@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension">
-    <Product Id="{3FCC6219-5391-41C9-B573-27387C233966}" Name="openSEE" Language="1033" Version="1.0.1.0" Manufacturer="Grid Protection Alliance" UpgradeCode="{A39ED5D7-B6CC-419B-9EFA-73D786FAF75D}">
+    <Product Id="{E50D5E3A-5DBA-4232-A667-F901FE540F0D}" Name="openSEE" Language="1033" Version="1.0.0.0" Manufacturer="Grid Protection Alliance" UpgradeCode="{ECB73A67-FD31-4200-A0CB-3C4CDD0747E4}">
         <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
         <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
