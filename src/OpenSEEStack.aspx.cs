@@ -24,7 +24,8 @@ public partial class OpenSEEStack : System.Web.UI.Page
     public String postedInceptionTime = "";
     public String EndTime = "";
     public String postedFaultCurrent = "";
-    public String postedDurationPeriod = ""; 
+    public String postedDurationPeriod = "";
+    public String postedShowFaultCurves = "";
 
     String connectionstring = ConfigurationManager.ConnectionStrings["EPRIConnectionString"].ConnectionString;
 
@@ -34,6 +35,16 @@ public partial class OpenSEEStack : System.Web.UI.Page
         {
             if (Request["eventId"] != null)
             {
+                if (Request["faultcurves"] == null)
+                {
+                    postedShowFaultCurves = "1";
+                }
+                else
+                {
+                    postedShowFaultCurves = Request["faultcurves"];
+                }
+
+                postedShowFaultCurves = Request["faultcurves"];
                 postedEventId = Request["eventId"];
                 using (EventTypeTableAdapter eventTypeAdapter = new EventTypeTableAdapter())
                 using (EventTableAdapter eventAdapter = new EventTableAdapter())
@@ -46,8 +57,6 @@ public partial class OpenSEEStack : System.Web.UI.Page
                         eventAdapter.Connection.ConnectionString = connectionstring;
                         eventTypeAdapter.Connection.ConnectionString = connectionstring;
                         summaryInfo.Connection.ConnectionString = connectionstring;
-
-
 
                         MeterData.EventRow theevent = eventAdapter.GetDataByID(Convert.ToInt32(postedEventId)).First();
 

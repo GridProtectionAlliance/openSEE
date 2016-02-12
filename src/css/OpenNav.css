@@ -26,7 +26,8 @@
                 padding: 0;
                 height: 100%;
                 width: 100%;
-                overflow: hidden;
+                overflow-x: hidden;
+                /*overflow: hidden;*/
                 -webkit-user-select: none;
                 -moz-user-select: -moz-none;
                 -ms-user-select: none;
@@ -78,10 +79,10 @@
 
             .headerStrip {
                 display: block;
-                z-index: 1001;
                 width: 100%;
                 padding: 0;
                 border: 1px solid black;
+                z-index: 1000;
             }
 
             .configNameModal {
@@ -135,6 +136,8 @@
                 padding: .2em .2em 0;
             }
 
+            .ui-datepicker{ z-index: 9999 !important;}
+
             .dockletcontainer {
                 /*position: relative;*/
                 width: 100%;
@@ -143,7 +146,8 @@
                 margin: 0;
                 padding: 0;
                 border: none;
-                overflow: hidden;
+                overflow-x: hidden;
+                /*overflow: hidden;*/
             }
 
             .docklet {
@@ -152,7 +156,8 @@
                 height: 100%;
                 margin: 0;
                 padding: 0;
-                overflow: hidden;
+                overflow-x: hidden;
+                /*overflow: hidden;*/
                 border: none;
                 float: left;
             }

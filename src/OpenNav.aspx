@@ -17,7 +17,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>OpenNav v.1</title>
+    <title>OpenSee v.1</title>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
@@ -98,21 +98,21 @@
     
         <div style="visibility:hidden; width: 0px; height: 0px;" id="postedUserName"><%=username %></div>
 
-<%--        <div style="width: 100%; height: 36px;" unselectable="on">
+        <div style="width: 100%; height: 36px;" unselectable="on">
             <table width="100%" unselectable="on">
                 <tr>
-                    <td width="33%" unselectable="on" align="left"><img src="images/GPA-Logo---30-pix(on-white).png" /></td>
-                    <td width="33%" unselectable="on" align="center"><img src="images/PQ-Dashboard.png" /></td>
-                    <td width="34%" unselectable="on" align="right" valign="top" nowrap><img src="images/EPRI(c).jpg" /></td>
+                    <td width="33%" unselectable="on" align="left"><img src="images/openSEELogo.png" /></td>
+                    <td width="33%" unselectable="on" align="center"><img src="" /></td>
+                    <td width="34%" unselectable="on" align="right" valign="top" nowrap><img src="images/GPA-Logo---30-pix(on-white).png" /></td>
                 </tr>
             </table>
-        </div>--%>
+        </div>
 
         <div id="ApplicationContent" unselectable="on" class="noselect" >
             <div id="headerStrip" unselectable="on" class="headerStrip ui-state-default noselect">
                 <table style="width: 100%;">
                     <tr>
-                        <td width="25%" align="center" style="z-index: 999;" nowrap>
+                        <td width="25%" align="center" nowrap>
                             <select class="smallbutton" id="Configurations" onchange="configurationapply(this);"></select>
                             <button class="smallbutton" id="ConfigurationsCopy" onclick="configurationscopy(this);">New</button>
                             <button class="smallbutton" id="ConfigurationsUpdate" onclick="configurationsupdate(this);">Save</button>
@@ -140,17 +140,9 @@
                 </table>
             </div>
 
-
-
-            <div unselectable="on" id="DockDetailContainer" class="dockletcontainer noselect">
-                <div id="DetailEvents" class="docklet">
+            <div unselectable="on" id="DockDetailContainer" class="dockletcontainer noselect" style="z-index: 999;">
+                <div id="DetailEvents" class="docklet" style="z-index: 999;">
                 </div>
-            </div>
-
-
-            <div id="DetailEvents">
-
-                    
             </div>
 
             <div unselectable="on" id="modal-dialog" class="configNameModal" title="New Configuration">

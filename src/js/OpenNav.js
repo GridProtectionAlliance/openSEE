@@ -115,6 +115,8 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
             $('#DetailEvents').jqxGrid(
             {
                 ready: function () {
+                    var rowscount = $("#DetailEvents").jqxGrid('getdatainformation').rowscount;
+                    $('#DetailEvents').jqxGrid({ pagesizeoptions: ['50', '100', rowscount] });
 
                     $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
                     $('#DetailEvents').jqxGrid('hidecolumn', 'meterid');
@@ -131,9 +133,11 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
                 },
 
                 width: '100%',
+                
                 //height: '100%',
                 autoheight: true,
                 //autowidth: true,
+
                 source: {
                     localdata: data.d,
                     dataType: 'json',
@@ -154,6 +158,7 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
                 pageable: true,
                 theme: 'ui-redmond',
 
+
                 columns: [
 
                             { text: 'eventid', dataField: 'eventid' },
@@ -163,8 +168,8 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
                             { text: 'End Time', dataField: 'endtime', width: 220 },
                             { text: 'Name', dataField: 'thesite' },
                             { text: 'Event Type', dataField: 'thename' },
-                            { text: ' ', cellsrenderer: makeMeterEventsByLineButton_html, dataField: 'OpenSeeStack', width: 40, padding: 0, cellsalign: 'left' }
-                        ]
+                            { text: ' ', cellsrenderer: makeOpenSeeStackButton_html, dataField: 'OpenSeeStack', width: 40, padding: 0, cellsalign: 'left' }
+                ]
             });
 
             $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
@@ -186,26 +191,8 @@ function makeOpenSeeStackButton_html(id) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function OpenWindowToOpenSeeStack(id) {
-    var datarow = $('#Detail' + currentTab).jqxGrid('getrowdata', id);
-    var popup = window.open("openSeeStack.aspx?eventid=" + datarow.theeventid, id + "openSeeStack", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
-    return false;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-function makeMeterEventsByLineButton_html(id) {
-    var return_html = "";
-    return_html += '<div style="cursor: pointer; width: 100%; Height: 100%; text-align: center; margin: auto; border: 0 none;">';
-    return_html += '<button onClick="OpenWindowToMeterEventsByLine(' + id + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch Events List Page">';
-    return_html += '<img src="images/eventDetailButton.png" /></button></div>';
-    return (return_html);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-function OpenWindowToMeterEventsByLine(id) {
     var datarow = $('#DetailEvents').jqxGrid('getrowdata', id);
-    var popup = window.open("MeterEventsByLine.aspx?eventid=" + datarow.eventid, id + "MeterEventsByLine", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
+    var popup = window.open("openSeeStack.aspx?eventid=" + datarow.eventid + "&faultcurves=0", id + "openSeeStack", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
     return false;
 }
 

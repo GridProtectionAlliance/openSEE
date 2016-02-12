@@ -27,6 +27,7 @@
     var loadingPanel = null;
     var postedEventId = "";
     var postedEventName = "";
+    var postedShowFaultCurves = "";
     var postedMeterId = "";
     var postedDate = "";
     var postedEventDate = "";
@@ -837,7 +838,16 @@ function showData() {
 
         options1 = populateDivWithLineChartByInstanceID("getSignalDataByIDAndType", 'WaveformEventsVoltage', postedEventId, "", "V");
         options2 = populateDivWithLineChartByInstanceID("getSignalDataByIDAndType", 'WaveformEventsCurrent', postedEventId, "", "I");
+
+        if (postedShowFaultCurves == "0")
+        {
+        options3 = populateDivWithLineChartByInstanceID("getFaultCurveDataByID", 'WaveformEventsFaultCurve', 0, "", null);
+        }
+        else
+        {
         options3 = populateDivWithLineChartByInstanceID("getFaultCurveDataByID", 'WaveformEventsFaultCurve', postedEventId, "", null);
+        }
+        
     }
 }
 
@@ -1097,6 +1107,7 @@ function showdetails(thecontrol) {
 
         postedEventId = $("#postedEventId")[0].innerHTML;
         postedEventName = $("#postedEventName")[0].innerHTML;
+        postedShowFaultCurves = $("#postedShowFaultCurves")[0].innerHTML;
         postedMeterId = $("#postedMeterId")[0].innerHTML;
         postedDate = $("#postedDate")[0].innerHTML;
         postedEventDate = $("#postedEventDate")[0].innerHTML;
@@ -1107,8 +1118,12 @@ function showdetails(thecontrol) {
         postedDurationPeriod = $("#postedDurationPeriod")[0].innerHTML;
         postedFaultCurrent = $("#postedFaultCurrent")[0].innerHTML;
 
-        if (postedEventName != "Fault") {
-            $("#showdetails").hide();
+        $("#showdetails").hide();
+
+        if (postedShowFaultCurves == "1") {
+            if (postedEventName == "Fault") {
+                $("#showdetails").show();
+            }
         }
 
         if (postedMeterId != "") {
@@ -1184,10 +1199,6 @@ function showdetails(thecontrol) {
         if (typeof chart != 'undefined') {
             chart.reflow();
         }
-
-
-
-
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1383,7 +1394,8 @@ function showdetails(thecontrol) {
                 name: 'VAN',
                 color: colorVAN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
             },
             {
                 yAxis: 0,
@@ -1392,7 +1404,8 @@ function showdetails(thecontrol) {
                 name: 'VBN',
                 color: colorVBN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
 
             },
             {
@@ -1402,7 +1415,8 @@ function showdetails(thecontrol) {
                 name: 'VCN',
                 color: colorVCN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
 
             },
             {
@@ -1411,7 +1425,8 @@ function showdetails(thecontrol) {
                 name: 'IAN',
                 color: colorIAN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
             },
             {
                 yAxis: 1,
@@ -1419,7 +1434,8 @@ function showdetails(thecontrol) {
                 name: 'IBN',
                 color: colorIBN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
 
             },
             {
@@ -1428,7 +1444,8 @@ function showdetails(thecontrol) {
                 name: 'ICN',
                 color: colorICN,
                 marker: { lineWidth: 3 },
-                data: []
+                data: [],
+                connectEnds: false
 
             }]
         });

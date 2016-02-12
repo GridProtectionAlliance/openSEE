@@ -6,7 +6,7 @@
 
 <head id="Head1" runat="server">
     
-    <title>OpenSEE</title>
+    <title>OpenSEEView v.1</title>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
@@ -75,7 +75,6 @@
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/adapters/prototype-adapter.js"></script>
 
-
     <script type="text/javascript" src="js/HighchartsYAxisZeroAlign.js"></script>
 
     <script type="text/javascript" src="./js/modules/exporting.js"></script>
@@ -105,8 +104,9 @@
         <div style="visibility:hidden; width: 0px; height: 0px;" id="postedInceptionTime"><%=postedInceptionTime %></div>
         <div style="visibility:hidden; width: 0px; height: 0px;" id="postedDurationPeriod"><%=postedDurationPeriod %></div>
         <div style="visibility:hidden; width: 0px; height: 0px;" id="postedFaultCurrent"><%=postedFaultCurrent %></div>
+        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedShowFaultCurves"><%=postedShowFaultCurves %></div>
 
-
+        
 
         <div id="unifiedtooltip" class="ui-widget-content">
             <div id="unifiedtooltiphandle"></div>

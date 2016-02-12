@@ -361,6 +361,11 @@ public eventSet getSignalDataByIDAndType(string EventInstanceID, String DataType
     {
         eventSet theset = new eventSet();
         theset.data = new List<signalDetail>();
+        theset.Yaxis0name = "Miles";
+        theset.Yaxis1name = "";
+
+        if (EventInstanceID == "0") return (theset);
+
         DataGroup eventDataGroup = new DataGroup();
         List<DataSeries> faultCurves;
         List<FaultLocationData.FaultCurveRow> FaultCurves;
