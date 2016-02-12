@@ -1145,6 +1145,7 @@ public class eventService : System.Web.Services.WebService {
             RowList.Add(ColList);
         }
         JavaScriptSerializer js = new JavaScriptSerializer();
+        js.MaxJsonLength = 50000000;
         string JSON = js.Serialize(RowList);
         return JSON;
     }
