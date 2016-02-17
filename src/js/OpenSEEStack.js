@@ -361,12 +361,15 @@
                     fontSize: '8px'
                 },
 
-                width: 120,
+                width: 140,
                 layout: 'vertical',
                 align: 'right',
                 verticalAlign: 'top',
-                symbolwidth: 1,
-                symbolPadding: 1,
+
+                symbolHeight: 0,
+                symbolWidth: 0,
+                symbolRadius: 0,
+                symbolPadding: 0,
                 padding: 0,
 
                 backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColorSolid) || 'white',

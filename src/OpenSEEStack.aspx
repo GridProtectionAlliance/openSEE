@@ -70,10 +70,17 @@
 
     <script type="text/javascript" src="./js/jqwidgets/jqxgrid.export.js"></script>
     
-    <script src="https://code.highcharts.com/highcharts.js"></script>
+<%--    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/adapters/prototype-adapter.js"></script>
+    <script src="https://code.highcharts.com/adapters/prototype-adapter.js"></script>--%>
+
+
+    <script src="./js/highcharts.js"></script>
+    <script src="./js/highcharts-more.js"></script>
+    <script src="./js/modules/exporting.js"></script>
+    <script src="./js/adapters/prototype-adapter.js"></script>
+
 
     <script type="text/javascript" src="js/HighchartsYAxisZeroAlign.js"></script>
 
