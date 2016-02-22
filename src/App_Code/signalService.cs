@@ -12,7 +12,6 @@ using FaultData.Database.FaultLocationDataTableAdapters;
 using FaultData.Database.MeterDataTableAdapters;
 using GSF;
 using GSF.COMTRADE;
-using GSF.EMAX;
 using GSF.IO;
 using GSF.PQDIF.Logical;
 using GSF.SELEventParser;
@@ -310,7 +309,7 @@ public eventSet getSignalDataByIDAndType(string EventInstanceID, String DataType
                         measurementType = "D";
                         int thechannelid  = theseries.SeriesInfo.Channel.ID;
                         Channel thechannel = theseries.SeriesInfo.Channel.MeasurementType.Channels.First(m => m.ID == thechannelid);
-                        phasename = thechannel.Name;
+                        phasename = thechannel.Description;
                     }
 
                     if (theseries.SeriesInfo.SeriesType.Name.Substring(0, 3) == "Min") continue;
