@@ -184,7 +184,7 @@ function makeOpenSEEButton_html(id) {
     var return_html = "";
     return_html += '<div style="cursor: pointer; width: 100%; Height: 100%; text-align: center; margin: auto; border: 0 none;">';
     return_html += '<button onClick="OpenWindowToOpenSEE(' + id + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch OpenSEE Waveform Viewer">';
-    return_html += '<img src="images/seeButton.png" /></button></div>';
+    return_html += '<img class="dgButtonIcon" src="images/openSEE.png" /></button></div>';
     return (return_html);
 }
 

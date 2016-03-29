@@ -161,3 +161,8 @@
                 border: none;
                 float: left;
             }
+
+            .dgButtonIcon {
+                width: 24px;
+                height: 24px;
+            }
