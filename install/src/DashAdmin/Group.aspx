@@ -1,13 +1,6 @@
-﻿<%@ page title="Group Configuration" language="C#" masterpagefile="~/Site.master" autoeventwireup="true" inherits="Group, App_Web_wiiwa3qz" %>
+﻿<%@ page title="Group Configuration" language="C#" masterpagefile="~/Site.master" autoeventwireup="true" inherits="Group, App_Web_uoty15n1" %>
 
 
-
-
-
-
-
-<asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" Runat="Server">
-</asp:Content>
 
 <asp:Content runat="server" ID="FeaturedContent" ContentPlaceHolderID="FeaturedContent">
     <section class="featured">
@@ -34,6 +27,12 @@
                 padding: 0;
                 position: relative;
             }
+    .auto-style1 {
+        width: 157px;
+    }
+    .auto-style2 {
+        width: 100px;
+    }
 </style>
 
     <script type="text/javascript">
@@ -142,7 +141,7 @@
                     </td>
                 </tr>
                 <tr runat="server">
-                    <td nowrap runat="server" style="text-align: center; background-color: #5D7B9D; font-family: Verdana, Arial, Helvetica, sans-serif; color: #FFFFFF">
+                    <td nowrap runat="server" style="">
                         <asp:DataPager ID="DataPager1" runat="server">
                             <Fields>
                                 <asp:NextPreviousPagerField ButtonType="Button" ShowFirstPageButton="True" ShowLastPageButton="True" />
@@ -172,75 +171,76 @@
     </asp:ListView>
 </asp:Panel>
 <asp:Panel ID="Panel2" Visible="False" runat="server" Width="40%" CssClass="floating">
+    <div width="100%">
+        <table>
+            <tr>
+                <td align="center" class="auto-style1">
+                    <table width="160px">
+                        <tr>
+                            <td colspan="2" align="center">
+                                Available Meters
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <asp:TextBox ID="TextBox1" runat="server" Width="121px" onkeyup="RefreshUpdatePanel();" OnTextChanged="TextBox1_TextChanged" AutoPostBack="True" ></asp:TextBox>
+                            </td>
+                            <td>
+                                <input type="image" src="Images/magnify.png" alt="Submit" height="16px" width="16px">
+                            </td>
+                        </tr>
 
-            <table>
-                <tr>
-                    <td align="center">
-                        <table>
-                            <tr>
-                                <td colspan="2" align="center">
-                                    Available Meters
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <asp:TextBox ID="TextBox1" runat="server" Width="121px" onkeyup="RefreshUpdatePanel();" OnTextChanged="TextBox1_TextChanged" AutoPostBack="True" ></asp:TextBox>
-                                </td>
-                                <td>
-                                    <input type="image" src="Images/magnify.png" alt="Submit">
-                                </td>
-                            </tr>
-
-                        </table>
+                    </table>
                         
-                    </td>
-                    <td></td>
-                    <td align="center">Authorized Meters</td>
-                </tr>
-                <tr>
-                    <td ><asp:ListBox ID="ListBox1" runat="server"
-                                        DataSourceID="meterDataSource" 
-                                        DataTextField="Name" 
-                                        DataValueField="ID"
-                                        SelectionMode="Multiple" 
-                                        Width="150px" 
-                                        Height="500px">
-                         </asp:ListBox>
-                    </td>
-                    <td valign="middle" align="center" style="width:100px">
-                        <asp:Button ID="ButtonAdd" runat="server" 
-                                    Text=">" 
-                                    OnClick="ButtonAdd_Click"  
-                                    Width="50px"/><br />
-     
-                        <asp:Button ID="ButtonRemove" runat="server" 
-                                    Text="<" 
-                                    OnClick="ButtonRemove_Click" 
-                                   Width="50px"/> <br />
-     
-                        <asp:Button ID="ButtonAddAll" runat="server" 
-                                    Text =">>>" 
-                                    OnClick="ButtonAddAll_Click" 
-                                    Width="50px"/> 
-                        <br />
-     
-                        <asp:Button ID="ButtonRemoveAll" runat="server" 
-                                    Text ="<<<" 
-                                    OnClick="ButtonRemoveAll_Click" 
-                                    Width="50px"/>
-                    </td>
-                    <td>
-                       <asp:ListBox ID="ListBox2" runat="server"
-                                    DataSourceID="GroupMeterDataSource" 
+                </td>
+                <td class="auto-style2"></td>
+                <td align="center">Authorized Meters</td>
+            </tr>
+            <tr>
+                <td class="auto-style1" ><asp:ListBox ID="ListBox1" runat="server"
+                                    DataSourceID="meterDataSource" 
                                     DataTextField="Name" 
                                     DataValueField="ID"
                                     SelectionMode="Multiple" 
                                     Width="150px" 
                                     Height="500px">
-                      </asp:ListBox>
-                    </td>
-                </tr>
-    </table>
+                        </asp:ListBox>
+                </td>
+                <td valign="middle" align="center" class="auto-style2">
+                    <asp:Button ID="ButtonAdd" runat="server" 
+                                Text=">" 
+                                OnClick="ButtonAdd_Click"  
+                                Width="50px"/><br />
+     
+                    <asp:Button ID="ButtonRemove" runat="server" 
+                                Text="<" 
+                                OnClick="ButtonRemove_Click" 
+                                Width="50px"/> <br />
+     
+                    <asp:Button ID="ButtonAddAll" runat="server" 
+                                Text =">>>" 
+                                OnClick="ButtonAddAll_Click" 
+                                Width="50px"/> 
+                    <br />
+     
+                    <asp:Button ID="ButtonRemoveAll" runat="server" 
+                                Text ="<<<" 
+                                OnClick="ButtonRemoveAll_Click" 
+                                Width="50px"/>
+                </td>
+                <td>
+                    <asp:ListBox ID="ListBox2" runat="server"
+                                DataSourceID="GroupMeterDataSource" 
+                                DataTextField="Name" 
+                                DataValueField="ID"
+                                SelectionMode="Multiple" 
+                                Width="150px" 
+                                Height="500px">
+                    </asp:ListBox>
+                </td>
+            </tr>
+        </table>
+    </div>
     <asp:SqlDataSource ID="meterDataSource" 
         runat="server" 
         ConnectionString="<%$ ConnectionStrings:GTCConnectionString %>"

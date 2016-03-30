@@ -1,11 +1,11 @@
 ﻿
-<%@ page title="User Configuration" language="C#" masterpagefile="~/Site.Master" autoeventwireup="true" inherits="User, App_Web_wiiwa3qz" %>
+<%@ page title="User Configuration" language="C#" masterpagefile="~/Site.Master" autoeventwireup="true" inherits="User, App_Web_uoty15n1" %>
 
 <asp:Content runat="server" ID="FeaturedContent" ContentPlaceHolderID="FeaturedContent">
     <section class="featured">
         <div class="content-wrapper">
             <hgroup class="title">
-                <h1>PQDashboard Administrator <%: Title %></h1>
+                <h1>PQDashboard Configuration - <%: Title %></h1>
             </hgroup>
             <asp:Menu ID="Menu1" runat="server" DataSourceID="SiteMapDataSource">
             </asp:Menu>
@@ -29,7 +29,7 @@
         <asp:ListView ID="ListView1" runat="server" DataKeyNames="ID" DataSourceID="userDataSource" InsertItemPosition="LastItem">
             <AlternatingItemTemplate>
                 <tr style="">
-                    <td>
+                    <td nowrap>
                         <asp:Button ID="DeleteButton" OnClick="ButtonDelete_Click" runat="server" CommandName="Delete" Text="Delete" />
                         <asp:Button ID="EditButton" OnClick="ButtonEdit_Click" runat="server" CommandName="Edit" Text="Edit" />
                     </td>
@@ -46,7 +46,7 @@
             </AlternatingItemTemplate>
             <EditItemTemplate>
                 <tr style="">
-                    <td>
+                    <td nowrap>
                         <asp:Button ID="UpdateButton" OnClick="ButtonUpdate_Click" runat="server" CommandName="Update" Text="Update" />
                         <asp:Button ID="CancelButton" OnClick="ButtonCancel_Click" runat="server" CommandName="Cancel" Text="Cancel" />
                     </td>
@@ -70,7 +70,7 @@
             </EmptyDataTemplate>
             <InsertItemTemplate>
                 <tr style="">
-                    <td>
+                    <td nowrap>
                         <asp:Button ID="InsertButton" OnClick="ButtonInsert_Click" runat="server" CommandName="Insert" Text="Insert" />
                         <asp:Button ID="CancelButton" OnClick="ButtonCancel_Click" runat="server" CommandName="Cancel" Text="Clear" />
                     </td>
@@ -85,7 +85,7 @@
             </InsertItemTemplate>
             <ItemTemplate>
                 <tr style="">
-                    <td>
+                    <td nowrap>
                         <asp:Button ID="DeleteButton" OnClick="ButtonDelete_Click" runat="server" CommandName="Delete" Text="Delete" />
                         <asp:Button ID="EditButton" OnClick="ButtonEdit_Click" runat="server" CommandName="Edit" Text="Edit" />
                     </td>
@@ -129,7 +129,7 @@
             </LayoutTemplate>
             <SelectedItemTemplate>
                 <tr style="">
-                    <td>
+                    <td nowrap>
                         <asp:Button ID="DeleteButton" OnClick="ButtonDelete_Click" runat="server" CommandName="Delete" Text="Delete" />
                         <asp:Button ID="EditButton" OnClick="ButtonEdit_Click" runat="server" CommandName="Edit" Text="Edit" />
                     </td>

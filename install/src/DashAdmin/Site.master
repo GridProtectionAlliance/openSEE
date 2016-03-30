@@ -1,4 +1,4 @@
-﻿<%@ master language="C#" autoeventwireup="true" inherits="SiteMaster, App_Web_e1xyn5m1" %>
+﻿<%@ master language="C#" autoeventwireup="true" inherits="SiteMaster, App_Web_ic0wafdp" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -39,15 +39,15 @@
         <div class="content-wrapper">
             <div class="float-left">
                 <p class="site-title">
-                    <a href="~/">Grid Protection Alliance</a></p>
+                    <a href="~/">Disturbance Analytics Administration Interface</a></p>
             </div>
             <div class="float-right">
                 <section id="login">
                     <asp:LoginView runat="server" ViewStateMode="Disabled">
                         <AnonymousTemplate>
                             <ul>
-                                <li><a id="registerLink" runat="server" href="~/Account/Register">Register</a></li>
-                                <li><a id="loginLink" runat="server" href="~/Account/Login">Log in</a></li>
+<%--                                <li><a id="registerLink" runat="server" href="~/Account/Register">Register</a></li>
+                                <li><a id="loginLink" runat="server" href="~/Account/Login">Log in</a></li>--%>
                             </ul>
                         </AnonymousTemplate>
                         <LoggedInTemplate>
@@ -63,8 +63,8 @@
                 <nav>
                     <ul id="menu">
                         <li><a runat="server" href="~/">Home</a></li>
-                        <li><a runat="server" href="~/About">About</a></li>
-                        <li><a runat="server" href="~/Contact">Contact</a></li>
+<%--                        <li><a runat="server" href="~/About">About</a></li>
+                        <li><a runat="server" href="~/Contact">Contact</a></li>--%>
                     </ul>
                 </nav>
             </div>
