@@ -23,13 +23,13 @@
 //******************************************************************************************************
 -->
 
-<%@ page language="C#" autoeventwireup="true" inherits="OpenSEENav, App_Web_is42uzuo" %>
+<%@ page language="C#" autoeventwireup="true" inherits="OpenSEENav, App_Web_fhmfjz5j" %>
 
 <!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>OpenSee v.1</title>
+    <title>openSEE Navigation</title>
     
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
@@ -38,7 +38,8 @@
     <meta http-equiv="expires" content="0" />
     <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
     <meta http-equiv="pragma" content="no-cache" />
-
+    
+    <link rel="shortcut icon" type="image/ico" href="./images/openSEE.ico">
     <link rel="stylesheet" href="./css/themes/redmond/jquery-ui.css">  
     <link rel="stylesheet" href="./css/jquery.multiselect.css">
     <link rel="stylesheet" href="./css/jquery.multiselect.filter.css"> 
