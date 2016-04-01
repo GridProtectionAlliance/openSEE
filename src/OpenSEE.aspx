@@ -92,6 +92,7 @@
                 <div id="accumulatedpointshandle"></div>
                 <div style="overflow-y: scroll; height: 200px" ><div id="accumulatedpointscontent"></div></div>
                 <div style="margin: 5px; text-align: right">
+                    <input class="smallbutton" type="button" value="Remove" onclick="RemovePoint()" />
                     <input class="smallbutton" type="button" value="Pop" onclick="popAccumulatedPoints()" />
                     <input class="smallbutton" type="button" value="Clear" onclick="clearAccumulatedPoints()" />
                 </div>

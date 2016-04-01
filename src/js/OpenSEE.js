@@ -42,6 +42,7 @@ var postedDurationPeriod = "";
 var postedMagnitude = "";
 
 var pointsTable = [];
+var selectedPoint;
 
 var plots = [];
 var plotDataList = [];
@@ -226,6 +227,8 @@ function buildPage() {
 
     $('#accumulatedpointscontent').puidatatable({
         stickyHeader: true,
+        selectionMode: 'single',
+        rowSelect: function (event, data) { selectedPoint= data.arrayIndex; },
         columns: [
             { field: 'theseries', headerText: 'Series' },
             { field: 'thetime', headerText: 'Time', content: ShowTime },
@@ -771,7 +774,8 @@ function attachEvents(key) {
             thetime: time,
             thevalue: item.datapoint[1].toFixed(3),
             deltatime: deltatime,
-            deltavalue: deltavalue.toFixed(3)
+            deltavalue: deltavalue.toFixed(3),
+            arrayIndex: pointsTable.length
         });
 
         $('#accumulatedpointscontent').puidatatable('reload');
@@ -1365,6 +1369,33 @@ function unzoom() {
     alignAxes();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+function RemovePoint() {
+    if (selectedPoint === pointsTable.length - 1) {
+        pointsTable.pop();
+    }
+    else if (selectedPoint === 0) {
+        pointsTable[1].deltatime = 0;
+        pointsTable[1].deltavalue = (0.0).toFixed(3);
+        for(var i = selectedPoint + 1; i < pointsTable.length; ++i)
+            pointsTable[i].arrayIndex--;
+        pointsTable.splice(selectedPoint, 1);
+    }
+    else if (selectedPoint === -1) {
+ 
+    }
+    else {
+        pointsTable[selectedPoint + 1].deltatime = pointsTable[selectedPoint - 1].thetime - pointsTable[selectedPoint + 1].thetime;
+        pointsTable[selectedPoint + 1].deltavalue = (pointsTable[selectedPoint - 1].thevalue - pointsTable[selectedPoint + 1].thevalue).toFixed(3);
+        for (var i = selectedPoint + 1; i < pointsTable.length; ++i)
+            pointsTable[i].arrayIndex--;
+        pointsTable.splice(selectedPoint, 1);
+    }
+    selectedPoint = -1;
+    $('#accumulatedpointscontent').puidatatable('reload');
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 function popAccumulatedPoints() {
 
