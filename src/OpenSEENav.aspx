@@ -40,12 +40,12 @@
     <meta http-equiv="pragma" content="no-cache" />
     
     <link rel="shortcut icon" type="image/ico" href="./images/openSEE.ico">
-    <link rel="stylesheet" href="./css/themes/redmond/jquery-ui.css">  
-    <link rel="stylesheet" href="./css/jquery.multiselect.css">
-    <link rel="stylesheet" href="./css/jquery.multiselect.filter.css"> 
-    <link rel="stylesheet" href="./css/OpenSEENav.css" type="text/css" />
+    <link rel="stylesheet" href="./css/themes/redmond/jquery-ui.css">
     <link rel="stylesheet" href="./js/PrimeUI/Font-Awesome/css/font-awesome.min.css"/>
     <link rel="stylesheet" href="./js/PrimeUI/primeui.min.css" />
+    <link rel="stylesheet" href="./css/jquery.multiselect.css">
+    <link rel="stylesheet" href="./css/jquery.multiselect.filter.css">
+    <link rel="stylesheet" href="./css/OpenSEENav.css" type="text/css" />
     
    
     <script type="text/javascript" src="./js/jquery-2.1.1.js"></script>   

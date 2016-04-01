@@ -12,21 +12,21 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Global
 
-    var javascriptversion = "13";
+var javascriptversion = "13";
 
-    var usersettings = {
-        lastSetting: {},
-        uisettings: []
-    };
+var usersettings = {
+    lastSetting: {},
+    uisettings: []
+};
 
-    var applicationsettings = {};
+var applicationsettings = {};
 
-    var loadingPanel = null;
+var loadingPanel = null;
 
-    var datafromdate = new Date();
-    var datatodate = new Date();
+var datafromdate = new Date();
+var datatodate = new Date();
 
-    var postedUserName = "";
+var postedUserName = "";
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,6 +39,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
     function loadDataForDateClick() {
+        $("#Configurations")[0].value = "Empty";
         $("#staticPeriod")[0].value = "Custom";
         loadDataForDate();
     }
@@ -100,39 +101,66 @@ function GetCurrentlySelectedSitesIDs() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theDateFrom, theDateTo) {
-
     var thedatasent = "{'siteID':'" + siteID + "', 'targetDateFrom':'" + theDateFrom + "', 'targetDateTo':'" + theDateTo + "','userName':'" + postedUserName + "'   }";
 
-    $('#DetailEvents').puidatatable({
-        paginator: {
-            rows: 20
-        },
-        selectionMode: 'single',
-        columns: [
-            { field: 'starttime', headerText: 'Start Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
-            { field: 'endtime', headerText: 'End Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
-            { field: 'thesite', headerText: 'Meter', filter: true, sortable: true },
-            { field: 'linename', headerText: 'Line Name', filter: true, sortable: true },
-            { field: 'thename', headerText: 'Event Type', headerStyle: "width: 120px", bodyStyle: "width: 120px", filter: true, sortable: true },
-            { field: 'OpenSEE', headerText: ' ', content: makeOpenSEEButton_html, headerStyle: "width: 40px", bodyStyle: "width: 40px; padding: 0; cellsalign: 'left'" }
-        ],
-        datasource: function(callback) {
-            $.ajax({
-                type: "POST",
-                url: './eventService.asmx/' + thedatasource,
-                data: thedatasent,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                context: this,
-                success: function (data) {
-                    //console.log(JSON.parse(data.d));
-                    callback.call(this, JSON.parse(data.d));
-                }
+    $.ajax({
+        type: "POST",
+        url: './eventService.asmx/' + thedatasource,
+        data: thedatasent,
+        contentType: "application/json; charset=utf-8",
+        dataType: 'json',
+        context: this,
+        success: function (data) {
+            $('#DetailEvents').puidatatable({
+                paginator: { },
+                selectionMode: 'single',
+                stickyHeader: true,
+                columns: [
+                    { field: 'starttime', headerText: 'Start Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+                    { field: 'endtime', headerText: 'End Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+                    { field: 'thesite', headerText: 'Meter', filter: true, sortable: true },
+                    { field: 'linename', headerText: 'Line Name', filter: true, sortable: true },
+                    { field: 'thename', headerText: 'Event Type', headerStyle: "width: 120px", bodyStyle: "width: 120px", filter: true, sortable: true },
+                    { field: 'OpenSEE', headerText: ' ', content: makeOpenSEEButton_html, headerStyle: "width: 40px", bodyStyle: "width: 40px; padding: 0; cellsalign: 'left'" }
+                ],
+                datasource: JSON.parse(data.d)
             });
+
+            var comboBox = $('#EventsPerPage');
+
+            if (comboBox.length == 0) {
+                var paginator = $('#DetailEvents').puidatatable('getPaginator');
+                var values = ["--", "20", "50", "100"];
+
+                comboBox = $('<select id="EventsPerPage" onChange="changeEventsPerPage();">');
+                paginator.append('<span style="margin-left: 20px">Events per page: </span>');
+                paginator.append(comboBox);
+
+                $.each(values, function (_, value) {
+                    if (value == "20")
+                        comboBox.append($('<option selected>' + value + '</option>'));
+                    else
+                        comboBox.append($('<option>' + value + '</option>'));
+                });
+            }
+
+            changeEventsPerPage();
         }
     });
+}
 
-   
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+function changeEventsPerPage() {
+    var selectedOption = $('#EventsPerPage option:selected');
+    var paginator = $('#DetailEvents').puidatatable('getPaginator');
+    var rows = selectedOption.text();
+
+    if (rows == "--")
+        rows = paginator.puipaginator('option', 'totalRecords');
+
+    paginator.puipaginator('option', 'rows', rows);
+    $('#DetailEvents').puidatatable('filter');
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,6 +275,7 @@ function initializeDatePickers(datafromdate , datatodate) {
 
         onClose: function (selectedDate) {
             $("#datePickerTo").datepicker("option", "minDate", selectedDate);
+            $("#datePickerTo").datepicker("option", "minDate", null);
         }
     });
 
@@ -275,6 +304,7 @@ function initializeDatePickers(datafromdate , datatodate) {
         showButtonPanel: false,
         onClose: function (selectedDate) {
             $("#datePickerFrom").datepicker("option", "maxDate", selectedDate);
+            $("#datePickerFrom").datepicker("option", "maxDate", null);
         }
     });
 
@@ -285,6 +315,8 @@ function initializeDatePickers(datafromdate , datatodate) {
 
 function loadconfigdropdown(currentselected) {
     $('#Configurations')[0].options.length = 0;
+    SelectAdd("Configurations", "Empty", "", "");
+
     $.each(usersettings.uisettings, function (key, value) {
         SelectAdd("Configurations", key, value.Name, (currentselected == value.Name) ? "selected" : "");
     });
@@ -354,6 +386,9 @@ function validatesettings(usersettings) {
 function configurationapply(item) {
         
     var currentconfigname = $("#Configurations :selected").text();
+
+    if (currentconfigname == "")
+        return;
 
     usersettings["lastSetting"] = currentconfigname;
 
