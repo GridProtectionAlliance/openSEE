@@ -43,37 +43,22 @@
     <link rel="stylesheet" href="./css/themes/redmond/jquery-ui.css">  
     <link rel="stylesheet" href="./css/jquery.multiselect.css">
     <link rel="stylesheet" href="./css/jquery.multiselect.filter.css"> 
-    <link rel="stylesheet" href="./js/jqwidgets/styles/jqx.base.css" type="text/css" />
-    <link rel="stylesheet" href="./js/jqwidgets/styles/jqx.ui-redmond.css" type="text/css" />
     <link rel="stylesheet" href="./css/OpenSEENav.css" type="text/css" />
-
-    <script type="text/javascript" src="./js/jquery-2.1.1.js"></script>
+    <link rel="stylesheet" href="./js/PrimeUI/Font-Awesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="./js/PrimeUI/primeui.min.css" />
+    
+   
+    <script type="text/javascript" src="./js/jquery-2.1.1.js"></script>   
     <script type="text/javascript" src="./js/jquery-ui.js"></script>
+    <script type="text/javascript" src="./js/PrimeUI/primeui.js"></script>
+    <script type="text/javascript" src="./js/PrimeUI/x-tag-core.min.js"></script>
+    <script type="text/javascript" src="./js/PrimeUI/primeelements.js"></script>
     <script type="text/javascript" src="./js/jquery.blockUI.js"></script>
     <script type="text/javascript" src="./js/jquery.multiselect.js"></script>
     <script type="text/javascript" src="./js/jquery.multiselect.filter.js"></script>
     
-    <script type="text/javascript" src="./js/jqwidgets/jqxcore.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxdata.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxbuttons.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxscrollbar.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxmenu.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxlistbox.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxdropdownlist.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.selection.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.columnsresize.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.filter.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.sort.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.pager.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.grouping.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxdata.export.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.export.js"></script>
-    
     <script type="text/javascript" src="./js/OpenSEENav.js?ver=<%=DateTime.Now.Ticks.ToString()%>"></script>
-
     <script type="text/javascript" src="./js/jstorage.js"></script> 
-    
     <script type="text/javascript" src="./js/moment.js"></script> 
 
 </head>

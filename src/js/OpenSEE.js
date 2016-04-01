@@ -41,6 +41,8 @@ var postedStartTime = "";
 var postedDurationPeriod = "";
 var postedMagnitude = "";
 
+var pointsTable = [];
+
 var plots = [];
 var plotDataList = [];
 
@@ -222,6 +224,18 @@ function buildPage() {
         $.unblockUI();
     });
 
+    $('#accumulatedpointscontent').puidatatable({
+        stickyHeader: true,
+        columns: [
+            { field: 'theseries', headerText: 'Series' },
+            { field: 'thetime', headerText: 'Time', content: ShowTime },
+            { field: 'thevalue', headerText: 'Value' },
+            { field: 'deltatime', headerText: 'Delta Time', content: ShowDeltaTime },
+            { field: 'deltavalue', headerText: 'Delta Value' }
+        ],
+        datasource: pointsTable
+    });
+
     $("#unifiedtooltip").draggable({ scroll: false, handle: '#unifiedtooltiphandle' });
     $('#unifiedtooltip').hide();
 
@@ -241,60 +255,23 @@ function buildPage() {
         }, 100);
     });
 
-    var pointsource = {
-        localdata: pointdata,
-        datatype: "array",
-        datafields: [
-            { name: 'theseries', type: 'string' },
-            { name: 'thetime', type: 'string' },
-            { name: 'thevalue', type: 'string' },
-            { name: 'thedelta', type: 'string' }
-        ]
-    };
-
-    var pointadapter = new $.jqx.dataAdapter(pointsource, {
-
-        downloadComplete: function (data, status, xhr) {
-            //alert("done");
-        },
-
-        loadComplete: function (data) {
-            //alert("done");
-        },
-
-        loadError: function (xhr, status, error) {
-            //alert(error);
-        }
-
-    });
-
-    var rend = function (row, columnfield, value, defaulthtml, columnproperties) {
-        return '<div style="text-overflow: ellipsis; overflow: hidden; padding-bottom: 2px; text-align: center; margin-top: 4px;">' + value + '</div>';
-    }
-
-    $("#accumulatedpointscontent").jqxGrid(
-    {
-        width: "100%",
-        height: "140px",
-        source: pointadapter,
-        columnsresize: true,
-        rowsheight: 30,
-        sortable: true,
-        theme: 'ui-redmond',
-        columns: [
-            { text: 'Series', width: '20%', datafield: "theseries" },
-            { text: 'Time', width: '20%', datafield: "thetime", cellsalign: 'center', cellsrenderer: rend },
-            { text: 'Value', width: '20%', datafield: "thevalue", cellsalign: 'center' },
-            { text: 'Delta Time', width: '20%', datafield: "deltatime", cellsalign: 'center', cellsrenderer: rend },
-            { text: 'Delta Value', width: '20%', datafield: "deltavalue", cellsalign: 'center' }
-        ]
-    });
+   
 
     $('#resetZoom').click(function () {
         unzoom();
     });
 }
 
+
+function ShowTime(rowdata) {
+    var html = rowdata.thetime.toFixed(7) + " sec<br>" + (rowdata.thetime * 60.0).toFixed(2) + " cycles";
+    return html;
+}
+
+function ShowDeltaTime(rowdata) {
+    var html = rowdata.deltatime.toFixed(7) + " sec<br>" + (rowdata.deltatime * 60.0).toFixed(2) + " cycles";
+    return html;
+}
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function resetWaveformDiv() {
@@ -773,42 +750,31 @@ function attachEvents(key) {
     });
 
     $(div).bind("plotclick", function (event, pos, item) {
-        var rows;
-        var rowdata;
-
         var time;
         var deltatime;
         var deltavalue;
 
         if (clickHandled || !item)
             return;
-
-        rows = $('#accumulatedpointscontent').jqxGrid('getrows');
-        rowdata = [];
-
+ 
         time = (item.datapoint[0] - Number(postedEventMilliseconds)) / 1000.0;
         deltatime = 0.0;
         deltavalue = 0.0;
-
-        if (rows.length > 0) {
-            var datarow = $('#accumulatedpointscontent').jqxGrid('getrowdata', rows.length - 1);
-            deltatime = time - datarow.hiddentime;
-            deltavalue = item.datapoint[1] - datarow.hiddenvalue;
+        
+        if (pointsTable.length > 0) {
+            deltatime = time - pointsTable[pointsTable.length-1].thetime;
+            deltavalue = item.datapoint[1] - pointsTable[pointsTable.length-1].thevalue;
         }
 
-        rowdata.push({
-            theseries: item.series.label + "<br/>",
-            thetime: time.toFixed(7) + " sec<br/>" + (time * 60.0).toFixed(2) + " cycles",
-            thevalue: item.datapoint[1].toFixed(3) + "<br/>",
-            deltatime: deltatime.toFixed(7) + " sec<br/>" + (deltatime * 60.0).toFixed(2) + " cycles",
-            deltavalue: deltavalue.toFixed(3) + "<br/>",
-            hiddentime: time.toFixed(7),
-            hiddenvalue: item.datapoint[1].toFixed(3)
+        pointsTable.push({
+            theseries: item.series.label,
+            thetime: time,
+            thevalue: item.datapoint[1].toFixed(3),
+            deltatime: deltatime,
+            deltavalue: deltavalue.toFixed(3)
         });
 
-        $('#accumulatedpointscontent').jqxGrid("addrow", null, rowdata);
-        $('#accumulatedpointscontent').jqxGrid('selectrow', rows.length - 1);
-        $('#accumulatedpointscontent').jqxGrid('ensurerowvisible', rows.length - 1);
+        $('#accumulatedpointscontent').puidatatable('reload');
     });
 
     $(div).bind("plotselected", function (event, ranges) {
@@ -1399,21 +1365,20 @@ function unzoom() {
     alignAxes();
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
 
 function popAccumulatedPoints() {
-    var rows = $('#accumulatedpointscontent').jqxGrid('getrows');
 
-    if (rows.length > 0) {
-        var lastrow = rows[rows.length - 1];
-        $('#accumulatedpointscontent').jqxGrid('deleterow', lastrow.uid);
-    }
+    if(pointsTable.length > 0)
+        pointsTable.pop();
+    $('#accumulatedpointscontent').puidatatable('reload');
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function clearAccumulatedPoints() {
-    $('#accumulatedpointscontent').jqxGrid('clear');
+    while(pointsTable.length > 0) pointsTable.pop();
+    $('#accumulatedpointscontent').puidatatable('reload');
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

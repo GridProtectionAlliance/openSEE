@@ -42,43 +42,24 @@
 
     <link rel="shortcut icon" type="image/ico" href="./images/openSEE.ico" />
     <link rel="stylesheet" href="./css/themes/redmond/jquery-ui.css" />
-    <link rel="stylesheet" href="./js/jqwidgets/styles/jqx.base.css" type="text/css" />
-    <link rel="stylesheet" href="./js/jqwidgets/styles/jqx.ui-redmond.css" type="text/css" />
     <link rel="stylesheet" href="./css/jquery.multiselect.css" />
     <link rel="stylesheet" href="./css/jquery.multiselect.filter.css" />
     <link rel="stylesheet" href="./css/OpenSEE.css" type="text/css" />
+    <link rel="stylesheet" href="./js/PrimeUI/Font-Awesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="./js/PrimeUI/primeui.min.css" />
 
     <script type="text/javascript" src="./js/jquery-2.1.1.js"></script>
     <script type="text/javascript" src="./js/jquery-ui.js"></script>
+    <script type="text/javascript" src="./js/PrimeUI/primeui.js"></script>
     <script type="text/javascript" src="./js/jquery.blockUI.js"></script>
-
-    <script type="text/javascript" src="./js/jqwidgets/jqxcore.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxdata.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxbuttons.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxscrollbar.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxmenu.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxlistbox.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxdropdownlist.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.selection.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.columnsresize.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.filter.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.sort.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.pager.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.grouping.js"></script> 
-    <script type="text/javascript" src="./js/jqwidgets/jqxdata.export.js"></script>
-    <script type="text/javascript" src="./js/jqwidgets/jqxgrid.export.js"></script>
-    
     <script type="text/javascript" src="./js/jquery.multiselect.js"></script>
     <script type="text/javascript" src="./js/jquery.multiselect.filter.js"></script>
-
     <script type="text/javascript" src="./js/flot/jquery.flot.js"></script>
 	<script type="text/javascript" src="./js/flot/jquery.flot.crosshair.js"></script>
 	<script type="text/javascript" src="./js/flot/jquery.flot.navigate.js"></script>
 	<script type="text/javascript" src="./js/flot/jquery.flot.resize.js"></script>
 	<script type="text/javascript" src="./js/flot/jquery.flot.selection.js"></script>
     <script type="text/javascript" src="./js/flot/jquery.flot.time.js"></script>
-
     <script type="text/javascript">var SeriesList = <%=postedSeriesList %>;</script>
     <script type="text/javascript" src="./js/OpenSEE.js?ver=<%=DateTime.Now.Ticks.ToString()%>"></script>
 
@@ -106,14 +87,16 @@
             <button class="CloseButton" onclick="showhideTooltip($('#showtooltip')[0]);">X</button>
         </div>
         
-        <div id="accumulatedpoints" class="ui-widget-content" style="width: 480px; height: 200px">
-            <div id="accumulatedpointshandle"></div>
-            <div id="accumulatedpointscontent"></div>
-            <div style="margin: 5px; text-align: right">
-                <input class="smallbutton" type="button" value="Pop" onclick="popAccumulatedPoints()" />
-                <input class="smallbutton" type="button" value="Clear" onclick="clearAccumulatedPoints()" />
+        <div id="accumulatedpoints" class="ui-widget-content">
+            <div style="border: black solid 2px;">
+                <div id="accumulatedpointshandle"></div>
+                <div style="overflow-y: scroll; height: 200px" ><div id="accumulatedpointscontent"></div></div>
+                <div style="margin: 5px; text-align: right">
+                    <input class="smallbutton" type="button" value="Pop" onclick="popAccumulatedPoints()" />
+                    <input class="smallbutton" type="button" value="Clear" onclick="clearAccumulatedPoints()" />
+                </div>
+                <button class="CloseButton" onclick="showhidePoints($('#showpoints')[0]);">X</button>
             </div>
-            <button class="CloseButton" onclick="showhidePoints($('#showpoints')[0]);">X</button>
         </div>
 
         <div id="phasor" class="ui-widget-content" style="width:300px; height:320px;">

@@ -1,4 +1,4 @@
-﻿//******************************************************************************************************
+﻿ //******************************************************************************************************
 //  OpenNav.js - Gbtc
 //
 //
@@ -30,10 +30,10 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-    Array.prototype.remove = function (from, to) {
-        var rest = this.slice((to || from) + 1 || this.length);
-        this.length = from < 0 ? this.length + from : from;
-        return this.push.apply(this, rest);
+    function RemoveFromArray(arr, from, to) {
+        var rest = arr.slice((to || from) + 1 || arr.length);
+        arr.length = from < 0 ? arr.length + from : from;
+        return arr.push.apply(arr, rest);
     };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,87 +103,42 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
 
     var thedatasent = "{'siteID':'" + siteID + "', 'targetDateFrom':'" + theDateFrom + "', 'targetDateTo':'" + theDateTo + "','userName':'" + postedUserName + "'   }";
 
-    $.ajax({
-        type: "POST",
-        url: './eventService.asmx/' + thedatasource,
-        data: thedatasent,
-        contentType: "application/json; charset=utf-8",
-        dataType: 'json',
-        cache: true,
-        success: function (data) {
-
-            $('#DetailEvents').jqxGrid(
-            {
-                ready: function () {
-                    var rowscount = $("#DetailEvents").jqxGrid('getdatainformation').rowscount;
-                    $('#DetailEvents').jqxGrid({ pagesizeoptions: ['50', '100', rowscount] });
-
-                    $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
-                    $('#DetailEvents').jqxGrid('hidecolumn', 'meterid');
-
-                    var localizationobj = {};
-                    localizationobj.emptydatastring = "No data for date period.";
-                    $('#DetailEvents').jqxGrid('localizestrings', localizationobj);
-
-                    var datarow = $('#DetailEvents').jqxGrid('getrowdata', 0);
-
-                    if (typeof (datarow) != "undefined") {
-                        $('#DetailEvents').jqxGrid('selectrow', 0);
-                    }
-                },
-
-                width: '100%',
-                
-                //height: '100%',
-                autoheight: true,
-                //autowidth: true,
-
-                source: {
-                    localdata: data.d,
-                    dataType: 'json',
-
-                    datafields: [
-                        { name: 'eventid' },
-                        { name: 'meterid' },
-                        { name: 'starttime' },
-                        //{ name: 'inceptiontime' },
-                        { name: 'endtime' },
-                        { name: 'thesite' },
-                        { name: 'thename' },
-                        ]
-
-                },
-                sortable: true,
-                altrows: true,
-                pageable: true,
-                theme: 'ui-redmond',
-
-
-                columns: [
-
-                            { text: 'eventid', dataField: 'eventid' },
-                            { text: 'meterid', dataField: 'meterid' },
-                            { text: 'Start Time', dataField: 'starttime', width: 220 },
-                            //{ text: 'Inception Time', datafield: 'inceptiontime', width: 220 },
-                            { text: 'End Time', dataField: 'endtime', width: 220 },
-                            { text: 'Name', dataField: 'thesite' },
-                            { text: 'Event Type', dataField: 'thename' },
-                            { text: ' ', cellsrenderer: makeOpenSEEButton_html, dataField: 'OpenSEE', width: 40, padding: 0, cellsalign: 'left' }
-                ]
+    $('#DetailEvents').puidatatable({
+        paginator: {
+            rows: 20
+        },
+        selectionMode: 'single',
+        columns: [
+            { field: 'starttime', headerText: 'Start Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+            { field: 'endtime', headerText: 'End Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+            { field: 'thesite', headerText: 'Name', filter: true, sortable: true },
+            { field: 'thename', headerText: 'Event Type', filter: true, sortable: true },
+            { field: 'OpenSEE', headerText: ' ', content: makeOpenSEEButton_html, headerStyle: "width: 40px", bodyStyle: "width: 40px; padding: 0; cellsalign: 'left'" }
+        ],
+        datasource: function(callback) {
+            $.ajax({
+                type: "POST",
+                url: './eventService.asmx/' + thedatasource,
+                data: thedatasent,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                context: this,
+                success: function(data) {
+                    callback.call(this, JSON.parse(data.d));
+                }
             });
-
-            $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
-            $('#DetailEvents').jqxGrid('hidecolumn', 'meterid');
         }
     });
+
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-function makeOpenSEEButton_html(id) {
+function makeOpenSEEButton_html(rowdata) {
     var return_html = "";
     return_html += '<div style="cursor: pointer; width: 100%; Height: 100%; text-align: center; margin: auto; border: 0 none;">';
-    return_html += '<button onClick="OpenWindowToOpenSEE(' + id + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch OpenSEE Waveform Viewer">';
+    return_html += '<button onClick="OpenWindowToOpenSEE(' + rowdata.eventid + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch OpenSEE Waveform Viewer">';
     return_html += '<img class="dgButtonIcon" src="images/openSEE.png" /></button></div>';
     return (return_html);
 }
@@ -191,8 +146,7 @@ function makeOpenSEEButton_html(id) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function OpenWindowToOpenSEE(id) {
-    var datarow = $('#DetailEvents').jqxGrid('getrowdata', id);
-    var popup = window.open("openSEE.aspx?eventid=" + datarow.eventid, id + "openSee", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
+    var popup = window.open("openSEE.aspx?eventid=" + id, id + "openSee", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
     return false;
 }
 
@@ -451,7 +405,7 @@ function deleteconfirmation(item) {
                     if (currentconfigname == value.Name) {
 
 
-                            usersettings.uisettings.remove(key, key);
+                            RemoveFromArray(usersettings.uisettings, key, key);
                             usersettings["lastSetting"] = "Default";
                             $.jStorage.set("usersettings", usersettings);
                             loadconfigdropdown("Default");
@@ -829,23 +783,11 @@ function buildPage() {
     var mousemove = null;
 
     $.ech.multiselect.prototype.options.selectedText = "# of # selected";
-
+    
     $(window).on('resize', function () {
 
-
-
-        //var gridParentWidth = $('#DetailEvents').parent().width();
-        //$('#DetailEvents').jqxGrid('setGridWidth', gridParentWidth);
-
-
-
-
-
-
-
-
     });
-
+  
     if ($.jStorage.get("usersettings") != null) {
         usersettings = $.jStorage.get("usersettings");
         validatesettings(usersettings);
@@ -864,24 +806,10 @@ function buildPage() {
     initializeDatePickers(datafromdate, datatodate);
     getMeters();
 
-    //$('#DetailEvents').jqxGrid({width: 0})
-    //$('#DetailEvents').mousedown(function (event) {
-
-    //    //var datainformation = $('#DetailEvents').jqxGrid('getdatainformation');
-    //    //if (datainformation.rowscount == 0) return (false);
-
-    //    //// get the clicked cell.
-    //    //var cell = $('#DetailEvents').jqxGrid('getCellAtPosition', event.pageX, event.pageY);
-    //    ////select row.
-    //    //if (cell != null && cell.row) {
-    //    //    $('#DetailEvents').jqxGrid('selectrow', cell.row);
-    //    //}
-    //    return false;
-    //});
+   
 
     $("#staticPeriod")[0].value = getcurrentconfigsetting("staticPeriod");
 
-    //loadSettingsAndApply();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
