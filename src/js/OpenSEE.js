@@ -779,6 +779,9 @@ function attachEvents(key) {
         });
 
         $('#accumulatedpointscontent').puidatatable('reload');
+
+        var scrollDiv = $('#accumulatedpointscontent').parent()[0];
+        scrollDiv.scrollTop = scrollDiv.scrollHeight;
     });
 
     $(div).bind("plotselected", function (event, ranges) {
