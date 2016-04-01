@@ -23,6 +23,8 @@
 
 using System;
 using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Web.Script.Serialization;
@@ -51,6 +53,7 @@ public partial class OpenSEE : System.Web.UI.Page
     public string postedShowBreakerDigitals = "";
 
     public string postedErrorMessage = "";
+    public int[] postedAdjacentEventIds = {0,0};
 
     string connectionString = ConfigurationManager.ConnectionStrings["EPRIConnectionString"].ConnectionString;
 
@@ -93,6 +96,8 @@ public partial class OpenSEE : System.Web.UI.Page
                         postedMeterName = meterInfo.Meters.Single(m => m.ID == theevent.MeterID).Name;
 
                         MeterData.EventTypeDataTable eventTypes = eventTypeAdapter.GetData();
+
+                        postedAdjacentEventIds = GetPreviousAndNextEventIds(theevent.ID, dbAdapterContainer.Connection);
 
                         postedLineName = meterInfo.MeterLines.Where(row => row.LineID == theevent.LineID)
                             .Where(row => row.MeterID == theevent.MeterID)
@@ -155,5 +160,43 @@ public partial class OpenSEE : System.Web.UI.Page
                 }
             }
         }
+    }
+
+    public int[] GetPreviousAndNextEventIds(int id, IDbConnection conn)
+    {
+        IDataReader rdr = null;
+        int[] results = {0,0};
+
+        try
+        {
+            IDbCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "GetPreviousAndNextEventIds";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add(new SqlParameter("@EventID", id));
+            cmd.CommandTimeout = 300;
+
+            rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+            {
+                if (rdr.IsDBNull(0))
+                    results[0] = -1;
+                else
+                    results[0] = rdr.GetInt32(0);
+
+                if (rdr.IsDBNull(1))
+                    results[1] = -1;
+                else
+                    results[1] = rdr.GetInt32(1);
+            }
+        }
+        finally
+        {
+            if (rdr != null)
+            {
+                rdr.Close();
+            }
+        }
+
+        return results;
     }
 }
