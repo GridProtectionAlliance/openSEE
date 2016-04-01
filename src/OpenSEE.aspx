@@ -95,7 +95,7 @@
                     <input class="smallbutton" type="button" value="Pop" onclick="popAccumulatedPoints()" />
                     <input class="smallbutton" type="button" value="Clear" onclick="clearAccumulatedPoints()" />
                 </div>
-                <button class="CloseButton" onclick="showhidePoints($('#showpoints')[0]);">X</button>
+                <button class="CloseButton" style="top: 2px; right: 2px" onclick="showhidePoints($('#showpoints')[0]);">X</button>
             </div>
         </div>
 
