@@ -111,8 +111,9 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
         columns: [
             { field: 'starttime', headerText: 'Start Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
             { field: 'endtime', headerText: 'End Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
-            { field: 'thesite', headerText: 'Name', filter: true, sortable: true },
-            { field: 'thename', headerText: 'Event Type', filter: true, sortable: true },
+            { field: 'thesite', headerText: 'Meter', filter: true, sortable: true },
+            { field: 'linename', headerText: 'Line Name', filter: true, sortable: true },
+            { field: 'thename', headerText: 'Event Type', headerStyle: "width: 120px", bodyStyle: "width: 120px", filter: true, sortable: true },
             { field: 'OpenSEE', headerText: ' ', content: makeOpenSEEButton_html, headerStyle: "width: 40px", bodyStyle: "width: 40px; padding: 0; cellsalign: 'left'" }
         ],
         datasource: function(callback) {
@@ -123,7 +124,8 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 context: this,
-                success: function(data) {
+                success: function (data) {
+                    //console.log(JSON.parse(data.d));
                     callback.call(this, JSON.parse(data.d));
                 }
             });
