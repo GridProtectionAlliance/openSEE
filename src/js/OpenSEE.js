@@ -1214,7 +1214,6 @@ function fixYAxis(plotKey) {
     var xmax = axes.xaxis.options.max;
     var ymin = null;
     var ymax = null;
-
     if ($("#DockCharts").children()[plotKey].id == "FaultChart")
         return;
 
@@ -1241,10 +1240,10 @@ function fixYAxis(plotKey) {
 
     // Fix y-axis after updating data
     if (ymin != null)
-        axes.yaxis.options.min = ymin - Math.abs(ymin * 0.2);
+        axes.yaxis.options.min = ymin - Math.abs((ymax - ymin)*0.1);
 
     if (ymax != null)
-        axes.yaxis.options.max = ymax + Math.abs(ymax * 0.2);
+        axes.yaxis.options.max = ymax + Math.abs((ymax - ymin)*0.1);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
