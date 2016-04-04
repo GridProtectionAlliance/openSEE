@@ -28,15 +28,8 @@
             <UIRef Id="WixUI_FeatureTree" />
             <UIRef Id="WixUI_ErrorProgressText" />
             <DialogRef Id="DatabaseConnectionDialog" />
-            
-            <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="DependenciesDialog">NOT Installed AND <![CDATA[&openSEEFeature=3]]></Publish>
-            <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="DatabaseConnectionDialog">NOT Installed AND <![CDATA[NOT(&openSEEFeature=3)]]></Publish>
-            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="DatabaseConnectionDialog">NOT Installed</Publish>
-            
-            <!--
             <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="DatabaseConnectionDialog">NOT Installed</Publish>
             <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="DatabaseConnectionDialog">NOT Installed</Publish>
-            -->
         </UI>
         
         <Icon Id="openSEE.ico" SourceFile="src/openSEE.ico" />
@@ -44,10 +37,6 @@
         
         <Property Id="WWWROOTDIR">
             <RegistrySearch Id="FindInetPubFolder" Root="HKLM" Key="SOFTWARE\Microsoft\InetStp" Name="PathWWWRoot" Type="directory" />
-        </Property>
-        
-        <Property Id="JQWIDGETSFOLDER" Secure="yes">
-            <RegistrySearch Id="FindJQWidgetsFolder" Root="HKLM" Key="SOFTWARE\GPA\openSEE" Name="JQWidgetsFolder" Type="directory" />
         </Property>
         
         <Property Id="SERVERNAME" Value="localhost" />
@@ -86,8 +75,6 @@
         <CustomAction Id="CreateDBUser" BinaryKey="InstallerActions" DllEntry="DatabaseQueryAction" Execute="deferred" Impersonate="yes" />
         <CustomAction Id="GrantDBPermissions.SetProperty" Property="GrantDBPermissions" Value="SERVICENAME=[SERVICENAME];CONNECTIONSTRING=[DBCONNECTIONSTRING];DATAPROVIDERSTRING=[DATAPROVIDERSTRING];DBQUERY=[DBPERMISSIONSQUERY]" />
         <CustomAction Id="GrantDBPermissions" BinaryKey="InstallerActions" DllEntry="DatabaseQueryAction" Execute="deferred" Impersonate="yes" />
-        <CustomAction Id="UnzipJQWidgetsAction.SetProperty" Property="UnzipJQWidgetsAction" Value="ZIPFILE=[JQWIDGETSPATH];SOURCEDIR=jqwidgets;DESTINATIONDIR=[JQWIDGETSFOLDER]" />
-        <CustomAction Id="UnzipJQWidgetsAction" BinaryKey="InstallerActions" DllEntry="UnzipAction" Execute="deferred" Impersonate="no" />
         
         <InstallExecuteSequence>
             <Custom Action="CreateDBLogin.SetProperty" After="InstallFiles">NOT REMOVE</Custom>
@@ -98,8 +85,6 @@
             <Custom Action="CreateDBUser" After="CreateDBUser.SetProperty">NOT REMOVE</Custom>
             <Custom Action="GrantDBPermissions.SetProperty" After="CreateDBUser">NOT REMOVE</Custom>
             <Custom Action="GrantDBPermissions" After="GrantDBPermissions.SetProperty">NOT REMOVE</Custom>
-            <Custom Action="UnzipJQWidgetsAction.SetProperty" After="GrantDBPermissions">NOT REMOVE AND <![CDATA[&openSEEFeature=3]]></Custom>
-            <Custom Action="UnzipJQWidgetsAction" After="UnzipJQWidgetsAction.SetProperty">NOT REMOVE AND <![CDATA[&openSEEFeature=3]]></Custom>
         </InstallExecuteSequence>
     </Product>
 
@@ -107,11 +92,7 @@
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="INETPUBDIR" Name="inetpub">
                 <Directory Id="WWWROOTDIR" Name="wwwroot">
-                    <Directory Id="OPENSEEFOLDER" Name="openSEE">
-                        <Directory Id="JSFOLDER" Name="js">
-                            <Directory Id="JQWIDGETSFOLDER" Name="jqwidgets" />
-                        </Directory>
-                    </Directory>
+                    <Directory Id="OPENSEEFOLDER" Name="openSEE" />
                     <Directory Id="DASHADMINFOLDER" Name="DashAdmin" />
                 </Directory>
             </Directory>
@@ -125,7 +106,7 @@
     <Fragment>
         <DirectoryRef Id="OPENSEEFOLDER">
             <Component Id="openSEEConnectionString" Guid="{0369FEA2-33FF-4D99-8835-494B080FDAFB}" KeyPath="yes">
-                <util:XmlFile Id="SetopenSEEConnectionString" Action="setValue" ElementPath="/configuration/connectionStrings/add[\[]@name='EPRIConnectionString'[\]]/@connectionString" Value="[DASHBOARDCONNECTIONSTRING]" File="[#fil8977D99ACB9DFB3500F2A897D7B60F20]" SelectionLanguage="XPath" Sequence="1" />
+                <util:XmlFile Id="SetopenSEEConnectionString" Action="setValue" ElementPath="/configuration/connectionStrings/add[\[]@name='EPRIConnectionString'[\]]/@connectionString" Value="[OPENSEECONNECTIONSTRING]" File="[#fil29A7EC3B592F6FC3477C64C423776E14]" SelectionLanguage="XPath" Sequence="1" />
             </Component>
             
             <Component Id="InstallopenSEESite" Guid="{C73A8977-9C77-41A4-9656-38E0934CC5B4}" KeyPath="yes">
@@ -142,7 +123,7 @@
         </DirectoryRef>
         <DirectoryRef Id="DASHADMINFOLDER">
             <Component Id="DashAdminConnectionString" Guid="{504DCEDC-5794-4113-BAFF-F77740E49E13}" KeyPath="yes">
-                <util:XmlFile Id="SetDashAdminConnectionString" Action="setValue" ElementPath="/configuration/connectionStrings/add[\[]@name='GTCConnectionString'[\]]/@connectionString" Value="[DASHBOARDCONNECTIONSTRING]" File="[#fil4112A65570B8F6D7954AA74282965F04]" SelectionLanguage="XPath" Sequence="1" />
+                <util:XmlFile Id="SetDashAdminConnectionString" Action="setValue" ElementPath="/configuration/connectionStrings/add[\[]@name='GTCConnectionString'[\]]/@connectionString" Value="[OPENSEECONNECTIONSTRING]" File="[#fil4112A65570B8F6D7954AA74282965F04]" SelectionLanguage="XPath" Sequence="1" />
             </Component>
             
             <Component Id="InstallDashAdminSite" Guid="{D305B773-74B2-4CDE-9425-7AB8DC0DADF3}" KeyPath="yes">
@@ -156,12 +137,6 @@
                 <RegistryValue Root="HKLM" Key="SOFTWARE\GPA\DashAdmin" Name="DashAdminShortcut" Type="string" Value="" KeyPath="yes" />
             </Component>
         </DirectoryRef>
-        <DirectoryRef Id="JQWIDGETSFOLDER">
-            <Component Id="CleanUpJQWidgets" Guid="{F3CFA035-A60A-4812-A933-2BD5FAF2C3B2}">
-                <RegistryValue Root="HKLM" Key="SOFTWARE\GPA\openSEE" Name="JQWidgetsFolder" Type="string" Value="[JQWIDGETSFOLDER]" KeyPath="yes" />
-                <util:RemoveFolderEx Id="RemoveJQWidgetsFolder" On="uninstall" Property="JQWIDGETSFOLDER" />
-            </Component>
-        </DirectoryRef>
     </Fragment>
     
     <Fragment>
@@ -170,7 +145,6 @@
             <ComponentRef Id="openSEEConnectionString" />
             <ComponentRef Id="InstallopenSEESite" />
             <ComponentRef Id="openSEEShortcutComponent" />
-            <ComponentRef Id="CleanUpJQWidgets" />
             <ComponentGroupRef Id="Cleanup" />
         </ComponentGroup>
         <ComponentGroup Id="DashAdminGroup">
@@ -192,45 +166,6 @@
     <!-- Custom Dialogs -->
     <Fragment>
         <UI>
-            <!-- Dependencies Dialog -->
-            <Dialog Id="DependenciesDialog" Width="370" Height="270" Title="[ProductName] Setup">
-                <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
-                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
-                    <Text>{\WixUI_Font_Title}Get JavaScript Libraries</Text>
-                </Control>
-                <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes">
-                    <Text>Enter the path to the required libraries.</Text>
-                </Control>
-                <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
-                <Control Id="JQWidgetsInstruction" Type="Text" X="75" Y="70" Width="200" Height="20" TabSkip="yes" Text="Download the latest version of JQWidgets and browse to the downloaded zip file." />
-                <Control Id="JQWidgetsHyperlink" Type="Hyperlink" X="100" Y="95" Width="100" Height="10" TabSkip="no">
-                    <Text><![CDATA[<a href="http://www.jqwidgets.com/download/">Get JQWidgets</a>]]></Text>
-                </Control>
-                <Control Id="JQWidgetsLabel" Type="Text" X="75" Y="115" Width="100" Height="10" TabSkip="no" Text="&amp;JQWidgets:" />
-                <Control Id="JQWidgetsEdit" Type="Edit" X="75" Y="125" Width="170" Height="18" Property="JQWIDGETSPATH" Text="{80}" />
-                <Control Id="JQWidgetsBrowse" Type="PushButton" X="255" Y="125" Width="56" Height="17" Text="Browse...">
-                    <Publish Property="BROWSEFILEEXTENSION" Value="zip">1</Publish>
-                    <Publish Event="DoAction" Value="BrowseFileAction">1</Publish>
-                    <Publish Property="JQWIDGETSPATH" Value="[SELECTEDFILE]">1</Publish>
-                </Control>
-                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
-                <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
-                    <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
-                </Control>
-                <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
-                    <Publish Property="FILEPATH" Value="[JQWIDGETSPATH]">1</Publish>
-                    <Publish Event="DoAction" Value="CheckFileExistenceAction">1</Publish>
-                    <Publish Property="JQWIDGETSEXISTS" Value="[FILEEXISTS]">1</Publish>
-                    
-                    <Publish Property="ERRORMESSAGE" Value="Unable to locate JQWidgets archive. Please browse to the location of JQWidgets.">NOT JQWIDGETSEXISTS</Publish>
-                    <Publish Event="SpawnDialog" Value="ModalErrorDialog">NOT JQWIDGETSEXISTS</Publish>
-                    <Publish Event="NewDialog" Value="DatabaseConnectionDialog">JQWIDGETSEXISTS</Publish>
-                </Control>
-                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
-                    <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
-                </Control>
-            </Dialog>
-            
             <!-- Database Connection Dialog -->
             <Dialog Id="DatabaseConnectionDialog" Width="370" Height="270" Title="[ProductName] Setup">
                 <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
@@ -264,8 +199,7 @@
                 </Control>
                 <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
                 <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
-                    <Publish Event="NewDialog" Value="DependenciesDialog"><![CDATA[&openSEEFeature=3]]></Publish>
-                    <Publish Event="NewDialog" Value="CustomizeDlg"><![CDATA[NOT(&openSEEFeature=3)]]></Publish>
+                    <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
                 </Control>
                 <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
                     <!-- Set up the authentication part of the connection string based on user input. -->
@@ -274,18 +208,18 @@
                     
                     <!-- Set up the queries to create the database user. -->
                     <Publish Property="GENPASSWORDLENGTH" Value="20">1</Publish>
-                    <Publish Event="DoAction" Value="PasswordGenerationAction">NOT DASHBOARDDBPASSWORD</Publish>
-                    <Publish Property="DASHBOARDDBLOGIN" Value="openSEE">1</Publish>
-                    <Publish Property="DASHBOARDDBPASSWORD" Value="[GENERATEDPASSWORD]">NOT DASHBOARDDBPASSWORD</Publish>
-                    <Publish Property="CREATEDBLOGINQUERY" Value="IF NOT EXISTS (SELECT * FROM master.dbo.syslogins WHERE loginname = '[DASHBOARDDBLOGIN]') CREATE LOGIN [\[][DASHBOARDDBLOGIN][\]] WITH PASSWORD = '[XDASERVICEPASSWORD]', CHECK_EXPIRATION = OFF, CHECK_POLICY = OFF">1</Publish>
-                    <Publish Property="ALTERDBLOGINQUERY" Value="ALTER LOGIN [\[][DASHBOARDDBLOGIN][\]] WITH PASSWORD = '[DASHBOARDDBPASSWORD]'">1</Publish>
-                    <Publish Property="CREATEDBUSERQUERY" Value="IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '[DASHBOARDDBLOGIN]') CREATE USER [\[][DASHBOARDDBLOGIN][\]] FOR LOGIN [\[][DASHBOARDDBLOGIN][\]]">1</Publish>
-                    <Publish Property="DBPERMISSIONSQUERY" Value="EXEC sp_addrolemember N'db_owner', N'[DASHBOARDDBLOGIN]'">1</Publish>
+                    <Publish Event="DoAction" Value="PasswordGenerationAction">NOT OPENSEEDBPASSWORD</Publish>
+                    <Publish Property="OPENSEEDBLOGIN" Value="openSEE">1</Publish>
+                    <Publish Property="OPENSEEDBPASSWORD" Value="[GENERATEDPASSWORD]">NOT OPENSEEDBPASSWORD</Publish>
+                    <Publish Property="CREATEDBLOGINQUERY" Value="IF NOT EXISTS (SELECT * FROM master.dbo.syslogins WHERE loginname = '[OPENSEEDBLOGIN]') CREATE LOGIN [\[][OPENSEEDBLOGIN][\]] WITH PASSWORD = '[XDASERVICEPASSWORD]', CHECK_EXPIRATION = OFF, CHECK_POLICY = OFF">1</Publish>
+                    <Publish Property="ALTERDBLOGINQUERY" Value="ALTER LOGIN [\[][OPENSEEDBLOGIN][\]] WITH PASSWORD = '[OPENSEEDBPASSWORD]'">1</Publish>
+                    <Publish Property="CREATEDBUSERQUERY" Value="IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '[OPENSEEDBLOGIN]') CREATE USER [\[][OPENSEEDBLOGIN][\]] FOR LOGIN [\[][OPENSEEDBLOGIN][\]]">1</Publish>
+                    <Publish Property="DBPERMISSIONSQUERY" Value="EXEC sp_addrolemember N'db_owner', N'[OPENSEEDBLOGIN]'">1</Publish>
                     
                     <!-- Set up connection strings for connecting to server and database. -->
                     <Publish Property="SERVERCONNECTIONSTRING" Value="Data Source=[SERVERNAME];;[AUTHSTRING]">1</Publish>
                     <Publish Property="DBCONNECTIONSTRING" Value="Data Source=[SERVERNAME];;Initial Catalog=[DATABASENAME];;[AUTHSTRING]">1</Publish>
-                    <Publish Property="DASHBOARDCONNECTIONSTRING" Value="Data Source=[SERVERNAME];Initial Catalog=[DATABASENAME];User Id=[DASHBOARDDBLOGIN];Password=[DASHBOARDDBPASSWORD]">1</Publish>
+                    <Publish Property="OPENSEECONNECTIONSTRING" Value="Data Source=[SERVERNAME];Initial Catalog=[DATABASENAME];User Id=[OPENSEEDBLOGIN];Password=[OPENSEEDBPASSWORD]">1</Publish>
                     
                     <!-- Determine whether we can connect to the database server. -->
                     <Publish Property="CONNECTIONSTRING" Value="[SERVERCONNECTIONSTRING]">1</Publish>
