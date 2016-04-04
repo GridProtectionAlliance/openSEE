@@ -1,4 +1,4 @@
-﻿//******************************************************************************************************
+﻿ //******************************************************************************************************
 //  OpenNav.js - Gbtc
 //
 //
@@ -12,33 +12,34 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Global
 
-    var javascriptversion = "13";
+var javascriptversion = "13";
 
-    var usersettings = {
-        lastSetting: {},
-        uisettings: []
-    };
+var usersettings = {
+    lastSetting: {},
+    uisettings: []
+};
 
-    var applicationsettings = {};
+var applicationsettings = {};
 
-    var loadingPanel = null;
+var loadingPanel = null;
 
-    var datafromdate = new Date();
-    var datatodate = new Date();
+var datafromdate = new Date();
+var datatodate = new Date();
 
-    var postedUserName = "";
+var postedUserName = "";
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-    Array.prototype.remove = function (from, to) {
-        var rest = this.slice((to || from) + 1 || this.length);
-        this.length = from < 0 ? this.length + from : from;
-        return this.push.apply(this, rest);
+    function RemoveFromArray(arr, from, to) {
+        var rest = arr.slice((to || from) + 1 || arr.length);
+        arr.length = from < 0 ? arr.length + from : from;
+        return arr.push.apply(arr, rest);
     };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
     function loadDataForDateClick() {
+        $("#Configurations")[0].value = "Empty";
         $("#staticPeriod")[0].value = "Custom";
         loadDataForDate();
     }
@@ -100,7 +101,6 @@ function GetCurrentlySelectedSitesIDs() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theDateFrom, theDateTo) {
-
     var thedatasent = "{'siteID':'" + siteID + "', 'targetDateFrom':'" + theDateFrom + "', 'targetDateTo':'" + theDateTo + "','userName':'" + postedUserName + "'   }";
 
     $.ajax({
@@ -109,81 +109,66 @@ function populateEventsDivWithGrid(thedatasource, thediv, siteName, siteID, theD
         data: thedatasent,
         contentType: "application/json; charset=utf-8",
         dataType: 'json',
-        cache: true,
+        context: this,
         success: function (data) {
-
-            $('#DetailEvents').jqxGrid(
-            {
-                ready: function () {
-                    var rowscount = $("#DetailEvents").jqxGrid('getdatainformation').rowscount;
-                    $('#DetailEvents').jqxGrid({ pagesizeoptions: ['50', '100', rowscount] });
-
-                    $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
-                    $('#DetailEvents').jqxGrid('hidecolumn', 'meterid');
-
-                    var localizationobj = {};
-                    localizationobj.emptydatastring = "No data for date period.";
-                    $('#DetailEvents').jqxGrid('localizestrings', localizationobj);
-
-                    var datarow = $('#DetailEvents').jqxGrid('getrowdata', 0);
-
-                    if (typeof (datarow) != "undefined") {
-                        $('#DetailEvents').jqxGrid('selectrow', 0);
-                    }
-                },
-
-                width: '100%',
-                
-                //height: '100%',
-                autoheight: true,
-                //autowidth: true,
-
-                source: {
-                    localdata: data.d,
-                    dataType: 'json',
-
-                    datafields: [
-                        { name: 'eventid' },
-                        { name: 'meterid' },
-                        { name: 'starttime' },
-                        //{ name: 'inceptiontime' },
-                        { name: 'endtime' },
-                        { name: 'thesite' },
-                        { name: 'thename' },
-                        ]
-
-                },
-                sortable: true,
-                altrows: true,
-                pageable: true,
-                theme: 'ui-redmond',
-
-
+            $('#DetailEvents').puidatatable({
+                paginator: { },
+                selectionMode: 'single',
+                stickyHeader: true,
                 columns: [
-
-                            { text: 'eventid', dataField: 'eventid' },
-                            { text: 'meterid', dataField: 'meterid' },
-                            { text: 'Start Time', dataField: 'starttime', width: 220 },
-                            //{ text: 'Inception Time', datafield: 'inceptiontime', width: 220 },
-                            { text: 'End Time', dataField: 'endtime', width: 220 },
-                            { text: 'Name', dataField: 'thesite' },
-                            { text: 'Event Type', dataField: 'thename' },
-                            { text: ' ', cellsrenderer: makeOpenSEEButton_html, dataField: 'OpenSEE', width: 40, padding: 0, cellsalign: 'left' }
-                ]
+                    { field: 'starttime', headerText: 'Start Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+                    { field: 'endtime', headerText: 'End Time', headerStyle: "width: 220px", bodyStyle: "width: 220px", filter: true, sortable: true },
+                    { field: 'thesite', headerText: 'Meter', filter: true, sortable: true },
+                    { field: 'linename', headerText: 'Line Name', filter: true, sortable: true },
+                    { field: 'thename', headerText: 'Event Type', headerStyle: "width: 120px", bodyStyle: "width: 120px", filter: true, sortable: true },
+                    { field: 'OpenSEE', headerText: ' ', content: makeOpenSEEButton_html, headerStyle: "width: 40px", bodyStyle: "width: 40px; padding: 0; cellsalign: 'left'" }
+                ],
+                datasource: JSON.parse(data.d)
             });
 
-            $('#DetailEvents').jqxGrid('hidecolumn', 'eventid');
-            $('#DetailEvents').jqxGrid('hidecolumn', 'meterid');
+            var comboBox = $('#EventsPerPage');
+
+            if (comboBox.length == 0) {
+                var paginator = $('#DetailEvents').puidatatable('getPaginator');
+                var values = ["--", "20", "50", "100"];
+
+                comboBox = $('<select id="EventsPerPage" onChange="changeEventsPerPage();">');
+                paginator.append('<span style="margin-left: 20px">Events per page: </span>');
+                paginator.append(comboBox);
+
+                $.each(values, function (_, value) {
+                    if (value == "20")
+                        comboBox.append($('<option selected>' + value + '</option>'));
+                    else
+                        comboBox.append($('<option>' + value + '</option>'));
+                });
+            }
+
+            changeEventsPerPage();
         }
     });
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-function makeOpenSEEButton_html(id) {
+function changeEventsPerPage() {
+    var selectedOption = $('#EventsPerPage option:selected');
+    var paginator = $('#DetailEvents').puidatatable('getPaginator');
+    var rows = selectedOption.text();
+
+    if (rows == "--")
+        rows = paginator.puipaginator('option', 'totalRecords');
+
+    paginator.puipaginator('option', 'rows', Number(rows));
+    $('#DetailEvents').puidatatable('filter');
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+function makeOpenSEEButton_html(rowdata) {
     var return_html = "";
     return_html += '<div style="cursor: pointer; width: 100%; Height: 100%; text-align: center; margin: auto; border: 0 none;">';
-    return_html += '<button onClick="OpenWindowToOpenSEE(' + id + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch OpenSEE Waveform Viewer">';
+    return_html += '<button onClick="OpenWindowToOpenSEE(' + rowdata.eventid + ');" value="" style="cursor: pointer; text-align: center; margin: auto; border: 0 none;" title="Launch OpenSEE Waveform Viewer">';
     return_html += '<img class="dgButtonIcon" src="images/openSEE.png" /></button></div>';
     return (return_html);
 }
@@ -191,8 +176,7 @@ function makeOpenSEEButton_html(id) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function OpenWindowToOpenSEE(id) {
-    var datarow = $('#DetailEvents').jqxGrid('getrowdata', id);
-    var popup = window.open("openSEE.aspx?eventid=" + datarow.eventid, id + "openSee", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
+    var popup = window.open("openSEE.aspx?eventid=" + id, id + "openSee", "left=0,top=0,width=1024,height=768,status=no,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no");
     return false;
 }
 
@@ -291,6 +275,7 @@ function initializeDatePickers(datafromdate , datatodate) {
 
         onClose: function (selectedDate) {
             $("#datePickerTo").datepicker("option", "minDate", selectedDate);
+            $("#datePickerTo").datepicker("option", "minDate", null);
         }
     });
 
@@ -319,6 +304,7 @@ function initializeDatePickers(datafromdate , datatodate) {
         showButtonPanel: false,
         onClose: function (selectedDate) {
             $("#datePickerFrom").datepicker("option", "maxDate", selectedDate);
+            $("#datePickerFrom").datepicker("option", "maxDate", null);
         }
     });
 
@@ -329,6 +315,8 @@ function initializeDatePickers(datafromdate , datatodate) {
 
 function loadconfigdropdown(currentselected) {
     $('#Configurations')[0].options.length = 0;
+    SelectAdd("Configurations", "Empty", "", "");
+
     $.each(usersettings.uisettings, function (key, value) {
         SelectAdd("Configurations", key, value.Name, (currentselected == value.Name) ? "selected" : "");
     });
@@ -399,6 +387,9 @@ function configurationapply(item) {
         
     var currentconfigname = $("#Configurations :selected").text();
 
+    if (currentconfigname == "")
+        return;
+
     usersettings["lastSetting"] = currentconfigname;
 
     $.jStorage.set("usersettings", usersettings);
@@ -451,7 +442,7 @@ function deleteconfirmation(item) {
                     if (currentconfigname == value.Name) {
 
 
-                            usersettings.uisettings.remove(key, key);
+                            RemoveFromArray(usersettings.uisettings, key, key);
                             usersettings["lastSetting"] = "Default";
                             $.jStorage.set("usersettings", usersettings);
                             loadconfigdropdown("Default");
@@ -829,23 +820,11 @@ function buildPage() {
     var mousemove = null;
 
     $.ech.multiselect.prototype.options.selectedText = "# of # selected";
-
+    
     $(window).on('resize', function () {
 
-
-
-        //var gridParentWidth = $('#DetailEvents').parent().width();
-        //$('#DetailEvents').jqxGrid('setGridWidth', gridParentWidth);
-
-
-
-
-
-
-
-
     });
-
+  
     if ($.jStorage.get("usersettings") != null) {
         usersettings = $.jStorage.get("usersettings");
         validatesettings(usersettings);
@@ -864,24 +843,10 @@ function buildPage() {
     initializeDatePickers(datafromdate, datatodate);
     getMeters();
 
-    //$('#DetailEvents').jqxGrid({width: 0})
-    //$('#DetailEvents').mousedown(function (event) {
-
-    //    //var datainformation = $('#DetailEvents').jqxGrid('getdatainformation');
-    //    //if (datainformation.rowscount == 0) return (false);
-
-    //    //// get the clicked cell.
-    //    //var cell = $('#DetailEvents').jqxGrid('getCellAtPosition', event.pageX, event.pageY);
-    //    ////select row.
-    //    //if (cell != null && cell.row) {
-    //    //    $('#DetailEvents').jqxGrid('selectrow', cell.row);
-    //    //}
-    //    return false;
-    //});
+   
 
     $("#staticPeriod")[0].value = getcurrentconfigsetting("staticPeriod");
 
-    //loadSettingsAndApply();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
