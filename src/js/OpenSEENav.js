@@ -159,7 +159,7 @@ function changeEventsPerPage() {
     if (rows == "--")
         rows = paginator.puipaginator('option', 'totalRecords');
 
-    paginator.puipaginator('option', 'rows', rows);
+    paginator.puipaginator('option', 'rows', Number(rows));
     $('#DetailEvents').puidatatable('filter');
 }
 
