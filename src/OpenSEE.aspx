@@ -65,21 +65,21 @@
 
 </head>
     <body>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedEventId"><%=postedEventId %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedEventName"><%=postedEventName %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedMeterId"><%=postedMeterId %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedDate"><%=postedDate %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedEventDate"><%=postedEventDate %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedEventMilliseconds"><%=postedEventMilliseconds %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedMeterName"><%=postedMeterName %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedLineName"><%=postedLineName %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedLineLength"><%=postedLineLength %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedStartTime"><%=postedStartTime %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedDurationPeriod"><%=postedDurationPeriod %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedMagnitude"><%=postedMagnitude %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedShowFaultCurves"><%=postedShowFaultCurves %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedShowBreakerDigitals"><%=postedShowBreakerDigitals %></div>
-        <div style="visibility:hidden; width: 0px; height: 0px;" id="postedErrorMessage"><%=postedErrorMessage %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedEventId"><%=postedEventId %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedEventName"><%=postedEventName %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedMeterId"><%=postedMeterId %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedDate"><%=postedDate %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedEventDate"><%=postedEventDate %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedEventMilliseconds"><%=postedEventMilliseconds %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedMeterName"><%=postedMeterName %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedLineName"><%=postedLineName %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedLineLength"><%=postedLineLength %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedStartTime"><%=postedStartTime %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedDurationPeriod"><%=postedDurationPeriod %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedMagnitude"><%=postedMagnitude %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedShowFaultCurves"><%=postedShowFaultCurves %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedShowBreakerDigitals"><%=postedShowBreakerDigitals %></div>
+        <div style="visibility:hidden; width: 0; height: 0;" id="postedErrorMessage"><%=postedErrorMessage %></div>
 
         <div id="unifiedtooltip" class="ui-widget-content">
             <div id="unifiedtooltiphandle"></div>
@@ -111,9 +111,9 @@
         <div style="width: 100%">
             <table style="width: 100%">
                 <tr>
-                    <td style="width: 33%; text-align: left"><img alt="" src="images/GPA-Logo---30-pix(on-white).png" /></td>
-                    <td style="width: 33%; text-align: center"><img alt="" src="images/openSEET.png" /></td>
-                    <td style="width: 33%; text-align: right; vertical-align: top; white-space: nowrap"><img alt="" src="images/GPA-Logo.png" /></td>
+                    <td style="text-align: left"><img alt="" src="images/GPA-Logo---30-pix(on-white).png" /></td>
+                    <td style="text-align: center"><img alt="" src="images/openSEET.png" /></td>
+                    <td style="text-align: right; vertical-align: top; white-space: nowrap"><img alt="" src="images/GPA-Logo.png" style="display: none" /></td>
                 </tr>
                 <tr>
                     <td colspan="3" style="text-align: center">
