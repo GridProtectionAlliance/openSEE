@@ -23,7 +23,7 @@
 //******************************************************************************************************
 -->
 
-<%@ page language="C#" autoeventwireup="true" inherits="OpenSEENav, App_Web_inf1p4py" %>
+<%@ page language="C#" autoeventwireup="true" inherits="OpenSEENav, App_Web_bqpuo1ol" %>
 
 <!DOCTYPE html>
 

@@ -1387,8 +1387,8 @@ function RemovePoint() {
  
     }
     else {
-        pointsTable[selectedPoint + 1].deltatime = pointsTable[selectedPoint - 1].thetime - pointsTable[selectedPoint + 1].thetime;
-        pointsTable[selectedPoint + 1].deltavalue = (pointsTable[selectedPoint - 1].thevalue - pointsTable[selectedPoint + 1].thevalue).toFixed(3);
+        pointsTable[selectedPoint + 1].deltatime = pointsTable[selectedPoint + 1].thetime - pointsTable[selectedPoint - 1].thetime;
+        pointsTable[selectedPoint + 1].deltavalue = (pointsTable[selectedPoint + 1].thevalue - pointsTable[selectedPoint - 1].thevalue).toFixed(3);
         for (var i = selectedPoint + 1; i < pointsTable.length; ++i)
             pointsTable[i].arrayIndex--;
         pointsTable.splice(selectedPoint, 1);
@@ -1410,7 +1410,7 @@ function popAccumulatedPoints() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 function clearAccumulatedPoints() {
-    while(pointsTable.length > 0) pointsTable.pop();
+    while (pointsTable.length > 0) pointsTable.pop();
     $('#accumulatedpointscontent').puidatatable('reload');
 }
 
