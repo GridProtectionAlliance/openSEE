@@ -27,6 +27,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
+using System.Web;
 using System.Web.Script.Serialization;
 using FaultData.Database;
 using FaultData.Database.FaultLocationDataTableAdapters;
@@ -52,8 +53,10 @@ public partial class OpenSEE : System.Web.UI.Page
     public string postedShowFaultCurves = "";
     public string postedShowBreakerDigitals = "";
 
+    public int[] postedAdjacentEventIds = { 0, 0 };
+    public string postedURLQueryString = "";
+
     public string postedErrorMessage = "";
-    public int[] postedAdjacentEventIds = {0,0};
 
     string connectionString = ConfigurationManager.ConnectionStrings["EPRIConnectionString"].ConnectionString;
 
@@ -63,13 +66,16 @@ public partial class OpenSEE : System.Web.UI.Page
         {
             if (Request["eventId"] != null)
             {
-                if (Request["faultcurves"] == null)
+                if (Request["faultcurves"] != null)
                     postedShowFaultCurves = Request["faultcurves"];
 
                 if (Request["breakerdigitals"] != null)
                     postedShowBreakerDigitals = Request["breakerdigitals"];
 
-                postedShowFaultCurves = Request["faultcurves"];
+                postedURLQueryString = string.Concat(Request.QueryString.AllKeys
+                    .Where(key => !key.Equals("eventId", StringComparison.OrdinalIgnoreCase))
+                    .Select(key => "&" + HttpUtility.UrlEncode(key) + "=" + HttpUtility.UrlEncode(Request.QueryString[key])));
+
                 postedEventId = Request["eventId"];
 
                 using (DbAdapterContainer dbAdapterContainer = new DbAdapterContainer(connectionString))

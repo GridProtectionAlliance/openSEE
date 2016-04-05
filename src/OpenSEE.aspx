@@ -128,7 +128,7 @@
                 <tr>
                     <% if (postedAdjacentEventIds[0] != -1)
                        { %>
-                    <td><a href="?eventid=<%= postedAdjacentEventIds[0] %>" class="smallbutton" type="button" id="previousevent">Previous Event</a></td>
+                    <td><a href="?eventid=<%= postedAdjacentEventIds[0] + postedURLQueryString %>" class="smallbutton" type="button" id="previousevent">Previous Event</a></td>
                     <% } %>
                     <td><input class="smallbutton" type="button" value="Reset Zoom" id="resetZoom"/></td>
                     <td><input class="smallbutton" type="button" value="Show Points" onclick="showhidePoints(this);" id="showpoints"/></td>
@@ -137,7 +137,7 @@
                     <td><input class="smallbutton" type="button" value="Fault Details" onclick="showdetails(this);" id="showdetails"/></td>
                     <% if (postedAdjacentEventIds[1] != -1)
                        { %>
-                    <td><a href="?eventid=<%=postedAdjacentEventIds[1] %>" class="smallbutton" type="button" id="nextevent">Next Event</a></td>
+                    <td><a href="?eventid=<%=postedAdjacentEventIds[1] + postedURLQueryString %>" class="smallbutton" type="button" id="nextevent">Next Event</a></td>
                      <% } %>
                 </tr>
             </table>
