@@ -13,7 +13,7 @@ openSEE is built in the style of [EPRI's Open PQ Dashboard](https://sourceforge.
 
 # Documentation
 
-openSEE is a part of the [Open PQ Dashboard](https://github.com/GridProtectionAlliance/PQDashboard) and there is currently no documentation solely for openSEE. Don't be sad though, you can check out some [screenshots](#screenshots) below.
+openSEE is a part of the [Open PQ Dashboard](https://github.com/GridProtectionAlliance/PQDashboard) and there is currently no documentation solely for openSEE. You can check out some [screenshots](#screenshots) below.
 # Deployment
 
 * To install openSEE:
