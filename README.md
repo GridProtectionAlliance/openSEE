@@ -1,4 +1,4 @@
-![openSEE](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/openSEE%20Logo.png)
+![Round Logo](http://www.gridprotectionalliance.org/images/products/icons%2064/openSEE.png)![openSEE](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/openSEE%20Logo.png)
 
 openSEE is a browser-based wave-form display tool that can be implemented with [openXDA](https://github.com/GridProtectionAlliance/openXDA). A link to openSEE is typically embedded in e-mails automatically produced by openXDA so that e-mail recipients can quickly access the waveforms that triggered DFR and PQ meter events.
 openSEE allows two waveforms to be displayed so that comparisons of data can be made - from different channels in the same DFR that triggered the event of from channels in other DFRs. An optional phasor display is also available to easily resolve phase angles.
@@ -9,7 +9,7 @@ openSEE is built in the style of [EPRI's Open PQ Dashboard](https://sourceforge.
 
 **Where openSEE Fits In:**
 
-![Where it fits in](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/Where%20it%20fits%20in.png)
+![Where it fits in](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/Where%20it%20fits%20in.png)
 
 # Documentation and Support
 
@@ -58,16 +58,16 @@ If you would like to contribute please:
 # Screenshots
 
 **Fault Example:**
-![FaultExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/OpenSeeFaultExample.png)
+![FaultExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/OpenSeeFaultExample.png)
 
 **Fault Example Zoomed:**
-![FaultExampleZoomed](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/OpenSeeFaultExampleZoomed.png)
+![FaultExampleZoomed](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/OpenSeeFaultExampleZoomed.png)
 
 **Fault Specifics Example:**
-![FaultSpecificsExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/FaultSpecificsExample.png)
+![FaultSpecificsExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/FaultSpecificsExample.png)
 
 **Sag Example:**
-![SagExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/OpenSeeSagExample.png)
+![SagExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/OpenSeeSagExample.png)
 
 **PQI Fault Example:**
-![PQIFaultExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/readme%20files/PQIFaultExample.png)
+![PQIFaultExample](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/PQIFaultExample.png)
