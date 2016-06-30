@@ -9,7 +9,7 @@ openSEE is built in the style of [EPRI's Open PQ Dashboard](https://sourceforge.
 
 **Where openSEE Fits In:**
 
-![Where it fits in](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/Where%20it%20fits%20in.png)
+![Where it fits in](http://gridprotectionalliance.org/images/products/PQ%20Tool%20Suite.png)
 
 # Documentation and Support
 

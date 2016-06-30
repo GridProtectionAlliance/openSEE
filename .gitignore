@@ -225,3 +225,4 @@ install/src/AdminComponents.wxs
 install/src/openSEEComponents.wxs
 !install/src/DashAdmin/**
 !install/src/openSEE/**
+readme.txt
