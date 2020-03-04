@@ -113,6 +113,8 @@ export default class Current extends React.Component<any, any>{
             startTimeVis={this.props.startTimeVis}
             endTimeVis={this.props.endTimeVis}
             hover={this.props.hover}
+            fftWindow={this.props.fftWindow}
+            fftStartTime={this.props.fftStartTime}
         />
     }
 

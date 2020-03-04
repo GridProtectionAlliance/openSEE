@@ -39,7 +39,9 @@ export default function Analog(props: D3LineChartBaseProps): JSX.Element {
         endTime: props.endTime,
         startTimeVis: props.startTimeVis,
         endTimeVis: props.endTimeVis,
-        hover: props.hover
+        hover: props.hover,
+        fftWindow: props.fftWindow,
+        fftStartTime: props.fftStartTime,
     }, null);
 
 }
