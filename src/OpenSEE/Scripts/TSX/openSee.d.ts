@@ -115,8 +115,6 @@ declare interface OpenSEEState {
     comparedEvents: Array<number>,
     overlappingEvents: Array<iListObject>,
     analytic: string,
-    fftStartTime?: string,
-    fftEndTime?: string,
     TooltipWithDeltaTable: Map<string, Map<string, { data: number, color: string }>>,
     Height?: number,
     AnalyticSettings: AnalyticParamters,
@@ -124,6 +122,7 @@ declare interface OpenSEEState {
     endTime: number,
     startTimeVis: number,
     endTimeVis: number,
+    fftStartTime: number,
 }
 
 declare interface iListObject {

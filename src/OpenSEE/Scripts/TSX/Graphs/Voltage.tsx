@@ -113,12 +113,14 @@ export default class Voltage extends React.Component<any, any>{
             eventId={this.props.eventId}
             height={this.props.height}
             stateSetter={this.props.stateSetter}
-            options={ this.props.options }
+            options={this.props.options}
             startTime={this.props.startTime}
             endTime={this.props.endTime}
             startTimeVis={this.props.startTimeVis}
             endTimeVis={this.props.endTimeVis}
             hover={this.props.hover}
+            fftWindow={this.props.fftWindow}
+            fftStartTime={this.props.fftStartTime}
         />
     }
 

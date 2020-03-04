@@ -50,9 +50,10 @@
     <Content Include="Content\bootstrap4-datetimepicker.css" />
     <Content Include="Data\OpenSee.sql" />
     <Content Include="Global.asax" />
-    <Content Include="Images\SE Browser - Spelled out - 111 high.png" />
     <None Include="Scripts\jquery-1.6.4-vsdoc.js" />
-    <Content Include="Readme.txt" />
+    <Content Include="Images\2-Line - 500.png" />
+    <Content Include="Images\openSEE - Waveform Viewer Header.png" />
+    <Content Include="Images\openSEELogo.png" />
     <Content Include="Scripts\jquery-1.6.4.js" />
     <Content Include="Scripts\jquery-1.6.4.min.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.js" />

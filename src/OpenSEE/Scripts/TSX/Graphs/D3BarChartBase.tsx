@@ -34,7 +34,7 @@ import { LegendClickCallback, D3PlotOptions, iD3DataSet, iD3DataSeries  } from '
 export type GetDataFunction = (props: D3BarChartBaseProps, ctrl: D3BarChartBase) => void;
 
 export interface D3BarChartBaseProps {
-    eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, endTime: number
+    eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, fftWindow: number
 };
 
 interface D3BarChartBaseClassProps extends D3BarChartBaseProps{
@@ -171,8 +171,8 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
         delete props.startTime;
         delete nextPropsClone.startTime;
-        delete props.endTime;
-        delete nextPropsClone.endTime;
+        delete props.fftWindow;
+        delete nextPropsClone.fftWindow;
 
         //delete props.hover;
         //delete nextPropsClone.hover;
@@ -249,7 +249,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         }
        
 
-        ctrl.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(ctrl.yScale));
+        ctrl.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)));
         ctrl.xAxis = svg.append("g").attr("transform", "translate(0," + (this.props.height - 60) + ")").call(d3.axisBottom(ctrl.xScale));
 
 
@@ -301,7 +301,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
         
         lines.forEach((row, key, map) => {
-            console.log(row.DataPoints.map(item => { return { x: item[0], y: item[1] } }))
             ctrl.paths.append("g").attr("fill", row.Color).selectAll('rect')
                 .data(row.DataPoints.map(item => { return { x: item[0], y: item[1] } }))
                 .join("rect")
@@ -351,7 +350,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale));
 
         ctrl.yScale.domain(ctrl.getYLimits(ctrl, xMin, xMax, undefined));
-        ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale))
+        ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
 
 
 
@@ -475,6 +474,32 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         ctrl.updateZoom(ctrl, newMinX, newMaxX);
     }
 
+    formatValueTick(ctrl: D3BarChartBase, d: number) {
+
+        let h = ctrl.yScale.domain()[1] - ctrl.yScale.domain()[0]
+        let val = d;
+        if (h > 10000000) {
+            val = val / 1000000.0
+            return val.toFixed(1) + "M"
+        }
+        if (h > 1000000) {
+            val = val / 1000000.0
+            return val.toFixed(2) + "M"
+        }
+        if (h > 10000) {
+            val = val / 1000.0;
+            return val.toFixed(1) + "k"
+        }
+        if (h > 1000) {
+            val = val / 1000.0;
+            return val.toFixed(2) + "k"
+        }
+        if (h > 10)
+            return val.toFixed(1)
+        else
+            return d.toFixed(2)
+    }
+
     // Get current Y axis limits
     getYLimits(ctrl: D3BarChartBase, xMin: number, xMax: number, lines: any[]) {
 
@@ -500,15 +525,21 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
                 row.DataPoints.forEach((pt, i, points) => {
                     if (pt[0] < xmax && pt[0] > xmin) {
                         if (this.isNumberMax(pt[1]) > ymax) {
-                            ymax = pt[1];
+                            ymax = this.isNumberMin(pt[1]);
                         }
                         if (this.isNumberMin(pt[1]) < ymin) {
-                            ymin = pt[1];
+                            ymin = this.isNumberMax(pt[1]);
                         }
                     }
                 })
             })
         }
+        else {
+            let tmp = ymax;
+            ymax = ymin;
+            ymin = tmp;
+        }
+
         if (ymin == Number.MAX_VALUE || !Number.isFinite(ymin)) { ymin = NaN; }
         if (ymax == Number.MIN_VALUE || !Number.isFinite(ymax)) { ymax = NaN; }
 
@@ -536,27 +567,25 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         if (xmax == Number.MIN_VALUE || !Number.isFinite(xmax)) { xmax = NaN; }
 
 
-
-
         return [xmin, xmax];
     }
 
     isNumberMax(d) {
         if (!isNaN(parseFloat(d)))
             return d
-    
+
         else
-            return Number.MIN_VALUE
-    
+            return Number.MAX_VALUE
+
     }
 
     isNumberMin(d) {
         if (!isNaN(parseFloat(d)))
             return d
-    
+
         else
             return Number.MIN_VALUE
-    
+
     }
 
 

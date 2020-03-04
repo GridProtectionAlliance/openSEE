@@ -96,11 +96,11 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             overlappingEvents: [],
             analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
             TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>(),
-            AnalyticSettings: { harmonic: 5, order: 1, Trc: 100 }
-
+            AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
+            fftStartTime: (query['StartDate'] != undefined ? new Date(query['StartDate'] + "Z").getTime() : new Date(eventStartTime + "Z").getTime()),
+           
         }
 
-        this.state.endTime;
         this.TableData = new Map<string, { data: number, color: string }>();
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
@@ -239,12 +239,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         TooltipWithDeltaTable={this.state.TooltipWithDeltaTable}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
-                        <ViewerWindow key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} />
-                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow key={a} eventId={a} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>}/>) : null)}
+                        <ViewerWindow key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
+                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow key={a} eventId={a} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>} />) : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
-                            <AnalyticBar analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
+                            <AnalyticBar analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic != "FFT" && this.state.analytic != "HarmonicSpectrum") ?
-                            <AnalyticLine analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} options={{ showXLabel: true }} /> : null)}
+                            <AnalyticLine analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} options={{ showXLabel: true }} /> : null)}
 
                     </div>
                 </div>
@@ -270,11 +270,14 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             delete prop.displaTCE;
             delete prop.PostedData;
             delete prop.nextBackLookup;
-            delete prop.overlappingEvents;
+            delete prop.overlappingEvents;  
             delete prop.TooltipWithDeltaTable;
             return queryString.stringify(prop, { encode: false });
         }
-       
+
+        if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
+            obj.fftStartTime = this.state.startTime;
+        }
         var oldQueryString = toQueryString(this.state);
         var oldQuery = queryString.parse(oldQueryString);
 
@@ -321,7 +324,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
             <div className="card-header">{props.label}</div>
             <div className="card-body" style={{ padding: 0 }}>
-                {(props.displayVolt ? <Voltage eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayVolt ? <Voltage fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
                 {(props.displayCur ? <Current eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
                 {(props.displayDigitals ? <Digital eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
                 {(props.displayAnalogs ? <Analog eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
@@ -330,7 +333,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         </div>
         :
         <div>
-            {(props.displayVolt ? <Voltage eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayVolt ? <Voltage fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
             {(props.displayCur ? <Current eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
             {(props.displayDigitals ? <Digital eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
             {(props.displayAnalogs ? <Analog eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}

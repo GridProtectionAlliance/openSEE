@@ -695,7 +695,7 @@ export default class OpenSEEService{
         return this.freqencyAnalyticDataHandle;
     }
 
-    getFFTData(eventid: number, startDate?: string, endDate?: string): JQuery.jqXHR {
+    getFFTData(eventid: number, cycles: number, startDate?: string, endDate?: string): JQuery.jqXHR {
         if (this.fftDataHandle !== undefined)
             this.fftDataHandle.abort();
 
@@ -703,7 +703,8 @@ export default class OpenSEEService{
             type: "GET",
             url: `${homePath}api/OpenSEE/GetFFTData?eventId=${eventid}` +
                 `${startDate != undefined ? `&startDate=${startDate}` : ``}` +
-                `${endDate != undefined ? `&endDate=${endDate}` : ``}`,
+                `${endDate != undefined ? `&endDate=${endDate}` : ``}` +
+                `&cycles=${cycles}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
@@ -713,7 +714,7 @@ export default class OpenSEEService{
         return this.fftDataHandle;
     }
 
-    getSpecifiedHarmonicData(eventid: number,harmonic: number): JQuery.jqXHR {
+    getSpecifiedHarmonicData(eventid: number, harmonic: number): JQuery.jqXHR {
         if (this.specifiedHarmonicDataHandle !== undefined)
             this.specifiedHarmonicDataHandle.abort();
 

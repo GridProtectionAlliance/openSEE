@@ -29,7 +29,8 @@ import D3BarChartBase, { D3BarChartBaseProps } from './D3BarChartBase';
 import { AnalyticParamters } from '../Components/RadioselectWindow';
 interface AnalyticBarprops extends D3BarChartBaseProps {
     analytic: string,
-    analyticParameter: AnalyticParamters
+    analyticParameter: AnalyticParamters,
+    
 }
 
 export default class AnalyticBar extends React.Component<any, any>{
@@ -73,18 +74,18 @@ export default class AnalyticBar extends React.Component<any, any>{
     openSEEServiceFunction(eventid: number) {
 
         if (this.props.analytic == "HarmonicSpectrum") {
-            return this.openSEEService.getHarmonicSpectrumData(eventid, this.props.analyticParameter.harmonic, this.props.startTime.toString(), this.props.endTime.toString())
+            return this.openSEEService.getHarmonicSpectrumData(eventid, this.props.analyticParameter.harmonic, this.props.startTime.toString(), this.props.fftWindow.toString())
         }
         
 
-        return this.openSEEService.getFFTData(eventid, this.props.startTime.toString(), this.props.endTime.toString())
+        return this.openSEEService.getFFTData(eventid, this.props.fftWindow, this.props.startTime.toString())
     }
     render() {
         return <D3BarChartBase
             legendKey={this.props.analytic}
             openSEEServiceFunction={(eventid: number) => this.openSEEServiceFunction(eventid)}
             getData={(props, ctrl) => this.getData(props, ctrl, this)}
-            endTime={this.props.endTime}
+            fftWindow={this.props.fftWindow}
             eventId={this.props.eventId}
             height={this.props.height}
             pixels={this.props.pixels}

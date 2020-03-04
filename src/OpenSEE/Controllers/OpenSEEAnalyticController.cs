@@ -492,18 +492,18 @@ namespace OpenSEE
         public Task<JsonReturn> GetFFTData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
+                    int cycles = int.Parse(query["cycles"]);
+
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                     meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-
-
+                    
                     double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                    double endTime = query.ContainsKey("endDate") ? double.Parse(query["endDate"]) : startTime + 16.666667;
+                    double endTime = query.ContainsKey("endDate") ? double.Parse(query["endDate"]) : startTime + 16.666667*cycles;
                     DataGroup dataGroup = QueryDataGroup(eventId, meter);
 
                     List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, endTime);
@@ -528,24 +528,43 @@ namespace OpenSEE
 
             double systemFrequency;
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
             }
 
-            DataSeries vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-            DataSeries iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
+            List<DataSeries> vAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            if (vAN != null) GenerateFFT(dataLookup, systemFrequency, vAN, "VAN", startTime, endTime);
-            if (vBN != null) GenerateFFT(dataLookup, systemFrequency, vBN, "VBN", startTime, endTime);
-            if (vCN != null) GenerateFFT(dataLookup, systemFrequency, vCN, "VCN", startTime, endTime);
-            if (iAN != null) GenerateFFT(dataLookup, systemFrequency, iAN, "IAN", startTime, endTime);
-            if (iBN != null) GenerateFFT(dataLookup, systemFrequency, iBN, "IBN", startTime, endTime);
-            if (iCN != null) GenerateFFT(dataLookup, systemFrequency, iCN, "ICN", startTime, endTime);
+            if (vAN.Count() != 0)
+            {
+                vAN.ForEach( item => { GenerateFFT(dataLookup, systemFrequency, item, "VAN", startTime, endTime); });
+            }
+            if (vBN.Count() != 0)
+            {
+                vBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VBN", startTime, endTime); });
+            }
+            if (vCN.Count() != 0)
+            {
+                vCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VCN", startTime, endTime); });
+
+            }
+            if (iAN.Count() != 0) 
+            {
+                iAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IAN", startTime, endTime); }); 
+            }
+            if (iBN.Count() != 0) 
+            {
+                iBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IBN", startTime, endTime); });
+            }
+            if (iCN.Count() != 0) 
+            {
+                iCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "ICN", startTime, endTime); });
+            }
 
             return dataLookup;
         }
@@ -561,10 +580,10 @@ namespace OpenSEE
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = $"{label} FFT Mag",
                 XaxisLabel = "",
-                Color = GetColor(null),
-                LegendClass = "",
-                SecondaryLegendClass = "Mag",
-                LegendGroup = "",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "Mag",
+                SecondaryLegendClass = (label.IndexOf("V") > -1)? "V": "I",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetKey,
                 DataPoints = new List<double[]>()
             };
 
@@ -573,10 +592,10 @@ namespace OpenSEE
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = $"{label} FFT Ang",
                 XaxisLabel = "",
-                Color = GetColor(null),
-                LegendClass = "",
-                SecondaryLegendClass = "Ang",
-                LegendGroup = "",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "Ang",
+                SecondaryLegendClass = (label.IndexOf("V") > -1) ? "V" : "I",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetKey,
                 DataPoints = new List<double[]>()
             };
 

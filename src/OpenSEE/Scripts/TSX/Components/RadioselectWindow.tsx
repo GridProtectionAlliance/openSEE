@@ -29,7 +29,7 @@ import { clone } from 'lodash';
 declare var cycles: number;
 declare var samplesPerCycle: number;
 
-export interface AnalyticParamters { harmonic: number, order: number, Trc: number };
+export interface AnalyticParamters { harmonic: number, order: number, Trc: number, fftWindow: number };
 
 
 export default class RadioselectWindow extends React.Component{
@@ -45,6 +45,8 @@ export default class RadioselectWindow extends React.Component{
     samplesPerCycleOptions: any[];
     orderOptions: any[];
     RCoptions: any[];
+    FFTWindowOptions: any[];
+
     constructor(props, context) {
         super(props, context);
         this.state = {
@@ -95,9 +97,40 @@ export default class RadioselectWindow extends React.Component{
         this.RCoptions.push(<option key={i} value={i.toString()}>{i}</option>);
         var i = 500;
         this.RCoptions.push(<option key={i} value={i.toString()}>{i}</option>);
+
+        this.FFTWindowOptions = [];
+        var i = 1;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 2;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 3;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 4;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 5;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 6;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 7;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 8;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 9;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        var i = 10;
+        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+
     }
 
     handleClicks(event): void {
+
+        if (event.target.value.toLowerCase() == "fft") {
+            this.props.stateSetter({ fftStartTime: 0 });
+        }
+        else {
+            this.props.stateSetter({ fftStartTime: -1 });
+        }
+
         this.props.stateSetter({ analytic: event.target.value });
     }
 
@@ -167,6 +200,16 @@ export default class RadioselectWindow extends React.Component{
                         </form> : null)
                     
                     : null)}
+                {(this.props.analytic != null ?
+                    ((this.props.analytic.toLowerCase() == "fft") ?
+                        <form style={optionStyle}>
+                            <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
+                                <li><label> FFT Window (cycles): <select defaultValue={'1'} onChange={this.ChangefftWindow.bind(this)}>{this.FFTWindowOptions}</select></label></li>
+                            </ul>
+                        </form> : null)
+
+                    : null)}
+
             </div>
         );
     }
@@ -186,6 +229,12 @@ export default class RadioselectWindow extends React.Component{
     ChangeTrc(event) {
         var obj = clone(this.props.analyticSettings);
         obj.Trc = event.target.value;
+        this.props.stateSetter({ AnalyticSettings: obj });
+    }
+
+    ChangefftWindow(event) {
+        var obj = clone(this.props.analyticSettings);
+        obj.fftWindow = parseInt(event.target.value);
         this.props.stateSetter({ AnalyticSettings: obj });
     }
 }

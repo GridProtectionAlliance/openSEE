@@ -35,7 +35,7 @@ export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBas
 
 export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
-    options?: D3PlotOptions,
+    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
@@ -80,13 +80,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     hover: any;
     area: any;
     xlabel: any;
+    cycle: any;
+    movingCycle: boolean;
 
     mousedownX: number;
+    cycleStart: number;
+    cycleEnd: number;
 
     state: { dataSet: iD3DataSet, dataHandle: JQuery.jqXHR }
     constructor(props, context) {
         super(props, context);
         var ctrl = this;
+        this.movingCycle = false;
 
         ctrl.state = {
             dataSet: {
@@ -215,10 +220,16 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.legendKey;
         delete nextPropsClone.legendKey;
 
+        delete props.fftWindow;
+        delete nextPropsClone.fftWindow;
+
+        delete props.fftStartTime;
+        delete nextPropsClone.fftStartTime;
+
+
         if (nextProps.startTimeVis && nextProps.endTimeVis) {
             if (this.xScale != null && (this.props.startTimeVis != nextProps.startTimeVis || this.props.endTimeVis != nextProps.endTimeVis)) {
                 this.updateZoom(this, nextProps.startTimeVis, nextProps.endTimeVis);
-
             }
         }
 
@@ -237,6 +248,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             this.getData(nextProps);
         }
 
+        if (nextProps.fftStartTime != this.props.fftStartTime || nextProps.fftWindow != this.props.fftWindow) {
+            this.updateCycle(this, nextProps.fftStartTime, nextProps.fftWindow);
+
+        }
         if (!(isEqual(props, nextPropsClone))) {
             this.getData(nextProps);
             
@@ -250,6 +265,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     createDataRows(data) {
         // if start and end date are not provided calculate them from the data set
         var ctrl = this;
+
+        
 
         // remove the previous SVG object
         d3.select("#graphWindow-" + this.props.legendKey + "-" + this.props.eventId +  ">svg").remove()
@@ -283,7 +300,17 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)));
 
         ctrl.xAxis = svg.append("g").attr("transform", "translate(0," + (this.props.height - 60) + ")").call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)));
-         
+
+        // Calculate cycle window if neccesarry
+        if (this.props.fftStartTime && this.props.fftWindow) {
+            this.cycleStart = this.props.fftStartTime;
+            this.cycleEnd = this.props.fftStartTime + this.props.fftWindow * 16.6666
+        }
+        else {
+            this.cycleStart = null;
+            this.cycleEnd = null;
+        }
+
         
         if (ctrl.props.options.showXLabel) {
             let timeLabel = "Time";
@@ -326,7 +353,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .attr("fill", "black")
             .style("opacity", 0);
 
-
         var clip = svg.append("defs").append("svg:clipPath")
             .attr("id", "clip-" + this.props.legendKey)
             .append("svg:rect")
@@ -335,7 +361,32 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .attr("x", 20)
             .attr("y", 0);
 
+        if (this.cycleStart != null && this.cycleEnd != null) {
+            this.cycle = svg.append("rect")
+                .attr("stroke", "#000")
+                .attr("x", this.xScale(this.cycleStart)).attr("width", (this.xScale(this.cycleEnd) - this.xScale(this.cycleStart)))
+                .attr("y", 0).attr("height", this.props.height - 60)
+                .attr("fill", "black")
+                .style("opacity", 0.5)
+                .attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
+        }
+        else
+        {
+            this.cycle = svg.append("rect")
+                .attr("stroke", "#000")
+                .attr("x", 10).attr("width", 0)
+                .attr("y", 0).attr("height", this.props.height - 60)
+                .attr("fill", "black")
+                .style("opacity", 0)
+                .attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
+        }
+
         
+            
+     
+
+        //cycleStart: number;
+        //cycleEnd: number;
 
 
         ctrl.paths = svg.append("g").attr("id","path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
@@ -431,16 +482,27 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     let ty = !isNaN(parseFloat(ctrl.yScale(d.y)));
                     return tx && ty;
                 })
-            )
+        )
+
+
+        if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
+
+            ctrl.cycle.transition()
+                .duration(1000)
+                .attr("x", this.xScale(ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) -this.xScale(ctrl.cycleStart)))
+        }
+        
+
+
     }
 
     mousemove(ctrl: D3LineChartBase) {
         
             // recover coordinate we need
         var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
-        
+
         let selectedData = x0
-        
+
         if (ctrl.state.dataSet.Data.length > 0) {
             let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), x0, 1);
             if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
@@ -450,7 +512,13 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
 
+        if (ctrl.movingCycle) {
 
+            let leftEdge = Math.min(selectedData, ctrl.props.endTimeVis - this.props.fftWindow*16.6666)
+            ctrl.updateCycle(ctrl, leftEdge, this.props.fftWindow)
+        }
+
+      
         ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
 
         let h = ctrl.mousedownX - ctrl.xScale(selectedData);
@@ -468,20 +536,49 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     mousedown(ctrl: D3LineChartBase) {
+
         // create square as neccesarry
         var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
 
+        //Check if we are clicking in cycle marker
+        if (ctrl.cycleStart && ctrl.cycleEnd) {
+            if (x0 > ctrl.cycleStart && x0 < ctrl.cycleEnd) {
+                ctrl.movingCycle = true;
+                return;
+            }
+        }
 
-        let selectedData = [x0]
-
-        
-        ctrl.mousedownX = ctrl.xScale(selectedData[0])
+        ctrl.mousedownX = ctrl.xScale(x0)
 
         ctrl.brush
-            .attr("x", ctrl.xScale(selectedData[0]))
+            .attr("x", ctrl.xScale(x0))
             .attr("width", 0)
             .style("opacity", 0.25)
         
+
+    }
+
+    updateCycle(ctrl: D3LineChartBase, cycleStart?: number, cycleWindow?: number) {
+
+        if (cycleStart && cycleWindow) {
+            ctrl.cycleStart = cycleStart;
+            
+            ctrl.cycleEnd = cycleStart + cycleWindow * 16.6666
+        }
+        else {
+            ctrl.cycleStart = null;
+            ctrl.cycleEnd = null;
+        }
+
+        if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
+            ctrl.cycle.attr("x", ctrl.xScale(ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) - this.xScale(ctrl.cycleStart)))
+                .style("opacity", 0.5);
+        }
+        else {
+            ctrl.cycle.attr("x", 10).attr("width", 0)
+                .style("opacity", 0);
+        }
+
 
     }
 
@@ -502,10 +599,21 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.setState({ Hover: null });
         ctrl.brush.style("opacity", 0);
         ctrl.mousedownX = 0;
+
+        if (ctrl.movingCycle) {
+            ctrl.props.stateSetter({ fftStartTime: ctrl.cycleStart });
+        }
+        ctrl.movingCycle = false;
     }
 
     mouseup(ctrl: D3LineChartBase) {
-        
+
+        if (ctrl.movingCycle) {
+            ctrl.movingCycle = false;
+            ctrl.props.stateSetter({ fftStartTime: ctrl.cycleStart });
+            return
+        }
+
         if (ctrl.mousedownX < 10) {
             ctrl.brush.style("opacity", 0);
             ctrl.mousedownX = 0;
