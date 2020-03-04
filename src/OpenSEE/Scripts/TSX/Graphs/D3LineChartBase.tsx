@@ -460,6 +460,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     updateZoom(ctrl: D3LineChartBase, startTime: number, endTime: number) {
 
+        
         ctrl.xScale.domain([startTime, endTime]);
 
         ctrl.updateTimeAxis(ctrl, startTime, endTime)
@@ -622,21 +623,29 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
 
-        let selectedData = [x0]
-
-        let h = ctrl.mousedownX - ctrl.xScale(selectedData[0]);
+        let h = ctrl.mousedownX - ctrl.xScale(x0);
 
         if (Math.abs(h) < 10) {
             h = 10;
         }
 
-        if (Math.abs(ctrl.xScale.invert(ctrl.mousedownX) - selectedData[0]) > 10) {
+        let xMouse = ctrl.xScale.invert(ctrl.mousedownX)
+        // If we have a cycle window adjust left and right to ensure you are outside the cycle window
+        if (ctrl.cycleStart && ctrl.cycleEnd) {
+            xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
+            x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
+               
+        }
+        
+
+
+        if (Math.abs(xMouse - x0) > 10) {
 
             if (h < 0) {
-                ctrl.props.stateSetter({ startTimeVis: ctrl.xScale.invert(ctrl.mousedownX), endTimeVis: selectedData[0] });
+                ctrl.props.stateSetter({ startTimeVis: xMouse, endTimeVis: x0 });
             }
             else {
-                ctrl.props.stateSetter({ startTimeVis: selectedData[0], endTimeVis: ctrl.xScale.invert(ctrl.mousedownX) });
+                ctrl.props.stateSetter({ startTimeVis: x0, endTimeVis: xMouse });
             }
         }
 
