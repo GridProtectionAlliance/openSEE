@@ -300,7 +300,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     resetZoom() {
         clearTimeout(this.historyHandle);
         this.history['push'](this.history['location'].pathname + '?eventid=' + this.state.eventid + (this.state.breakerdigitals ? '&breakerdigitals=1' : ''));
-        this.setState({ startTime: new Date(this.state.StartDate + "Z").getTime(), endTime: new Date(this.state.EndDate + "Z").getTime() })
+        this.setState({ startTimeVis: this.state.startTime, endTimeVis: this.state.endTime })
     }
 
     calculateHeights(obj: any) {
