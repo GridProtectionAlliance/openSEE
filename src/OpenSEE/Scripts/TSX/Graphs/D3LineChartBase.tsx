@@ -248,8 +248,12 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
         if (nextProps.fftStartTime != this.props.fftStartTime || nextProps.fftWindow != this.props.fftWindow) {
-            this.updateCycle(this, nextProps.fftStartTime, nextProps.fftWindow);
-
+            if (nextProps.fftStartTime > 0) 
+                this.updateCycle(this, nextProps.fftStartTime, nextProps.fftWindow);
+            
+            else 
+                this.updateCycle(this, null, null);
+            
         }
         if (!(isEqual(props, nextPropsClone))) {
             this.getData(nextProps);

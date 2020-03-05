@@ -88,6 +88,9 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
     componentDidMount() {
         this.getData(this.props);
+        let ctrl = this;
+        this.props.stateSetter({ barChartReset: ctrl.ResetZoom.bind(ctrl) })
+
     }
 
     componentWillUnmount() {
@@ -384,6 +387,12 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
                 let val = (ctrl.props.height - 60) - ctrl.yScale(d.y)
                 return (val < 0) ? 0 : val;
             })
+    }
+
+    ResetZoom(ctrl: D3BarChartBase) {
+        this.xminVis = this.xmin;
+        this.xmaxVis = this.xmax;
+        this.updateZoom(this);
     }
 
     mousemove(ctrl: D3BarChartBase) {

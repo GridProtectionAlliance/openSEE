@@ -98,6 +98,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>(),
             AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
             fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
+            barChartReset: null
            
         }
 
@@ -257,36 +258,16 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     stateSetter(obj) {
-        function toQueryString(state) {
-            var prop = clone(state);
-            delete prop.Hover;
-            delete prop.Width;
-            delete prop.TableData;
-            delete prop.phasorButtonText;
-            delete prop.pointsButtonText;
-            delete prop.tooltipButtonText;
-            delete prop.harmonicButtonText;
-            delete prop.statButtonText;
-            delete prop.correlatedSagsButtonText;
-            delete prop.PointsTable;
-            delete prop.displayCur;
-            delete prop.displayVolt;
-            delete prop.displaTCE;
-            delete prop.PostedData;
-            delete prop.nextBackLookup;
-            delete prop.overlappingEvents;  
-            delete prop.TooltipWithDeltaTable;
-            return queryString.stringify(prop, { encode: false });
-        }
+        
 
         if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
             obj.fftStartTime = this.state.startTime;
         }
-        var oldQueryString = toQueryString(this.state);
+        var oldQueryString = this.toQueryString(this.state);
         var oldQuery = queryString.parse(oldQueryString);
 
         this.setState(obj, () => {
-            var newQueryString = toQueryString(this.state);
+            var newQueryString = this.toQueryString(this.state);
             var newQuery = queryString.parse(newQueryString);
 
             if (!isEqual(oldQuery, newQuery)) {
@@ -302,30 +283,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     resetZoom() {
-        function toQueryString(state) {
-            var prop = clone(state);
-            delete prop.Hover;
-            delete prop.Width;
-            delete prop.TableData;
-            delete prop.phasorButtonText;
-            delete prop.pointsButtonText;
-            delete prop.tooltipButtonText;
-            delete prop.harmonicButtonText;
-            delete prop.statButtonText;
-            delete prop.correlatedSagsButtonText;
-            delete prop.PointsTable;
-            delete prop.displayCur;
-            delete prop.displayVolt;
-            delete prop.displaTCE;
-            delete prop.PostedData;
-            delete prop.nextBackLookup;
-            delete prop.overlappingEvents;
-            delete prop.TooltipWithDeltaTable;
-            return queryString.stringify(prop, { encode: false });
-        }
-
+        
         clearTimeout(this.historyHandle);
-        this.history['push'](this.history['location'].pathname + '?' + toQueryString(this.state))
+        this.history['push'](this.history['location'].pathname + '?' + this.toQueryString(this.state))
+
+        if (this.state.barChartReset != null)
+            this.state.barChartReset()
+
         this.setState({ startTimeVis: this.state.startTime, endTimeVis: this.state.endTime })
     }
 
@@ -333,6 +297,30 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         if (obj.tab == "Compare") return 300;
         return (window.innerHeight - 100 - 30) / (Number(obj.displayVolt) + Number(obj.displayCur) + Number(obj.breakerdigitals) + Number(obj.displayTCE) + Number(obj.displayAnalogs) + Number(obj.tab == "Analytics"))
     }
+
+    toQueryString(state) {
+        var prop = clone(state);
+        delete prop.Hover;
+        delete prop.Width;
+        delete prop.TableData;
+        delete prop.phasorButtonText;
+        delete prop.pointsButtonText;
+        delete prop.tooltipButtonText;
+        delete prop.harmonicButtonText;
+        delete prop.statButtonText;
+        delete prop.correlatedSagsButtonText;
+        delete prop.PointsTable;
+        delete prop.displayCur;
+        delete prop.displayVolt;
+        delete prop.displaTCE;
+        delete prop.PostedData;
+        delete prop.nextBackLookup;
+        delete prop.overlappingEvents;
+        delete prop.TooltipWithDeltaTable;
+        delete prop.barChartReset;
+
+        return queryString.stringify(prop, { encode: false });
+}
 
 
 
