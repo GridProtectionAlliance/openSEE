@@ -496,17 +496,17 @@ namespace OpenSEE
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
-                    int cycles = int.Parse(query["cycles"]);
+                    int cycles = query.ContainsKey("cycles") ? int.Parse(query["cycles"]): 1;
 
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                     meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
                     
                     double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                    double endTime = query.ContainsKey("endDate") ? double.Parse(query["endDate"]) : startTime + 16.666667*cycles;
+
                     DataGroup dataGroup = QueryDataGroup(eventId, meter);
 
-                    List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, endTime);
+                    List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, cycles);
 
                     if (returnList.Count == 0) return null;
 
@@ -522,7 +522,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, double endTime)
+        private List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -542,39 +542,39 @@ namespace OpenSEE
 
             if (vAN.Count() != 0)
             {
-                vAN.ForEach( item => { GenerateFFT(dataLookup, systemFrequency, item, "VAN", startTime, endTime); });
+                vAN.ForEach( item => { GenerateFFT(dataLookup, systemFrequency, item, "VAN", startTime, cycles); });
             }
             if (vBN.Count() != 0)
             {
-                vBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VBN", startTime, endTime); });
+                vBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VBN", startTime, cycles); });
             }
             if (vCN.Count() != 0)
             {
-                vCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VCN", startTime, endTime); });
+                vCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VCN", startTime, cycles); });
 
             }
             if (iAN.Count() != 0) 
             {
-                iAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IAN", startTime, endTime); }); 
+                iAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IAN", startTime, cycles); }); 
             }
             if (iBN.Count() != 0) 
             {
-                iBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IBN", startTime, endTime); });
+                iBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IBN", startTime, cycles); });
             }
             if (iCN.Count() != 0) 
             {
-                iCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "ICN", startTime, endTime); });
+                iCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "ICN", startTime, cycles); });
             }
 
             return dataLookup;
         }
 
-        private void GenerateFFT(List<D3Series> dataLookup, double systemFrequency, DataSeries dataSeries, string label, double startTime, double endTime)
+        private void GenerateFFT(List<D3Series> dataLookup, double systemFrequency, DataSeries dataSeries, string label, double startTime, int cycles)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-            var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / samplesPerCycle).Select((grouping) => grouping.Select((obj) => obj.Point));
+            var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / (samplesPerCycle*cycles)).Select((grouping) => grouping.Select((obj) => obj.Point));
 
-            List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take(samplesPerCycle).ToList();
+            List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take((samplesPerCycle * cycles)).ToList();
             D3Series fftMag = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
@@ -583,7 +583,7 @@ namespace OpenSEE
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Mag",
                 SecondaryLegendClass = (label.IndexOf("V") > -1)? "V": "I",
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetKey,
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataPoints = new List<double[]>()
             };
 
@@ -595,14 +595,14 @@ namespace OpenSEE
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Ang",
                 SecondaryLegendClass = (label.IndexOf("V") > -1) ? "V" : "I",
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetKey,
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataPoints = new List<double[]>()
             };
 
-            if (cycleData.Count() != samplesPerCycle) return;
-            double[] points = cycleData.Select(point => point.Value / samplesPerCycle).ToArray();
+            if (cycleData.Count() != (samplesPerCycle * cycles)) return;
+            double[] points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
 
-            FFT fft = new FFT(systemFrequency * samplesPerCycle, points);
+            FFT fft = new FFT(systemFrequency * (samplesPerCycle), points);
 
             fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { index, (value / Math.Sqrt(2)) }).ToList();
             fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] {index, (value * 180.0D / Math.PI)}).ToList();
