@@ -155,7 +155,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             legend.push(key);
         });
 
-        console.log(legend)
         return legend;
 
     }
@@ -253,6 +252,11 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
         if (Number.isNaN(this.xmaxVis))
             this.xmaxVis = this.xmax
+
+        if (this.xmax < this.xmaxVis)
+            this.xmaxVis = this.xmax
+        if (this.xmin > this.xminVis)
+            this.xminVis = this.xmin
 
         ctrl.xScale = d3.scaleBand()
             .domain(range(this.xminVis, this.xmaxVis + 1))

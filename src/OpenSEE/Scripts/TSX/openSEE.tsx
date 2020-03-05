@@ -97,11 +97,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
             TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>(),
             AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
-            fftStartTime: null,
+            fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
            
         }
 
         this.TableData = new Map<string, { data: number, color: string }>();
+
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
             this.setState({
@@ -301,8 +302,30 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     resetZoom() {
+        function toQueryString(state) {
+            var prop = clone(state);
+            delete prop.Hover;
+            delete prop.Width;
+            delete prop.TableData;
+            delete prop.phasorButtonText;
+            delete prop.pointsButtonText;
+            delete prop.tooltipButtonText;
+            delete prop.harmonicButtonText;
+            delete prop.statButtonText;
+            delete prop.correlatedSagsButtonText;
+            delete prop.PointsTable;
+            delete prop.displayCur;
+            delete prop.displayVolt;
+            delete prop.displaTCE;
+            delete prop.PostedData;
+            delete prop.nextBackLookup;
+            delete prop.overlappingEvents;
+            delete prop.TooltipWithDeltaTable;
+            return queryString.stringify(prop, { encode: false });
+        }
+
         clearTimeout(this.historyHandle);
-        this.history['push'](this.history['location'].pathname + '?eventid=' + this.state.eventid + (this.state.breakerdigitals ? '&breakerdigitals=1' : ''));
+        this.history['push'](this.history['location'].pathname + '?' + toQueryString(this.state))
         this.setState({ startTimeVis: this.state.startTime, endTimeVis: this.state.endTime })
     }
 
