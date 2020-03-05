@@ -97,7 +97,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
             TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>(),
             AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
-            fftStartTime: (query['StartDate'] != undefined ? new Date(query['StartDate'] + "Z").getTime() : new Date(eventStartTime + "Z").getTime()),
+            fftStartTime: null,
            
         }
 
@@ -111,7 +111,10 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 breakerdigitals: query['breakerdigitals'] == '1' || query['breakerdigitals'] == 'true',
                 displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
                 displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
+                fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null
             });
+
+
         });
     }
 
