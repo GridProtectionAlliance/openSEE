@@ -150,16 +150,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let legend: Array<iD3DataSeries> = [];
 
-        let secondaryHeader: Array<string> = Array.from(new Set(data.map(item => item.SecondaryLegendClass)));
-        let primaryHeader: Array<string> = Array.from(new Set(data.map(item => item.LegendClass)));
-
-
         data.sort((a, b) => {
             if (a.LegendGroup == b.LegendGroup) {
                 return (a.ChartLabel > b.ChartLabel) ? 1 : ((b.ChartLabel > a.ChartLabel) ? -1 : 0)
             }
             return (a.LegendGroup > b.LegendGroup) ? 1 : ((b.LegendGroup > a.LegendGroup) ? -1 : 0)
         })
+
+        let secondaryHeader: Array<string> = Array.from(new Set(data.map(item => item.SecondaryLegendClass)));
+        let primaryHeader: Array<string> = Array.from(new Set(data.map(item => item.LegendClass)));
 
 
         $.each(data, function (i, key) {

@@ -27,6 +27,7 @@ import * as moment from 'moment';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3BarChartBase, { D3BarChartBaseProps } from './D3BarChartBase';
 import { AnalyticParamters } from '../Components/RadioselectWindow';
+import { iD3DataSet } from './D3LineChartBase';
 interface AnalyticBarprops extends D3BarChartBaseProps {
     analytic: string,
     analyticParameter: AnalyticParamters,
@@ -54,23 +55,56 @@ export default class AnalyticBar extends React.Component<any, any>{
 
         var eventDataHandle = this.openSEEServiceFunction(props.eventId).then(data => {
 
-            var dataSet = baseCtrl.state.dataSet;
-            if (dataSet.Data != undefined)
-                dataSet.Data = dataSet.Data.concat(data.Data);
+            let dataSet = data
+
+            if (baseCtrl.state.dataSet.Data == undefined)
+                dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
             else
-                dataSet = data;
+                dataSet.Data = ctrl.updateData(baseCtrl, data, baseCtrl.state.dataSet);
 
-            
-            dataSet.Data = baseCtrl.createLegendRows(data.Data);
-            baseCtrl.createDataRows(data.Data);
+            baseCtrl.createDataRows(dataSet.Data);
 
-            baseCtrl.setState({ dataSet: data });
+            baseCtrl.setState({ dataSet: dataSet });
 
         });
         this.setState({ eventDataHandle: eventDataHandle });
         
     }
-           
+
+    updateData(baseCtrl: D3BarChartBase, data: iD3DataSet, oldData: iD3DataSet) {
+        let containsNew = false;
+
+        if (data.Data.length != oldData.Data.length) 
+            return baseCtrl.createLegendRows(data.Data);
+        
+        //Check if any of them changed except for the dataPoints
+
+        for (let index = 0; index < data.Data.length; index++) {
+
+            let i = oldData.Data.findIndex((val, ind) => {
+                return (
+                    val.ChannelID == data.Data[index].ChannelID &&
+                    val.ChartLabel == data.Data[index].ChartLabel &&
+                    val.XaxisLabel == data.Data[index].XaxisLabel &&
+                    val.LegendClass == data.Data[index].LegendClass &&
+                    val.LegendGroup == data.Data[index].LegendGroup &&
+                    val.SecondaryLegendClass == data.Data[index].SecondaryLegendClass )
+            });
+            if (i > -1)
+                oldData.Data[i].DataPoints = data.Data[index].DataPoints
+            else {
+                containsNew = true
+                break
+            }
+        }
+
+        if (containsNew)
+            return baseCtrl.createLegendRows(data.Data);
+
+        else
+            return oldData.Data
+    }
+
     openSEEServiceFunction(eventid: number) {
 
         if (this.props.analytic == "HarmonicSpectrum") {

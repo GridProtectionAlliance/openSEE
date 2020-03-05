@@ -123,14 +123,12 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
     }
 
     createLegendRows(data) {
+
         var ctrl = this;
 
         let legend: Array<iD3DataSeries> = [];
 
-        let secondaryHeader: Array<string> = Array.from(new Set(data.map(item => item.SecondaryLegendClass)));
-        let primaryHeader: Array<string> = Array.from(new Set(data.map(item => item.LegendClass)));
-
-
+        
         data.sort((a, b) => {
             if (a.LegendGroup == b.LegendGroup) {
                 return (a.ChartLabel > b.ChartLabel) ? 1 : ((b.ChartLabel > a.ChartLabel) ? -1 : 0)
@@ -138,6 +136,8 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             return (a.LegendGroup > b.LegendGroup) ? 1 : ((b.LegendGroup > a.LegendGroup) ? -1 : 0)
         })
 
+        let secondaryHeader: Array<string> = Array.from(new Set(data.map(item => item.SecondaryLegendClass)));
+        let primaryHeader: Array<string> = Array.from(new Set(data.map(item => item.LegendClass)));
 
         $.each(data, function (i, key) {
 
@@ -145,7 +145,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             key.Enabled = false;
 
             if (primaryHeader.length < 2 || key.LegendClass == primaryHeader[0]) {
-
                 key.Display = true;
 
                 if (secondaryHeader.length < 2 || key.SecondaryLegendClass == secondaryHeader[0]) {
@@ -156,6 +155,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             legend.push(key);
         });
 
+        console.log(legend)
         return legend;
 
     }
@@ -206,7 +206,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
     // create Plot
     createDataRows(data) {
         // if start and end date are not provided calculate them from the data set
-        console.log("redraw")
         var ctrl = this;
 
         // remove the previous SVG object
