@@ -61,8 +61,8 @@ export default class AnalyticBar extends React.Component<any, any>{
                 dataSet = data;
 
             
-            dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-            baseCtrl.createDataRows(dataSet.Data);
+            dataSet.Data = baseCtrl.createLegendRows(data.Data);
+            baseCtrl.createDataRows(data.Data);
 
             baseCtrl.setState({ dataSet: data });
 
@@ -91,7 +91,7 @@ export default class AnalyticBar extends React.Component<any, any>{
             pixels={this.props.pixels}
             startTime={this.props.startTime}
             stateSetter={this.props.stateSetter}
-            options={ this.props.options }
+            options={this.props.options}
         />
     }
 

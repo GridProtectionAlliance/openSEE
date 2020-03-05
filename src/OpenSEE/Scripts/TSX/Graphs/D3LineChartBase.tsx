@@ -263,6 +263,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
    
     // create Plot
     createDataRows(data) {
+        
         // if start and end date are not provided calculate them from the data set
         var ctrl = this;
 
@@ -301,6 +302,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         ctrl.xAxis = svg.append("g").attr("transform", "translate(0," + (this.props.height - 60) + ")").call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)));
 
+     
         // Calculate cycle window if neccesarry
         if (this.props.fftStartTime && this.props.fftWindow) {
             this.cycleStart = this.props.fftStartTime;
@@ -310,7 +312,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             this.cycleStart = null;
             this.cycleEnd = null;
         }
-
         
         if (ctrl.props.options.showXLabel) {
             let timeLabel = "Time";

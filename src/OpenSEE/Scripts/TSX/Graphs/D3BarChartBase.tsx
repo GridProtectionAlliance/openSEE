@@ -34,7 +34,7 @@ import { LegendClickCallback, D3PlotOptions, iD3DataSet, iD3DataSeries  } from '
 export type GetDataFunction = (props: D3BarChartBaseProps, ctrl: D3BarChartBase) => void;
 
 export interface D3BarChartBaseProps {
-    eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, fftWindow: number
+    eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, fftWindow: number,
 };
 
 interface D3BarChartBaseClassProps extends D3BarChartBaseProps{
@@ -57,6 +57,12 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
     mousedownX: number;
 
+    xmin: number;
+    xmax: number;
+    xminVis: number;
+    xmaxVis: number;
+
+
     state: { dataSet: iD3DataSet, dataHandle: JQuery.jqXHR }
     constructor(props, context) {
         super(props, context);
@@ -67,10 +73,15 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
                 Data: null
             } , 
             dataHandle: undefined,
-          
         };
         
         if (ctrl.props.getData != undefined) ctrl.getData = (props) => ctrl.props.getData(props, ctrl);
+
+        ctrl.xmin = NaN;
+        ctrl.xmax = NaN;
+        ctrl.xminVis = NaN;
+        ctrl.xmaxVis = NaN;
+
 
         ctrl.mousedownX = 0;
     }
@@ -169,14 +180,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         delete props.getData;
         delete nextPropsClone.getData;
 
-        delete props.startTime;
-        delete nextPropsClone.startTime;
-        delete props.fftWindow;
-        delete nextPropsClone.fftWindow;
-
-        //delete props.hover;
-        //delete nextPropsClone.hover;
-
         delete props.legendKey;
         delete nextPropsClone.legendKey;
 
@@ -203,6 +206,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
     // create Plot
     createDataRows(data) {
         // if start and end date are not provided calculate them from the data set
+        console.log("redraw")
         var ctrl = this;
 
         // remove the previous SVG object
@@ -229,24 +233,34 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         let yLim = this.getYLimits(this, Number.NaN, Number.NaN, lines);
         let xLim = this.getXLimits(this, lines);
 
+        if (Number.isNaN(xLim[0]) || Number.isNaN(xLim[1])) {
+            this.xmax = 10
+            this.xmin = 0
+            this.xmaxVis = 10
+            this.xminVis = 0
+        }
+        else {
+            this.xmax = xLim[1]
+            this.xmin = xLim[0]
+        }
+           
+
         ctrl.yScale = d3.scaleLinear()
             .domain(yLim)
             .range([this.props.height - 60, 0]);
 
-        if (Number.isNaN(xLim[0]) || Number.isNaN(xLim[1])) {
-            ctrl.xScale = d3.scaleBand()
-                .domain([0,1])
-                .range([20, container.node().getBoundingClientRect().width - 100])
-                .padding(0.1)
-                ;
-        }
-        else {
-            ctrl.xScale = d3.scaleBand()
-                .domain(range(xLim[0], xLim[1] + 1))
-                .range([20, container.node().getBoundingClientRect().width - 100])
-                .padding(0.1)
-                ;
-        }
+        if (Number.isNaN(this.xminVis))
+            this.xminVis = this.xmin
+
+        if (Number.isNaN(this.xmaxVis))
+            this.xmaxVis = this.xmax
+
+        ctrl.xScale = d3.scaleBand()
+            .domain(range(this.xminVis, this.xmaxVis + 1))
+            .range([20, container.node().getBoundingClientRect().width - 100])
+            .padding(0.1)
+            ;
+        
        
 
         ctrl.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)));
@@ -294,9 +308,6 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             .attr("x", 20)
             .attr("y", 0);
 
-        
-
-
         ctrl.paths = svg.append("g").attr("id","path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
 
         
@@ -325,31 +336,30 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
     }
 
     
-    updateZoom(ctrl: D3BarChartBase, xMin: number, xMax: number) {
+    updateZoom(ctrl: D3BarChartBase) {
 
-        if (xMin > xMax)
-            return;
+        if (this.xminVis > this.xmaxVis) {
+            let tmp = this.xminVis;
+            this.xminVis = this.xmaxVis
+            this.xmaxVis = tmp
+        }
 
-        if ((xMax - xMin) < 2)
-            return;
+        if ((this.xmaxVis - this.xminVis) < 2) {
+            this.xminVis = this.xmaxVis - 2
+        }
+            
+        if (this.xmaxVis > this.xmax)
+            this.xmaxVis = this.xmax
 
+        if (this.xminVis < this.xmin)
+            this.xminVis = this.xmin
 
-        if (xMax > ctrl.getXLimits(ctrl, undefined)[1])
-            xMax = ctrl.getXLimits(ctrl, undefined)[1]
-
-        if (xMin < ctrl.getXLimits(ctrl, undefined)[0])
-            xMin = ctrl.getXLimits(ctrl, undefined)[0]
-
-        if (Number.isNaN(xMin) || Number.isNaN(xMax))
-            ctrl.xScale.domain([0, 1])
-
-        else
-            ctrl.xScale.domain(range(xMin, xMax + 1))
+        ctrl.xScale.domain(range(this.xminVis, this.xmaxVis + 1))
 
 
         ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale));
 
-        ctrl.yScale.domain(ctrl.getYLimits(ctrl, xMin, xMax, undefined));
+        ctrl.yScale.domain(ctrl.getYLimits(ctrl, this.xminVis, this.xmaxVis, undefined));
         ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
 
 
@@ -430,10 +440,14 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         if (Math.abs(h) > 10) {
 
             if (h < 0) {
-                ctrl.updateZoom(ctrl, ctrl.getXbucket(ctrl, ctrl.mousedownX), ctrl.getXbucket(ctrl, x0))
+                ctrl.xminVis = ctrl.getXbucket(ctrl, ctrl.mousedownX)
+                ctrl.xmaxVis = ctrl.getXbucket(ctrl, x0)
+                ctrl.updateZoom(ctrl)
             }
             else {
-                ctrl.updateZoom(ctrl, ctrl.getXbucket(ctrl, x0), ctrl.getXbucket(ctrl, ctrl.mousedownX))
+                ctrl.xmaxVis = ctrl.getXbucket(ctrl, ctrl.mousedownX)
+                ctrl.xminVis = ctrl.getXbucket(ctrl, x0)
+                ctrl.updateZoom(ctrl)
             }
         }
 
@@ -471,7 +485,9 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         let newMinX = Math.floor(zoomPoint - pLeft * diffNew)
         let newMaxX = Math.ceil(zoomPoint + pRight * diffNew)
 
-        ctrl.updateZoom(ctrl, newMinX, newMaxX);
+        ctrl.xminVis = newMinX
+        ctrl.xmaxVis = newMaxX
+        ctrl.updateZoom(ctrl);
     }
 
     formatValueTick(ctrl: D3BarChartBase, d: number) {
