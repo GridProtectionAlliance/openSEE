@@ -364,7 +364,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private string GetChartLabel(openXDA.Model.Channel channel, string type = null)
+        public static string GetChartLabel(openXDA.Model.Channel channel, string type = null)
         {
             if (channel.MeasurementType.Name == "Voltage" && type == null)
                 return "V" + DisplayPhaseName(channel.Phase.Name);
@@ -382,7 +382,7 @@ namespace OpenSEE
             return null;
         }
 
-        private string DisplayPhaseName(string phaseName)
+        private static string DisplayPhaseName(string phaseName)
         {
             Dictionary<string, string> diplayNames = new Dictionary<string, string>()
             {
@@ -537,7 +537,7 @@ namespace OpenSEE
        
         #region [ Shared Functions ]
 
-        private DataGroup QueryDataGroup(int eventID, Meter meter)
+        public static DataGroup QueryDataGroup(int eventID, Meter meter)
         {
             string target = $"DataGroup-{eventID}";
 
@@ -580,7 +580,7 @@ namespace OpenSEE
             return viCycleDataGroupTask.Result;
         }
 
-        private DataGroup ToDataGroup(Meter meter, List<byte[]> data)
+        public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
         {
             DataGroup dataGroup = new DataGroup();
             dataGroup.FromData(meter, data);

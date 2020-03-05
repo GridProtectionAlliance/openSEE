@@ -50,6 +50,7 @@
     <Content Include="Content\bootstrap4-datetimepicker.css" />
     <Content Include="Data\OpenSee.sql" />
     <Content Include="Global.asax" />
+    <Content Include="CSVDownload.ashx" />
     <None Include="Scripts\jquery-1.6.4-vsdoc.js" />
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
@@ -77,6 +78,9 @@
     <Compile Include="Controllers\OpenSEEAnalyticController.cs" />
     <Compile Include="Controllers\OpenSeeController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="CSVDownload.ashx.cs">
+      <DependentUpon>CSVDownload.ashx</DependentUpon>
+    </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
