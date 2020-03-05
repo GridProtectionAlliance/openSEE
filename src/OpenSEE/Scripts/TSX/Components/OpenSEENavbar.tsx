@@ -186,7 +186,7 @@ export default class OpenSEENavbar extends React.Component {
 
 
     exportData(type) {
-        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${this.props.eventid}`
+        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${this.props.eventid}`);
             /*+
             `${this.props.startDate != undefined ? `&startDate=${this.props.startDate}` : ``}` +
             `${this.props.endDate != undefined ? `&endDate=${this.props.endDate}` : ``}` +
