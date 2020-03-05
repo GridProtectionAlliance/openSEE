@@ -103,22 +103,7 @@ export default class RadioselectWindow extends React.Component{
         this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
         var i = 2;
         this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 3;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 4;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 5;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 6;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 7;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 8;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 9;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
-        var i = 10;
-        this.FFTWindowOptions.push(<option key={i} value={i.toString()}>{i}</option>);
+        
 
     }
 
