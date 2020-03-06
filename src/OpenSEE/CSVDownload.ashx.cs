@@ -157,6 +157,8 @@ namespace OpenSEE
         {
             if (requestParameters["type"] == "csv")
                 ExportToCSV(responseStream, requestParameters);
+            else if (requestParameters["type"] == "pqds")
+                ExportToPQDS(responseStream, requestParameters);
             else if (requestParameters["type"] == "stats")
                 ExportStatsToCSV(responseStream, requestParameters);
             else if (requestParameters["type"] == "harmonics")
@@ -207,6 +209,54 @@ namespace OpenSEE
                 for (int i = 0; i < data.First().DataPoints.Count; ++i)
                     writer.WriteLine(ToCSV(data,i));
             }
+        }
+
+
+        public void ExportToPQDS(Stream returnStream, NameValueCollection requestParameters)
+        {
+            int eventID = int.Parse(requestParameters["eventID"]);
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+
+
+
+                // only get Single Voltage and Single Current Data for This....
+                List<PQDS.DataSeries> data = new List<PQDS.DataSeries>();
+                List<PQDS.MetaDataTag> metaData = new List<PQDS.MetaDataTag>();
+
+                VIDataGroup dataGroup = new VIDataGroup( OpenSEEController.QueryDataGroup(evt.ID, meter));
+
+                data.Add(PQDSSeries(dataGroup.VA, "va"));
+                data.Add(PQDSSeries(dataGroup.VB, "vb"));
+                data.Add(PQDSSeries(dataGroup.VC, "vc"));
+
+                data.Add(PQDSSeries(dataGroup.IA, "va"));
+                data.Add(PQDSSeries(dataGroup.IB, "vb"));
+                data.Add(PQDSSeries(dataGroup.IC, "vc"));
+                data.Add(PQDSSeries(dataGroup.IR, "vn"));
+
+                
+
+                if (data.Count() == 0) return;
+
+                PQDS.PQDSFile file = new PQDS.PQDSFile(metaData, data, evt.StartTime);
+
+                using (StreamWriter writer = new StreamWriter(returnStream))
+                {
+                    file.WriteToStream(writer);
+                }
+            }
+        }
+
+        private PQDS.DataSeries PQDSSeries(DataSeries data, string label)
+        {
+            PQDS.DataSeries result = new PQDS.DataSeries(label);
+
+            return result;
         }
 
         public void ExportStatsToCSV(Stream returnStream, NameValueCollection requestParameters)

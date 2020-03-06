@@ -97,6 +97,7 @@ export default class OpenSEENavbar extends React.Component {
 
                                 <div className="dropdown-divider"></div>
                                 <a className="dropdown-item" onClick={this.exportData.bind(this, "csv")}>Export CSV</a>
+                                <a className="dropdown-item" onClick={this.exportData.bind(this, "pqds")}>Export PQDS</a>
                                 {this.state.showComtradeExportButton ? <a className="dropdown-item" onClick={this.exportComtrade.bind(this)}>Export COMTRADE</a> : null}
                             </div>
                         </li>
