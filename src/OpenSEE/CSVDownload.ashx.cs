@@ -205,6 +205,8 @@ namespace OpenSEE
             return string.Join(",", headers);
         }
 
+
+
         public void ExportToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
             IEnumerable<D3Series> data = BuildDataSeries(requestParameters);
@@ -212,7 +214,7 @@ namespace OpenSEE
 
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
-                IEnumerable<string> keys = data.Select(item => item.ChartLabel) ;
+                IEnumerable<string> keys = data.Select(item => (item.LegendGroup + "-" + item.ChartLabel)) ;
                 // Write the CSV header to the file
                 writer.WriteLine(GetCSVHeader(keys));
 
@@ -341,9 +343,11 @@ namespace OpenSEE
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-                List<D3Series> returnList = new List<D3Series>();
+                IEnumerable<D3Series> returnList = new List<D3Series>();
+                returnList = QueryVoltageData(meter, evt);
 
-                return QueryVoltageData(meter, evt);
+                returnList = returnList.Concat(QueryCurrentData(meter, evt));
+                return returnList.ToList();
             }
         }
 
@@ -358,16 +362,106 @@ namespace OpenSEE
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
                         ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
-                        XaxisLabel = "",
-                        Color = "",
-                        LegendClass = "",
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     }).ToList();
 
-            //WaveForm.Sort()
+            WaveForm.Sort((a, b) => {
+                    if (a.LegendGroup == b.LegendGroup)
+                    {
+                        return a.ChartLabel.CompareTo(b.ChartLabel);
+                    }
+                    return a.LegendGroup.CompareTo(b.LegendGroup);
+                });
 
-            return WaveForm;
+            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+
+            List<D3Series> result = new List<D3Series>();
+
+            foreach(D3Series w in WaveForm)
+            {
+                result.Add(w);
+                int index = viCycleDataGroup.CycleDataGroups.FindIndex(item => item.RMS.SeriesInfo.ChannelID == w.ChannelID);
+                if (index > -1)
+                {
+                    result.Add(new D3Series
+                    {
+                        ChannelID = w.ChannelID,
+                        DataPoints = viCycleDataGroup.CycleDataGroups[index].RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        ChartLabel = w.ChartLabel +  " RMS",
+                        LegendGroup = w.LegendGroup,
+
+                    });
+
+                    result.Add(new D3Series
+                    {
+                        ChannelID = w.ChannelID,
+                        DataPoints = viCycleDataGroup.CycleDataGroups[index].Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        ChartLabel = w.ChartLabel + " Phase",
+                        LegendGroup = w.LegendGroup,
+                    });
+
+                }
+            }
+
+
+            return result;
+        }
+
+        private List<D3Series> QueryCurrentData(Meter meter, Event evt)
+        {
+            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+            List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Current"                 
+                ).Select(
+                    ds => new D3Series()
+                    {
+                        ChannelID = ds.SeriesInfo.Channel.ID,
+                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                    }).ToList();
+
+            WaveForm.Sort((a, b) => {
+                if (a.LegendGroup == b.LegendGroup)
+                {
+                    return a.ChartLabel.CompareTo(b.ChartLabel);
+                }
+                return a.LegendGroup.CompareTo(b.LegendGroup);
+            });
+
+            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+
+            List<D3Series> result = new List<D3Series>();
+
+            foreach (D3Series w in WaveForm)
+            {
+                result.Add(w);
+                int index = viCycleDataGroup.CycleDataGroups.FindIndex(item => item.RMS.SeriesInfo.ChannelID == w.ChannelID);
+                if (index > -1)
+                {
+                    result.Add(new D3Series
+                    {
+                        ChannelID = w.ChannelID,
+                        DataPoints = viCycleDataGroup.CycleDataGroups[index].RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        ChartLabel = w.ChartLabel + " RMS",
+                        LegendGroup = w.LegendGroup,
+
+                    });
+
+                    result.Add(new D3Series
+                    {
+                        ChannelID = w.ChannelID,
+                        DataPoints = viCycleDataGroup.CycleDataGroups[index].Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        ChartLabel = w.ChartLabel + " Phase",
+                        LegendGroup = w.LegendGroup,
+                    });
+
+                }
+            }
+
+
+            return result;
         }
 
         private Dictionary<string, DataSeries> QueryEventData(AdoDataConnection connection, Meter meter, DateTime startTime, DateTime endTime)

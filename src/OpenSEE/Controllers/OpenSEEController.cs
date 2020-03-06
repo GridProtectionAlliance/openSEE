@@ -558,7 +558,7 @@ namespace OpenSEE
             return dataGroupTask.Result;
         }
 
-        private VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter)
+        public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter)
         {
             string target = $"VICycleDataGroup-{eventID}";
 
