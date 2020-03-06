@@ -165,22 +165,7 @@ namespace OpenSEE
                 ExportCorrelatedSagsToCSV(responseStream, requestParameters);
         }
 
-        // Converts the data group row of CSV data.
-        private string ToCSV(Dictionary<string, DataSeries> dict, IEnumerable<string> keys,int index)
-        {
-            DateTime timestamp = dict.Values.First().DataPoints[index].Time;
-            IEnumerable<string> row = new List<string>() { timestamp.ToString("MM/dd/yyyy HH:mm:ss.fffffff"), timestamp.ToString("fffffff") };
-
-            row = row.Concat(keys.Select(x => {
-                if (dict[x].DataPoints.Count > index)
-                    return dict[x].DataPoints[index].Value.ToString();
-                else
-                    return string.Empty;
-            }));
-
-            return string.Join(",", row);
-        }
-
+      
         // Converts the data group row of CSV data.
         private string ToCSV(IEnumerable<D3Series> data, int index)
         {
@@ -353,10 +338,17 @@ namespace OpenSEE
 
         private List<D3Series> QueryVoltageData( Meter meter, Event evt)
         {
+            bool useLL;
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            {
+                useLL = connection.ExecuteScalar<bool?>("SELECT Value FROM Settings WHERE Name = 'useLLVoltage'") ?? false;
+            }
+                            
             DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
 
-            List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage" &&
-                !(ds.SeriesInfo.Channel.Phase.Name == "AB" || ds.SeriesInfo.Channel.Phase.Name == "BC" || ds.SeriesInfo.Channel.Phase.Name == "CA")
+            List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && (
+                (useLL && !(ds.SeriesInfo.Channel.Phase.Name == "AB" || ds.SeriesInfo.Channel.Phase.Name == "BC" || ds.SeriesInfo.Channel.Phase.Name == "CA")) ||
+                (!useLL && (ds.SeriesInfo.Channel.Phase.Name == "AB" || ds.SeriesInfo.Channel.Phase.Name == "BC" || ds.SeriesInfo.Channel.Phase.Name == "CA")))
                 ).Select(
                     ds => new D3Series()
                     {
@@ -464,75 +456,7 @@ namespace OpenSEE
             return result;
         }
 
-        private Dictionary<string, DataSeries> QueryEventData(AdoDataConnection connection, Meter meter, DateTime startTime, DateTime endTime)
-        {
-            Func<IEnumerable<DataSeries>, DataSeries> merge = grouping =>
-            {
-                DataSeries mergedSeries = DataSeries.Merge(grouping);
-                mergedSeries.SeriesInfo = grouping.First().SeriesInfo;
-                return mergedSeries;
-            };
 
-            double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0D;
-            DataTable dataTable = connection.RetrieveData("(SELECT ID FROM Event WHERE MeterID = {0} AND EndTime >= {1} AND StartTime <= {2})", meter.ID, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
-
-            Dictionary<string, DataSeries> dict = new Dictionary<string, DataSeries>();
-
-            IEnumerable<DataGroup> dataGroups = dataTable
-                .Select()
-                .Select(row => row.ConvertField<int>("ID"))
-                .Select(id => ToDataGroup(meter, ChannelData.DataFromEvent(id,connection)))
-                .OrderBy(subGroup => subGroup.StartTime)
-                .ToList();
-
-            List<DataSeries> mergedSeriesList = dataGroups
-                .SelectMany(dataGroup => dataGroup.DataSeries)
-                .GroupBy(dataSeries => dataSeries.SeriesInfo.Channel.Name)
-                .Select(merge)
-                .ToList();
-
-            DataGroup mergedGroup = new DataGroup();
-            mergedSeriesList.ForEach(mergedSeries => mergedGroup.Add(mergedSeries));
-
-            foreach (DataSeries dataSeries in mergedGroup.DataSeries)
-            {
-                string key = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" :"I") + dataSeries.SeriesInfo.Channel.Phase.Name;
-                dict.GetOrAdd(key, _ => dataSeries.ToSubSeries(startTime, endTime));
-            }
-
-            VICycleDataGroup viCycleDataGroup = Transform.ToVICycleDataGroup(new VIDataGroup(mergedGroup), systemFrequency);
-
-            foreach (CycleDataGroup cycleDataGroup in viCycleDataGroup.CycleDataGroups)
-            {
-                DataGroup dg = cycleDataGroup.ToDataGroup();
-                string key = (dg.DataSeries.First().SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I") + dg.DataSeries.First().SeriesInfo.Channel.Phase.Name;
-                dict.GetOrAdd(key + " RMS", _ => cycleDataGroup.RMS.ToSubSeries(startTime, endTime));
-                DataSeries angles = cycleDataGroup.Phase.ToSubSeries(startTime, endTime);
-                angles.DataPoints = angles.DataPoints.Select(dataPoint => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value * 180 / Math.PI }).ToList();
-                dict.GetOrAdd(key + " Angle", _ => angles);
-            }
-
-            return dict;
-        }
-
-        private DataGroup ToDataGroup(Meter meter, List<byte[]> data)
-        {
-            DataGroup dataGroup = new DataGroup();
-            dataGroup.FromData(meter, data);
-            VIDataGroup vIDataGroup = new VIDataGroup(dataGroup);
-            return vIDataGroup.ToDataGroup();
-        }
-
-        private IDbDataParameter ToDateTime2(AdoDataConnection connection, DateTime dateTime)
-        {
-            using (IDbCommand command = connection.Connection.CreateCommand())
-            {
-                IDbDataParameter parameter = command.CreateParameter();
-                parameter.DbType = DbType.DateTime2;
-                parameter.Value = dateTime;
-                return parameter;
-            }
-        }
 
         #endregion
 

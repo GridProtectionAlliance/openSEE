@@ -139,7 +139,8 @@ INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles
 GO
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'bootstrapTheme', N'~/Content/bootstrap-theme.css', 0, N'Administrator')
 GO
-
+INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'export.CSV', N'useLLVoltage', N'false', 0, N'Administrator')
+GO
 
 CREATE TABLE [dbo].[ValueListGroup](
 	[ID] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,
