@@ -35,7 +35,7 @@ export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBas
 
 export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
-    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number
+    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
@@ -66,6 +66,20 @@ export interface iD3DataSeries {
     LegendGroup: string,
     SecondaryLegendClass: string,
     DataPoints: Array<[number, number]>,
+}
+
+export interface iD3DataPoint {
+    ChannelID: number,
+    ChartLabel: string,
+    XaxisLabel: string,
+    Color: string,
+    LegendKey: string,
+    Enabled: boolean,
+
+    LegendClass: string,
+    LegendGroup: string,
+    SecondaryLegendClass: string,
+    Value: number,
 }
 
 
@@ -224,6 +238,12 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         delete props.fftStartTime;
         delete nextPropsClone.fftStartTime;
+
+        delete props.tableSetter;
+        delete nextPropsClone.tableSetter;
+
+        delete props.tableReset;
+        delete nextPropsClone.tableReset;
 
 
         if (nextProps.startTimeVis && nextProps.endTimeVis) {
@@ -386,13 +406,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
         
-            
-     
-
-        //cycleStart: number;
-        //cycleEnd: number;
-
-
         ctrl.paths = svg.append("g").attr("id","path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
 
         
@@ -591,6 +604,39 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         if (hover == null) {
             ctrl.hover.style("opacity", 0);
             return;
+        }
+
+        // Hover Changed does not neccesarily correpond to Mouse move....
+        if (ctrl.props.tableSetter) {
+
+            let points = [];
+            ctrl.state.dataSet.Data.forEach((row, key, map) => {
+                if (row.Display) {
+                    let i = d3.bisect(row.DataPoints.map(item => item[0]), ctrl.xScale.invert(hover), 1);
+                    if (row.DataPoints[i] != undefined) {
+                        points.push({
+                            ChannelID: row.ChannelID,
+                            ChartLabel: row.ChartLabel,
+                            XaxisLabel: row.XaxisLabel,
+                            Color: row.Color,
+                            LegendKey: ctrl.props.legendKey,
+
+                            LegendClass: row.LegendClass,
+                            LegendGroup: row.LegendGroup,
+                            SecondaryLegendClass: row.SecondaryLegendClass,
+                            Value: row.DataPoints[i][1],
+                            Enabled: row.Enabled
+                        })
+                    }
+                }
+            });
+
+            ctrl.props.tableSetter(points)
+           /* if (ctrl.state.dataSet.Data.length > 0) {
+                let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), x0, 1);
+                if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
+                    selectedData = ctrl.state.dataSet.Data[0].DataPoints[i][0]
+                    */
         }
 
         ctrl.hover.attr("x1", hover)

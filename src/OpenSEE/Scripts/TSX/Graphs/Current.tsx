@@ -115,6 +115,8 @@ export default class Current extends React.Component<any, any>{
             hover={this.props.hover}
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
+            tableSetter={this.props.tableSetter}
+            tableReset={this.props.tableReset}
         />
     }
 

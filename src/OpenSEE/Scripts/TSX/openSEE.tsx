@@ -48,7 +48,7 @@ import AnalyticBar from './Graphs/AnalyticBar';
 import OpenSEENavbar from './Components/OpenSEENavbar';
 import About from './Components/About';
 
-import { D3LineChartBaseProps } from './Graphs/D3LineChartBase';
+import { D3LineChartBaseProps, iD3DataPoint } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
 
 
@@ -57,7 +57,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     historyHandle: any;
     openSEEService: OpenSEEService;
     resizeId: any;
-    TableData: Map<string, { data: number, color: string }>;
+    TableData: Array<iD3DataPoint>;
+
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -82,7 +83,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             Width: window.innerWidth - 300,
             Hover: null,
             PointsTable: [],
-            TableData: new Map < string, { data: number, color: string }>(),
+            TableData: new Array<iD3DataPoint>(),
             PostedData: {},
             nextBackLookup:{
                 Meter: {},
@@ -102,7 +103,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
            
         }
 
-        this.TableData = new Map<string, { data: number, color: string }>();
+        this.TableData = [];
 
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
@@ -160,6 +161,11 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     render() {
         var height = this.calculateHeights(this.state);
         var windowHeight = window.innerHeight;
+
+        if (this.state.TableData.length > 0) {
+            console.log("OpenSEE " + this.state.TableData[0].ChartLabel + ": " + this.state.TableData[0].Value)
+        }
+
 
         return (
             <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
@@ -244,7 +250,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         TooltipWithDeltaTable={this.state.TooltipWithDeltaTable}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
-                        <ViewerWindow key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
+                        <ViewerWindow tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
                         {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow key={a} eventId={a} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>} />) : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
                             <AnalyticBar analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
@@ -277,8 +283,32 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         });
     }
 
-    tableUpdater(obj: Map<string, { data: number, color: string }>) {
-        this.TableData = new Map([...Array.from(this.TableData), ...Array.from(obj)]);
+    ResetTable() {
+        this.TableData = [];
+    }
+
+    tableUpdater(obj: Array<iD3DataPoint>) {
+
+        
+        obj.forEach(item => {
+            let i = this.TableData.findIndex(d => {
+                return (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == item.ChartLabel &&
+                    d.XaxisLabel == item.XaxisLabel &&
+                    d.LegendClass == item.LegendClass &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.SecondaryLegendClass == item.SecondaryLegendClass &&
+                    d.LegendKey == item.LegendKey
+                )
+            });
+            if (i > -1) {
+                this.TableData[i] = item
+            }
+            else
+                this.TableData.push(item)
+        });
+
         this.setState({ TableData: this.TableData });
     }
 
@@ -338,8 +368,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
             <div className="card-header">{props.label}</div>
             <div className="card-body" style={{ padding: 0 }}>
-                {(props.displayVolt ? <Voltage fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayCur ? <Current fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayVolt ? <Voltage tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayCur ? <Current tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
                 {(props.displayDigitals ? <Digital fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
                 {(props.displayAnalogs ? <Analog fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
                 {(props.displayTCE ? <TripCoilCurrent fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
@@ -347,8 +377,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         </div>
         :
         <div>
-            {(props.displayVolt ? <Voltage fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayCur ? <Current fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayVolt ? <Voltage tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayCur ? <Current tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
             {(props.displayDigitals ? <Digital fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
             {(props.displayAnalogs ? <Analog fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
             {(props.displayTCE ? <TripCoilCurrent fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTimeVis={props.startTimeVis} endTimeVis={props.endTimeVis} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}

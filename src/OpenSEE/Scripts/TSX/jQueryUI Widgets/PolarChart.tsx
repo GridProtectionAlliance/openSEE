@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
+import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -43,7 +44,7 @@ const outerDiv: React.CSSProperties = {
 };
 
 const handle = style({
-    width: '100 %',
+    width: '100%',
     height: '20px',
     backgroundColor: '#808080',
     cursor: 'move',
@@ -70,7 +71,7 @@ const closeButton = style({
 });
 
 export interface PolarChartProps {
-    data: Map<string, { data: number, color: string }>,
+    data: Array<iD3DataPoint>,
     callback: Function
 }
 
@@ -97,21 +98,107 @@ export default class PolarChart extends React.Component<any, any>{
     
         var dataV = [];
 
-        if (this.props.data.get('VAN RMS') != undefined)
-            dataV.push({ mag: this.props.data.get('VAN RMS').data, ang: this.props.data.get('VAN Phase').data, color: this.props.data.get('VAN RMS').color });
-        if (this.props.data.get('VBN RMS') != undefined)
-            dataV.push({ mag: this.props.data.get('VBN RMS').data, ang: this.props.data.get('VBN Phase').data, color: this.props.data.get('VBN RMS').color });
-        if (this.props.data.get('VCN RMS') != undefined)
-            dataV.push({ mag: this.props.data.get('VCN RMS').data, ang: this.props.data.get('VCN Phase').data, color: this.props.data.get('VCN RMS').color });
-
         var dataI = [];
-        if (this.props.data.get('IAN RMS') != undefined)
-            dataI.push({ mag: this.props.data.get('IAN RMS').data, ang: this.props.data.get('IAN Phase').data, color: this.props.data.get('IAN RMS').color });
-        if (this.props.data.get('IBN RMS') != undefined)
-            dataI.push({ mag: this.props.data.get('IBN RMS').data, ang: this.props.data.get('IBN Phase').data, color: this.props.data.get('IBN RMS').color });
-        if (this.props.data.get('ICN RMS') != undefined)
-            dataI.push({ mag: this.props.data.get('ICN RMS').data, ang: this.props.data.get('ICN Phase').data, color: this.props.data.get('ICN RMS').color });        
 
+        
+        //replace with foreach
+        this.props.data.forEach(item => {
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VAN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VAN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VAN", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VBN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VBN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VBN", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VCN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VCN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VCN", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VAB RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VAB Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VAB", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VBC RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VBC Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VBC", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VCA RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "VCA Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Voltage'));
+                if (i) {
+                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VCA", group: item.LegendGroup })
+                }
+            }
+
+            if (item.LegendKey == 'Current' && item.ChartLabel == "IAN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "IAN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Current'));
+                if (i) {
+                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "IAN", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Current' && item.ChartLabel == "IBN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "IBN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Current'));
+                if (i) {
+                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "IBN", group: item.LegendGroup })
+                }
+            }
+            if (item.LegendKey == 'Current' && item.ChartLabel == "ICN RMS") {
+                let i = this.props.data.findIndex(d => (
+                    d.ChannelID == item.ChannelID &&
+                    d.ChartLabel == "ICN Phase" &&
+                    d.LegendGroup == item.LegendGroup &&
+                    d.LegendKey == 'Current'));
+                if (i) {
+                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "ICN", group: item.LegendGroup })
+                }
+            }
+
+
+        })
+
+      
         var vMax = 0;
         $.each(dataV, function (key, series) {
             if (series.mag > vMax)
@@ -127,25 +214,35 @@ export default class PolarChart extends React.Component<any, any>{
         var scaleI = 0.9 * 150 / iMax;
 
 
-        var vanRMS = this.props.data.get('VAN RMS');
-        var vbnRMS = this.props.data.get('VBN RMS');
-        var vcnRMS = this.props.data.get('VCN RMS');
-        var ianRMS = this.props.data.get('IAN RMS');
-        var ibnRMS = this.props.data.get('IBN RMS');
-        var icnRMS = this.props.data.get('ICN RMS');
+        let tblData = {};
 
-        var vanPhase = this.props.data.get('VAN Phase');
-        var vbnPhase = this.props.data.get('VBN Phase');
-        var vcnPhase = this.props.data.get('VCN Phase');
-        var ianPhase = this.props.data.get('IAN Phase');
-        var ibnPhase = this.props.data.get('IBN Phase');
-        var icnPhase = this.props.data.get('ICN Phase');
+        dataV.forEach(item => {
+            if (!(tblData[item.group])) 
+                tblData[item.group] = {}
+            
+            tblData[item.group][item.label] = { Mag: item.mag, Ang: item.ang }
+            
+        })
+
+        var vanRMS = this.props.data[0]//this.props.data.get('VAN RMS');
+        var vbnRMS = this.props.data[0]//this.props.data.get('VBN RMS');
+        var vcnRMS = this.props.data[0]//this.props.data.get('VCN RMS');
+        var ianRMS = this.props.data[0]//this.props.data.get('IAN RMS');
+        var ibnRMS = this.props.data[0]//this.props.data.get('IBN RMS');
+        var icnRMS = this.props.data[0]//this.props.data.get('ICN RMS');
+
+        var vanPhase = this.props.data[0]//this.props.data.get('VAN Phase');
+        var vbnPhase = this.props.data[0]//this.props.data.get('VBN Phase');
+        var vcnPhase = this.props.data[0]//this.props.data.get('VCN Phase');
+        var ianPhase = this.props.data[0]//this.props.data.get('IAN Phase');
+        var ibnPhase = this.props.data[0]//this.props.data.get('IBN Phase');
+        var icnPhase = this.props.data[0]//this.props.data.get('ICN Phase');
 
 
         return (
             <div id="phasor" className="ui-widget-content" style={outerDiv}>
                 <div id="phasorhandle" className={handle}></div>
-                <div id="phasorchart" style={{ width: '500px', height: '300px', zIndex: 1001 }}>
+                <div id="phasorchart" style={{ width: '520px', height: '300px', zIndex: 1001 }}>
                     <svg width="300" height="300">
                         <circle cx="150" cy="150" r={60} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0"/>
                         <circle cx="150" cy="150" r={130} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
@@ -154,44 +251,47 @@ export default class PolarChart extends React.Component<any, any>{
                         { dataV.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleV, value.ang)} style={{ stroke: value.color, strokeWidth: 3 }} />)}
                         { dataI.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleI, value.ang)} strokeDasharray="10,10" style={{ stroke: value.color, strokeWidth: 3 }} />)}
                     </svg>
-                    <table className="table" style={{ width: 200, height: 300, float: 'right' }}>
+                    <table className="table" style={{ width: 180, height: 300, float: 'right' }}>
                         <thead>
                             <tr>
-                                <th>Phase</th>
-                                <th>Mag</th>
-                                <th>Angle</th>
+                                <th style={{width: 180}}>Asset A</th>
+                            </tr>
+                            <tr>
+                                <th style={{ width: 20 }}>Phase</th>
+                                <th style={{ width: 80 }}>Mag</th>
+                                <th style={{ width: 80 }}>Angle</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>VAN</td>
-                                <td>{( vanRMS != undefined ? vanRMS.data.toFixed(2) : null)}</td>
-                                <td>{(vanPhase != undefined ? vanPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20}}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
                             <tr>
-                                <td>VBN</td>
-                                <td>{(vbnRMS != undefined ? vbnRMS.data.toFixed(2) : null)}</td>
-                                <td>{(vbnPhase != undefined ? vbnPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20 }}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
                             <tr>
-                                <td>VCN</td>
-                                <td>{(vcnRMS != undefined ? vcnRMS.data.toFixed(2) : null)}</td>
-                                <td>{(vcnPhase != undefined ? vcnPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20 }}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
                             <tr>
-                                <td>IAN</td>
-                                <td>{(ianRMS != undefined ? ianRMS.data.toFixed(2) : null)}</td>
-                                <td>{(ianPhase != undefined ? ianPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20 }}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
                             <tr>
-                                <td>IBN</td>
-                                <td>{(ibnRMS != undefined ? ibnRMS.data.toFixed(2) : null)}</td>
-                                <td>{(ibnPhase != undefined ? ibnPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20 }}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
                             <tr>
-                                <td>ICN</td>
-                                <td>{(icnRMS != undefined ? icnRMS.data.toFixed(2) : null)}</td>
-                                <td>{(icnPhase != undefined ? icnPhase.data.toFixed(2) : null)}</td>
+                                <td style={{ width: 20 }}>VAN</td>
+                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
+                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
                             </tr>
 
                         </tbody>

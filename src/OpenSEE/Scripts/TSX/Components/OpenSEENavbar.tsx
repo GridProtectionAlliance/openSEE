@@ -31,12 +31,13 @@ import ScalarStats from './../jQueryUI Widgets/ScalarStats';
 import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
+import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
 declare var homePath: string;
 
 export default class OpenSEENavbar extends React.Component {
     props: {
-        TableData: Map<string, { data: number, color: string }>,
+        TableData: Array<iD3DataPoint>,
         PointsTable: Array<{ arrayIndex: number, theseries: string, thetime: number, thevalue: any, deltatime: number, deltavalue: any }>,
         eventid: number,
         resetZoom: any,
@@ -77,6 +78,7 @@ export default class OpenSEENavbar extends React.Component {
     }
 
     render() {
+                
         return (
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
 
@@ -139,10 +141,10 @@ export default class OpenSEENavbar extends React.Component {
             </nav>
         );
 
-        //      <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
-        //    <TooltipWithDelta data={this.props.TooltipWithDeltaTable} callback={this.props.stateSetter} />
-        //    <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
-        //    <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
+        //   <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
+        //   <TooltipWithDelta data={this.props.TooltipWithDeltaTable} callback={this.props.stateSetter} />
+        //   <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
+        //   <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
         //   <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
         //   <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
 

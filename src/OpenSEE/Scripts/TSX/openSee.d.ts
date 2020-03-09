@@ -107,7 +107,7 @@ declare interface OpenSEEState {
     Width: number,
     Hover: number,
     PointsTable: Array<any>,
-    TableData: Map<string, { data: number, color: string }>,
+    TableData: Array<iD3DataPoint>,
     PostedData: iPostedData,
     nextBackLookup: iNextBackLookup,
     navigation: string,
@@ -123,7 +123,7 @@ declare interface OpenSEEState {
     startTimeVis: number,
     endTimeVis: number,
     fftStartTime: number,
-    barChartReset?: Function
+    barChartReset?: Function,
 }
 
 declare interface iListObject {
