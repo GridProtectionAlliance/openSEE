@@ -384,6 +384,11 @@ namespace OpenSEE
         public List<D3Series> BuildDataSeries(NameValueCollection requestParameters)
         {
             int eventID = int.Parse(requestParameters["eventID"]);
+            bool displayVolt = requestParameters["displayVolt"] == null ? true:  bool.Parse(requestParameters["displayVolt"]);
+            bool displayCur = requestParameters["displayCur"] == null ? true : bool.Parse(requestParameters["displayCur"]);
+            bool displayTCE = requestParameters["displayTCE"] == null ? false : bool.Parse(requestParameters["displayTCE"]);
+            bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
+            bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
 
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
@@ -392,9 +397,21 @@ namespace OpenSEE
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
                 IEnumerable<D3Series> returnList = new List<D3Series>();
-                returnList = QueryVoltageData(meter, evt);
+                if (displayVolt)
+                    returnList = returnList.Concat(QueryVoltageData(meter, evt));
 
-                returnList = returnList.Concat(QueryCurrentData(meter, evt));
+                if(displayCur)
+                    returnList = returnList.Concat(QueryCurrentData(meter, evt));
+
+                if(displayTCE)
+                    returnList = returnList.Concat(QueryTCEData(meter, evt));
+
+                if (displayAnalogs)
+                    returnList = returnList.Concat(QueryAnalogData(meter, evt));
+
+                if (breakerdigitals)
+                    returnList = returnList.Concat(QueryDigitalData(meter, evt));
+
                 return returnList.ToList();
             }
         }
@@ -462,7 +479,6 @@ namespace OpenSEE
 
             return result;
         }
-
         private List<D3Series> QueryCurrentData(Meter meter, Event evt)
         {
             DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
@@ -519,7 +535,61 @@ namespace OpenSEE
             return result;
         }
 
+        private List<D3Series> QueryTCEData(Meter meter, Event evt)
+        {
+            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
 
+            List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "TripCoilCurrent"
+                ).Select(
+                    ds => new D3Series()
+                    {
+                        ChannelID = ds.SeriesInfo.Channel.ID,
+                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                    }).ToList();
+
+            return result;
+        }
+
+        private List<D3Series> QueryDigitalData(Meter meter, Event evt)
+        {
+            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+            List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital"
+                ).Select(
+                    ds => new D3Series()
+                    {
+                        ChannelID = ds.SeriesInfo.Channel.ID,
+                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                    }).ToList();
+
+            return result;
+        }
+
+        private List<D3Series> QueryAnalogData(Meter meter, Event evt)
+        {
+            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+            List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds =>
+               ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" &&
+               ds.SeriesInfo.Channel.MeasurementType.Name != "Voltage" &&
+               ds.SeriesInfo.Channel.MeasurementType.Name != "Current" &&
+               ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds =>
+                  new D3Series()
+                  {
+                      ChannelID = ds.SeriesInfo.Channel.ID,
+                      ChartLabel = ds.SeriesInfo.Channel.Description?? OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                      LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                      DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+
+                  }).ToList();
+
+
+            return dataLookup;
+        }
 
         #endregion
 

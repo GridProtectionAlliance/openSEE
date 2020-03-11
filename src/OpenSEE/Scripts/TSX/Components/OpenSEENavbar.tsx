@@ -48,7 +48,13 @@ export default class OpenSEENavbar extends React.Component {
         selected: string,
         startDate: string,
         endDate: string,
-        TooltipWithDeltaTable: Map<string, Map<string, { data: number, color: string }>>
+        TooltipWithDeltaTable: Map<string, Map<string, { data: number, color: string }>>,
+
+        displayVolt: boolean,
+        displayCur: boolean,
+        displayTCE:boolean,
+        breakerdigitals: boolean,
+        displayAnalogs: boolean,
     }
     state: {
         showComtradeExportButton: boolean
@@ -187,9 +193,16 @@ export default class OpenSEENavbar extends React.Component {
     }
 
 
-
     exportData(type) {
-        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${this.props.eventid}`);
+        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${this.props.eventid}` + 
+            `${this.props.displayVolt != undefined ? `&displayVolt=${this.props.displayVolt}` : ``}` + 
+            `${this.props.displayCur != undefined ? `&displayCur=${this.props.displayCur}` : ``}` + 
+            `${this.props.displayTCE != undefined ? `&displayTCE=${this.props.displayTCE}` : ``}` + 
+            `${this.props.breakerdigitals != undefined ? `&breakerdigitals=${this.props.breakerdigitals}` : ``}` + 
+            `${this.props.displayAnalogs != undefined ? `&displayAnalogs=${this.props.displayAnalogs}` : ``}` + 
+            `&Meter=${this.props.PostedData.postedMeterName}` +
+            `&EventType=${this.props.PostedData.postedEventName}`
+            );
             /*+
             `${this.props.startDate != undefined ? `&startDate=${this.props.startDate}` : ``}` +
             `${this.props.endDate != undefined ? `&endDate=${this.props.endDate}` : ``}` +
