@@ -216,12 +216,14 @@ export default class PolarChart extends React.Component<any, any>{
             VAB: [], VAN: [], 
             VBC: [], VBN: [],
             VCA: [], VCN: [],
+            IAN: [], IBN: [], ICN: [],
         };
 
         let tblShow = {
             VAB: false, VAN: false,
             VBC: false, VBN: false,
             VCA: false, VCN: false,
+            IAN: false, IBN: false, ICN: false,
         };
 
         let assetData = []
@@ -238,12 +240,38 @@ export default class PolarChart extends React.Component<any, any>{
                 tblData.VAN.push({ Mag: NaN, Ang: NaN })
                 tblData.VBN.push({ Mag: NaN, Ang: NaN })
                 tblData.VCN.push({ Mag: NaN, Ang: NaN })
+                tblData.IAN.push({ Mag: NaN, Ang: NaN })
+                tblData.IBN.push({ Mag: NaN, Ang: NaN })
+                tblData.ICN.push({ Mag: NaN, Ang: NaN })
 
             }
 
             tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
             tblShow[item.label] = true
         })
+
+        dataI.forEach(item => {
+            let assetIndex = assetData.findIndex(d => d == item.group);
+            if (assetIndex < 0) {
+                assetIndex = assetData.length;
+                assetData.push(item.group)
+                tblData.VAB.push({ Mag: NaN, Ang: NaN })
+                tblData.VBC.push({ Mag: NaN, Ang: NaN })
+                tblData.VCA.push({ Mag: NaN, Ang: NaN })
+
+                tblData.VAN.push({ Mag: NaN, Ang: NaN })
+                tblData.VBN.push({ Mag: NaN, Ang: NaN })
+                tblData.VCN.push({ Mag: NaN, Ang: NaN })
+                tblData.IAN.push({ Mag: NaN, Ang: NaN })
+                tblData.IBN.push({ Mag: NaN, Ang: NaN })
+                tblData.ICN.push({ Mag: NaN, Ang: NaN })
+
+            }
+
+            tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
+            tblShow[item.label] = true
+        })
+
 
         return (
             <div id="phasor" className="ui-widget-content" style={outerDiv}>
@@ -275,6 +303,10 @@ export default class PolarChart extends React.Component<any, any>{
                                 {(tblShow.VAB ? Row("VAB", tblData.VAB) : null)}
                                 {(tblShow.VBC ? Row("VBC", tblData.VBC) : null)}
                                 {(tblShow.VCA ? Row("VCA", tblData.VCA) : null)}
+
+                                {(tblShow.IAN ? Row("IAN", tblData.IAN) : null)}
+                                {(tblShow.IBN ? Row("IBN", tblData.IBN) : null)}
+                                {(tblShow.ICN ? Row("ICN", tblData.ICN) : null)}
                             </tbody>
                         </table>
                     </div>
