@@ -35,7 +35,8 @@ export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBas
 
 export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
-    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function
+    pointTable?: Array<iD3DataPoint>,
+    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function, 
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
@@ -80,6 +81,7 @@ export interface iD3DataPoint {
     LegendGroup: string,
     SecondaryLegendClass: string,
     Value: number,
+    Time: number,
 }
 
 
@@ -245,6 +247,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.tableReset;
         delete nextPropsClone.tableReset;
 
+        delete props.pointTable;
+        delete nextPropsClone.pointTable;
+
 
         if (nextProps.startTimeVis && nextProps.endTimeVis) {
             if (this.xScale != null && (this.props.startTimeVis != nextProps.startTimeVis || this.props.endTimeVis != nextProps.endTimeVis)) {
@@ -338,7 +343,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
         if (ctrl.props.options.showXLabel) {
             let timeLabel = "Time";
-            if ((this.props.endTimeVis - this.props.startTimeVis) < 1000)
+            if ((this.props.endTimeVis - this.props.startTimeVis) < 100)
                 timeLabel = timeLabel + " (ms)"
             else
                 timeLabel = timeLabel + " (s)";
@@ -438,14 +443,16 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
    formatTimeTick(ctrl: D3LineChartBase, d: number) {
-        let TS = moment(d);
-        let h = ctrl.xScale.domain()[1] - ctrl.xScale.domain()[0]
+       let TS = moment(d);
+       let h = ctrl.xScale.domain()[1] - ctrl.xScale.domain()[0]
+
         if (h < 100)
-            return TS.format("ss.SSS")
+            return TS.format("SSS.S")
         else if (h < 1000)
             return TS.format("ss.SS")
         else
-            return TS.format("SSS.S")
+            return TS.format("ss.S")
+            
     }
 
     formatValueTick(ctrl: D3LineChartBase, d: number) {
@@ -606,7 +613,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return;
         }
 
-        // Hover Changed does not neccesarily correpond to Mouse move....
         if (ctrl.props.tableSetter) {
 
             let points = [];
@@ -632,11 +638,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             });
 
             ctrl.props.tableSetter(points)
-           /* if (ctrl.state.dataSet.Data.length > 0) {
-                let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), x0, 1);
-                if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
-                    selectedData = ctrl.state.dataSet.Data[0].DataPoints[i][0]
-                    */
+           
         }
 
         ctrl.hover.attr("x1", hover)
@@ -675,8 +677,34 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let h = ctrl.mousedownX - ctrl.xScale(x0);
 
-        if (Math.abs(h) < 10) {
-            h = 10;
+        if (ctrl.props.pointTable && h < 3 && $('#accumulatedpoints').css('display') != "none") {
+            let points = ctrl.props.pointTable;
+            
+            ctrl.state.dataSet.Data.forEach((row, key, map) => {
+                let i = d3.bisect(row.DataPoints.map(item => item[0]), x0, 1);
+                if (row.Enabled) {
+                    points.push({
+                        ChannelID: row.ChannelID,
+                        ChartLabel: row.ChartLabel,
+                        XaxisLabel: row.XaxisLabel,
+                        Color: row.Color,
+                        LegendKey: ctrl.props.legendKey,
+
+                        LegendClass: row.LegendClass,
+                        LegendGroup: row.LegendGroup,
+                        SecondaryLegendClass: row.SecondaryLegendClass,
+                        Value: row.DataPoints[i][1],
+                        Enabled: row.Enabled,
+                        Time: row.DataPoints[i][0]
+                    })
+                }
+            })
+            ctrl.props.stateSetter({ pointTable: points })
+
+            ctrl.brush.style("opacity", 0);
+            ctrl.mousedownX = 0;
+            return
+            // Add this point to the PointsTable 
         }
 
         let xMouse = ctrl.xScale.invert(ctrl.mousedownX)
@@ -690,7 +718,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
 
         if (Math.abs(xMouse - x0) > 10) {
-
+            
             if (h < 0) {
                 ctrl.props.stateSetter({ startTimeVis: xMouse, endTimeVis: x0 });
             }
@@ -733,7 +761,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         if (ctrl.props.options.showXLabel) {
             let timeLabel = "Time"
 
-            if ((endTime - startTime) < 1000) 
+            if ((endTime - startTime) < 100) 
                 timeLabel = timeLabel + " (ms)";
             else 
                 timeLabel = timeLabel + " (s)";

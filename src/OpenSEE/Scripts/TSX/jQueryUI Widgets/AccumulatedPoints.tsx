@@ -23,7 +23,26 @@
 import * as React from 'react';
 import { clone } from "lodash";
 import { style } from "typestyle";
+import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
+interface TableRow {
+    Value: Array<number>,
+    DeltaValue: Array<number>,
+    Time: number,
+    DeltaTime: number,
+    Indices: Array<number>
+}
+
+interface TableHeader {
+    Asset: string,
+    Channel: string,
+}
+
+
+interface pointInformation extends iD3DataPoint {
+    DeltaValue: number,
+    DeltaTime: number
+}
 // styles
 const outerDiv: React.CSSProperties = {
     minWidth: '200px',
@@ -40,7 +59,7 @@ const outerDiv: React.CSSProperties = {
     display: 'none',
     backgroundColor: 'white',
     width: '520px',
-    //height: '260px'
+    maxHeight: '1040px'
 };
 
 const handle = style({
@@ -71,7 +90,8 @@ const closeButton = style({
 });
 
 export default class Points extends React.Component<any, any>{
-    props: { pointsTable: Array<{ arrayIndex: number, theseries: string, thetime: number, thevalue: any, deltatime: number, deltavalue: any }>, callback: Function, postedData: any}
+    props: { pointsTable: Array<iD3DataPoint>, callback: Function, postedData: any }
+    tblData: Array<TableRow>
     constructor(props) {
         super(props);
 
@@ -86,15 +106,69 @@ export default class Points extends React.Component<any, any>{
 
 
     render() {
-        var rows = this.props.pointsTable.map(a => Row(a, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), this.state.selectedPoint))
+
+        this.tblData = [];
+        let headerData: Array<TableHeader> = [];
+        let availableTimes = [];
+
+        this.props.pointsTable.forEach((item,i) => {
+
+            let channelIndex = headerData.findIndex(d => (
+                d.Asset == item.LegendGroup && d.Channel == item.ChartLabel
+            ));
+
+            let timeIndex = availableTimes.findIndex(d => (
+                d == item.Time
+            ));
+
+            if (channelIndex < 0) {
+                headerData.push({ Asset: item.LegendGroup, Channel: item.ChartLabel });
+                channelIndex = headerData.length - 1;
+                if (this.tblData.length > 0 && this.tblData[0].Value.length < channelIndex) {
+                    this.tblData.forEach(item => {
+                        item.Value.push(NaN);
+                        item.DeltaValue.push(NaN);
+                    })
+                }
+            }
+
+            if (timeIndex < 0) {
+                let nData = headerData.length;
+                let t = item.Time - this.props.postedData.postedEventMilliseconds
+                this.tblData.push({
+                    Time: t,
+                    DeltaTime: (this.tblData.length > 0) ? t - this.tblData[this.tblData.length - 1].Time : NaN,
+                    Value: Array(nData).fill(NaN),
+                    DeltaValue: Array(nData).fill(NaN),
+                    Indices: []
+                })
+                availableTimes.push(item.Time)
+                timeIndex = availableTimes.length - 1;
+            }
+
+            this.tblData[timeIndex].Value[channelIndex] = item.Value;
+            this.tblData[timeIndex].DeltaValue[channelIndex] = 100;
+            this.tblData[timeIndex].Indices.push(i)
+
+        })
+
+        let headers = headerData.map((a,i) => Header(a))
+        if (!headers)
+            headers = []
+
+        var rows = this.tblData.map((a, i) => {
+            return Row(a, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
+        })
+
         return (
             <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
                 <div style={{ border: 'black solid 2px' }}>
                     <div id="accumulatedpointshandle" className={handle}></div>
-                    <div style={{ overflowY: 'scroll' }}>
+                    <div style={{ overflowY: 'scroll', maxHeight: 950}}>
                         <table className="table table-bordered table-hover">
                             <thead>
-                                <tr><td>Series</td><td>Time</td><td>Value</td><td>Delta Time</td><td>Delta Value</td></tr>
+                                <tr><td colSpan={2}></td>{headers}</tr>
+                                {SubHeader(headers.length)}
                             </thead>
                             <tbody>
                                 {rows}
@@ -121,28 +195,11 @@ export default class Points extends React.Component<any, any>{
         var data = clone(this.props.pointsTable);
         var selectedPoint = this.state.selectedPoint;
 
-        if (selectedPoint === data.length - 1) {
-            data.pop();
-        }
-        else if (this.state.selectedPoint == 0) {
-
-            data[1].deltatime = 0;
-            data[1].deltavalue = (0.0).toFixed(3);
-            for (var i = selectedPoint + 1; i < data.length; ++i)
-                data[i].arrayIndex--;
-            data.splice(selectedPoint, 1);
-
-
-        }
-        else if (selectedPoint === -1) {
+        if (selectedPoint === -1) {
 
         }
         else {
-            data[selectedPoint + 1].deltatime = data[selectedPoint + 1].thetime - data[selectedPoint - 1].thetime;
-            data[selectedPoint + 1].deltavalue = (data[selectedPoint + 1].thevalue - data[selectedPoint - 1].thevalue).toFixed(3);
-            for (var i = selectedPoint + 1; i < data.length; ++i)
-                data[i].arrayIndex--;
-            data.splice(selectedPoint, 1);
+            data = this.removeByIndex(data, this.tblData[selectedPoint].Indices)
         }
         selectedPoint = -1;
 
@@ -154,8 +211,9 @@ export default class Points extends React.Component<any, any>{
 
     popAccumulatedPoints() {
         var data = clone(this.props.pointsTable);
-        if (data.length > 0)
-            data.pop();
+        if (data.length > 0) {
+            data = this.removeByIndex(data, this.tblData[this.tblData.length -1].Indices)
+        }
 
         this.props.callback({
             PointsTable: data
@@ -167,26 +225,87 @@ export default class Points extends React.Component<any, any>{
             PointsTable: []
         });
     }
+
+    removeByIndex(array, indices) {
+        indices.sort(function (a, b) { return b - a; });
+
+        for (let i = 0; i< indices.length ; i++)
+            array.splice(indices[i], 1);
+
+        return array
+    }
 }
 
-const Row = (row: { arrayIndex: number, theseries: string, thetime: number, thevalue: any, deltatime: number, deltavalue: any }, systemFrequency: number, stateSetter: Function, arrayIndex) => {
+const Row = (row: TableRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number) => {
     function showTime(thetime) {
         return <span>{ thetime.toFixed(7) } sec<br/>{(thetime * Number(systemFrequency)).toFixed(2)} cycles</span>;
     }
 
     function showDeltaTime(deltatime) {
-        return <span>{deltatime.toFixed(7)} sec<br />{(deltatime * Number(systemFrequency)).toFixed(2)} cycles</span>;
+        if (isNaN(deltatime))
+            return (<span>N/A</span>)
+        if (deltatime)
+        return <span>{deltatime.toFixed(7)} sec<br/>{(deltatime * Number(systemFrequency)).toFixed(2)} cycles</span>;
     }
-
+    function createValue(index) {
+        if (isNaN(row.Value[index]))
+            return (<td><span>N/A</span></td>)
+        return (<td>{row.Value[index].toFixed(2)}</td>)
+    }
+    function createDeltaValue(index) {
+        if (isNaN(row.DeltaValue[index]))
+            return (<td><span>N/A</span></td>)
+        return (<td>{row.DeltaValue[index].toFixed(2)}</td>)
+    }
+    function createCells() {
+        let res = [];
+        row.Value.forEach((a, i) => {
+            res.push(createValue(i))
+            res.push(createDeltaValue(i))
+        })
+        return res;
+    }
     return (
-        <tr key={row.arrayIndex} onClick={(e) => stateSetter({ selectedPoint: row.arrayIndex })} style={{backgroundColor: (row.arrayIndex == arrayIndex ? 'yellow': null)}}>
-            <td>{row.theseries}</td>
-            <td>{showTime(row.thetime)}</td>
-            <td>{row.thevalue}</td>
-            <td>{showDeltaTime(row.deltatime)}</td>
-            <td>{row.deltavalue}</td>
-
+        <tr key={arrayIndex} onClick={(e) => stateSetter({ selectedPoint: arrayIndex })} style={{ backgroundColor: (arrayIndex == currentSelected ? 'yellow' : null) }}>
+            <td>{showTime(row.Time / 1000.0)}</td>
+            <td>{showDeltaTime(row.DeltaTime / 1000.0)}</td>
+            {createCells()}
         </tr>
     );
 }
+
+const Header = (header: TableHeader) => {
+    return (
+        <td colSpan={2}><span>{header.Asset}<br />{header.Channel}</span> </td>
+        )
+}
+
+
+const SubHeader = (collumns: number) => {
+    function createCell(str) {
+        return (<td>{str}</td>)
+    }
+
+    function createCells() {
+        let res = [];
+        let i;
+        res.push(createCell("Time"))
+        res.push(createCell("Delta Time"))
+        for (i = 0; i < collumns; i++) {
+            res.push(createCell("Value"))
+            res.push(createCell("Delta Value"))
+        }
+       
+        return res;
+    }
+
+
+    return (
+        <tr>
+            {createCells()}
+        </tr>
+        );
+
+}
+
 

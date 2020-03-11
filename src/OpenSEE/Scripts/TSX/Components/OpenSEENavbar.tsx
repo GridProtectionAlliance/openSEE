@@ -38,7 +38,7 @@ declare var homePath: string;
 export default class OpenSEENavbar extends React.Component {
     props: {
         TableData: Array<iD3DataPoint>,
-        PointsTable: Array<{ arrayIndex: number, theseries: string, thetime: number, thevalue: any, deltatime: number, deltavalue: any }>,
+        PointsTable: Array<iD3DataPoint>,
         eventid: number,
         resetZoom: any,
         stateSetter: Function,

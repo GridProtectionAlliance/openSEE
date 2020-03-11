@@ -42,6 +42,7 @@ export default function Analog(props: D3LineChartBaseProps): JSX.Element {
         hover: props.hover,
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
+        pointTable: props.pointTable,
     }, null);
 
 }

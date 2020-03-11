@@ -123,6 +123,7 @@ export default class Voltage extends React.Component<any, any>{
             fftStartTime={this.props.fftStartTime}
             tableSetter={this.props.tableSetter}
             tableReset={this.props.tableReset}
+            pointTable={this.props.pointTable}
         />
     }
 

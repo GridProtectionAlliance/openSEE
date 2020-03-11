@@ -133,7 +133,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             eventId={this.props.eventId}
             height={this.props.height}
             stateSetter={this.props.stateSetter}
-            options={ this.props.options }
+            options={this.props.options}
             startTime={this.props.startTime}
             endTime={this.props.endTime}
             startTimeVis={this.props.startTimeVis}
@@ -141,6 +141,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             hover={this.props.hover}
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
+            pointTable={this.props.pointTable}
         />
     }
 

@@ -106,7 +106,7 @@ declare interface OpenSEEState {
     displayAnalogs: boolean,
     Width: number,
     Hover: number,
-    PointsTable: Array<any>,
+    PointsTable: Array<iD3DataPoint>,
     TableData: Array<iD3DataPoint>,
     PostedData: iPostedData,
     nextBackLookup: iNextBackLookup,
