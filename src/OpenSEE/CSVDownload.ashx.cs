@@ -102,7 +102,9 @@ namespace OpenSEE
 
             try
             {
-                Filename = requestParameters["Meter"] + "_" + requestParameters["EventType"] + "_Event_" + requestParameters["eventID"] + ".csv";
+                Filename = (requestParameters["Meter"] == null? (requestParameters["Meter"] + "_") : "") + (requestParameters["EventType"] == null? requestParameters["EventType"] + "_" : "") + "Event_" + requestParameters["eventID"] + ".csv";
+                if (requestParameters["type"] == "pqds")
+                    Filename = "PQDS_" + Filename;
                 response.ClearContent();
                 response.Clear();
                 response.AddHeader("Content-Type", CsvContentType);
@@ -130,7 +132,10 @@ namespace OpenSEE
             {
                 try
                 {
-                    Filename = requestParameters["Meter"] + "_" + requestParameters["EventType"] + "_Event_" + requestParameters["eventID"] + ".csv";
+                    Filename = (requestParameters["Meter"] == null ? (requestParameters["Meter"] + "_") : "") + (requestParameters["EventType"] == null ? requestParameters["EventType"] + "_" : "") + "Event_" + requestParameters["eventID"] + ".csv";
+                    if (requestParameters["type"] == "pqds")
+                        Filename = "PQDS_" + Filename;
+
                     WriteTableToStream(requestParameters, stream, null, cancellationToken);
                 }
                 catch (Exception e)
@@ -230,16 +235,22 @@ namespace OpenSEE
 
                 VIDataGroup dataGroup = new VIDataGroup( OpenSEEController.QueryDataGroup(evt.ID, meter));
 
-                data.Add(PQDSSeries(dataGroup.VA, "va"));
-                data.Add(PQDSSeries(dataGroup.VB, "vb"));
-                data.Add(PQDSSeries(dataGroup.VC, "vc"));
+                if (dataGroup.VA != null)
+                    data.Add(PQDSSeries(dataGroup.VA, "va"));
+                if (dataGroup.VB != null)
+                    data.Add(PQDSSeries(dataGroup.VB, "vb"));
+                if (dataGroup.VC != null)
+                    data.Add(PQDSSeries(dataGroup.VC, "vc"));
 
-                data.Add(PQDSSeries(dataGroup.IA, "va"));
-                data.Add(PQDSSeries(dataGroup.IB, "vb"));
-                data.Add(PQDSSeries(dataGroup.IC, "vc"));
-                data.Add(PQDSSeries(dataGroup.IR, "vn"));
+                if (dataGroup.IA != null)
+                    data.Add(PQDSSeries(dataGroup.IA, "ia"));
+                if (dataGroup.IB != null)
+                    data.Add(PQDSSeries(dataGroup.IB, "ib"));
+                if (dataGroup.IC != null)
+                    data.Add(PQDSSeries(dataGroup.IC, "ic"));
+                if (dataGroup.IR != null)
+                    data.Add(PQDSSeries(dataGroup.IR, "in"));
 
-                
 
                 if (data.Count() == 0) return;
 
@@ -255,6 +266,8 @@ namespace OpenSEE
         private PQDS.DataSeries PQDSSeries(DataSeries data, string label)
         {
             PQDS.DataSeries result = new PQDS.DataSeries(label);
+
+            result.Series = data.DataPoints.Select(item => new PQDS.DataPoint() { Time = item.Time, Value = item.Value }).ToList();
 
             return result;
         }

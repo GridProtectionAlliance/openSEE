@@ -229,7 +229,7 @@ namespace OpenSEE
 
             using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
-                 false;
+                 
                 if (channel.MeasurementType.Name == "Voltage")
                 {
                     switch (channel.Phase.Name)
