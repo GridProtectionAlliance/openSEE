@@ -227,47 +227,50 @@ namespace OpenSEE
                 return random;
             }
 
-            if (channel.MeasurementType.Name == "Voltage")
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
-                switch (channel.Phase.Name)
+                 false;
+                if (channel.MeasurementType.Name == "Voltage")
                 {
-                    case ("AN"):
-                        return "#A30000";
-                    case ("BN"):
-                        return "#0029A3";
-                    case ("CN"):
-                        return "#007A29";
-                    case ("AB"):
-                        return "#A30000";
-                    case ("BC"):
-                        return "#0029A3";
-                    case ("CA"):
-                        return "#007A29";
-                    case ("NG"):
-                        return "#d3d3d3";
-                    default: // Should be random
-                        return random;
+                    switch (channel.Phase.Name)
+                    {
+                        case ("AN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AN'") ?? "#A30000";
+                        case ("BN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BN'") ?? "#0029A3";
+                        case ("CN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CN'") ??  "#007A29";
+                        case ("AB"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AB'") ?? "#A30000";
+                        case ("BC"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BC'") ?? "#0029A3";
+                        case ("CA"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CA'") ?? "#007A29";
+                        case ("NG"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'NG'") ?? "#d3d3d3";
+                        default: // Should be random
+                            return random;
+                    }
+                }
+                else if (channel.MeasurementType.Name == "Current")
+                {
+                    switch (channel.Phase.Name)
+                    {
+                        case ("AN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'AN'") ?? "#FF0000";
+                        case ("BN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'BN'") ?? "#0066CC";
+                        case ("CN"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'CN'") ?? "#33CC33";
+                        case ("NG"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'NG'") ?? "#d3d3d3";
+                        case ("RES"):
+                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'RES'") ?? "#d3d3d3";
+                        default: // Should be random
+                            return random;
+                    }
                 }
             }
-            else if (channel.MeasurementType.Name == "Current")
-            {
-                switch (channel.Phase.Name)
-                {
-                    case ("AN"):
-                        return "#FF0000";
-                    case ("BN"):
-                        return "#0066CC";
-                    case ("CN"):
-                        return "#33CC33";
-                    case ("NG"):
-                        return "#d3d3d3";
-                    case ("RES"):
-                        return "#d3d3d3";
-                    default: // Should be random
-                        return random;
-                }
-            }
-
             //Should be Random
             return random;
 
