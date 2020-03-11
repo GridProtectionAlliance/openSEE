@@ -100,8 +100,6 @@ export default class PolarChart extends React.Component<any, any>{
 
         var dataI = [];
 
-        
-        //replace with foreach
         this.props.data.forEach(item => {
             if (item.LegendKey == 'Voltage' && item.ChartLabel == "VAN RMS") {
                 let i = this.props.data.findIndex(d => (
@@ -214,30 +212,38 @@ export default class PolarChart extends React.Component<any, any>{
         var scaleI = 0.9 * 150 / iMax;
 
 
-        let tblData = {};
+        let tblData = {
+            VAB: [], VAN: [], 
+            VBC: [], VBN: [],
+            VCA: [], VCN: [],
+        };
+
+        let tblShow = {
+            VAB: false, VAN: false,
+            VBC: false, VBN: false,
+            VCA: false, VCN: false,
+        };
+
+        let assetData = []
 
         dataV.forEach(item => {
-            if (!(tblData[item.group])) 
-                tblData[item.group] = {}
-            
-            tblData[item.group][item.label] = { Mag: item.mag, Ang: item.ang }
-            
+            let assetIndex = assetData.findIndex(d => d == item.group);
+            if (assetIndex < 0) {
+                assetIndex = assetData.length;
+                assetData.push(item.group)
+                tblData.VAB.push({ Mag: NaN, Ang: NaN })
+                tblData.VBC.push({ Mag: NaN, Ang: NaN })
+                tblData.VCA.push({ Mag: NaN, Ang: NaN })
+
+                tblData.VAN.push({ Mag: NaN, Ang: NaN })
+                tblData.VBN.push({ Mag: NaN, Ang: NaN })
+                tblData.VCN.push({ Mag: NaN, Ang: NaN })
+
+            }
+
+            tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
+            tblShow[item.label] = true
         })
-
-        var vanRMS = this.props.data[0]//this.props.data.get('VAN RMS');
-        var vbnRMS = this.props.data[0]//this.props.data.get('VBN RMS');
-        var vcnRMS = this.props.data[0]//this.props.data.get('VCN RMS');
-        var ianRMS = this.props.data[0]//this.props.data.get('IAN RMS');
-        var ibnRMS = this.props.data[0]//this.props.data.get('IBN RMS');
-        var icnRMS = this.props.data[0]//this.props.data.get('ICN RMS');
-
-        var vanPhase = this.props.data[0]//this.props.data.get('VAN Phase');
-        var vbnPhase = this.props.data[0]//this.props.data.get('VBN Phase');
-        var vcnPhase = this.props.data[0]//this.props.data.get('VCN Phase');
-        var ianPhase = this.props.data[0]//this.props.data.get('IAN Phase');
-        var ibnPhase = this.props.data[0]//this.props.data.get('IBN Phase');
-        var icnPhase = this.props.data[0]//this.props.data.get('ICN Phase');
-
 
         return (
             <div id="phasor" className="ui-widget-content" style={outerDiv}>
@@ -251,51 +257,27 @@ export default class PolarChart extends React.Component<any, any>{
                         { dataV.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleV, value.ang)} style={{ stroke: value.color, strokeWidth: 3 }} />)}
                         { dataI.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleI, value.ang)} strokeDasharray="10,10" style={{ stroke: value.color, strokeWidth: 3 }} />)}
                     </svg>
-                    <table className="table" style={{ width: 180, height: 300, float: 'right' }}>
-                        <thead>
-                            <tr>
-                                <th style={{width: 180}}>Asset A</th>
-                            </tr>
-                            <tr>
-                                <th style={{ width: 20 }}>Phase</th>
-                                <th style={{ width: 80 }}>Mag</th>
-                                <th style={{ width: 80 }}>Angle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style={{ width: 20}}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 20 }}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 20 }}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 20 }}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 20 }}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 20 }}>VAN</td>
-                                <td style={{ width: 80 }}>{(vanRMS != undefined ? vanRMS.Value.toFixed(2) : null)}</td>
-                                <td style={{ width: 80 }} >{(vanPhase != undefined ? vanPhase.Value.toFixed(2) : null)}</td>
-                            </tr>
+                    <div style={{ overflowY: 'scroll', maxWidth: 200, maxHeight: 300, float: 'right'}}>
+                        <table className="table" style={{  height: 300, float: 'right' }}>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    {assetData.map(item => Header(item))}
+                                </tr>
+                                {SubHeader(assetData.length)}
+                                
+                            </thead>
+                            <tbody>
+                                {(tblShow.VAN ? Row("VAN", tblData.VAN) : null)}
+                                {(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
+                                {(tblShow.VCN ? Row("VCN", tblData.VCN) : null)}
 
-                        </tbody>
-                    </table>
+                                {(tblShow.VAB ? Row("VAB", tblData.VAB) : null)}
+                                {(tblShow.VBC ? Row("VBC", tblData.VBC) : null)}
+                                {(tblShow.VCA ? Row("VCA", tblData.VCA) : null)}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <button className={closeButton} onClick={() => {
                     this.props.callback({ phasorButtonText: "Show Phasor" });
@@ -306,3 +288,64 @@ export default class PolarChart extends React.Component<any, any>{
         );
     }
 }
+
+
+const Header = (header: string) => {
+    return (
+        <td colSpan={2}><span>{header}</span> </td>
+    )
+}
+
+
+const SubHeader = (collumns: number) => {
+    function createCell(str) {
+        return (<td>{str}</td>)
+    }
+
+    function createCells() {
+        let res = [];
+        let i;
+        res.push(createCell("Phase"))
+        for (i = 0; i < collumns; i++) {
+            res.push(createCell("Mag"))
+            res.push(createCell("Angle"))
+        }
+
+        return res;
+    }
+
+
+    return (
+        <tr>
+            {createCells()}
+        </tr>
+    );
+}
+
+const Row = (label: string, data: Array<{ Mag: number, Ang: number }>) => {
+    function AddMagnitude(index) {
+        return (<td>{data[index].Mag.toFixed(2)}</td>)
+    }
+       
+    function AddPhase(index) {
+        return (<td>{data[index].Ang.toFixed(2)}</td>)
+        
+    }
+    function rows() {
+        let res = [];
+        let i;
+        for (i = 0; i < data.length; i++) {
+            res.push(AddMagnitude(i))
+            res.push(AddPhase(i))
+        }
+
+        return res;
+    }
+    return (
+        <tr>
+            <td>{label}</td>
+            {rows()}
+        </tr>
+    );
+}
+   

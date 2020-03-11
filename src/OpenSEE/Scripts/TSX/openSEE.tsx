@@ -280,6 +280,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 
     ResetTable() {
         this.TableData = [];
+        this.setState({ PointsTable: [] })
     }
 
     tableUpdater(obj: Array<iD3DataPoint>) {
