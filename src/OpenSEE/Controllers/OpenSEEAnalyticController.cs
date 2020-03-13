@@ -486,7 +486,6 @@ namespace OpenSEE
         #endregion
 
 
-      
         #region [ FFT ]
         [Route("GetFFTData"),HttpGet]
         public Task<JsonReturn> GetFFTData(CancellationToken cancellationToken)
@@ -635,7 +634,7 @@ namespace OpenSEE
                         int eventID = row.ConvertField<int>("ID");
                         DataGroup dataGroup = QueryDataGroup(eventId, meter);
                         VICycleDataGroup viCycleDataGroup = QueryVICycleDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetFirstDerivativeLookup(dataGroup, viCycleDataGroup)).ToList();
+                        returnList = returnList.Concat(Analytics.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup)).ToList();
                       
                     }
                     
@@ -649,80 +648,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetFirstDerivativeLookup(DataGroup dataGroup, VICycleDataGroup viCycleDataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            //deal with the followinf Phases
-            List<string> phases = new List<string> { "AN","BN","CN" };
-
-            foreach(DataSeries ds in dataGroup.DataSeries)
-            {
-                if (((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") || (ds.SeriesInfo.Channel.MeasurementType.Name == "Current"))
-                    && (ds.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous") && (phases.Contains(ds.SeriesInfo.Channel.Phase.Name)))
-                {
-                    string name = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + ds.SeriesInfo.Channel.Phase.Name;
-                    string category = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I");
-
-                    dataLookup.Add(GetFirstDerivativeFlotSeries(ds, name, category, "W"));
-                }
-            }
-
-            foreach (CycleDataGroup dg in viCycleDataGroup.CycleDataGroups)
-            {
-                if ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") && (dg.RMS.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous")
-                    && (phases.Contains(dg.RMS.SeriesInfo.Channel.Phase.Name)))
-                {
-                    string name = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dg.RMS.SeriesInfo.Channel.Phase.Name + " RMS";
-                    string category = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I");
-
-                    dataLookup.Add(GetFirstDerivativeFlotSeries(dg.RMS, name, category, "RMS"));
-                }
-            }
-
-            return dataLookup;
-        }
-
-        private D3Series GetFirstDerivativeFlotSeries(DataSeries dataSeries, string label, string legenclass, string type)
-        {
-            double lastX = 0;
-            double lastY = 0;
-
-            D3Series D3Series = new D3Series()
-            {
-                ChannelID = dataSeries.SeriesInfo.Channel.ID,
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel) + "/s",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
-                LegendClass = legenclass,
-                SecondaryLegendClass = type,
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                ChartLabel = label + " First Derivative",
-                DataPoints = dataSeries.DataPoints.Select((point, index) => {
-                    double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
-                    double y = point.Value;
-
-                    if (index == 0)
-                    {
-                        lastX = x;
-                        lastY = y;
-                    }
-
-                    double[] arr = new double[] { x, (y - lastY) / ((x - lastX)) };
-
-                    lastY = y;
-                    lastX = x;
-
-
-                    return arr;
-                }).ToList()
-            };
-
-            D3Series.DataPoints = D3Series.DataPoints.Select(item => new double[] {item[0], item[1]*1000.0D}).ToList();
-            return D3Series;
-            
-
-        }
-
+     
         #endregion
 
         #region [ Impedance ]
@@ -1546,7 +1472,7 @@ namespace OpenSEE
             double max = dataSeries.DataPoints.Select(point => point.Value).Max();
             double min = dataSeries.DataPoints.Select(point => point.Value).Min();
 
-            D3Series dt = GetFirstDerivativeFlotSeries(dataSeries, "", "", "");
+            D3Series dt = Analytics.GetFirstDerivativeFlotSeries(dataSeries, "", "", "");
 
             fitWave.DataPoints = dataSeries.DataPoints.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).OrderBy(item => item[0]).ToList();
 

@@ -57,7 +57,7 @@ namespace OpenSEE
         // Fields
         private DateTime m_epoch = new DateTime(1970, 1, 1);
 
-        private Random m_random = new Random();
+        private static Random  m_random = new Random();
 
         public class JsonReturn
         {
@@ -207,7 +207,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private string GetUnits(Channel channel)
+        public static string GetUnits(Channel channel)
         {
             if (channel.MeasurementType.Name == "Voltage")
                 return "V";
@@ -217,7 +217,7 @@ namespace OpenSEE
                 return " ";
         }
 
-        private string GetColor(Channel channel)
+        public static string GetColor(Channel channel)
         {
             
             string random = string.Format("#{0:X6}", m_random.Next(0x1000001));

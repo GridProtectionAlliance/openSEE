@@ -176,7 +176,8 @@ namespace OpenSEE
         // Converts the data group row of CSV data.
         private string ToCSV(IEnumerable<D3Series> data, int index)
         {
-            DateTime timestamp = new DateTime(); //dict.Values.First().DataPoints[index].Time;
+            DateTime timestamp = this.m_epoch.Add(new TimeSpan((long)(data.First().DataPoints[index][1] * TimeSpan.TicksPerMillisecond)));
+                
             IEnumerable<string> row = new List<string>() { timestamp.ToString("MM/dd/yyyy HH:mm:ss.fffffff"), timestamp.ToString("fffffff") };
 
             row = row.Concat(data.Select(x => {
@@ -196,8 +197,6 @@ namespace OpenSEE
             headers = headers.Concat(keys);
             return string.Join(",", headers);
         }
-
-
 
         public void ExportToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
@@ -390,6 +389,8 @@ namespace OpenSEE
             bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
             bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
 
+            string displayAnalytics = requestParameters["displayAnalytics"] == null ? "" : requestParameters["displayAnalytics"];
+
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
@@ -412,9 +413,26 @@ namespace OpenSEE
                 if (breakerdigitals)
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
+                if (displayAnalytics == "FirstDerivative")
+                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
+
+                returnList = AlignData(returnList.ToList());
+
                 return returnList.ToList();
             }
         }
+
+        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic)
+        {
+            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+
+            if (analytic == "FirstDerivative")
+                return Analytics.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
+           
+            return new List<D3Series>();
+        }
+
 
         private List<D3Series> QueryVoltageData( Meter meter, Event evt)
         {
@@ -567,6 +585,21 @@ namespace OpenSEE
                     }).ToList();
 
             return result;
+        }
+
+        private List<D3Series> AlignData(List<D3Series> data)
+        {
+            data.ForEach(series => {
+                series.DataPoints = series.DataPoints.OrderBy(p => p[0]).ToList();
+            });
+
+            double minT = data.Select(item => item.DataPoints[0][0]).Min();
+            double maxT = data.Select(item => item.DataPoints[item.DataPoints.Count - 1][0]).Max();
+
+            List<D3Series> result = new List<D3Series>();
+
+            return result;
+
         }
 
         private List<D3Series> QueryAnalogData(Meter meter, Event evt)
