@@ -115,7 +115,6 @@ declare interface OpenSEEState {
     comparedEvents: Array<number>,
     overlappingEvents: Array<iListObject>,
     analytic: string,
-    TooltipWithDeltaTable: Map<string, Map<string, { data: number, color: string }>>,
     Height?: number,
     AnalyticSettings: AnalyticParamters,
     startTime: number,

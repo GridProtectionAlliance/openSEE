@@ -24,6 +24,9 @@
 import * as React from 'react';
 import { utc } from "moment";
 import { style } from "typestyle"
+import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import { iD3TableHeader, iD3DataRow } from './AccumulatedPoints';
+import moment = require('moment');
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -71,8 +74,10 @@ const closeButton = style({
 });
 
 export interface TooltipWithDeltaProps {
-    data: Map<string, Map<string, { data: number, color: string }>>,
-    callback: Function
+    pointdata: Array<iD3DataRow>,
+    pointheader: Array<iD3TableHeader>,
+    callback: Function,
+    PostedData: any
 }
 
 export default class TooltipWithDelta extends React.Component<any, any>{
@@ -85,24 +90,26 @@ export default class TooltipWithDelta extends React.Component<any, any>{
         ($('#tooltipwithdelta') as any).draggable({ scroll: false, handle: '#tooltipwithdeltahandle', containment: 'document' });
     }
 
-    getMillisecondTime(date) {
-        var milliseconds = utc(date).valueOf();
-        var millisecondsFractionFloat = parseFloat((date.toString().indexOf('.') >= 0 ? '.' + date.toString().split('.')[1] : '0')) * 1000;
-
-        return milliseconds + millisecondsFractionFloat - Math.floor(millisecondsFractionFloat);
-    }
-
     render() {
         var rows = [];
-        var keyIterator = this.props.data.keys();
-        var firstDate = keyIterator.next().value;
-        var secondDate = keyIterator.next().value;
 
-        if (firstDate != undefined && secondDate != undefined) {
-            this.props.data.get(firstDate).forEach((value, key, map) => {
+        let firstDate: number = NaN;
+        let secondDate: number = NaN;
 
-                if ($('.legendCheckbox:checked').toArray().map(x => (x as any).name).indexOf(key) >= 0) 
-                    var row = Row(key, value.color, value.data, this.props.data.get(secondDate).get(key).data);
+        if (this.props.pointdata.length > 1)
+            secondDate = (this.props.pointdata[this.props.pointdata.length - 2].Time) + parseFloat(this.props.PostedData.postedEventMilliseconds);
+
+        if (this.props.pointdata.length > 0)
+            firstDate = (this.props.pointdata[this.props.pointdata.length - 1].Time) + parseFloat(this.props.PostedData.postedEventMilliseconds);
+
+        if (!isNaN(firstDate)) {
+            this.props.pointheader.forEach((header, i) => {
+                var row;
+
+                if (!isNaN(secondDate))
+                    row = Row(header.Channel, header.Color, this.props.pointdata[this.props.pointdata.length - 1].Value[i], this.props.pointdata[this.props.pointdata.length - 2].Value[i]);
+                else
+                    row = Row(header.Channel, header.Color, this.props.pointdata[this.props.pointdata.length - 1].Value[i], NaN);
                 rows.push(row);
             });
         }
@@ -114,7 +121,7 @@ export default class TooltipWithDelta extends React.Component<any, any>{
                     <div style={{textAlign: 'center'}}>
                         <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: window.innerHeight * 0.9}}>
                             <thead>
-                                <tr><td style={{width: 34}}></td><td></td><td><b>{firstDate}</b></td><td><b>{secondDate}</b></td><td><b>{(firstDate != undefined && secondDate != undefined ? (this.getMillisecondTime(secondDate) - this.getMillisecondTime(firstDate)) / 1000 + ' (s)' : '')}</b></td></tr>
+                                <tr><td style={{ width: 34 }}></td><td></td><td><b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b></td><td><b>{(!isNaN(secondDate) ? moment(secondDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b></td><td><b>{(!isNaN(firstDate) && !isNaN(secondDate) ? (secondDate - firstDate) / 1000 + ' (s)' : '')}</b></td></tr>
                             </thead>
                             <tbody>
                                 {rows}

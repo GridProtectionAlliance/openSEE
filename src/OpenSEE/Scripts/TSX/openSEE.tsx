@@ -51,7 +51,6 @@ import About from './Components/About';
 import { D3LineChartBaseProps, iD3DataPoint } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
 
-
 export class OpenSEE extends React.Component<{}, OpenSEEState>{
     history: object;
     historyHandle: any;
@@ -82,7 +81,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 
             Width: window.innerWidth - 300,
             Hover: null,
-            PointsTable: [],
+            PointsTable: new Array<iD3DataPoint>(),
             TableData: new Array<iD3DataPoint>(),
             PostedData: {},
             nextBackLookup:{
@@ -96,7 +95,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             comparedEvents: (query["comparedEvents"] != undefined ? (Array.isArray(query["comparedEvents"]) ? query["comparedEvents"].map(a => parseInt(a)) : [parseInt(query["comparedEvents"])]) : []),
             overlappingEvents: [],
             analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
-            TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>(),
             AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
             fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
             barChartReset: null
@@ -242,7 +240,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         startDate={this.state.StartDate}
                         stateSetter={this.stateSetter.bind(this)}
                         TableData={this.state.TableData}
-                        TooltipWithDeltaTable={this.state.TooltipWithDeltaTable}
                         displayVolt={this.state.displayVolt}
                         displayCur={this.state.displayCur}
                         displayTCE={this.state.displayTCE}

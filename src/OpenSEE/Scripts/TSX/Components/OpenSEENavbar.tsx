@@ -32,6 +32,8 @@ import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
+import { clone } from 'lodash';
 
 declare var homePath: string;
 
@@ -48,8 +50,7 @@ export default class OpenSEENavbar extends React.Component {
         selected: string,
         startDate: string,
         endDate: string,
-        TooltipWithDeltaTable: Map<string, Map<string, { data: number, color: string }>>,
-
+        
         displayVolt: boolean,
         displayCur: boolean,
         displayTCE:boolean,
@@ -58,16 +59,72 @@ export default class OpenSEENavbar extends React.Component {
         displayAnalytics: string,
     }
     state: {
-        showComtradeExportButton: boolean
+        showComtradeExportButton: boolean,
+        pointsData: Array<iD3DataRow>,
+        pointsHeader: Array<iD3TableHeader>
     }
     constructor(props, context) {
         super(props, context);
 
         this.state = {
-            showComtradeExportButton: false
+            showComtradeExportButton: false,
+            pointsData: [],
+            pointsHeader: [],
         }
     }
 
+
+    componentWillReceiveProps(nextProps) {
+
+        let headerData: Array<iD3TableHeader> = [];
+        let availableTimes = [];
+        let tblData: Array<iD3DataRow> = [];
+          
+        nextProps.PointsTable.forEach((item, i) => {
+            let channelIndex = headerData.findIndex(d => (
+                d.Asset == item.LegendGroup && d.Channel == item.ChartLabel
+            ));
+
+            let timeIndex = availableTimes.findIndex(d => (
+                d == item.Time
+            ));
+
+            if (channelIndex < 0) {
+                headerData.push({ Asset: item.LegendGroup, Channel: item.ChartLabel, Color: item.Color });
+                channelIndex = headerData.length - 1;
+                if (tblData.length > 0 && tblData[0].Value.length < channelIndex) {
+                    tblData.forEach(item => {
+                        item.Value.push(NaN);
+                        item.DeltaValue.push(NaN);
+                    })
+                }
+            }
+
+            if (timeIndex < 0) {
+                let nData = headerData.length;
+                let t = item.Time - this.props.PostedData.postedEventMilliseconds
+                tblData.push({
+                    Time: t,
+                    DeltaTime: (tblData.length > 0) ? t - tblData[tblData.length - 1].Time : NaN,
+                    Value: Array(nData).fill(NaN),
+                    DeltaValue: Array(nData).fill(NaN),
+                    Indices: []
+                })
+                availableTimes.push(item.Time)
+                timeIndex = availableTimes.length - 1;
+            }
+
+            tblData[timeIndex].Value[channelIndex] = item.Value;
+            tblData[timeIndex].DeltaValue[channelIndex] = (timeIndex > 0) ? item.Value - tblData[timeIndex-1].Value[channelIndex] : NaN;
+            tblData[timeIndex].Indices.push(i)
+        })
+
+
+        this.setState({ pointsData: tblData, pointsHeader: headerData})
+        
+
+    }
+ 
     componentDidMount() {
         this.getOutputChannelCount();
     }
@@ -143,8 +200,9 @@ export default class OpenSEENavbar extends React.Component {
                     </ul>
                   </div>
                 <PolarChart data={this.props.TableData} callback={this.props.stateSetter} />
-                <Points pointsTable={this.props.PointsTable} callback={this.props.stateSetter} postedData={this.props.PostedData} />
+                <Points pointsData={this.state.pointsData} pointsHeader={this.state.pointsHeader} pointsTable = { this.props.PointsTable } callback={this.props.stateSetter} postedData={this.props.PostedData} />
                 <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
+                <TooltipWithDelta pointdata={this.state.pointsData} pointheader={this.state.pointsHeader} PostedData={this.props.PostedData} callback = { this.props.stateSetter } />
             </nav>
         );
 
@@ -158,6 +216,7 @@ export default class OpenSEENavbar extends React.Component {
     }
 
     showhidePoints(evt) {
+        this.props.stateSetter({ PointsTable: [] });
         $('#accumulatedpoints').show();
     }
 
@@ -167,10 +226,9 @@ export default class OpenSEENavbar extends React.Component {
     }
 
     showhideTooltipWithDelta(evt) {
-        this.props.stateSetter({ TooltipWithDeltaTable: new Map<string, Map<string, { data: number, color: string }>>() });
-
+        this.props.stateSetter({ PointsTable: [] });
         $('#tooltipwithdelta').show();
-        $('.legendCheckbox').show();
+        //$('.legendCheckbox').show();
     }
 
     showhidePhasor(evt) {

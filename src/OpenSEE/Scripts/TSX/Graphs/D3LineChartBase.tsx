@@ -678,7 +678,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let h = ctrl.mousedownX - ctrl.xScale(x0);
 
-        if (ctrl.props.pointTable && h < 3 && $('#accumulatedpoints').css('display') != "none") {
+        if (ctrl.props.pointTable && h < 3 && ($('#accumulatedpoints').css('display') != "none" || $('#tooltipwithdelta').css('display') != "none") ) {
             let points = ctrl.props.pointTable;
             
             ctrl.state.dataSet.Data.forEach((row, key, map) => {

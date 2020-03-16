@@ -25,17 +25,18 @@ import { clone } from "lodash";
 import { style } from "typestyle";
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
-interface TableRow {
+export interface iD3DataRow {
     Value: Array<number>,
     DeltaValue: Array<number>,
     Time: number,
     DeltaTime: number,
-    Indices: Array<number>
+    Indices: Array<number>,
 }
 
-interface TableHeader {
+export interface iD3TableHeader {
     Asset: string,
     Channel: string,
+    Color: string
 }
 
 
@@ -90,8 +91,14 @@ const closeButton = style({
 });
 
 export default class Points extends React.Component<any, any>{
-    props: { pointsTable: Array<iD3DataPoint>, callback: Function, postedData: any }
-    tblData: Array<TableRow>
+    props: {
+        pointsData: Array<iD3DataRow>,
+        pointsHeader: Array<iD3TableHeader>,
+        pointsTable: Array<iD3DataPoint>,
+        callback: Function,
+        postedData: any
+    }
+
     constructor(props) {
         super(props);
 
@@ -107,56 +114,12 @@ export default class Points extends React.Component<any, any>{
 
     render() {
 
-        this.tblData = [];
-        let headerData: Array<TableHeader> = [];
-        let availableTimes = [];
 
-        this.props.pointsTable.forEach((item,i) => {
-
-            let channelIndex = headerData.findIndex(d => (
-                d.Asset == item.LegendGroup && d.Channel == item.ChartLabel
-            ));
-
-            let timeIndex = availableTimes.findIndex(d => (
-                d == item.Time
-            ));
-
-            if (channelIndex < 0) {
-                headerData.push({ Asset: item.LegendGroup, Channel: item.ChartLabel });
-                channelIndex = headerData.length - 1;
-                if (this.tblData.length > 0 && this.tblData[0].Value.length < channelIndex) {
-                    this.tblData.forEach(item => {
-                        item.Value.push(NaN);
-                        item.DeltaValue.push(NaN);
-                    })
-                }
-            }
-
-            if (timeIndex < 0) {
-                let nData = headerData.length;
-                let t = item.Time - this.props.postedData.postedEventMilliseconds
-                this.tblData.push({
-                    Time: t,
-                    DeltaTime: (this.tblData.length > 0) ? t - this.tblData[this.tblData.length - 1].Time : NaN,
-                    Value: Array(nData).fill(NaN),
-                    DeltaValue: Array(nData).fill(NaN),
-                    Indices: []
-                })
-                availableTimes.push(item.Time)
-                timeIndex = availableTimes.length - 1;
-            }
-
-            this.tblData[timeIndex].Value[channelIndex] = item.Value;
-            this.tblData[timeIndex].DeltaValue[channelIndex] = 100;
-            this.tblData[timeIndex].Indices.push(i)
-
-        })
-
-        let headers = headerData.map((a,i) => Header(a))
+        let headers = this.props.pointsHeader.map((a, i) => Header(a))
         if (!headers)
             headers = []
 
-        var rows = this.tblData.map((a, i) => {
+        var rows = this.props.pointsData.map((a, i) => {
             return Row(a, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
         })
 
@@ -199,7 +162,7 @@ export default class Points extends React.Component<any, any>{
 
         }
         else {
-            data = this.removeByIndex(data, this.tblData[selectedPoint].Indices)
+            data = this.removeByIndex(data, this.props.pointsData[selectedPoint].Indices)
         }
         selectedPoint = -1;
 
@@ -212,7 +175,7 @@ export default class Points extends React.Component<any, any>{
     popAccumulatedPoints() {
         var data = clone(this.props.pointsTable);
         if (data.length > 0) {
-            data = this.removeByIndex(data, this.tblData[this.tblData.length -1].Indices)
+            data = this.removeByIndex(data, this.props.pointsData[this.props.pointsData.length -1].Indices)
         }
 
         this.props.callback({
@@ -236,7 +199,7 @@ export default class Points extends React.Component<any, any>{
     }
 }
 
-const Row = (row: TableRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number) => {
+const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number) => {
     function showTime(thetime) {
         return <span>{ thetime.toFixed(7) } sec<br/>{(thetime * Number(systemFrequency)).toFixed(2)} cycles</span>;
     }
@@ -274,7 +237,7 @@ const Row = (row: TableRow, systemFrequency: number, stateSetter: Function, arra
     );
 }
 
-const Header = (header: TableHeader) => {
+const Header = (header: iD3TableHeader) => {
     return (
         <td colSpan={2}><span>{header.Asset}<br />{header.Channel}</span> </td>
         )
