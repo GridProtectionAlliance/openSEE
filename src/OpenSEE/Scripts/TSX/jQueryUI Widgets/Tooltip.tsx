@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { style } from "typestyle"
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import moment = require('moment');
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -90,13 +91,17 @@ export default class Tooltip extends React.Component<any, any>{
     }
 
     render() {
-        var subsecond = ("0000000" + (this.props.hover * 10000 % 10000000)).slice(-7);
-        var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
+        let TS = moment(this.props.hover);
+        if (this.props.data.length > 0)
+            TS = moment(this.props.data[0].Time);
+
+        //var subsecond = ("0000000" + (this.props.hover * 10000 % 10000000)).slice(-7);
+        //var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
         var rows = [];
 
-        this.props.data.forEach((data) => {
+        this.props.data.forEach((data,i) => {
             if (data.Enabled)
-                rows.push(Row({ label: data.ChartLabel, data: data.Value, color: data.Color }));
+                rows.push(Row(data,i));
         });
 
 
@@ -105,7 +110,7 @@ export default class Tooltip extends React.Component<any, any>{
                 <div id="unifiedtooltiphandle" className={handle}></div>
                 <div id="unifiedtooltipcontent" >
                     <div style={{ textAlign: 'center' }} >
-                        <b>{format}</b>
+                        <b>{TS.utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
                         <br />
                         <table className="table">
                             <tbody style={{ display: 'block', overflowY: 'scroll', maxHeight: window.innerHeight * 0.9 }}>
@@ -117,19 +122,19 @@ export default class Tooltip extends React.Component<any, any>{
                 <button className={closeButton} onClick={() => {
                     this.props.callback({ tooltipButtonText: "Show Tooltip" });
                     $('#unifiedtooltip').hide();
-                    $('.legendCheckbox').hide();
+                    //$('.legendCheckbox').hide();
                 }}>X</button>
             </div>
         );
     }
 }
 
-const Row = (row) => {
+const Row = (row: iD3DataPoint, key: number) => {
     return (
-        <tr key={row.label}>
-            <td className="dot" style={{ background: row.color, width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
-            <td style={{ textAlign: 'left' }}><b>{row.label}</b></td>
-            <td style={{ textAlign: "right" }}><b>{parseFloat(row.data).toFixed(2)}</b></td>
+        <tr key={key}>
+            <td className="dot" style={{ background: row.Color, width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
+            <td style={{ textAlign: 'left' }}><b>{row.ChartLabel}</b></td>
+            <td style={{ textAlign: "right" }}><b>{(row.Value).toFixed(2)} {row.XaxisLabel}</b></td>
         </tr>
     );
 }

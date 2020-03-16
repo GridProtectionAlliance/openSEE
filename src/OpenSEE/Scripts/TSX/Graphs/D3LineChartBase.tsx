@@ -613,7 +613,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return;
         }
 
-        if (ctrl.props.tableSetter) {
+        if (ctrl.props.tableSetter && ctrl.state.dataSet) {
 
             let points = [];
             ctrl.state.dataSet.Data.forEach((row, key, map) => {
@@ -631,6 +631,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                             LegendGroup: row.LegendGroup,
                             SecondaryLegendClass: row.SecondaryLegendClass,
                             Value: row.DataPoints[i][1],
+                            Time: row.DataPoints[i][0],
                             Enabled: row.Enabled
                         })
                     }

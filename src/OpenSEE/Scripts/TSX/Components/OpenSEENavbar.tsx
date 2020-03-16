@@ -163,7 +163,7 @@ export default class OpenSEENavbar extends React.Component {
 
     showhideTooltip(evt) {
         $('#unifiedtooltip').show();
-        $('.legendCheckbox').show();
+        //$('.legendCheckbox').show();
     }
 
     showhideTooltipWithDelta(evt) {
