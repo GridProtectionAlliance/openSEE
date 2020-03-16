@@ -838,7 +838,7 @@ namespace OpenSEE
             Dictionary<string, string> query = Request.QueryParameters();
             int eventId = int.Parse(query["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 DataTable dataTable = connection.RetrieveData(@"
                     SELECT 

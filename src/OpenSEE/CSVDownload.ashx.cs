@@ -330,7 +330,7 @@ namespace OpenSEE
         public void ExportHarmonicsToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
             int eventId = int.Parse(requestParameters["eventId"]);
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 DataTable dataTable = connection.RetrieveData(@"

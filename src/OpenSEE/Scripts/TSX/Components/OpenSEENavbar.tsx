@@ -204,6 +204,7 @@ export default class OpenSEENavbar extends React.Component {
                 <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
                 <TooltipWithDelta pointdata={this.state.pointsData} pointheader={this.state.pointsHeader} PostedData={this.props.PostedData} callback={this.props.stateSetter} />
                 <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
+                <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
             </nav>
         );
 
