@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
+import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -71,7 +72,7 @@ const closeButton = style({
 });
 
 export interface TooltipProps {
-    data: Map<string, { data: number, color: string}>,
+    data: Array<iD3DataPoint>,
     hover: number,
     callback: Function
 }
@@ -93,19 +94,9 @@ export default class Tooltip extends React.Component<any, any>{
         var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
         var rows = [];
 
-        this.props.data.forEach((data, key, map) => {
-            if (key.indexOf('V') == 0 && $('.legendCheckbox:checked').toArray().map(x => (x as any).name).indexOf(key) >= 0 )
-                rows.push(Row({ label: key, data: data.data, color: data.color}));
-        });
-
-        this.props.data.forEach((data, key, map) => {
-            if (key.indexOf('I') == 0 && $('.legendCheckbox:checked').toArray().map(x => (x as any).name).indexOf(key) >= 0)
-                rows.push(Row({ label: key, data: data.data, color: data.color }));
-        });
-
-        this.props.data.forEach((data, key, map) => {
-            if (key.indexOf('V') != 0 && key.indexOf('I') != 0 && $('.legendCheckbox:checked').toArray().map(x => (x as any).name).indexOf(key) >= 0)
-                rows.push(Row({ label: key, data: data.data, color: data.color }));
+        this.props.data.forEach((data) => {
+            if (data.Enabled)
+                rows.push(Row({ label: data.ChartLabel, data: data.Value, color: data.Color }));
         });
 
 
