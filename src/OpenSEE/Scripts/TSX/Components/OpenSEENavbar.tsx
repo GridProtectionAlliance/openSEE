@@ -164,7 +164,7 @@ export default class OpenSEENavbar extends React.Component {
                                 <div className="dropdown-divider"></div>
                                 <a className="dropdown-item" onClick={this.exportData.bind(this, "csv")}>Export CSV</a>
                                 <a className="dropdown-item" onClick={this.exportData.bind(this, "pqds")}>Export PQDS</a>
-                                {this.state.showComtradeExportButton ? <a className="dropdown-item" onClick={this.exportComtrade.bind(this)}>Export COMTRADE</a> : null}
+                                
                             </div>
                         </li>
                         <li className="nav-item" style={{ width: 'calc(100% - 450px)', textAlign: 'center' }}>
@@ -209,11 +209,8 @@ export default class OpenSEENavbar extends React.Component {
                 <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
             </nav>
         );
-
-        //   
-        //   
-        //   <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
-        //   <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
+ 
+        //   {this.state.showComtradeExportButton ? <a className="dropdown-item" onClick={this.exportComtrade.bind(this)}>Export COMTRADE</a> : null}   
 
     }
 
