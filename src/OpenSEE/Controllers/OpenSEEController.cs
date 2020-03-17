@@ -863,7 +863,7 @@ namespace OpenSEE
             int eventID = int.Parse(query["eventId"]);
 
             if (eventID <= 0) return new DataTable();
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 double timeTolerance = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'TimeTolerance'");
                 DateTime startTime = connection.ExecuteScalar<DateTime>("SELECT StartTime FROM Event WHERE ID = {0}", eventID);
@@ -882,16 +882,16 @@ namespace OpenSEE
             Dictionary<string, string> query = Request.QueryParameters();
             int eventID = int.Parse(query["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 const string Query =
                     "SELECT " +
-                    "    Line.AssetKey AS LineKey, " +
+                    "    Asset.AssetKey AS LineKey, " +
                     "    DATEADD(SECOND, -2, Fault.Inception) AS StartTime, " +
                     "    DATEADD(SECOND, 2, Fault.Inception) AS EndTime " +
                     "FROM " +
                     "    Event JOIN " +
-                    "    Line ON Event.LineID = Line.ID CROSS APPLY " +
+                    "    Asset ON Event.AssetID = Asset.ID CROSS APPLY " +
                     "    ( " +
                     "        SELECT " +
                     "            DATEADD " +

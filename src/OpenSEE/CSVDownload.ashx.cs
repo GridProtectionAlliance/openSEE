@@ -293,7 +293,7 @@ namespace OpenSEE
         {
             int eventID = int.Parse(requestParameters["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 double timeTolerance = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'TimeTolerance'");

@@ -154,7 +154,7 @@ const HeaderRow = (exportCallback) => {
             <th style={{ width: 150 }} key='SagDuration'>Duration</th>
             <th style={{ width: 220 }} key='StartTime'>Start Time</th>
             <th style={{ width: 150 }} key='MeterName'>Meter Name</th>
-            <th style={{ width: 'calc(400px - 1em)' }} key='LineName'>Line Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => exportCallback("correlatedsags")}>Export(csv)</button></th>
+            <th style={{ width: 'calc(400px - 1em)' }} key='LineName'>Asset Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => exportCallback("correlatedsags")}>Export(csv)</button></th>
         </tr>
     );
 }
