@@ -141,6 +141,9 @@ INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles
 GO
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'export.CSV', N'useLLVoltage', N'false', 0, N'Administrator')
 GO
+INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'SlidingCacheExpiration', N'2.0', 0, N'Administrator')
+GO
+
 
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'AN', N'#A30000', 0, N'Administrator')
 GO

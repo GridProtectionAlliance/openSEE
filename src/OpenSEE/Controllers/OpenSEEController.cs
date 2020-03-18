@@ -59,6 +59,7 @@ namespace OpenSEE
 
         private static Random  m_random = new Random();
 
+        
         public class JsonReturn
         {
             public List<D3Series> Data;
@@ -130,10 +131,16 @@ namespace OpenSEE
 
         #region [ Static ]
         private static MemoryCache s_memoryCache;
+        private static double m_cacheSlidingExpiration;
 
         static OpenSEEController()
         {
             s_memoryCache = new MemoryCache("openSEE");
+
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            {
+                m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM Settings WHERE Scope = 'app.setting' AND Name = 'SlidingCacheExpiration'") ?? 2.0;
+            }
         }
         #endregion
 
@@ -553,7 +560,7 @@ namespace OpenSEE
                 }
             });
 
-            if (s_memoryCache.Add(target, dataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(10.0D) }))
+            if (s_memoryCache.Add(target, dataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
                 dataGroupTask.Start();
 
             dataGroupTask = (Task<DataGroup>)s_memoryCache.Get(target);
@@ -575,7 +582,7 @@ namespace OpenSEE
                 }
             });
 
-            if (s_memoryCache.Add(target, viCycleDataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(10.0D) }))
+            if (s_memoryCache.Add(target, viCycleDataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
                 viCycleDataGroupTask.Start();
 
             viCycleDataGroupTask = (Task<VICycleDataGroup>)s_memoryCache.Get(target);
