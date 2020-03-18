@@ -415,6 +415,9 @@ namespace OpenSEE
 
                 if (displayAnalytics == "FirstDerivative")
                     returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
+                if (displayAnalytics == "ClippedWaveforms")
+                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
+
 
                 returnList = AlignData(returnList.ToList());
 
@@ -429,7 +432,8 @@ namespace OpenSEE
 
             if (analytic == "FirstDerivative")
                 return Analytics.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
-           
+            if (analytic == "ClippedWaveforms")
+                return Analytics.GetClippedWaveformsLookup(dataGroup);
             return new List<D3Series>();
         }
 
@@ -595,10 +599,29 @@ namespace OpenSEE
 
             double minT = data.Select(item => item.DataPoints[0][0]).Min();
             double maxT = data.Select(item => item.DataPoints[item.DataPoints.Count - 1][0]).Max();
+            int indexFirstTS = data.FindIndex(x => x.DataPoints[0][0] == minT);
 
-            List<D3Series> result = new List<D3Series>();
+            // For Now We are Assuming all data has the same Sampling Rate
+            // Should be guaranteed since we have a single DFR
+            IEnumerable<D3Series> result = data.Select(item =>
+            {
+                if (item.DataPoints[0][0] <= minT)
+                    return item;
 
-            return result;
+                int idx = data[indexFirstTS].DataPoints.FindIndex(i => i[0] > item.DataPoints[0][0]);
+
+                List<double[]> temp = new List<double[]>();
+
+                for (int i = 0; i < idx; i++)
+                    temp.Add(new double[] { data[indexFirstTS].DataPoints[i][0], double.NaN });
+
+                item.DataPoints = temp.Concat(item.DataPoints).ToList();
+
+                return item;
+            });
+
+            
+            return result.ToList();
 
         }
 

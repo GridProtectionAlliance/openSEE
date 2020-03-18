@@ -1380,32 +1380,18 @@ namespace OpenSEE
         public Task<JsonReturn> GetClippedWaveformsData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-
-                    DateTime startTime =  evt.StartTime;
-                    DateTime endTime = evt.EndTime;
+                  
+                    DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
+                    List<D3Series> returnList = Analytics.GetClippedWaveformsLookup(dataGroup);
                    
-                    DataTable table;
-
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetClippedWaveformsLookup(dataGroup)).ToList();
-                    }
-
-
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
 
@@ -1415,130 +1401,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetClippedWaveformsLookup(DataGroup dataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            double systemFrequency;
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-
-            DataSeries vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-            DataSeries iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-
-            if (vAN != null)
-                dataLookup.Add(GenerateFixedWaveform(systemFrequency, vAN, "VAN"));
-            if (vBN != null)
-                dataLookup.Add(GenerateFixedWaveform(systemFrequency, vBN, "VBN"));
-            if (vCN != null)
-                dataLookup.Add(GenerateFixedWaveform(systemFrequency, vCN, "VCN"));
-            if (iAN != null)
-                dataLookup.Add(GenerateFixedWaveform(systemFrequency, iAN, "IAN"));
-            if (iBN != null)
-                dataLookup.Add( GenerateFixedWaveform(systemFrequency, iBN, "IBN"));
-            if (iCN != null)
-                dataLookup.Add( GenerateFixedWaveform(systemFrequency, iCN, "ICN"));
-
-            return dataLookup;
-        }
-
-        private D3Series GenerateFixedWaveform(double systemFrequency, DataSeries dataSeries, string label) {
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-            var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / samplesPerCycle).Select((grouping) => grouping.Select((obj) => obj.Point));
-
-            string type = "V";
-            if (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Current")
-                type = "I";
-
-            D3Series fitWave = new D3Series()
-            {
-                ChannelID = 0,
-                ChartLabel = label + " Fixed Clipping",
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
-                LegendClass = "",
-                SecondaryLegendClass = type,
-                LegendGroup = "",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
-                DataPoints = new List<double[]>()
-            };
-
-            double max = dataSeries.DataPoints.Select(point => point.Value).Max();
-            double min = dataSeries.DataPoints.Select(point => point.Value).Min();
-
-            D3Series dt = Analytics.GetFirstDerivativeFlotSeries(dataSeries, "", "", "");
-
-            fitWave.DataPoints = dataSeries.DataPoints.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).OrderBy(item => item[0]).ToList();
-
-            // Find Section that meet Threshold Criteria of close to top/bottom and low derrivative
-            double threshold = 1E-3;
-            double relativeThreshold = threshold * (max - min);
-
-            int npoints = dataSeries.DataPoints.Count();
-            List<bool> isClipped = new List<bool>();
-            double[] distToTop = dataSeries.DataPoints.Select(point => Math.Abs(point.Value - max)).ToArray();
-            double[] distToBottom = dataSeries.DataPoints.Select(point => Math.Abs(point.Value - min)).ToArray();
-
-            isClipped = dt.DataPoints.Select((item, index) => (Math.Abs(item[1]) < threshold) && (Math.Min(distToTop[index],distToBottom[index]) < relativeThreshold)).ToList();
-
-            List<int[]> section = new List<int[]>();
-
-            //Corectly determines clipping but now I need to do something about it....
-            while(isClipped.Any(item => item==true))
-            {
-                int start = isClipped.IndexOf(true);
-                int end = isClipped.Skip(start).ToList().IndexOf(false) + start;
-                
-                isClipped = isClipped.Select((item, index) =>
-                {
-                    if (index < start || index > end)
-                        return item;
-                    else
-                        return false;
-                }).ToList();
-
-                int length = end - start;
-                int startRecovery = start - length / 2;
-                int endRecovery = end + length/2;
-
-                if (startRecovery < 0)
-                    startRecovery = 0;
-
-                if (endRecovery >= npoints)
-                    endRecovery = npoints - 1;
-
-                List<double[]> filteredDataPoints = fitWave.DataPoints.Where((item, index) =>
-                {
-                    if (index < startRecovery || index > endRecovery)
-                        return false;
-                    else if (index < start || index > end)
-                        return true;
-                    else
-                        return false;
-
-                }
-                ).ToList();
-
-
-                SineWave sineWave = WaveFit.SineFit(filteredDataPoints.Select(item => item[1]).ToArray(), filteredDataPoints.Select(item => item[0]/1000.0D).ToArray(), systemFrequency);
-
-                fitWave.DataPoints = fitWave.DataPoints.Select((item, index) =>
-                {
-                    if (index < start || index > end)
-                        return item;
-                    else
-                        return new double[2] { item[0], sineWave.CalculateY(item[0] / 1000.0D) };
-                }).ToList();
-            }
-
-            return fitWave;
-        }
+      
         #endregion
 
         #region [ Harmonic Spectrum ]
