@@ -271,8 +271,9 @@ export default class PolarChart extends React.Component<any, any>{
             tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
             tblShow[item.label] = true
         })
-
-
+        //{ assetData.map((item, i) => Header(item, i)) }
+        //{(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
+        
         return (
             <div id="phasor" className="ui-widget-content" style={outerDiv}>
                 <div id="phasorhandle" className={handle}></div>
@@ -290,7 +291,7 @@ export default class PolarChart extends React.Component<any, any>{
                             <thead>
                                 <tr>
                                     <th></th>
-                                    {assetData.map(item => Header(item))}
+                                   
                                 </tr>
                                 {SubHeader(assetData.length)}
                                 
@@ -298,15 +299,15 @@ export default class PolarChart extends React.Component<any, any>{
                             <tbody>
                                 {(tblShow.VAN ? Row("VAN", tblData.VAN) : null)}
                                 {(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
-                                {(tblShow.VCN ? Row("VCN", tblData.VCN) : null)}
+                                { (tblShow.VCN ? Row("VCN", tblData.VCN) : null) }
 
-                                {(tblShow.VAB ? Row("VAB", tblData.VAB) : null)}
-                                {(tblShow.VBC ? Row("VBC", tblData.VBC) : null)}
-                                {(tblShow.VCA ? Row("VCA", tblData.VCA) : null)}
+                                { (tblShow.VAB ? Row("VAB", tblData.VAB) : null) }
+                                { (tblShow.VBC ? Row("VBC", tblData.VBC) : null) }
+                                { (tblShow.VCA ? Row("VCA", tblData.VCA) : null) }
 
-                                {(tblShow.IAN ? Row("IAN", tblData.IAN) : null)}
-                                {(tblShow.IBN ? Row("IBN", tblData.IBN) : null)}
-                                {(tblShow.ICN ? Row("ICN", tblData.ICN) : null)}
+                                { (tblShow.IAN ? Row("IAN", tblData.IAN) : null) }
+                                { (tblShow.IBN ? Row("IBN", tblData.IBN) : null) }
+                                { (tblShow.ICN ? Row("ICN", tblData.ICN) : null) }
                             </tbody>
                         </table>
                     </div>
@@ -322,25 +323,25 @@ export default class PolarChart extends React.Component<any, any>{
 }
 
 
-const Header = (header: string) => {
+const Header = (header: string, key: number) => {
     return (
-        <td colSpan={2}><span>{header}</span> </td>
+        <th colSpan={2}><span>{header}</span> </th>
     )
 }
 
 
 const SubHeader = (collumns: number) => {
-    function createCell(str) {
-        return (<td>{str}</td>)
+    function createCell(str, i) {
+        return (<th key={"header-" + str + "-" + i}>{str}</th>)
     }
 
     function createCells() {
         let res = [];
         let i;
-        res.push(createCell("Phase"))
+        res.push(createCell("Phase",0))
         for (i = 0; i < collumns; i++) {
-            res.push(createCell("Mag"))
-            res.push(createCell("Angle"))
+            res.push(createCell("Mag",i))
+            res.push(createCell("Angle",i))
         }
 
         return res;
@@ -356,11 +357,11 @@ const SubHeader = (collumns: number) => {
 
 const Row = (label: string, data: Array<{ Mag: number, Ang: number }>) => {
     function AddMagnitude(index) {
-        return (<td>{data[index].Mag.toFixed(2)}</td>)
+        return (<td key={label + "-mag-" + index}>{data[index].Mag.toFixed(2)}</td>)
     }
        
     function AddPhase(index) {
-        return (<td>{data[index].Ang.toFixed(2)}</td>)
+        return (<td key={label + "-phase-" + index}>{data[index].Ang.toFixed(2)}</td>)
         
     }
     function rows() {
@@ -374,8 +375,8 @@ const Row = (label: string, data: Array<{ Mag: number, Ang: number }>) => {
         return res;
     }
     return (
-        <tr>
-            <td>{label}</td>
+        <tr key={label}>
+            <td key="label">{label}</td>
             {rows()}
         </tr>
     );
