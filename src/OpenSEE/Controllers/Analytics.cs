@@ -525,7 +525,7 @@ namespace OpenSEE
                 XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = type,
-                LegendGroup = "",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 DataPoints = new List<double[]>()
             };
@@ -550,7 +550,7 @@ namespace OpenSEE
 
             List<int[]> section = new List<int[]>();
 
-            //Corectly determines clipping but now I need to do something about it....
+            
             while (isClipped.Any(item => item == true))
             {
                 int start = isClipped.IndexOf(true);
