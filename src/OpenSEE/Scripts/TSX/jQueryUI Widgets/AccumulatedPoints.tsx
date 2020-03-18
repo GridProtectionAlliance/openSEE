@@ -115,14 +115,15 @@ export default class Points extends React.Component<any, any>{
     render() {
 
 
-        let headers = this.props.pointsHeader.map((a, i) => Header(a))
+        let headers = this.props.pointsHeader.map((a, i) => Header(a,i))
         if (!headers)
             headers = []
 
         var rows = this.props.pointsData.map((a, i) => {
             return Row(a, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
         })
-
+         
+       
         return (
             <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
                 <div style={{ border: 'black solid 2px' }}>
@@ -130,7 +131,7 @@ export default class Points extends React.Component<any, any>{
                     <div style={{ overflowY: 'scroll', maxHeight: 950}}>
                         <table className="table table-bordered table-hover">
                             <thead>
-                                <tr><td colSpan={2}></td>{headers}</tr>
+                                <tr><td colSpan={2} key="header-time"></td>{headers}</tr>
                                 {SubHeader(headers.length)}
                             </thead>
                             <tbody>
@@ -212,13 +213,13 @@ const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, ar
     }
     function createValue(index) {
         if (isNaN(row.Value[index]))
-            return (<td><span>N/A</span></td>)
-        return (<td>{row.Value[index].toFixed(2)}</td>)
+            return (<td key={"Value-" + index}><span>N/A</span></td>)
+        return (<td key={"Value-" + index}>{row.Value[index].toFixed(2)}</td>)
     }
     function createDeltaValue(index) {
         if (isNaN(row.DeltaValue[index]))
-            return (<td><span>N/A</span></td>)
-        return (<td>{row.DeltaValue[index].toFixed(2)}</td>)
+            return (<td key={"DeltaValue-" + index} ><span>N/A</span></td>)
+        return (<td key={"DeltaValue-" + index}>{row.DeltaValue[index].toFixed(2)}</td>)
     }
     function createCells() {
         let res = [];
@@ -230,33 +231,33 @@ const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, ar
     }
     return (
         <tr key={arrayIndex} onClick={(e) => stateSetter({ selectedPoint: arrayIndex })} style={{ backgroundColor: (arrayIndex == currentSelected ? 'yellow' : null) }}>
-            <td>{showTime(row.Time / 1000.0)}</td>
-            <td>{showDeltaTime(row.DeltaTime / 1000.0)}</td>
+            <td key="Time">{showTime(row.Time / 1000.0)}</td>
+            <td key="DeltaTime">{showDeltaTime(row.DeltaTime / 1000.0)}</td>
             {createCells()}
         </tr>
     );
 }
 
-const Header = (header: iD3TableHeader) => {
+const Header = (header: iD3TableHeader, index: number) => {
     return (
-        <td colSpan={2}><span>{header.Asset}<br />{header.Channel}</span> </td>
+        <td colSpan={2} key={"header-" + index}><span>{header.Asset}<br/>{header.Channel}</span> </td>
         )
 }
 
 
 const SubHeader = (collumns: number) => {
-    function createCell(str) {
-        return (<td>{str}</td>)
+    function createCell(str, i) {
+        return (<td key={str + i}>{str}</td>)
     }
 
     function createCells() {
         let res = [];
         let i;
-        res.push(createCell("Time"))
-        res.push(createCell("Delta Time"))
+        res.push(createCell("Time",0))
+        res.push(createCell("Delta Time",0))
         for (i = 0; i < collumns; i++) {
-            res.push(createCell("Value"))
-            res.push(createCell("Delta Value"))
+            res.push(createCell("Value",i))
+            res.push(createCell("Delta Value",i))
         }
        
         return res;
@@ -264,7 +265,7 @@ const SubHeader = (collumns: number) => {
 
 
     return (
-        <tr>
+        <tr key="subheaders">
             {createCells()}
         </tr>
         );

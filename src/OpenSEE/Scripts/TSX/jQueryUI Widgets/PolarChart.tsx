@@ -271,7 +271,7 @@ export default class PolarChart extends React.Component<any, any>{
             tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
             tblShow[item.label] = true
         })
-        //{ assetData.map((item, i) => Header(item, i)) }
+        //
         //{(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
         
         return (
@@ -291,7 +291,7 @@ export default class PolarChart extends React.Component<any, any>{
                             <thead>
                                 <tr>
                                     <th></th>
-                                   
+                                    {assetData.map((item, i) => Header(item, i))}
                                 </tr>
                                 {SubHeader(assetData.length)}
                                 
@@ -325,7 +325,7 @@ export default class PolarChart extends React.Component<any, any>{
 
 const Header = (header: string, key: number) => {
     return (
-        <th colSpan={2}><span>{header}</span> </th>
+        <th colSpan={2} key={key}><span>{header}</span> </th>
     )
 }
 
