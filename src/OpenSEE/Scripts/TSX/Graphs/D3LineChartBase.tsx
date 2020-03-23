@@ -709,14 +709,17 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
         let xMouse = ctrl.xScale.invert(ctrl.mousedownX)
+
         // If we have a cycle window adjust left and right to ensure you are outside the cycle window
-        if (ctrl.cycleStart && ctrl.cycleEnd) {
+        if (ctrl.cycleStart && ctrl.cycleEnd && ctrl.cycleStart > 0) {
+            console.log("Adjusting for FFT Cylce")
             xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
             x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
                
         }
         
-
+        console.log(x0)
+        console.log(xMouse)
 
         if (Math.abs(xMouse - x0) > 10) {
             
