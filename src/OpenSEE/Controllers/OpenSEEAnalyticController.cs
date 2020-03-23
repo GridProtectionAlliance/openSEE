@@ -652,34 +652,19 @@ namespace OpenSEE
         public Task<JsonReturn> GetImpedanceData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-
-                    DateTime startTime = evt.StartTime;
-                    DateTime endTime =  evt.EndTime;
-                    DataTable table;
-
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        VICycleDataGroup viCycleDataGroup = QueryVICycleDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetImpedanceLookup(viCycleDataGroup)).ToList();
-                       
-                    }
-
-                
+                    VICycleDataGroup viCycleDataGroup = QueryVICycleDataGroup(evt.ID, meter);
+                    List<D3Series> returnList = Analytics.GetImpedanceLookup(viCycleDataGroup);
+                   
                     JsonReturn returnDict = new JsonReturn();
-                    returnDict.Data = returnList;
+                    returnDict.Data = returnList; 
 
                     return returnDict;
 
@@ -689,148 +674,6 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetImpedanceLookup(VICycleDataGroup vICycleDataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            if (vICycleDataGroup.IA != null && vICycleDataGroup.VA != null) {
-
-                List<DataPoint> Timing = vICycleDataGroup.VA.RMS.DataPoints;
-                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VA, vICycleDataGroup.IA);
-                dataLookup.Add(new D3Series() {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Reactance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Reactance AN",
-                    DataPoints =  impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList() 
-                });
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Resistance AN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
-                });
-                
-                dataLookup.Add(new D3Series() {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Impedance AN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
-                });
-
-            }
-
-            if (vICycleDataGroup.IB != null && vICycleDataGroup.VB != null)
-            {
-                List<DataPoint> Timing = vICycleDataGroup.VB.RMS.DataPoints;
-                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VB, vICycleDataGroup.IB);
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Reactance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Reactance BN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
-                });
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Resistance BN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
-                });
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Impedance BN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
-                });
-
-            }
-
-            if (vICycleDataGroup.IC != null && vICycleDataGroup.VC != null)
-            {
-                List<DataPoint> Timing = vICycleDataGroup.VC.RMS.DataPoints;
-                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VC, vICycleDataGroup.IC);
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Reactance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Reactance CN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
-                });
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Resistance CN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
-                });
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "Ohm",
-                    Color = GetColor(null),
-                    LegendClass = "Resistance",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "Impedance CN",
-                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
-                });
-            }
-
-            return dataLookup;
-        }
-
-        private IEnumerable<Complex> CalculateImpedance(CycleDataGroup Voltage, CycleDataGroup Current)
-        {
-            List<DataPoint> voltagePointsMag = Voltage.RMS.DataPoints;
-            List<DataPoint> voltagePointsAng = Voltage.Phase.DataPoints;
-            List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
-
-            List<DataPoint> currentPointsMag = Current.RMS.DataPoints;
-            List<DataPoint> currentPointsAng = Current.Phase.DataPoints;
-            List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value)).ToList();
-
-            return (voltagePoints.Select((vPoint, index) => vPoint / currentPoints[index]));
-        }
 
         #endregion
 
@@ -2111,7 +1954,7 @@ namespace OpenSEE
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
 
                     DataGroup dataGroup = QueryDataGroup(evt.ID, meter);

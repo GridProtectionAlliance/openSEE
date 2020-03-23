@@ -752,6 +752,157 @@ namespace OpenSEE
 
         #endregion
 
+        #region [ Impedance ]
+
+        public static List<D3Series> GetImpedanceLookup(VICycleDataGroup vICycleDataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            if (vICycleDataGroup.IA != null && vICycleDataGroup.VA != null)
+            {
+
+                List<DataPoint> Timing = vICycleDataGroup.VA.RMS.DataPoints;
+                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VA, vICycleDataGroup.IA);
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Reactance",
+                    ChartLabel = "Reactance AN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Resistance",
+                    ChartLabel = "Resistance AN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Impedance",
+                    ChartLabel = "Impedance AN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+
+            }
+
+            if (vICycleDataGroup.IB != null && vICycleDataGroup.VB != null)
+            {
+                List<DataPoint> Timing = vICycleDataGroup.VB.RMS.DataPoints;
+                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VB, vICycleDataGroup.IB);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Reactance",
+                    ChartLabel = "Reactance BN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Resistance",
+                    ChartLabel = "Resistance BN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "",
+                    LegendGroup = "B",
+                    ChartLabel = "Impedance BN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+
+            }
+
+            if (vICycleDataGroup.IC != null && vICycleDataGroup.VC != null)
+            {
+                List<DataPoint> Timing = vICycleDataGroup.VC.RMS.DataPoints;
+                IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VC, vICycleDataGroup.IC);
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Reactance",
+                    ChartLabel = "Reactance CN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Resistance",
+                    ChartLabel = "Resistance CN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "Ohm",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Impedance",
+                    ChartLabel = "Impedance CN",
+                    DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+            }
+
+            return dataLookup;
+        }
+
+        private static IEnumerable<Complex> CalculateImpedance(CycleDataGroup Voltage, CycleDataGroup Current)
+        {
+            List<DataPoint> voltagePointsMag = Voltage.RMS.DataPoints;
+            List<DataPoint> voltagePointsAng = Voltage.Phase.DataPoints;
+            List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+
+            List<DataPoint> currentPointsMag = Current.RMS.DataPoints;
+            List<DataPoint> currentPointsAng = Current.Phase.DataPoints;
+            List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value)).ToList();
+
+            return (voltagePoints.Select((vPoint, index) => vPoint / currentPoints[index]));
+        }
+
+        #endregion
+
         #endregion
 
 

@@ -434,6 +434,8 @@ namespace OpenSEE
                 return Analytics.GetClippedWaveformsLookup(dataGroup);
             if (analytic == "Frequency")
                 return Analytics.GetFrequencyLookup(new VIDataGroup(dataGroup));
+            if (analytic == "Impedance")
+                return Analytics.GetImpedanceLookup(viCycleDataGroup);
 
             return new List<D3Series>();
         }
