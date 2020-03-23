@@ -413,11 +413,9 @@ namespace OpenSEE
                 if (breakerdigitals)
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
-                if (displayAnalytics == "FirstDerivative")
+                if (displayAnalytics != "")
                     returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
-                if (displayAnalytics == "ClippedWaveforms")
-                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
-
+                
 
                 returnList = AlignData(returnList.ToList());
 
@@ -434,6 +432,9 @@ namespace OpenSEE
                 return Analytics.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
             if (analytic == "ClippedWaveforms")
                 return Analytics.GetClippedWaveformsLookup(dataGroup);
+            if (analytic == "Frequency")
+                return Analytics.GetFrequencyLookup(new VIDataGroup(dataGroup));
+
             return new List<D3Series>();
         }
 

@@ -396,10 +396,6 @@ namespace OpenSEE
        
         #region [ Methods ]
 
-       
-      
-                 
-
         #region [ Fault Location Data ]
         [Route("GetFaultDistanceData"),HttpGet]
         public JsonReturn GetFaultDistanceData()
@@ -2109,34 +2105,20 @@ namespace OpenSEE
         public Task<JsonReturn> GetFrequencyData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                     meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
 
 
-                    DateTime startTime = evt.StartTime;
-                    DateTime endTime =  evt.EndTime;
-                   
+                    DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
+                    
 
-                    DataTable table;
+                    List<D3Series> returnList = Analytics.GetFrequencyLookup(new VIDataGroup(dataGroup));
 
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetFrequencyLookup(dataGroup)).ToList();
-
-                     
-                    }
-                   
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
 
@@ -2146,145 +2128,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetFrequencyLookup(DataGroup dataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            double systemFrequency;
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-
-            DataSeries vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-
-            D3Series fVa = null;
-            D3Series fVb = null;
-            D3Series fVc = null;
-
-            if (vAN != null)
-            {
-                fVa = GenerateFrequency(systemFrequency, vAN, "Va");
-            }
-            if (vBN != null)
-            {
-                fVb = GenerateFrequency(systemFrequency, vBN, "Vb");
-            }
-            if (vCN != null)
-            {
-                fVc = GenerateFrequency(systemFrequency, vCN, "Vc");
-            }
-
-
-            //    dataLookup.Add("Frequency VBN", GenerateFrequency(systemFrequency, vBN, "VBN"));
-            //if (vCN != null)
-            //    dataLookup.Add("Frequency VCN", GenerateFrequency(systemFrequency, vCN, "VCN"));
-            if (fVa != null || fVb != null || fVc != null)
-                dataLookup.Add( AvgFilter(fVa, fVb, fVc));
-
-            return dataLookup;
-        }
-
-        private D3Series GenerateFrequency(double systemFrequency, DataSeries dataSeries, string label)
-        {
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-
-            D3Series fitWave = new D3Series()
-            {
-                ChartLabel = label + "Frequency",
-                ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
-                LegendClass = "",
-                SecondaryLegendClass = "",
-                LegendGroup = "",                
-                DataPoints = new List<double[]>()
-            };
-
-            double thresholdValue = 0;
-
-            var crosses = dataSeries.DataPoints.Zip(dataSeries.DataPoints.Skip(1), (Point1, Point2) => new { Point1, Point2 }).Where(obj => obj.Point1.Value * obj.Point2.Value < 0 || obj.Point1.Value == 0).Select(obj => {
-                double slope = (obj.Point2.Value - obj.Point1.Value) / (obj.Point2.Time - obj.Point1.Time).Ticks;
-                DateTime interpolatedCrossingTime = m_epoch.AddTicks((long)Math.Round((thresholdValue - obj.Point1.Value) / slope + obj.Point1.Time.Subtract(m_epoch).Ticks));
-                return new DataPoint{ Time = interpolatedCrossingTime, Value = thresholdValue };
-
-            }).ToList();
-
-            fitWave.DataPoints = crosses.Zip(crosses.Skip(2), (Point1, Point2) =>  {
-                double frequency =  1 / (Point2.Time - Point1.Time).TotalSeconds;
-                return new double[] {  Point1.Time.Subtract(m_epoch).TotalMilliseconds, frequency };
-
-            }).ToList();
-
-            return fitWave;
-        }
-
-        private D3Series AvgFilter(D3Series Va, D3Series Vb, D3Series Vc)
-        {
-            D3Series result = new D3Series()
-            {
-                ChartLabel = "Frequency",
-                ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = "#a452a4",
-                LegendClass = "",
-                SecondaryLegendClass = "",
-                LegendGroup = "",
-                DataPoints = new List<double[]>()
-            };
-
-            double n_signals = 1.0D;
-            // for now assume Va is not null
-            result.DataPoints = Va.DataPoints.Select(point => new double[] { point[0], point[1] }).ToList();
-
-            if (Vb != null)
-            {
-                result.DataPoints = result.DataPoints.Zip(Vb.DataPoints, (point1, point2) => { return new double[] { point1[0], point1[1] + point2[1] }; }).ToList();
-                n_signals = n_signals + 1.0D;
-            }
-            if (Vc != null)
-            {
-                result.DataPoints = result.DataPoints.Zip(Vc.DataPoints, (point1, point2) => { return new double[] { point1[0], point1[1] + point2[1] }; }).ToList();
-                n_signals = n_signals + 1.0D;
-            }
-
-            result.DataPoints = result.DataPoints.Select(point => new double[] { point[0], point[1] / n_signals }).ToList();
-
-            return MedianFilt(result);
-        }
-
-        private D3Series MedianFilt(D3Series input)
-        {
-            D3Series output = new D3Series()
-            {
-                ChartLabel = "Frequency",
-                ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = "#a452a4",
-                LegendClass = "",
-                SecondaryLegendClass = "",
-                LegendGroup = "",
-                DataPoints = new List<double[]>()
-            };
-            
-
-            List<double[]> inputData = input.DataPoints.OrderBy(point => point[0]).ToList();
-
-            // Edges stay constant
-            output.DataPoints.Add(inputData[0]);
-
-            output.DataPoints.AddRange(inputData.Skip(1).Take(inputData.Count - 2).Select((value, index) =>
-                new double[] { value[0],
-                    MathNet.Numerics.Statistics.Statistics.Median(new double[] { value[1],inputData[index][1],inputData[index+2][1] })
-                }));
-
-            output.DataPoints.Add(inputData.Last());
-
-            return output;
-        }
+        
         #endregion
 
         #region [ Symmetrical Components  ]
