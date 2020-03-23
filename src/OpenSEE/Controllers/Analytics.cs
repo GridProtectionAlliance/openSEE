@@ -903,6 +903,250 @@ namespace OpenSEE
 
         #endregion
 
+        #region [ Power ]
+       
+        public static List<D3Series> GetPowerLookup(VICycleDataGroup vICycleDataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            List<Complex> powerPointsAN = null;
+            List<Complex> powerPointsBN = null;
+            List<Complex> powerPointsCN = null;
+
+            if (vICycleDataGroup.IA != null && vICycleDataGroup.VA != null)
+            {
+                List<DataPoint> voltagePointsMag = vICycleDataGroup.VA.RMS.DataPoints;
+                List<DataPoint> voltagePointsAng = vICycleDataGroup.VA.Phase.DataPoints;
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+
+                List<DataPoint> currentPointsMag = vICycleDataGroup.IA.RMS.DataPoints;
+                List<DataPoint> currentPointsAng = vICycleDataGroup.IA.Phase.DataPoints;
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+
+                powerPointsAN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VAR",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Reactive Power",
+                    ChartLabel = "AN Reactive Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "W",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Active Power",
+                    ChartLabel = "AN Active Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VA",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Apparent Power",
+                    ChartLabel = "AN Apparent Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "pf",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "A",
+                    LegendGroup = "Power Factor",
+                    ChartLabel = "AN Power Factor",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                });
+
+            }
+
+            if (vICycleDataGroup.IB != null && vICycleDataGroup.VB != null)
+            {
+                List<DataPoint> voltagePointsMag = vICycleDataGroup.VB.RMS.DataPoints;
+                List<DataPoint> voltagePointsAng = vICycleDataGroup.VB.Phase.DataPoints;
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+
+                List<DataPoint> currentPointsMag = vICycleDataGroup.IB.RMS.DataPoints;
+                List<DataPoint> currentPointsAng = vICycleDataGroup.IB.Phase.DataPoints;
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+
+                powerPointsBN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VAR",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Reactive Power",
+                    ChartLabel = "BN Reactive Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "W",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Active Power",
+                    ChartLabel = "BN Active Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VA",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Apparent Power",
+                    ChartLabel = "BN Apparent Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "pf",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "B",
+                    LegendGroup = "Power Factor",
+                    ChartLabel = "BN Power Factor",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                });
+            }
+
+            if (vICycleDataGroup.IC != null && vICycleDataGroup.VC != null)
+            {
+                List<DataPoint> voltagePointsMag = vICycleDataGroup.VC.RMS.DataPoints;
+                List<DataPoint> voltagePointsAng = vICycleDataGroup.VC.Phase.DataPoints;
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+
+                List<DataPoint> currentPointsMag = vICycleDataGroup.IC.RMS.DataPoints;
+                List<DataPoint> currentPointsAng = vICycleDataGroup.IC.Phase.DataPoints;
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+
+                powerPointsCN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VAR",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Reactive Power",
+                    ChartLabel = "CN Reactive Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "W",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Active Power",
+                    ChartLabel = "CN Active Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VA",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Apparent Power",
+                    ChartLabel = "CN Apparent Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "pf",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "C",
+                    LegendGroup = "Power Factor",
+                    ChartLabel = "CN Power Factor",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                });
+
+            }
+
+            if (powerPointsAN != null && powerPointsAN.Any() && powerPointsBN != null && powerPointsBN.Any() && powerPointsCN != null && powerPointsCN.Any())
+            {
+                IEnumerable<Complex> powerPoints = powerPointsAN.Select((pPoint, index) => pPoint + powerPointsBN[index] + powerPointsCN[index]).ToList();
+
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VAR",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "Sum",
+                    LegendGroup = "Reactive Power",
+                    ChartLabel = "Total Reactive Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] {  vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "W",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "Sum",
+                    LegendGroup = "Active Power",
+                    ChartLabel = "Total Active Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "VA",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "Sum",
+                    LegendGroup = "Apparent Power",
+                    ChartLabel = "Total Apparent Power",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    XaxisLabel = "pf",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "Sum",
+                    LegendGroup = "Power Factor",
+                    ChartLabel = "Total Power Factor",
+                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                });
+            }
+
+            return dataLookup;
+        }
+        #endregion
+
+
         #endregion
 
 

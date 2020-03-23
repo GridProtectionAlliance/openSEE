@@ -436,6 +436,8 @@ namespace OpenSEE
                 return Analytics.GetFrequencyLookup(new VIDataGroup(dataGroup));
             if (analytic == "Impedance")
                 return Analytics.GetImpedanceLookup(viCycleDataGroup);
+            if (analytic == "Power")
+                return Analytics.GetPowerLookup(viCycleDataGroup);
 
             return new List<D3Series>();
         }
