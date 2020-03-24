@@ -57,6 +57,7 @@ export default class OpenSEENavbar extends React.Component {
         breakerdigitals: boolean,
         displayAnalogs: boolean,
         displayAnalytics: string,
+        filterOrder: number,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -258,7 +259,8 @@ export default class OpenSEENavbar extends React.Component {
             `${this.props.displayTCE != undefined ? `&displayTCE=${this.props.displayTCE}` : ``}` + 
             `${this.props.breakerdigitals != undefined ? `&breakerdigitals=${this.props.breakerdigitals}` : ``}` + 
             `${this.props.displayAnalogs != undefined ? `&displayAnalogs=${this.props.displayAnalogs}` : ``}` +
-            `${this.props.displayAnalytics != undefined ? `&displayAnalytics=${this.props.displayAnalytics}` : ``}` + 
+            `${this.props.displayAnalytics != undefined ? `&displayAnalytics=${this.props.displayAnalytics}` : ``}` +
+            `${this.props.filterOrder != undefined ? `&filterOrder=${this.props.filterOrder}` : ``}` +             
             `&Meter=${this.props.PostedData.postedMeterName}` +
             `&EventType=${this.props.PostedData.postedEventName}`
             );

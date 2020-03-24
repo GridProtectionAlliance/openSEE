@@ -1334,6 +1334,304 @@ namespace OpenSEE
         #endregion
 
 
+        #region [ LowPassFilter ]
+        public static List<D3Series> GetLowPassFilterLookup(DataGroup dataGroup, int order)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+            double systemFrequency;
+            List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            Filter LPF = Filter.LPButterworth(120.0, order);
+
+            vAN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VAN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+
+            });
+
+            vBN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VBN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+
+                });
+            });
+
+            vCN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VCN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+            iAN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "IAN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+
+            iBN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "IBN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+            iCN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = LPF.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "ICN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+
+
+            return dataLookup;
+        }
+
+        #endregion
+
+        #region [ High Pass Filter ]
+        public static List<D3Series> GetHighPassFilterLookup(DataGroup dataGroup, int order)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+            double systemFrequency;
+            
+            List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            Filter hpf = Filter.HPButterworth(120.0, order);
+
+            vAN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VAN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+
+            vBN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VBN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+            vCN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "VCN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "V",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+            iAN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "IAN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+
+            iBN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "IBN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+            iCN.ForEach(item =>
+            {
+                int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, systemFrequency);
+                List<DataPoint> points = item.DataPoints;
+
+                double[] results = hpf.filtfilt(points.Select(x => x.Value).ToArray(), samplesPerCycle * systemFrequency);
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChartLabel = "ICN Low Pass Filter",
+                    ChannelID = 0,
+                    XaxisLabel = "A",
+                    Color = GetColor(item.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
+                });
+            });
+
+
+
+            return dataLookup;
+        }
+        #endregion
+
         #endregion
 
 

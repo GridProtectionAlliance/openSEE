@@ -388,6 +388,8 @@ namespace OpenSEE
             bool displayTCE = requestParameters["displayTCE"] == null ? false : bool.Parse(requestParameters["displayTCE"]);
             bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
             bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
+            int filterOrder = requestParameters["filterOrder"] == null? 0:  int.Parse(requestParameters["filterOrder"]);
+
 
             string displayAnalytics = requestParameters["displayAnalytics"] == null ? "" : requestParameters["displayAnalytics"];
 
@@ -414,7 +416,7 @@ namespace OpenSEE
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
                 if (displayAnalytics != "")
-                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics));
+                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder));
                 
 
                 returnList = AlignData(returnList.ToList());
@@ -423,7 +425,7 @@ namespace OpenSEE
             }
         }
 
-        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic)
+        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order)
         {
             DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
             VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
@@ -442,6 +444,10 @@ namespace OpenSEE
                 return Analytics.GetRemoveCurrentLookup(dataGroup);
             if (analytic == "MissingVoltage")
                 return Analytics.GetMissingVoltageLookup(dataGroup);
+            if (analytic == "LowPassFilter")
+                return Analytics.GetLowPassFilterLookup(dataGroup, order);
+            if (analytic == "HighPassFilter")
+                return Analytics.GetHighPassFilterLookup(dataGroup, order);
 
             return new List<D3Series>();
         }

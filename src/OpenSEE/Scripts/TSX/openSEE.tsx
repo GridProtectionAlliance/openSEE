@@ -245,7 +245,9 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         displayTCE={this.state.displayTCE}
                         breakerdigitals={this.state.breakerdigitals}
                         displayAnalogs={this.state.displayAnalogs}
-                        displayAnalytics={this.state.tab == "Analytics" ? this.state.analytic: "" }
+                        displayAnalytics={this.state.tab == "Analytics" ? this.state.analytic : ""}
+                        filterOrder={this.state.AnalyticSettings.order}
+
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         <ViewerWindow pointTable={this.state.PointsTable} tableReset = {() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
