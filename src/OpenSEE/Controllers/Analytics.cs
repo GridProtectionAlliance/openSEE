@@ -1274,6 +1274,66 @@ namespace OpenSEE
 
         #endregion
 
+        #region [ Missing Voltage ]
+        
+        public static List<D3Series> GetMissingVoltageLookup(DataGroup dataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+            double systemFrequency;
+
+            //deal with the followinf Phases
+            List<string> phases = new List<string> { "AN", "BN", "CN" };
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            foreach (DataSeries ds in dataGroup.DataSeries)
+            {
+                if ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") && (ds.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous")
+                    && (phases.Contains(ds.SeriesInfo.Channel.Phase.Name)))
+                {
+                    string name =  "V"  + ds.SeriesInfo.Channel.Phase.Name;
+
+                    int samplesPerCycle = Transform.CalculateSamplesPerCycle(ds.SampleRate, systemFrequency);
+
+                    List<DataPoint> firstCycle = ds.DataPoints.Take(samplesPerCycle).ToList();
+                    List<DataPoint> lastCycle = ds.DataPoints.OrderByDescending(x => x.Time).Take(samplesPerCycle).ToList();
+
+                    List<DataPoint> fullWaveFormPre = ds.DataPoints.Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = firstCycle[index % samplesPerCycle].Value - dataPoint.Value }).ToList();
+                    List<DataPoint> fullWaveFormPost = ds.DataPoints.OrderByDescending(x => x.Time).Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = lastCycle[index % samplesPerCycle].Value - dataPoint.Value }).OrderBy(x => x.Time).ToList();
+
+                    dataLookup.Add(new D3Series()
+                    {
+                        ChannelID = 0,
+                        XaxisLabel = "V",
+                        Color = GetColor(ds.SeriesInfo.Channel),
+                        LegendClass = "",
+                        SecondaryLegendClass = "Pre",
+                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        ChartLabel = name + " Pre Fault",
+                        DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
+                    });
+                    dataLookup.Add(new D3Series()
+                    {
+                        ChannelID = 0,
+                        XaxisLabel = "V",
+                        Color = GetColor(ds.SeriesInfo.Channel),
+                        LegendClass = "",
+                        SecondaryLegendClass = "Post",
+                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        ChartLabel = name + " Post Fault",
+                        DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
+                    });
+                }
+            }
+
+            return dataLookup;
+        }
+        #endregion
+
+
         #endregion
 
 

@@ -743,29 +743,18 @@ namespace OpenSEE
         public Task<JsonReturn> GetMissingVoltageData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    
-                    DateTime startTime = evt.StartTime;
-                    DateTime endTime =  evt.EndTime;
-                   
-                    DataTable table;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetMissingVoltageLookup(dataGroup)).ToList();
-                        
-                    }
-                   
+                    DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
+
+                    List<D3Series> returnList = Analytics.GetMissingVoltageLookup(dataGroup);
+                    
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
 
@@ -777,59 +766,6 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetMissingVoltageLookup(DataGroup dataGroup)
-        {
-            List< D3Series> dataLookup = new List<D3Series>();
-            double systemFrequency;
-
-            //deal with the followinf Phases
-            List<string> phases = new List<string> { "AN", "BN", "CN" };
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-
-            foreach (DataSeries ds in dataGroup.DataSeries)
-            {
-                if ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") && (ds.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous")
-                    && (phases.Contains(ds.SeriesInfo.Channel.Phase.Name)))
-                {
-                    string name = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + ds.SeriesInfo.Channel.Phase.Name;
-
-                    int samplesPerCycle = Transform.CalculateSamplesPerCycle(ds.SampleRate, systemFrequency);
-
-                    List<DataPoint> firstCycle = ds.DataPoints.Take(samplesPerCycle).ToList();
-                    List<DataPoint> lastCycle = ds.DataPoints.OrderByDescending(x => x.Time).Take(samplesPerCycle).ToList();
-
-                    List<DataPoint> fullWaveFormPre = ds.DataPoints.Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = firstCycle[index % samplesPerCycle].Value - dataPoint.Value }).ToList();
-                    List<DataPoint> fullWaveFormPost = ds.DataPoints.OrderByDescending(x => x.Time).Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = lastCycle[index % samplesPerCycle].Value - dataPoint.Value }).OrderBy(x => x.Time).ToList();
-
-                    dataLookup.Add(new D3Series() {
-                        ChannelID = 0,
-                        XaxisLabel = "V",
-                        Color = GetColor(ds.SeriesInfo.Channel),
-                        LegendClass = "",
-                        SecondaryLegendClass = "Pre",
-                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                        ChartLabel = name + " Pre Fault",
-                        DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                    });
-                    dataLookup.Add(new D3Series() {
-                        ChannelID = 0,
-                        XaxisLabel = "V",
-                        Color = GetColor(ds.SeriesInfo.Channel),
-                        LegendClass = "",
-                        SecondaryLegendClass = "Post",
-                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                        ChartLabel = name + " Post Fault",
-                        DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                    });
-                }
-            } 
-
-            return dataLookup;
-        }
         #endregion
 
         #region [ Clipped Waveforms ]

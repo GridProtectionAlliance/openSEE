@@ -440,7 +440,9 @@ namespace OpenSEE
                 return Analytics.GetPowerLookup(viCycleDataGroup);
             if (analytic == "RemoveCurrent")
                 return Analytics.GetRemoveCurrentLookup(dataGroup);
-            
+            if (analytic == "MissingVoltage")
+                return Analytics.GetMissingVoltageLookup(dataGroup);
+
             return new List<D3Series>();
         }
 
