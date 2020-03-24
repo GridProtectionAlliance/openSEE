@@ -438,7 +438,9 @@ namespace OpenSEE
                 return Analytics.GetImpedanceLookup(viCycleDataGroup);
             if (analytic == "Power")
                 return Analytics.GetPowerLookup(viCycleDataGroup);
-
+            if (analytic == "RemoveCurrent")
+                return Analytics.GetRemoveCurrentLookup(dataGroup);
+            
             return new List<D3Series>();
         }
 

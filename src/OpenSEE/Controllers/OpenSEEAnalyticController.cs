@@ -682,32 +682,17 @@ namespace OpenSEE
         public Task<JsonReturn> GetRemoveCurrentData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-
-                    DateTime startTime = evt.StartTime;
-                    DateTime endTime =  evt.EndTime;
+                    DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
+                    List<D3Series> returnList = Analytics.GetRemoveCurrentLookup(dataGroup);
                     
-                    DataTable table;
-
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}",  evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-
-                        returnList = returnList.Concat(GetRemoveCurrentLookup(dataGroup)).ToList();
-
-                    }
                     
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
@@ -721,126 +706,6 @@ namespace OpenSEE
 
         }
 
-        private List<D3Series> GetRemoveCurrentLookup(DataGroup dataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-            double systemFrequency;
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-            DataSeries iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-
-
-
-            if (iAN != null)
-            {
-                int samplesPerCycle = Transform.CalculateSamplesPerCycle(iAN.SampleRate, systemFrequency);
-
-                List<DataPoint> firstCycle = iAN.DataPoints.Take(samplesPerCycle).ToList();
-                List<DataPoint> lastCycle = iAN.DataPoints.OrderByDescending(x => x.Time).Take(samplesPerCycle).ToList();
-
-                List<DataPoint> fullWaveFormPre = iAN.DataPoints.Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - firstCycle[index % samplesPerCycle].Value }).ToList();
-                List<DataPoint> fullWaveFormPost = iAN.DataPoints.OrderByDescending(x => x.Time).Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - lastCycle[index % samplesPerCycle].Value }).OrderBy(x => x.Time).ToList();
-
-                dataLookup.Add( new D3Series() {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iAN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "IAN Pre Fault",
-                    DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList() 
-                });
-                dataLookup.Add(new D3Series() {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iAN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",                    
-                    ChartLabel = "IAN Post Fault",
-                    DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList() 
-                });
-
-            }
-
-
-            if (iBN != null)
-            {
-                int samplesPerCycle = Transform.CalculateSamplesPerCycle(iBN.SampleRate, systemFrequency);
-
-                List<DataPoint> firstCycle = iBN.DataPoints.Take(samplesPerCycle).ToList();
-                List<DataPoint> lastCycle = iBN.DataPoints.OrderByDescending(x => x.Time).Take(samplesPerCycle).ToList();
-
-                List<DataPoint> fullWaveFormPre = iBN.DataPoints.Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - firstCycle[index % samplesPerCycle].Value }).ToList();
-                List<DataPoint> fullWaveFormPost = iBN.DataPoints.OrderByDescending(x => x.Time).Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - lastCycle[index % samplesPerCycle].Value }).OrderBy(x => x.Time).ToList();
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iBN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "IBN Pre Fault",
-                    DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                });
-                dataLookup.Add( new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iBN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "IBN Post Fault",
-                    DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                });
-            }
-
-            if (iCN != null)
-            {
-                int samplesPerCycle = Transform.CalculateSamplesPerCycle(iCN.SampleRate, systemFrequency);
-
-                List<DataPoint> firstCycle = iCN.DataPoints.Take(samplesPerCycle).ToList();
-                List<DataPoint> lastCycle = iCN.DataPoints.OrderByDescending(x => x.Time).Take(samplesPerCycle).ToList();
-
-                List<DataPoint> fullWaveFormPre = iCN.DataPoints.Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - firstCycle[index % samplesPerCycle].Value }).ToList();
-                List<DataPoint> fullWaveFormPost = iCN.DataPoints.OrderByDescending(x => x.Time).Select((dataPoint, index) => new DataPoint() { Time = dataPoint.Time, Value = dataPoint.Value - lastCycle[index % samplesPerCycle].Value }).OrderBy(x => x.Time).ToList();
-
-                dataLookup.Add( new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iCN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "ICN Pre Fault",
-                    DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                });
-                dataLookup.Add( new D3Series()
-                {
-                    ChannelID = 0,
-                    XaxisLabel = "A",
-                    Color = GetColor(iCN.SeriesInfo.Channel),
-                    LegendClass = "",
-                    SecondaryLegendClass = "",
-                    LegendGroup = "",
-                    ChartLabel = "ICN Post Fault",
-                    DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                });
-            }
-
-
-
-            return dataLookup;
-        }
         #endregion
 
         #region [ Power ]
