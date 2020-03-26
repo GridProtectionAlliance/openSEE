@@ -448,6 +448,11 @@ namespace OpenSEE
                 return Analytics.GetLowPassFilterLookup(dataGroup, order);
             if (analytic == "HighPassFilter")
                 return Analytics.GetHighPassFilterLookup(dataGroup, order);
+            if (analytic == "SymmetricalComponents")
+                return Analytics.GetSymmetricalComponentsLookup(viCycleDataGroup);
+            if (analytic == "Unbalance")
+                return Analytics.GetUnbalanceLookup(viCycleDataGroup);
+
 
             return new List<D3Series>();
         }

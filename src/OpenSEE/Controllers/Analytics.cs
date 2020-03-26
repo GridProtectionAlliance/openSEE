@@ -1332,8 +1332,7 @@ namespace OpenSEE
             return dataLookup;
         }
         #endregion
-
-
+        
         #region [ LowPassFilter ]
         public static List<D3Series> GetLowPassFilterLookup(DataGroup dataGroup, int order)
         {
@@ -1630,6 +1629,303 @@ namespace OpenSEE
 
             return dataLookup;
         }
+        #endregion
+
+        #region [ Symmetrical Components  ]
+        
+        public static List<D3Series> GetSymmetricalComponentsLookup(VICycleDataGroup vICycleDataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+
+
+            if (vICycleDataGroup.VA != null && vICycleDataGroup.VB != null && vICycleDataGroup.VC != null)
+            {
+                var va = vICycleDataGroup.VA.RMS.DataPoints;
+                var vaPhase = vICycleDataGroup.VA.Phase.DataPoints;
+                var vb = vICycleDataGroup.VB.RMS.DataPoints;
+                var vbPhase = vICycleDataGroup.VB.Phase.DataPoints;
+                var vc = vICycleDataGroup.VC.RMS.DataPoints;
+                var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
+
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                    DataPoint vaPoint = point;
+                    DataPoint vaPhasePoint = vaPhase[index];
+                    Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
+
+                    DataPoint vbPoint = vb[index];
+                    DataPoint vbPhasePoint = vbPhase[index];
+                    Complex vbComplex = Complex.FromPolarCoordinates(vbPoint.Value, vbPhasePoint.Value);
+
+                    DataPoint vcPoint = vc[index];
+                    DataPoint vcPhasePoint = vcPhase[index];
+                    Complex vcComplex = Complex.FromPolarCoordinates(vcPoint.Value, vcPhasePoint.Value);
+
+                    SequenceComponents sequenceComponents = CalculateSequenceComponents(vaComplex, vbComplex, vcComplex);
+
+                    return sequenceComponents;
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Voltage S0",
+                    XaxisLabel = "V",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude }).ToList()
+
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Voltage S1",
+                    XaxisLabel = "V",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S1.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Voltage S2",
+                    XaxisLabel = "V",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude }).ToList()
+                });
+
+            }
+
+
+            if (vICycleDataGroup.IA != null && vICycleDataGroup.IB != null && vICycleDataGroup.IC != null)
+            {
+
+                var ia = vICycleDataGroup.IA.RMS.DataPoints;
+                var iaPhase = vICycleDataGroup.IA.Phase.DataPoints;
+                var ib = vICycleDataGroup.IB.RMS.DataPoints;
+                var ibPhase = vICycleDataGroup.IB.Phase.DataPoints;
+                var ic = vICycleDataGroup.IC.RMS.DataPoints;
+                var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
+
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                    DataPoint iaPoint = point;
+                    DataPoint iaPhasePoint = iaPhase[index];
+                    Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
+
+                    DataPoint ibPoint = ib[index];
+                    DataPoint ibPhasePoint = ibPhase[index];
+                    Complex ibComplex = Complex.FromPolarCoordinates(ibPoint.Value, ibPhasePoint.Value);
+
+                    DataPoint icPoint = ic[index];
+                    DataPoint icPhasePoint = icPhase[index];
+                    Complex icComplex = Complex.FromPolarCoordinates(icPoint.Value, icPhasePoint.Value);
+
+                    SequenceComponents sequenceComponents = CalculateSequenceComponents(iaComplex, ibComplex, icComplex);
+
+                    return sequenceComponents;
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Current S0",
+                    XaxisLabel = "A",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude }).ToList()
+
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Current S1",
+                    XaxisLabel = "A",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S1.Magnitude }).ToList()
+                });
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Current S2",
+                    XaxisLabel = "A",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude }).ToList()
+                });
+
+            }
+
+            return dataLookup;
+        }
+
+
+        private class SequenceComponents
+        {
+            public Complex S0 { get; set; }
+            public Complex S2 { get; set; }
+            public Complex S1 { get; set; }
+
+        }
+
+        private static SequenceComponents CalculateSequenceComponents(Complex an, Complex bn, Complex cn)
+        {
+            double TwoPI = 2.0D * Math.PI;
+            double Rad120 = TwoPI / 3.0D;
+            Complex a = new Complex(Math.Cos(Rad120), Math.Sin(Rad120));
+            Complex aSq = a * a;
+
+            SequenceComponents sequenceComponents = new SequenceComponents();
+
+            sequenceComponents.S0 = (an + bn + cn) / 3.0D;
+            sequenceComponents.S1 = (an + a * bn + aSq * cn) / 3.0D;
+            sequenceComponents.S2 = (an + aSq * bn + a * cn) / 3.0D;
+
+            return sequenceComponents;
+        }
+
+
+        #endregion
+
+        #region [ Unbalance ]
+       
+        public static List<D3Series> GetUnbalanceLookup(VICycleDataGroup vICycleDataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+
+
+            if (vICycleDataGroup.VA != null && vICycleDataGroup.VB != null && vICycleDataGroup.VC != null)
+            {
+                var va = vICycleDataGroup.VA.RMS.DataPoints;
+                var vaPhase = vICycleDataGroup.VA.Phase.DataPoints;
+                var vb = vICycleDataGroup.VB.RMS.DataPoints;
+                var vbPhase = vICycleDataGroup.VB.Phase.DataPoints;
+                var vc = vICycleDataGroup.VC.RMS.DataPoints;
+                var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
+
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                    DataPoint vaPoint = point;
+                    DataPoint vaPhasePoint = vaPhase[index];
+                    Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
+
+                    DataPoint vbPoint = vb[index];
+                    DataPoint vbPhasePoint = vbPhase[index];
+                    Complex vbComplex = Complex.FromPolarCoordinates(vbPoint.Value, vbPhasePoint.Value);
+
+                    DataPoint vcPoint = vc[index];
+                    DataPoint vcPhasePoint = vcPhase[index];
+                    Complex vcComplex = Complex.FromPolarCoordinates(vcPoint.Value, vcPhasePoint.Value);
+
+                    SequenceComponents sequenceComponents = CalculateSequenceComponents(vaComplex, vbComplex, vcComplex);
+
+                    return sequenceComponents;
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "S0/S1 Voltage",
+                    XaxisLabel = "",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude / point.S1.Magnitude * 100.0D }).ToList()
+
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "S2/S1 Voltage",
+                    XaxisLabel = "",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "V",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude / point.S1.Magnitude * 100.0D }).ToList()
+
+                });
+
+            }
+
+
+            if (vICycleDataGroup.IA != null && vICycleDataGroup.IB != null && vICycleDataGroup.IC != null)
+            {
+
+                var ia = vICycleDataGroup.IA.RMS.DataPoints;
+                var iaPhase = vICycleDataGroup.IA.Phase.DataPoints;
+                var ib = vICycleDataGroup.IB.RMS.DataPoints;
+                var ibPhase = vICycleDataGroup.IB.Phase.DataPoints;
+                var ic = vICycleDataGroup.IC.RMS.DataPoints;
+                var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
+
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                    DataPoint iaPoint = point;
+                    DataPoint iaPhasePoint = iaPhase[index];
+                    Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
+
+                    DataPoint ibPoint = ib[index];
+                    DataPoint ibPhasePoint = ibPhase[index];
+                    Complex ibComplex = Complex.FromPolarCoordinates(ibPoint.Value, ibPhasePoint.Value);
+
+                    DataPoint icPoint = ic[index];
+                    DataPoint icPhasePoint = icPhase[index];
+                    Complex icComplex = Complex.FromPolarCoordinates(icPoint.Value, icPhasePoint.Value);
+
+                    SequenceComponents sequenceComponents = CalculateSequenceComponents(iaComplex, ibComplex, icComplex);
+
+                    return sequenceComponents;
+                });
+
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "S0/S1 Current",
+                    XaxisLabel = "",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude / point.S1.Magnitude * 100.0D }).ToList()
+
+                });
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "S2/S1 Current",
+                    XaxisLabel = "",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "I",
+                    LegendGroup = "",
+                    DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude / point.S1.Magnitude * 100.0D }).ToList()
+
+                });
+
+
+            }
+
+            return dataLookup;
+        }
+
+
         #endregion
 
         #endregion
