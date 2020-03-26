@@ -59,6 +59,7 @@ export default class OpenSEENavbar extends React.Component {
         displayAnalytics: string,
         filterOrder: number,
         Trc: number,
+        harmonic: number,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -263,6 +264,7 @@ export default class OpenSEENavbar extends React.Component {
             `${this.props.displayAnalytics != undefined ? `&displayAnalytics=${this.props.displayAnalytics}` : ``}` +
             `${this.props.filterOrder != undefined ? `&filterOrder=${this.props.filterOrder}` : ``}` + 
             `${this.props.Trc != undefined ? `&Trc=${this.props.Trc}` : ``}` +
+            `${this.props.harmonic != undefined ? `&harmonic=${this.props.harmonic}` : ``}` +
             `&Meter=${this.props.PostedData.postedMeterName}` +
             `&EventType=${this.props.PostedData.postedEventName}`
             );
@@ -271,6 +273,7 @@ export default class OpenSEENavbar extends React.Component {
             `${this.props.endDate != undefined ? `&endDate=${this.props.endDate}` : ``}` +
             `&Meter=${this.props.PostedData.postedMeterName}` +
             `&EventType=${this.props.PostedData.postedEventName}`); */
+        
     }
 
     exportComtrade(evt) {

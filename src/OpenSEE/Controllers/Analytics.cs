@@ -2063,6 +2063,156 @@ namespace OpenSEE
         }
         #endregion
 
+        #region [ THD ]
+        public static List<D3Series> GetTHDLookup(DataGroup dataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            double systemFrequency;
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+
+            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD(systemFrequency, item))).ToList();
+
+
+            return dataLookup;
+        }
+
+        private static D3Series GenerateTHD(double systemFrequency, DataSeries dataSeries)
+        {
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
+
+            D3Series thd = new D3Series()
+            {
+                ChannelID = 0,
+                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                ChartLabel = dataSeries.SeriesInfo.Channel.Name + " THD",
+                DataPoints = new List<double[]>()
+            };
+
+            double[][] dataArr = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
+            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i++)
+            {
+
+                double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
+                FFT fft = new FFT(systemFrequency * samplesPerCycle, points);
+
+
+                double rmsHarmSum = fft.Magnitude.Where((value, index) => index != 1).Select(value => Math.Pow(value, 2)).Sum();
+                double rmsHarm = fft.Magnitude[1];
+                double thdValue = 100 * Math.Sqrt(rmsHarmSum) / rmsHarm;
+
+                dataArr[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, thdValue };
+            }
+
+            thd.DataPoints = dataArr.ToList();
+            return thd;
+        }
+
+        #endregion
+
+        #region [ Specified Harmonic ]
+        public static List<D3Series> GetSpecifiedHarmonicLookup(DataGroup dataGroup, int specifiedHarmonic)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            double systemFrequency;
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+             
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic(systemFrequency, item, specifiedHarmonic))).ToList();
+
+            return dataLookup;
+        }
+
+        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic( double systemFrequency, DataSeries dataSeries, int specifiedHarmonic)
+        {
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
+            
+            D3Series SpecifiedHarmonicMag = new D3Series()
+            {
+                ChannelID = 0,
+                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "",
+                SecondaryLegendClass = "Mag",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                ChartLabel = dataSeries.SeriesInfo.Channel.Name + $"Harmonic [{specifiedHarmonic}] Mag",
+                DataPoints = new List<double[]>()
+            };
+
+            D3Series SpecifiedHarmonicAng = new D3Series()
+            {
+                ChannelID = 0,
+                XaxisLabel = "deg",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "",
+                SecondaryLegendClass = "Ang",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                ChartLabel = dataSeries.SeriesInfo.Channel.Name + $"Harmonic [{specifiedHarmonic}] Ang",
+                DataPoints = new List<double[]>()
+            };
+
+            double[][] dataArrHarm = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
+            double[][] dataArrAngle = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
+
+            Parallel.For(0, dataSeries.DataPoints.Count - samplesPerCycle, i =>
+            {
+                double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
+                double specifiedFrequency = systemFrequency * specifiedHarmonic;
+
+                FFT fft = new FFT(systemFrequency * samplesPerCycle, points);
+
+                int index = Array.FindIndex(fft.Frequency, value => Math.Round(value) == specifiedFrequency);
+
+                dataArrHarm[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Magnitude[index] / Math.Sqrt(2) };
+                dataArrAngle[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Angle[index] * 180 / Math.PI };
+
+            });
+
+            SpecifiedHarmonicMag.DataPoints = dataArrHarm.ToList();
+            SpecifiedHarmonicAng.DataPoints = dataArrAngle.ToList();
+
+            return new List<D3Series>() { SpecifiedHarmonicMag, SpecifiedHarmonicAng };
+        }
+
+        #endregion
 
         #endregion
 

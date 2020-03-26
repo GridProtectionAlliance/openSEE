@@ -389,7 +389,8 @@ namespace OpenSEE
             bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
             bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
             int filterOrder = requestParameters["filterOrder"] == null? 0:  int.Parse(requestParameters["filterOrder"]);
-            double Trc = requestParameters["Trc"] == null ? 0 : int.Parse(requestParameters["Trc"]);
+            double Trc = requestParameters["Trc"] == null ? 0.0 : double.Parse(requestParameters["Trc"]);
+            int harmonic = requestParameters["harmonic"] == null ? 1 : int.Parse(requestParameters["harmonic"]);
 
             string displayAnalytics = requestParameters["displayAnalytics"] == null ? "" : requestParameters["displayAnalytics"];
 
@@ -416,7 +417,7 @@ namespace OpenSEE
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
                 if (displayAnalytics != "")
-                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder,Trc));
+                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder,Trc, harmonic));
                 
 
                 returnList = AlignData(returnList.ToList());
@@ -425,7 +426,7 @@ namespace OpenSEE
             }
         }
 
-        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc)
+        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc, int harmonic)
         {
             DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
             VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
@@ -456,6 +457,12 @@ namespace OpenSEE
                 return Analytics.GetRectifierLookup(new VIDataGroup(dataGroup),Trc);
             if (analytic == "RapidVoltageChange")
                 return Analytics.GetRapidVoltageChangeLookup(viCycleDataGroup);
+            if (analytic == "THD")
+                return Analytics.GetTHDLookup(dataGroup);
+            if (analytic == "SpecifiedHarmonic")
+                return Analytics.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
+            
+                
 
             return new List<D3Series>();
         }
