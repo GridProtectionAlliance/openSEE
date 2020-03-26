@@ -962,122 +962,28 @@ namespace OpenSEE
 
         #region [ Overlapping Waveform ]
         [Route("GetOverlappingWaveformData"),HttpGet]
-        public Task<OverlapReturn> GetOverlappingWaveformData(CancellationToken cancellationToken)
+        public Task<JsonReturn> GetOverlappingWaveformData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
+                    DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
 
-                    DateTime startTime = (query.ContainsKey("startDate") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-                    DateTime endTime = (query.ContainsKey("endDate") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
-
-                    DataTable table;
-
-                    Dictionary<string, OverlapSeries> dict = new Dictionary<string, OverlapSeries>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE StartTime <= {0} AND EndTime >= {1} and MeterID = {2} AND LineID = {3}", ToDateTime2(connection, endTime), ToDateTime2(connection, startTime), evt.MeterID, evt.AssetID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                        Dictionary<string, OverlapSeries> temp = GetOverlappingWaveformLookup(dataGroup);
-
-                        foreach (string key in temp.Keys)
-                        {
-                            if (dict.ContainsKey(key))
-                                dict[key].DataPoints = dict[key].DataPoints.Concat(temp[key].DataPoints).ToList();
-                            else
-                                dict.Add(key, temp[key]);
-                        }
-                    }
-                    if (dict.Count == 0) return null;
-
-
-                    List<OverlapSeries> returnList = new List<OverlapSeries>();
-                    foreach (string key in dict.Keys)
-                    {
-                        OverlapSeries series = new OverlapSeries();
-                        series = dict[key];
-                        series.DataPoints = dict[key].DataPoints;
-                        returnList.Add(series);
-                    }
-                    OverlapReturn returnDict = new OverlapReturn();
-                    returnDict.StartDate = evt.StartTime;
-                    returnDict.EndDate = evt.EndTime;
+                    List<D3Series> returnList = Analytics.GetOverlappingWaveformLookup(dataGroup);
+                   
+                    JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
 
                     return returnDict;
                 }
 
             }, cancellationToken);
-        }
-
-        private Dictionary<string, OverlapSeries> GetOverlappingWaveformLookup(DataGroup dataGroup)
-        {
-            double systemFrequency;
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-
-            Dictionary<string, OverlapSeries> dataLookup = new Dictionary<string, OverlapSeries>();
-
-            DataSeries vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-            DataSeries iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-
-            if (vAN != null) GenerateOverlappingWaveform(dataLookup, vAN, "VAN", systemFrequency);
-            if (vBN != null) GenerateOverlappingWaveform(dataLookup, vBN, "VBN", systemFrequency);
-            if (vCN != null) GenerateOverlappingWaveform(dataLookup, vCN, "VCN", systemFrequency);
-            if (iAN != null) GenerateOverlappingWaveform(dataLookup, iAN, "IAN", systemFrequency);
-            if (iBN != null) GenerateOverlappingWaveform(dataLookup, iBN, "IBN", systemFrequency);
-            if (iCN != null) GenerateOverlappingWaveform(dataLookup, iCN, "ICN", systemFrequency);
-
-            return dataLookup;
-        }
-
-        private void GenerateOverlappingWaveform(Dictionary<string, OverlapSeries> dataLookup, DataSeries dataSeries, string label, double systemFrequency)
-        {
-
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-            var cycles = dataSeries.DataPoints.Select((Point, Index) => new { Point, SampleIndex = Index % samplesPerCycle, GroupIndex = Index / samplesPerCycle }).GroupBy(point => point.GroupIndex);
-            OverlapSeries series = new OverlapSeries()
-            {
-                ChartLabel = label + " Overlapping",
-                DataPoints = new List<double?[]>()
-            };
-
-            foreach(var cycle in cycles)
-            {
-                series.DataPoints = series.DataPoints.Concat(cycle.Select(dataPoint => new double?[] { dataPoint.SampleIndex, dataPoint.Point.Value }).ToList()).ToList();
-                series.DataPoints = series.DataPoints.Concat(new List<double?[]> { new double?[] { null, null } }).ToList();
-
-            }
-
-            dataLookup.Add(series.ChartLabel, series);
-        }
-
-        public class OverlapSeries{
-            public string ChartLabel;
-            public List<double?[]> DataPoints;
-        }
-
-        public class OverlapReturn
-        {
-            public DateTime StartDate;
-            public DateTime EndDate;
-            public List<OverlapSeries> Data;
         }
 
         #endregion

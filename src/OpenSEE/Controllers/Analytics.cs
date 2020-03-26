@@ -2214,6 +2214,67 @@ namespace OpenSEE
 
         #endregion
 
+        #region [ Overlapping Waveform ]
+       
+        public static List<D3Series> GetOverlappingWaveformLookup(DataGroup dataGroup)
+        {
+            double systemFrequency;
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+
+            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+
+            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateOverlappingWaveform(item, systemFrequency))).ToList();
+
+            return dataLookup;
+        }
+
+        private static D3Series GenerateOverlappingWaveform(DataSeries dataSeries, double systemFrequency)
+        {
+
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
+            var cycles = dataSeries.DataPoints.Select((Point, Index) => new { Point, SampleIndex = Index % samplesPerCycle, GroupIndex = Index / samplesPerCycle }).GroupBy(point => point.GroupIndex);
+            D3Series series = new D3Series()
+            {
+                ChannelID = 0,
+                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                ChartLabel = dataSeries.SeriesInfo.Channel.Name + " Overlapping",
+                DataPoints = new List<double[]>()
+            };
+
+            foreach (var cycle in cycles)
+            {
+                series.DataPoints = series.DataPoints.Concat(cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex, dataPoint.Point.Value }).ToList()).ToList();
+                series.DataPoints = series.DataPoints.Concat(new List<double[]> { new double[] { double.NaN, double.NaN } }).ToList();
+
+            }
+
+            return series;
+        }
+
+        #endregion
+
         #endregion
 
 

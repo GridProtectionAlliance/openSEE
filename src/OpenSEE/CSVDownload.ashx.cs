@@ -461,8 +461,10 @@ namespace OpenSEE
                 return Analytics.GetTHDLookup(dataGroup);
             if (analytic == "SpecifiedHarmonic")
                 return Analytics.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
-            
-                
+            if (analytic == "OverlappingWaveform")
+                return Analytics.GetOverlappingWaveformLookup(dataGroup);
+
+
 
             return new List<D3Series>();
         }
