@@ -481,7 +481,6 @@ namespace OpenSEE
         }
         #endregion
 
-
         #region [ FFT ]
         [Route("GetFFTData"),HttpGet]
         public Task<JsonReturn> GetFFTData(CancellationToken cancellationToken)
@@ -495,16 +494,13 @@ namespace OpenSEE
 
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
                     
                     double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
 
                     DataGroup dataGroup = QueryDataGroup(eventId, meter);
 
-                    List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, cycles);
-
-                    if (returnList.Count == 0) return null;
-
+                    List<D3Series> returnList = Analytics.GetFFTLookup(dataGroup, startTime, cycles);
                     
                     JsonReturn returnDict = new JsonReturn();
 
@@ -517,95 +513,6 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            double systemFrequency;
-
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-            {
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-            }
-
-            List<DataSeries> vAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
-            List<DataSeries> iAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
-            List<DataSeries> vBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
-            List<DataSeries> iBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
-            List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
-            List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
-
-            if (vAN.Count() != 0)
-            {
-                vAN.ForEach( item => { GenerateFFT(dataLookup, systemFrequency, item, "VAN", startTime, cycles); });
-            }
-            if (vBN.Count() != 0)
-            {
-                vBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VBN", startTime, cycles); });
-            }
-            if (vCN.Count() != 0)
-            {
-                vCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VCN", startTime, cycles); });
-
-            }
-            if (iAN.Count() != 0) 
-            {
-                iAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IAN", startTime, cycles); }); 
-            }
-            if (iBN.Count() != 0) 
-            {
-                iBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IBN", startTime, cycles); });
-            }
-            if (iCN.Count() != 0) 
-            {
-                iCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "ICN", startTime, cycles); });
-            }
-
-            return dataLookup;
-        }
-
-        private void GenerateFFT(List<D3Series> dataLookup, double systemFrequency, DataSeries dataSeries, string label, double startTime, int cycles)
-        {
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-            var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / (samplesPerCycle*cycles)).Select((grouping) => grouping.Select((obj) => obj.Point));
-
-            List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take((samplesPerCycle * cycles)).ToList();
-            D3Series fftMag = new D3Series()
-            {
-                ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} FFT Mag",
-                XaxisLabel = "",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
-                LegendClass = "Mag",
-                SecondaryLegendClass = (label.IndexOf("V") > -1)? "V": "I",
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                DataPoints = new List<double[]>()
-            };
-
-            D3Series fftAng = new D3Series()
-            {
-                ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} FFT Ang",
-                XaxisLabel = "",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
-                LegendClass = "Ang",
-                SecondaryLegendClass = (label.IndexOf("V") > -1) ? "V" : "I",
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                DataPoints = new List<double[]>()
-            };
-
-            if (cycleData.Count() != (samplesPerCycle * cycles)) return;
-            double[] points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
-
-            FFT fft = new FFT(systemFrequency * (samplesPerCycle), points);
-
-            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { index, (value / Math.Sqrt(2)) }).ToList();
-            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] {index, (value * 180.0D / Math.PI)}).ToList();
-
-            dataLookup.Add(fftMag);
-            dataLookup.Add(fftAng);
-
-        }
         #endregion
 
         #region [ First Derivative ]
@@ -894,7 +801,6 @@ namespace OpenSEE
         }
         #endregion
 
-
         #region [ LowPassFilter ]
         [Route("GetLowPassFilterData"),HttpGet]
         public Task<JsonReturn> GetLowPassFilterData(CancellationToken cancellationToken)
@@ -928,7 +834,7 @@ namespace OpenSEE
 
         #endregion
 
-         #region [ High Pass Filter ]
+        #region [ High Pass Filter ]
         [Route("GetHighPassFilterData"),HttpGet]
         public Task<JsonReturn> GetHighPassFilterData(CancellationToken cancellationToken)
         {
@@ -987,7 +893,6 @@ namespace OpenSEE
         }
 
         #endregion
-
 
         #region [ Rapid Voltage Change ]
         [Route("GetRapidVoltageChangeData"),HttpGet]
