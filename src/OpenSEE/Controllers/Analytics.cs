@@ -2293,36 +2293,18 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            if (vAN.Count() != 0)
-            {
-                vAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VAN", startTime, cycles); });
-            }
-            if (vBN.Count() != 0)
-            {
-                vBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VBN", startTime, cycles); });
-            }
-            if (vCN.Count() != 0)
-            {
-                vCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "VCN", startTime, cycles); });
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
 
-            }
-            if (iAN.Count() != 0)
-            {
-                iAN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IAN", startTime, cycles); });
-            }
-            if (iBN.Count() != 0)
-            {
-                iBN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "IBN", startTime, cycles); });
-            }
-            if (iCN.Count() != 0)
-            {
-                iCN.ForEach(item => { GenerateFFT(dataLookup, systemFrequency, item, "ICN", startTime, cycles); });
-            }
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT(systemFrequency, item, startTime, cycles))).ToList();
 
             return dataLookup;
         }
 
-        private static void GenerateFFT(List<D3Series> dataLookup, double systemFrequency, DataSeries dataSeries, string label, double startTime, int cycles)
+        private static List<D3Series> GenerateFFT(double systemFrequency, DataSeries dataSeries, double startTime, int cycles)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
             var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / (samplesPerCycle * cycles)).Select((grouping) => grouping.Select((obj) => obj.Point));
@@ -2331,11 +2313,11 @@ namespace OpenSEE
             D3Series fftMag = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} FFT Mag",
+                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} FFT Mag",
                 XaxisLabel = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Mag",
-                SecondaryLegendClass = (label.IndexOf("V") > -1) ? "V" : "I",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataPoints = new List<double[]>()
             };
@@ -2343,16 +2325,18 @@ namespace OpenSEE
             D3Series fftAng = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} FFT Ang",
+                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} FFT Ang",
                 XaxisLabel = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Ang",
-                SecondaryLegendClass = (label.IndexOf("V") > -1) ? "V" : "I",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataPoints = new List<double[]>()
             };
 
-            if (cycleData.Count() != (samplesPerCycle * cycles)) return;
+            if (cycleData.Count() != (samplesPerCycle * cycles))
+                return new List<D3Series>();
+               
             double[] points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
 
             FFT fft = new FFT(systemFrequency * (samplesPerCycle), points);
@@ -2360,8 +2344,82 @@ namespace OpenSEE
             fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { index, (value / Math.Sqrt(2)) }).ToList();
             fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { index, (value * 180.0D / Math.PI) }).ToList();
 
-            dataLookup.Add(fftMag);
-            dataLookup.Add(fftAng);
+            return new List<D3Series>() { fftMag, fftAng };
+
+        }
+        #endregion
+
+        #region [ Harmonic Spectrum ]
+        
+        public static List<D3Series> GetHarmonicSpectrumLookup(DataGroup dataGroup, double startTime, double endTime, int cycles)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            double systemFrequency;
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            List<DataSeries> vAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> iAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
+            List<DataSeries> vBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> iBN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
+            List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+            List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
+
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateHarmonicSpectrum(systemFrequency, item, startTime, cycles))).ToList();
+
+            return dataLookup;
+        }
+
+        private static List<D3Series> GenerateHarmonicSpectrum( double systemFrequency, DataSeries dataSeries, double startTime, int cycles)
+        {
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
+
+            List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take(samplesPerCycle * cycles).ToList();
+            D3Series fftMag = new D3Series()
+            {
+                ChannelID = dataSeries.SeriesInfo.ChannelID,
+                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} DFT Mag",
+                XaxisLabel = "",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "Mag",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                DataPoints = new List<double[]>()
+            };
+
+            D3Series fftAng = new D3Series()
+            {
+                ChannelID = dataSeries.SeriesInfo.ChannelID,
+                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} DFT Ang",
+                XaxisLabel = "",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                LegendClass = "Ang",
+                SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
+                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                DataPoints = new List<double[]>()
+            };
+
+            if (cycleData.Count() != samplesPerCycle * cycles) 
+                return new List<D3Series>();
+
+            double[] points = cycleData.Select(point => point.Value / samplesPerCycle).ToArray();
+
+            FFT fft = new FFT(systemFrequency * samplesPerCycle, points);
+
+            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index], (value / cycles) / Math.Sqrt(2) }).ToList();
+            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index], value * 180 / Math.PI }).ToList();
+
+            return new List<D3Series>() { fftMag, fftAng };
 
         }
         #endregion

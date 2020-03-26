@@ -722,12 +722,11 @@ namespace OpenSEE
 
 
                     double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                    double endTime = query.ContainsKey("endDate") ? double.Parse(query["endDate"]) : startTime + 16.666667*cycles;
+
                     DataGroup dataGroup = QueryDataGroup(eventId, meter);
 
-                    List<D3Series> returnList = GetHarmonicSpectrumLookup(dataGroup, startTime, endTime, systemFrequency, cycles);
-                    if (returnList.Count == 0) return null;
-
+                    List<D3Series> returnList = Analytics.GetHarmonicSpectrumLookup(dataGroup, startTime, systemFrequency, cycles);
+                   
                     
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
@@ -736,70 +735,7 @@ namespace OpenSEE
 
             }, cancellationToken);
         }
-
-        private List<D3Series> GetHarmonicSpectrumLookup(DataGroup dataGroup, double startTime, double endTime, double systemFrequency, int cycles)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            DataSeries vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN");
-            DataSeries vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN");
-            DataSeries vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-            DataSeries iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN");
-
-            if (vAN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, vAN, "VAN", startTime, endTime, cycles);
-            if (vBN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, vBN, "VBN", startTime, endTime, cycles);
-            if (vCN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, vCN, "VCN", startTime, endTime, cycles);
-            if (iAN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, iAN, "IAN", startTime, endTime, cycles);
-            if (iBN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, iBN, "IBN", startTime, endTime, cycles);
-            if (iCN != null) GenerateHarmonicSpectrum(dataLookup, systemFrequency, iCN, "ICN", startTime, endTime, cycles);
-
-            return dataLookup;
-        }
-
-        private void GenerateHarmonicSpectrum(List<D3Series> dataLookup, double systemFrequency, DataSeries dataSeries, string label, double startTime, double endTime, int cycles)
-        {
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, systemFrequency);
-
-            List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take(samplesPerCycle*cycles).ToList();
-            D3Series fftMag = new D3Series()
-            {
-                ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} DFT Mag",
-                XaxisLabel = "",
-                Color = GetColor(null),
-                LegendClass = "",
-                SecondaryLegendClass = "Mag",
-                LegendGroup = "",
-                DataPoints = new List<double[]>()
-            };
-
-            D3Series fftAng = new D3Series()
-            {
-                ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{label} DFT Ang",
-                XaxisLabel = "",
-                Color = GetColor(null),
-                LegendClass = "",
-                SecondaryLegendClass = "Ang",
-                LegendGroup = "",
-                DataPoints = new List<double[]>()
-            };
-
-            if (cycleData.Count() != samplesPerCycle * cycles) return;
-            double[] points = cycleData.Select(point => point.Value / samplesPerCycle).ToArray();
-
-            FFT fft = new FFT(systemFrequency * samplesPerCycle, points);
-
-            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index], (value / cycles) / Math.Sqrt(2) }).ToList();
-            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index], value * 180 / Math.PI }).ToList();
-           
-            dataLookup.Add( fftMag);
-            dataLookup.Add( fftAng);
-
-        }
-        #endregion
+       #endregion
 
         #region [ LowPassFilter ]
         [Route("GetLowPassFilterData"),HttpGet]
