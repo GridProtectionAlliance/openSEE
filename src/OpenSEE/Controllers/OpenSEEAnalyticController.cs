@@ -1088,31 +1088,16 @@ namespace OpenSEE
         public Task<JsonReturn> GetRapidVoltageChangeData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-                    double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-
-                    DateTime startTime = evt.StartTime;
-                    DateTime endTime = evt.EndTime;
-                    int pixels = int.Parse(query["pixels"]);
-                    DataTable table;
-
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        VICycleDataGroup vICycleDataGroup = QueryVICycleDataGroup(eventID, meter);
-                        returnList = returnList.Concat(GetRapidVoltageChangeLookup(vICycleDataGroup)).ToList();
-                        
-                    }
+                    VICycleDataGroup vICycleDataGroup = QueryVICycleDataGroup(evt.ID, meter);
+                    List<D3Series> returnList = Analytics.GetRapidVoltageChangeLookup(vICycleDataGroup);
                     
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
@@ -1125,53 +1110,6 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetRapidVoltageChangeLookup(VICycleDataGroup vICycleDataGroup)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-
-            foreach(CycleDataGroup dg in vICycleDataGroup.CycleDataGroups)
-            {
-                if (dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage")
-                {
-                    string name = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dg.RMS.SeriesInfo.Channel.Phase.Name;
-                    dataLookup.Add(GetRapidVoltageChangeFlotSeries(dg.RMS, name));
-                }
-            }
-
-            return dataLookup;
-        }
-
-        private D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries, string label) {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                double nominalVoltage = connection.ExecuteScalar<double?>("SELECT VoltageKV * 1000 FROM Line WHERE ID = {0}", dataSeries.SeriesInfo.Channel.AssetID) ?? 1;
-
-                double lastY = 0;
-                double lastX = 0;
-                D3Series flotSeries = new D3Series()
-                {
-                    ChartLabel = label + " Rapid Voltage Change",
-                    DataPoints = dataSeries.DataPoints.Select((point, index) => {
-                        double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
-                        double y = point.Value;
-
-                        if (index == 0)
-                        {
-                            lastY = y;
-                        }
-
-                        double[] arr =  new double[] { x, (y - lastY) * 100 / nominalVoltage };
-
-                        lastY = y;
-                        lastX = x;
-                        return arr;
-                    }).ToList()
-                };
-
-                return flotSeries;
-            }
-
-        }
         #endregion
 
         #region [ Frequency ]
@@ -1272,33 +1210,21 @@ namespace OpenSEE
         public Task<JsonReturn> GetRectifierData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
                     double TRC = double.Parse(query["Trc"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                    int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+                   
                     double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
 
-
-                    DateTime startTime =  evt.StartTime;
-                    DateTime endTime = evt.EndTime;
-                 
-                    DataTable table;
-
-                    List<D3Series> returnList = new List<D3Series>();
-                    table = connection.RetrieveData("select ID, StartTime from Event WHERE ID = {0}", evt.ID);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        int eventID = row.ConvertField<int>("ID");
-                        DataGroup dataGroup = QueryDataGroup(eventID, meter);
-
-                        returnList = returnList.Concat(GetRectifierLookup(dataGroup, systemFrequency, TRC)).ToList();
-                       
-                    }
+                    VIDataGroup dataGroup = new VIDataGroup(QueryDataGroup(evt.ID, meter));
+                   
+                    List<D3Series> returnList = Analytics.GetRectifierLookup(dataGroup, TRC);
+                    
                     
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
@@ -1312,77 +1238,6 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        private List<D3Series> GetRectifierLookup(DataGroup dataGroup, double systemFrequency, double RC)
-        {
-            List<D3Series> dataLookup = new List<D3Series>();
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataGroup.DataSeries.First(), systemFrequency);
-
-            var vAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").DataPoints.ToList();
-            var vBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").DataPoints.ToList();
-            var vCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").DataPoints.ToList();
-            var iAN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").DataPoints.ToList();
-            var iBN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").DataPoints.ToList();
-            var iCN = dataGroup.DataSeries.ToList().Find(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").DataPoints.ToList();
-
-
-            if (vAN != null && vBN != null && vCN != null)
-            {
-
-
-                IEnumerable<DataPoint> phaseMaxes = vAN.Select((point, index) => new DataPoint() { Time = point.Time, Value = new double[] { Math.Abs(vAN[index].Value), Math.Abs(vBN[index].Value), Math.Abs(vCN[index].Value) }.Max() });
-
-                // Run Through RC Filter
-                if (RC > 0)
-                {
-                    double wc = 2.0D * Math.PI * 1.0D / (RC / 1000.0D);
-                    Filter filt = new Filter(new List<Complex>(){-wc}, new List<Complex>(), wc);
-
-                    phaseMaxes = phaseMaxes.OrderBy(item => item.Time);
-                    double[] points = phaseMaxes.Select(item => item.Value).ToArray();
-
-                    double[] filtered = filt.filt(points, samplesPerCycle* systemFrequency);
-
-                    phaseMaxes = phaseMaxes.Select((point, index) => new DataPoint() { Time = point.Time, Value = filtered[index] });
-                }
-
-                dataLookup.Add(new D3Series() {
-                    ChannelID = 0,
-                    ChartLabel = "Voltage Rectifier",
-                    XaxisLabel = "V",
-                    Color = GetColor(null),
-                    LegendClass = "",
-                    SecondaryLegendClass = "V",
-                    LegendGroup = "",
-                    DataPoints = phaseMaxes.Select(point  => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                    });
-
-            }
-
-
-            if (iAN != null && iBN != null && iCN != null)
-            {
-                IEnumerable<DataPoint> phaseMaxes = iAN.Select((point, index) => new DataPoint() { Time = point.Time, Value = new double[] { Math.Abs(iAN[index].Value), Math.Abs(iBN[index].Value), Math.Abs(iCN[index].Value) }.Max() });
-                //IEnumerable<DataPoint> cycleMaxes = phaseMaxes.Select((point, index) => new { Point = point, Index = index }).GroupBy(obj => obj.Index / samplesPerCycle).SelectMany(grouping => grouping.Select(point => new DataPoint() { Time = point.Point.Time, Value = grouping.Select(p => p.Point.Value).Max() }));
-
-
-                dataLookup.Add(new D3Series()
-                {
-                    ChannelID = 0,
-                    ChartLabel = "Current Rectifier",
-                    XaxisLabel = "A",
-                    Color = GetColor(null),
-                    LegendClass = "",
-                    SecondaryLegendClass = "I",
-                    LegendGroup = "",
-                    DataPoints = phaseMaxes.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
-                });
-
-            }
-
-
-
-            return dataLookup;
-        }
         #endregion
 
         #region [ THD ]

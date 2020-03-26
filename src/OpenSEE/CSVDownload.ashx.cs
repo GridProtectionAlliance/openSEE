@@ -389,7 +389,7 @@ namespace OpenSEE
             bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
             bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
             int filterOrder = requestParameters["filterOrder"] == null? 0:  int.Parse(requestParameters["filterOrder"]);
-
+            double Trc = requestParameters["Trc"] == null ? 0 : int.Parse(requestParameters["Trc"]);
 
             string displayAnalytics = requestParameters["displayAnalytics"] == null ? "" : requestParameters["displayAnalytics"];
 
@@ -416,7 +416,7 @@ namespace OpenSEE
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
                 if (displayAnalytics != "")
-                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder));
+                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder,Trc));
                 
 
                 returnList = AlignData(returnList.ToList());
@@ -425,7 +425,7 @@ namespace OpenSEE
             }
         }
 
-        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order)
+        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc)
         {
             DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
             VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
@@ -452,7 +452,10 @@ namespace OpenSEE
                 return Analytics.GetSymmetricalComponentsLookup(viCycleDataGroup);
             if (analytic == "Unbalance")
                 return Analytics.GetUnbalanceLookup(viCycleDataGroup);
-
+            if (analytic == "Rectifier")
+                return Analytics.GetRectifierLookup(new VIDataGroup(dataGroup),Trc);
+            if (analytic == "RapidVoltageChange")
+                return Analytics.GetRapidVoltageChangeLookup(viCycleDataGroup);
 
             return new List<D3Series>();
         }

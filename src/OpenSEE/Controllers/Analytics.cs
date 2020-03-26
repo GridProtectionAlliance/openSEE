@@ -1925,8 +1925,144 @@ namespace OpenSEE
             return dataLookup;
         }
 
-
         #endregion
+
+        #region [ Rectifier ]
+        
+        public static List<D3Series> GetRectifierLookup(VIDataGroup dataGroup, double RC)
+        {
+            double systemFrequency = 60.0;
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+            }
+
+            List<D3Series> dataLookup = new List<D3Series>();
+            if (dataGroup.VA == null)
+                return dataLookup;
+
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataGroup.VA, systemFrequency);
+
+           
+            if (dataGroup.VA != null && dataGroup.VB != null && dataGroup.VC != null)
+            {
+
+
+                IEnumerable<DataPoint> phaseMaxes = dataGroup.VA.DataPoints.Select((point, index) => new DataPoint() { Time = point.Time, Value = new double[] { Math.Abs(dataGroup.VA[index].Value), Math.Abs(dataGroup.VB[index].Value), Math.Abs(dataGroup.VC[index].Value) }.Max() });
+
+                // Run Through RC Filter
+                if (RC > 0)
+                {
+                    double wc = 2.0D * Math.PI * 1.0D / (RC / 1000.0D);
+                    Filter filt = new Filter(new List<Complex>() { -wc }, new List<Complex>(), wc);
+
+                    phaseMaxes = phaseMaxes.OrderBy(item => item.Time);
+                    double[] points = phaseMaxes.Select(item => item.Value).ToArray();
+
+                    double[] filtered = filt.filt(points, samplesPerCycle * systemFrequency);
+
+                    phaseMaxes = phaseMaxes.Select((point, index) => new DataPoint() { Time = point.Time, Value = filtered[index] });
+                }
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Voltage Rectifier",
+                    XaxisLabel = "V",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "",
+                    LegendGroup = "",
+                    DataPoints = phaseMaxes.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
+                });
+
+            }
+
+
+            if (dataGroup.IA != null && dataGroup.IB != null && dataGroup.IC != null)
+            {
+                IEnumerable<DataPoint> phaseMaxes = dataGroup.IA.DataPoints.Select((point, index) => new DataPoint() { Time = point.Time, Value = new double[] { Math.Abs(dataGroup.IA[index].Value), Math.Abs(dataGroup.IB[index].Value), Math.Abs(dataGroup.IC[index].Value) }.Max() });
+               
+
+                dataLookup.Add(new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = "Current Rectifier",
+                    XaxisLabel = "A",
+                    Color = GetColor(null),
+                    LegendClass = "",
+                    SecondaryLegendClass = "",
+                    LegendGroup = "",
+                    DataPoints = phaseMaxes.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
+                });
+
+            }
+
+
+
+            return dataLookup;
+        }
+        #endregion
+
+
+        #region [ Rapid Voltage Change ]
+       
+        public static List<D3Series> GetRapidVoltageChangeLookup(VICycleDataGroup vICycleDataGroup)
+        {
+            List<D3Series> dataLookup = new List<D3Series>();
+
+            foreach (CycleDataGroup dg in vICycleDataGroup.CycleDataGroups)
+            {
+                if (dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage")
+                {
+                    string name = "V"  + dg.RMS.SeriesInfo.Channel.Phase.Name;
+                    dataLookup.Add(GetRapidVoltageChangeFlotSeries(dg.RMS, name));
+                }
+            }
+
+            return dataLookup;
+        }
+
+        private static D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries, string label)
+        {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                double nominalVoltage = connection.ExecuteScalar<double?>("SELECT VoltageKV * 1000 FROM Asset WHERE ID = {0}", dataSeries.SeriesInfo.Channel.AssetID) ?? 1;
+
+                double lastY = 0;
+                double lastX = 0;
+                D3Series flotSeries = new D3Series()
+                {
+                    ChannelID = 0,
+                    ChartLabel = label + " Rapid Voltage Change",
+                    XaxisLabel = "V",
+                    Color = GetColor(dataSeries.SeriesInfo.Channel),
+                    LegendClass = "",
+                    SecondaryLegendClass = "",
+                    LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = dataSeries.DataPoints.Select((point, index) => {
+                        double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
+                        double y = point.Value;
+
+                        if (index == 0)
+                        {
+                            lastY = y;
+                        }
+
+                        double[] arr = new double[] { x, (y - lastY) * 100 / nominalVoltage };
+
+                        lastY = y;
+                        lastX = x;
+                        return arr;
+                    }).ToList()
+                };
+
+                return flotSeries;
+            }
+
+        }
+        #endregion
+
 
         #endregion
 
