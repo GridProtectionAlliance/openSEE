@@ -256,6 +256,9 @@ namespace OpenSEE
 
                 if (data.Count() == 0) return;
 
+                // Add MetaData Information
+                metaData = PQDSMetaData(evt, meter);
+
                 PQDS.PQDSFile file = new PQDS.PQDSFile(metaData, data, evt.StartTime);
 
                 using (StreamWriter writer = new StreamWriter(returnStream))
@@ -265,6 +268,125 @@ namespace OpenSEE
             }
         }
 
+        private List<PQDS.MetaDataTag> PQDSMetaData(Event evt, Meter meter)
+        {
+            List<PQDS.MetaDataTag> result = new List<PQDS.MetaDataTag>();
+
+            
+            result.Add(new PQDS.MetaDataTag<string>("DeviceName", meter.Name));
+            result.Add(new PQDS.MetaDataTag<string>("DeviceAlias", meter.ShortName));
+            result.Add(new PQDS.MetaDataTag<string>("DeviceLocation", meter.Location.Name));
+            result.Add(new PQDS.MetaDataTag<string>("DeviceLocationAlias", meter.Location.ShortName));
+            result.Add(new PQDS.MetaDataTag<string>("Latitude", Convert.ToString(meter.Location.Latitude)));
+            result.Add(new PQDS.MetaDataTag<string>("Longitude", Convert.ToString(meter.Location.Longitude)));
+
+            Asset asset;
+            double systemFrequency;
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                asset = (new TableOperations<Asset>(connection)).QueryRecordWhere("ID = {0}", evt.AssetID);
+                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+
+                if (asset != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("NominalVoltage-LG", asset.VoltageKV));
+                    result.Add(new PQDS.MetaDataTag<double>("NominalFrequency", systemFrequency));
+                    result.Add(new PQDS.MetaDataTag<string>("AssetName", asset.AssetKey));
+
+                    if (asset.AssetTypeID == connection.ExecuteScalar<int>("SELECT ID FROM AssetType WHERE Name = 'Line'"))
+                        result.Add(new PQDS.MetaDataTag<double>("LineLength", connection.ExecuteScalar<double>("SELECT Length FROM LineView WHERE ID = {0}", asset.ID)));
+                }
+
+
+                result.Add(new PQDS.MetaDataTag<string>("EventID", evt.Name));
+                result.Add(new PQDS.MetaDataTag<string>("EventGUID", Guid.NewGuid().ToString()));
+                result.Add(new PQDS.MetaDataTag<double>("EventDuration", (evt.EndTime - evt.StartTime).TotalMilliseconds));
+                result.Add(new PQDS.MetaDataTag<int>("EventTypeCode", PQDSEventTypeCode(evt.EventTypeID)));
+
+                EventStat stat = (new TableOperations<EventStat>(connection)).QueryRecordWhere("EventID = {0}", evt.ID);
+
+                if (stat != null)
+                {
+                    if (stat.VAMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVA", (double)stat.VAMax));
+                    }
+                    if (stat.VBMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVB", (double)stat.VBMax));
+                    }
+                    if (stat.VCMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVC", (double)stat.VCMax));
+                    }
+                    if (stat.VAMin != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMinVA", (double)stat.VAMin));
+                    }
+                    if (stat.VBMin != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMinVB", (double)stat.VBMin));
+                    }
+                    if (stat.VCMin != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMinVC", (double)stat.VCMin));
+                    }
+
+                    if (stat.IAMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIA", (double)stat.IAMax));
+                    }
+                    if (stat.IBMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIB", (double)stat.IBMax));
+                    }
+                    if (stat.ICMax != null)
+                    {
+                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIC", (double)stat.ICMax));
+                    }
+                    
+
+                }
+
+                result.Add(new PQDS.MetaDataTag<int>("EventYear", ((DateTime)evt.StartTime).Year));
+
+                result.Add(new PQDS.MetaDataTag<int>("EventMonth", (evt.StartTime).Month));
+                result.Add(new PQDS.MetaDataTag<int>("EventDay", (evt.StartTime).Day));
+                result.Add(new PQDS.MetaDataTag<int>("EventHour", (evt.StartTime).Hour));
+                result.Add(new PQDS.MetaDataTag<int>("EventMinute", (evt.StartTime).Minute));
+                result.Add(new PQDS.MetaDataTag<int>("EventSecond", (evt.StartTime).Second));
+                result.Add(new PQDS.MetaDataTag<int>("EventNanoSecond", Get_nanoseconds(evt.StartTime)));
+
+                String date = String.Format("{0:D2}/{1:D2}/{2:D4}", (evt.StartTime).Month, (evt.StartTime).Day, (evt.StartTime).Year);
+                String time = String.Format("{0:D2}:{1:D2}:{2:D2}", (evt.StartTime).Hour, (evt.StartTime).Minute, (evt.StartTime).Second);
+                result.Add(new PQDS.MetaDataTag<string>("EventDate", date));
+                result.Add(new PQDS.MetaDataTag<string>("EventTime", time));
+
+
+            }
+
+            
+
+            return result;
+
+        }
+
+        private int Get_nanoseconds(DateTime date)
+        {
+            TimeSpan day = date.TimeOfDay;
+            long result = day.Ticks;
+            result = result - (long)day.Hours * (60L * 60L * 10000000L);
+            result = result - (long)day.Minutes * (60L * 10000000L);
+            result = result - (long)day.Seconds * 10000000L;
+
+
+            return ((int)result * 100);
+        }
+
+        private int PQDSEventTypeCode(int XDAevtTypeID)
+        {
+            return 0;
+        }
         private PQDS.DataSeries PQDSSeries(DataSeries data, string label)
         {
             PQDS.DataSeries result = new PQDS.DataSeries(label);
