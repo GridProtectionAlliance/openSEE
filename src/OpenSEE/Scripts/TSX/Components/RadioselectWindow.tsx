@@ -58,7 +58,7 @@ export default class RadioselectWindow extends React.Component{
                 { label: 'First Derivative', analytic: 'FirstDerivative' },
                 { label: 'Fix Clipped Waveforms', analytic: 'ClippedWaveforms' },
                 { label: 'Frequency', analytic: 'Frequency' },
-                { label: 'Harmonic Spectrum', analytic: 'HarmonicSpectrum' },
+                //{ label: 'Harmonic Spectrum', analytic: 'HarmonicSpectrum' },
                 { label: 'High Pass', analytic: 'HighPassFilter' },
                 { label: 'Low Pass', analytic: 'LowPassFilter' },
                 { label: 'Missing Voltage', analytic: 'MissingVoltage' },
