@@ -170,6 +170,9 @@ namespace OpenSEE
                 ExportHarmonicsToCSV(responseStream, requestParameters);
             else if (requestParameters["type"] == "correlatedsags")
                 ExportCorrelatedSagsToCSV(responseStream, requestParameters);
+            else if (requestParameters["type"] == "FFT")
+                ExportFFTToCSV(responseStream, requestParameters);
+            
         }
 
       
@@ -326,6 +329,47 @@ namespace OpenSEE
             public double Magnitude;
             public double Angle;
         }
+
+
+        public void ExportFFTToCSV(Stream returnStream, NameValueCollection requestParameters)
+        {
+            int eventId = int.Parse(requestParameters["eventId"]);
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (StreamWriter writer = new StreamWriter(returnStream))
+            {
+                double startTime = requestParameters["startDate"] == null ? 0.0 : double.Parse(requestParameters["startDate"]);
+                int cycles = requestParameters["cycles"] == null ? 0 : int.Parse(requestParameters["cycles"]);
+
+                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventId);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+
+                DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+                List<D3Series> harmonics = Analytics.GetFFTLookup(dataGroup, startTime, cycles);
+
+                List<string> headers = new List<string>() { "Harmonic" };
+
+                headers = headers.Concat(harmonics.Select(item => item.ChartLabel)).ToList();
+
+                if (headers.Count == 1)
+                    return;
+
+                // Write the CSV header to the file
+                writer.WriteLine(string.Join(",", headers));
+
+                for (int i = 0; i < harmonics.First().DataPoints.Count(); ++i)
+                {
+                    
+                    List<string> line = new List<string>() { harmonics.First().DataPoints[i][0].ToString() };
+
+                    line = line.Concat(harmonics.Select(item => item.DataPoints[i][1].ToString())).ToList();
+                    
+                    writer.WriteLine(string.Join(",", line));
+                }
+            }
+        }
+
 
         public void ExportHarmonicsToCSV(Stream returnStream, NameValueCollection requestParameters)
         {

@@ -27,6 +27,8 @@ import * as d3 from '../../D3/d3';
 
 import { utc } from "moment";
 import D3Legend from './D3Legend';
+import FFTTable from '../jQueryUI Widgets/FFTTable';
+
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import * as moment from 'moment';
 import { LegendClickCallback, D3PlotOptions, iD3DataSet, iD3DataSeries  } from './D3LineChartBase'
@@ -640,6 +642,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
     render() {
         return (
             <div>
+                <FFTTable dataSet={this.state.dataSet} />
                 <div id={"graphWindow-" + this.props.legendKey} style={{ height: this.props.height, float: 'left', width: 'calc(100% - 220px)'}}></div>
                 <D3Legend data={this.state.dataSet.Data} callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height}/>
             </div>

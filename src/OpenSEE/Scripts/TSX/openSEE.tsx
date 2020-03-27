@@ -216,7 +216,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             <MultiselectWindow comparedEvents={this.state.comparedEvents} stateSetter={this.stateSetter.bind(this)} data={this.state.overlappingEvents} />
                         </div>
                         <div className={"tab-pane fade" + (this.state.tab == "Analytics" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
-                            <RadioselectWindow stateSetter={this.stateSetter.bind(this)} analytic={this.state.analytic} analyticSettings={this.state.AnalyticSettings} />
+                            <RadioselectWindow
+                                stateSetter={this.stateSetter.bind(this)}
+                                analytic={this.state.analytic}
+                                analyticSettings={this.state.AnalyticSettings}
+                                eventID={this.state.eventid}
+                                fftStartDate={this.state.fftStartTime}
+                            />
                         </div>
                     </div>
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>

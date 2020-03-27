@@ -38,7 +38,9 @@ export default class RadioselectWindow extends React.Component{
         className?: string,
         stateSetter: Function,
         analytic: string,
-        analyticSettings: AnalyticParamters
+        analyticSettings: AnalyticParamters,
+        eventID: number,
+        fftStartDate: number,
     }
     state: { analytics: Array<{ label: string, analytic: string }> }
     cyclesOptions: any[];
@@ -190,14 +192,26 @@ export default class RadioselectWindow extends React.Component{
                         <form style={optionStyle}>
                             <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
                                 <li><label> FFT Window (cycles): <select defaultValue={'1'} onChange={this.ChangefftWindow.bind(this)}>{this.FFTWindowOptions}</select></label></li>
+                                <li><button type="button" style={{ width: '50%' }} onClick={() => this.showTable()}>Table</button> </li>
+                                <li><button type="button" style={{ width: '50%' }} onClick={() => this.exportTableToCsv()}>CSV</button> </li>
                             </ul>
                         </form> : null)
-
                     : null)}
-
             </div>
         );
     }
+
+    showTable() {
+        $('#ffttable').show()
+    }
+
+    exportTableToCsv() {
+        window.open(homePath + `CSVDownload.ashx?type=FFT&eventID=${this.props.eventID}` +
+            `${this.props.fftStartDate != undefined ? `&startDate=${this.props.fftStartDate}` : ``}` +
+            `&cycles=${this.props.analyticSettings.fftWindow}`,
+        );
+    }
+
 
     ChangeCycles(event) {
         var obj = clone(this.props.analyticSettings);

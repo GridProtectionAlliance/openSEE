@@ -24,22 +24,24 @@
 import * as React from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import { style } from "typestyle"
+import { iD3DataSet, iD3DataSeries } from '../Graphs/D3LineChartBase';
 
 const outerDiv: React.CSSProperties = {
     minWidth: '200px',
     fontSize: '12px',
     marginLeft: 'auto',
     marginRight: 'auto',
-    overflowY: 'auto',
     padding: '0em',
     zIndex: 1000,
     boxShadow: '4px 4px 2px #888888',
     border: '2px solid black',
     position: 'absolute',
-    top: '0',
+    top: 0,
     left: 0,
     display: 'none',
-    backgroundColor: 'white'
+    backgroundColor: 'white',
+    width: '520px',
+    maxHeight: '1040px'
 };
 
 const handle = style({
@@ -71,7 +73,7 @@ const closeButton = style({
 
 
 export default class FFTTable extends React.Component<any, any>{
-    props: { dataSet: { Data: Array<{ChartLabel: string, DataPoints: any}>, CalculationTime:number, CalculationEnd: number} }
+    props: { dataSet: iD3DataSet }
     constructor(props) {
         super(props);
     }
@@ -81,31 +83,64 @@ export default class FFTTable extends React.Component<any, any>{
 
     render() {
         var table = null;
+        let headers = [];
+        let rows = [];
         if (this.props.dataSet.Data != undefined) {
-            var width = 'calc(' +parseInt((100/(this.props.dataSet.Data.length + 1)).toString()) + '%)';
 
-            table = <table className="table" style={{ fontSize: 'large', marginBottom: 0 }}>
-                <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
-                    <tr><th style={{ width: width }}>Harmonic</th>{this.props.dataSet.Data.map(x => <th style={{ width: width }} key={'header-'+x.ChartLabel}>{x.ChartLabel}</th>)}</tr>
-                </thead>
-                <tbody style={{ fontSize: 'medium',  maxHeight: 500, overflowY: 'auto', display: 'block' }}>
-                    {
-                        Object.keys(this.props.dataSet.Data[0].DataPoints).sort((a,b) => parseFloat(a) - parseFloat(b)).map(x => <tr style={{ width: 'calc(100%)', display: 'table' }} key={x}><td style={{ width: width }} key={x + '-harmonic'}>{x}</td>{this.props.dataSet.Data.map(data => <td style={{ width: width }} key={x + '-' + data.ChartLabel}>{data.DataPoints[x].toFixed(3)}</td>)}</tr>)
-                    }
-                </tbody>
-            </table>
+
+            headers = this.props.dataSet.Data.map((a, i) => <th key={"header-" + a.ChartLabel}> {a.ChartLabel}</th>)
+
+            rows = this.props.dataSet.Data[0].DataPoints.map((a, i) => Row(i, this.props.dataSet.Data));            
         }
+
         return (
             <div id="ffttable" className="ui-widget-content" style={outerDiv}>
-                <div id="ffttablehandle" className={handle}></div>
-                <div style={{ maxWidth: 1700 }}>
-                    {table}
+                <div style={{ border: 'black solid 2px' }}>
+                    <div id="ffttablehandle" className={handle}></div>
+                    <div style={{ overflowY: 'scroll', overflowX: 'scroll', maxHeight: 850 }}>
+                        <table className="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th key="header-harmonic">Harmonic</th>
+                                    {headers}
+                                 </tr>
+                            </thead>
+                            <tbody>
+                                {rows}
+                            </tbody>
+                        </table>
+                    </div>
+                   
+                    <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
+                        $('#ffttable').hide();
+                    }}>X</button>
                 </div>
-                <button className={closeButton} onClick={() => {
-                    $('#ffttable').hide();
-                }}>X</button>
+
             </div>
         );
     }
 }
 
+const Row = (row: number, data: Array<iD3DataSeries>) => {
+    
+    function showValue(index) {
+        let val = data[index].DataPoints[row][1];
+        if (isNaN(val))
+            return (<td key={"data-" + index}>N/A</td>)
+        return <td key={"data-" + index}>{val.toFixed(2)}</td> ;
+    }
+    
+    function createCells() {
+        let res = [];
+        data.forEach((a, i) => {
+            res.push(showValue(i))
+        })
+        return res;
+    }
+    return (
+        <tr key={"row-" + row}>
+            <td key="harmonic">{data[0].DataPoints[row][0].toFixed(0)}</td>
+            {createCells()}
+        </tr>
+    );
+}
