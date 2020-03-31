@@ -528,6 +528,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let selectedData = x0
 
+        if (!ctrl.state.dataSet.Data)
+            return
+
         if (ctrl.state.dataSet.Data.length > 0) {
             let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), x0, 1);
             if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
@@ -712,14 +715,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         // If we have a cycle window adjust left and right to ensure you are outside the cycle window
         if (ctrl.cycleStart && ctrl.cycleEnd && ctrl.cycleStart > 0) {
-            console.log("Adjusting for FFT Cylce")
             xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
             x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
                
         }
-        
-        console.log(x0)
-        console.log(xMouse)
+
 
         if (Math.abs(xMouse - x0) > 10) {
             
