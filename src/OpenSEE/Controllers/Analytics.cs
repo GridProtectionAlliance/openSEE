@@ -2104,7 +2104,7 @@ namespace OpenSEE
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                ChartLabel = dataSeries.SeriesInfo.Channel.Name + " THD",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " THD",
                 DataPoints = new List<double[]>()
             };
 
@@ -2171,7 +2171,7 @@ namespace OpenSEE
                 LegendClass = "",
                 SecondaryLegendClass = "Mag",
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                ChartLabel = dataSeries.SeriesInfo.Channel.Name + $"Harmonic [{specifiedHarmonic}] Mag",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + $"Harmonic [{specifiedHarmonic}] Mag",
                 DataPoints = new List<double[]>()
             };
 
@@ -2183,7 +2183,7 @@ namespace OpenSEE
                 LegendClass = "",
                 SecondaryLegendClass = "Ang",
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                ChartLabel = dataSeries.SeriesInfo.Channel.Name + $"Harmonic [{specifiedHarmonic}] Ang",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + $"Harmonic [{specifiedHarmonic}] Ang",
                 DataPoints = new List<double[]>()
             };
 
@@ -2257,7 +2257,7 @@ namespace OpenSEE
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                ChartLabel = dataSeries.SeriesInfo.Channel.Name + " Overlapping",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " Overlapping",
                 DataPoints = new List<double[]>()
             };
 
@@ -2313,7 +2313,7 @@ namespace OpenSEE
             D3Series fftMag = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} FFT Mag",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " FFT Mag",
                 XaxisLabel = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Mag",
@@ -2325,7 +2325,7 @@ namespace OpenSEE
             D3Series fftAng = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
-                ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} FFT Ang",
+                ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " FFT Ang",
                 XaxisLabel = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Ang",
