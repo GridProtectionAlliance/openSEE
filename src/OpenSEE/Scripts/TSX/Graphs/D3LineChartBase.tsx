@@ -67,6 +67,7 @@ export interface iD3DataSeries {
     LegendGroup: string,
     SecondaryLegendClass: string,
     DataPoints: Array<[number, number]>,
+    DataMarker: Array<[number, number]>,
 }
 
 export interface iD3DataPoint {
@@ -427,6 +428,20 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                         return tx && ty;
                     })
             );
+
+            if (row.DataMarker && row.DataMarker.length > 0) {
+                ctrl.paths.append("circle").data(row.DataMarker.map(item => { return { x: item[0], y: item[1] } })).attr("fill", "none")
+                    .attr("fill", row.Color)
+                    .attr("r", 5.0)
+                    .attr("cx", function (d) {
+                        return ctrl.xScale(d.x)
+                    })
+                    .attr("cy", function (d) {
+                        return ctrl.yScale(d.y)
+                    })
+            }
+
+
         });      
 
         this.area = svg.append("g").append("svg:rect")
@@ -508,6 +523,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     return tx && ty;
                 })
         )
+
+        ctrl.paths.selectAll('circle')
+            .transition()
+            .duration(1000)
+            .attr("cx", function (d) {
+                return ctrl.xScale(d.x)
+            })
+            .attr("cy", function (d) {
+                return ctrl.yScale(d.y)
+            })
+
+
 
 
         if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
