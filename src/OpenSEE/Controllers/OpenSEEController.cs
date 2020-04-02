@@ -215,6 +215,7 @@ namespace OpenSEE
 
             if (type == "Voltage"|| type == "Current")
             {
+                using (AdoDataConnection connectionSettings = new AdoDataConnection("systemSettings"))
                 using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     TableOperations<BreakerRestrike> restrikeTbl = new TableOperations<BreakerRestrike>(connection);
@@ -231,15 +232,15 @@ namespace OpenSEE
                         foreach (D3Series series in dataLookup)
                         {
 
-                            string ColorA = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AN'") ?? "#A30000";
-                            string ColorB = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BN'") ?? "#0029A3";
-                            string ColorC = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CN'") ?? "#007A29";
+                            string ColorA = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AN'") ?? "#A30000";
+                            string ColorB = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BN'") ?? "#0029A3";
+                            string ColorC = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CN'") ?? "#007A29";
 
                             if (type == "Current")
                             {
-                                ColorA = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'AN'") ?? "#FF0000";
-                                ColorB = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'BN'") ?? "#0066CC";
-                                ColorC = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'CN'") ?? "#33CC33";
+                                ColorA = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'AN'") ?? "#FF0000";
+                                ColorB = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'BN'") ?? "#0066CC";
+                                ColorC = connectionSettings.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'CN'") ?? "#33CC33";
                             }
 
                             if (series.Color == ColorA)
