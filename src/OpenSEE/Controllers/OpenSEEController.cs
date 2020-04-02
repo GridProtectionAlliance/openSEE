@@ -171,7 +171,7 @@ namespace OpenSEE
                 if (dataType == "Time")
                 {
                     DataGroup dataGroup = QueryDataGroup(eventId, meter);
-                    returnList = GetD3DataLookup(dataGroup, type);
+                    returnList = GetD3DataLookup(dataGroup, type, evt.ID);
 
                 }
                 else
@@ -194,13 +194,14 @@ namespace OpenSEE
             
         }
 
-        private List<D3Series> GetD3DataLookup(DataGroup dataGroup, string type)
+        private List<D3Series> GetD3DataLookup(DataGroup dataGroup, string type, int evtID)
         {
             List<D3Series> dataLookup;
 
+
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
                     ds => new D3Series()
-                    { 
+                    {
                         ChannelID = ds.SeriesInfo.Channel.ID,
                         ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
                         XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
@@ -209,7 +210,56 @@ namespace OpenSEE
                         SecondaryLegendClass = GetSignalType(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        DataMarker = new List<double[]>()
                     }).ToList();
+
+            if (type == "Voltage"|| type == "Current")
+            {
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                {
+                    TableOperations<BreakerRestrike> restrikeTbl = new TableOperations<BreakerRestrike>(connection);
+                    if (restrikeTbl.QueryRecordCountWhere("EventID = {0}", evtID) > 0)
+                    {
+
+                        List<int> pointsA = restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name ='AN')", evtID).Select(item => item.InitialExtinguishSample).ToList();
+                        List<int> pointsB = restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name ='BN')", evtID).Select(item => item.InitialExtinguishSample).ToList();
+                        List<int> pointsC = restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name ='CN')", evtID).Select(item => item.InitialExtinguishSample).ToList();
+
+
+
+
+                        foreach (D3Series series in dataLookup)
+                        {
+
+                            string ColorA = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AN'") ?? "#A30000";
+                            string ColorB = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BN'") ?? "#0029A3";
+                            string ColorC = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CN'") ?? "#007A29";
+
+                            if (type == "Current")
+                            {
+                                ColorA = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'AN'") ?? "#FF0000";
+                                ColorB = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'BN'") ?? "#0066CC";
+                                ColorC = connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'CN'") ?? "#33CC33";
+                            }
+
+                            if (series.Color == ColorA)
+                            {
+                                series.DataMarker = pointsA.Select(item => series.DataPoints[item]).ToList();
+                            }
+                            if (series.Color == ColorB)
+                            {
+                                series.DataMarker = pointsB.Select(item => series.DataPoints[item]).ToList();
+                            }
+                            if (series.Color == ColorC)
+                            {
+                                series.DataMarker = pointsC.Select(item => series.DataPoints[item]).ToList();
+                            }
+
+                        }
+
+                    }
+                }
+            }
 
             return dataLookup;
         }
