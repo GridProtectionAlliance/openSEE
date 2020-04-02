@@ -430,15 +430,20 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             );
 
             if (row.DataMarker && row.DataMarker.length > 0) {
-                ctrl.paths.append("circle").data(row.DataMarker.map(item => { return { x: item[0], y: item[1] } })).attr("fill", "none")
-                    .attr("fill", row.Color)
-                    .attr("r", 5.0)
-                    .attr("cx", function (d) {
-                        return ctrl.xScale(d.x)
-                    })
-                    .attr("cy", function (d) {
-                        return ctrl.yScale(d.y)
-                    })
+                let markers = ctrl.paths.append("g")
+                row.DataMarker.forEach(item => {
+                    let r = { x: item[0], y: item[1] }
+                    markers.append("circle").datum(r)
+                        .attr("fill", row.Color)
+                        .attr("r", 5.0)
+                        .attr("cx", function (d) {
+                            return ctrl.xScale(d.x)
+                        })
+                        .attr("cy", function (d) {
+                            return ctrl.yScale(d.y)
+                        })
+                })
+                    
             }
 
 
@@ -524,7 +529,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 })
         )
 
-        ctrl.paths.selectAll('circle')
+        ctrl.paths.selectAll("g").selectAll('circle')
             .transition()
             .duration(1000)
             .attr("cx", function (d) {
