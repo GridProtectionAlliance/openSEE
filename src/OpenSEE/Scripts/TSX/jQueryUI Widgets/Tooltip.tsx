@@ -87,7 +87,7 @@ export default class Tooltip extends React.Component<any, any>{
     }
     componentDidMount() {
         var ctrl = this;
-        ($('#unifiedtooltip') as any).draggable({ scroll: false, handle: '#unifiedtooltiphandle', containment: 'document' });
+        ($('#unifiedtooltip') as any).draggable({ scroll: false, handle: '#unifiedtooltiphandle', containment: '#chartpanel' });
     }
 
     render() {
