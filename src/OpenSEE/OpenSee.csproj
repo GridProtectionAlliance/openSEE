@@ -60,6 +60,7 @@
     <Content Include="Scripts\jquery-1.6.4.min.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.min.js" />
+    <Content Include="Scripts\OpenSee.js" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
@@ -67,7 +68,7 @@
     <Content Include="Shared\Content\Images\ui-icons_cc0000_256x240.png" />
     <Content Include="Shared\Scripts\default.ployfill.js" />
     <Content Include="Web.config" />
-    <Content Include="webpack.config.js" />
+    <None Include="webpack.config.js" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -92,45 +93,45 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ApplicationInsights.config" />
-    <Content Include="package.json" />
+    <None Include="package.json" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Web.config" />
-    <Content Include="tsconfig.json" />
+    <None Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\D3\D3.js" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\TS\Services\OpenSee.ts" />
+    <None Include="Scripts\TS\Services\OpenSee.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\TSX\OpenSee.d.ts" />
-    <Content Include="Scripts\TSX\openSee.tsx" />
-    <Content Include="Scripts\TSX\Graphs\Analog.tsx" />
-    <Content Include="Scripts\TSX\Graphs\AnalyticBar.tsx" />
-    <Content Include="Scripts\TSX\Graphs\AnalyticLine.tsx" />
-    <Content Include="Scripts\TSX\Graphs\Current.tsx" />
-    <Content Include="Scripts\TSX\Graphs\D3BarChartBase.tsx" />
-    <Content Include="Scripts\TSX\Graphs\D3Legend.tsx" />
-    <Content Include="Scripts\TSX\Graphs\D3LineChartBase.tsx" />
-    <Content Include="Scripts\TSX\Graphs\Digital.tsx" />
-    <Content Include="Scripts\TSX\Graphs\TCE.tsx" />
-    <Content Include="Scripts\TSX\Graphs\Voltage.tsx" />
-    <Content Include="Scripts\TSX\Components\About.tsx" />
-    <Content Include="Scripts\TSX\Components\Menu.tsx" />
-    <Content Include="Scripts\TSX\Components\MultiSelectWindow.tsx" />
-    <Content Include="Scripts\TSX\Components\OpenSEENavbar.tsx" />
-    <Content Include="Scripts\TSX\Components\OpenSEENoteModal.tsx" />
-    <Content Include="Scripts\TSX\Components\RadioSelectWindow.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\FFTTable.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\HarmonicStats.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\LightningData.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\PolarChart.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\ScalarStats.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\TimeCorrelatedSags.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\Tooltip.tsx" />
-    <Content Include="Scripts\TSX\jQueryUI Widgets\TooltipWithDelta.tsx" />
+    <None Include="Scripts\TSX\OpenSee.d.ts" />
+    <None Include="Scripts\TSX\openSee.tsx" />
+    <None Include="Scripts\TSX\Graphs\Analog.tsx" />
+    <None Include="Scripts\TSX\Graphs\AnalyticBar.tsx" />
+    <None Include="Scripts\TSX\Graphs\AnalyticLine.tsx" />
+    <None Include="Scripts\TSX\Graphs\Current.tsx" />
+    <None Include="Scripts\TSX\Graphs\D3BarChartBase.tsx" />
+    <None Include="Scripts\TSX\Graphs\D3Legend.tsx" />
+    <None Include="Scripts\TSX\Graphs\D3LineChartBase.tsx" />
+    <None Include="Scripts\TSX\Graphs\Digital.tsx" />
+    <None Include="Scripts\TSX\Graphs\TCE.tsx" />
+    <None Include="Scripts\TSX\Graphs\Voltage.tsx" />
+    <None Include="Scripts\TSX\Components\About.tsx" />
+    <None Include="Scripts\TSX\Components\Menu.tsx" />
+    <None Include="Scripts\TSX\Components\MultiSelectWindow.tsx" />
+    <None Include="Scripts\TSX\Components\OpenSEENavbar.tsx" />
+    <None Include="Scripts\TSX\Components\OpenSEENoteModal.tsx" />
+    <None Include="Scripts\TSX\Components\RadioSelectWindow.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\FFTTable.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\HarmonicStats.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\LightningData.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\PolarChart.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\ScalarStats.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\TimeCorrelatedSags.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\Tooltip.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\TooltipWithDelta.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
