@@ -51,6 +51,7 @@
     <Content Include="Data\OpenSee.sql" />
     <Content Include="Global.asax" />
     <Content Include="CSVDownload.ashx" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Scripts\jquery-1.6.4-vsdoc.js" />
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
@@ -64,10 +65,7 @@
     <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_777777_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_cc0000_256x240.png" />
-    <Content Include="Shared\Content\Readme.txt" />
-    <Content Include="Shared\Readme.txt" />
     <Content Include="Shared\Scripts\default.ployfill.js" />
-    <Content Include="Shared\Scripts\flot\LICENSE.txt" />
     <Content Include="Web.config" />
     <Content Include="webpack.config.js" />
   </ItemGroup>
