@@ -171,7 +171,7 @@ export default class OpenSEENavbar extends React.Component {
                             </div>
                         </li>
                         <li className="nav-item" style={{ width: 'calc(100% - 450px)', textAlign: 'center' }}>
-                            <img src="../Images/openSEE - Waveform Viewer Header.png"/>
+                            <img src={`${homePath}Images/openSEE - Waveform Viewer Header.png`}/>
                         </li>
                         <li className="nav-item" style={{ width: '156px' }}>
                             <button className="btn btn-primary" onClick={this.props.resetZoom}>Reset Zoom</button>
