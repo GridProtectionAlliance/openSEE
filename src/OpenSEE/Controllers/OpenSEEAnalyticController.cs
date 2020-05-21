@@ -1042,9 +1042,114 @@ namespace OpenSEE
 
         #endregion
 
-        
+        #region [Breaker Restrike Data]
+
+        [Route("GetBreakerRestrikeData"), HttpGet]
+        public JsonReturn GetBreakerRestrikeData()
+        {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+
+                Dictionary<string, string> query = Request.QueryParameters();
+
+                int eventId = int.Parse(query["eventId"]);
+
+                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+
+                DataGroup dataGroup = QueryDataGroup(eventId, meter);
+                List<D3Series> returnList = GetBreakerRestrikeData(evt.ID, dataGroup);
+
+                JsonReturn returnDict = new JsonReturn();
+
+
+                returnDict.Data = returnList;
+                return returnDict;
+
+            }
+            
+        }
+
+        private List<D3Series> GetBreakerRestrikeData(int eventID, DataGroup dataGroup)
+        {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                List<D3Series> currents;
+                List<D3Series> voltages;
+
+                TableOperations<BreakerRestrike> restrikeTbl = new TableOperations<BreakerRestrike>(connection);
+
+                if (restrikeTbl.QueryRecordCountWhere("EventID = {0}", eventID) == 0)
+                    return new List<D3Series>();
+
+
+
+                currents = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Current" &&
+                    restrikeTbl.QueryRecordCountWhere("EventID = {0} AND PhaseID = {1}", eventID, ds.SeriesInfo.Channel.PhaseID) > 0).Select(
+                        ds => new D3Series()
+                        {
+                            ChannelID = ds.SeriesInfo.Channel.ID,
+                            ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                            XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                            Color = GetColor(ds.SeriesInfo.Channel),
+                            LegendClass = "I",
+                            SecondaryLegendClass = ds.SeriesInfo.Channel.Phase.Name,
+                            LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                            DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                            DataMarker = new List<double[]>()
+                        }).ToList();
+
+                voltages = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage" &&
+                    restrikeTbl.QueryRecordCountWhere("EventID = {0} AND PhaseID = {1}", eventID, ds.SeriesInfo.Channel.PhaseID) > 0).Select(
+                        ds => new D3Series()
+                        {
+                            ChannelID = ds.SeriesInfo.Channel.ID,
+                            ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                            XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                            Color = GetColor(ds.SeriesInfo.Channel),
+                            LegendClass = "V",
+                            SecondaryLegendClass = ds.SeriesInfo.Channel.Phase.Name,
+                            LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                            DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                            DataMarker = new List<double[]>()
+                        }).ToList();
+
+                currents.ForEach(item =>
+                {
+                    item.DataMarker = new List<double[]>();
+
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                     {
+                         item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
+                         item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);
+                         item.DataMarker.Add(item.DataPoints[restrike.FinalExtinguishSample]);
+
+                     });
+
+                });
+
+                voltages.ForEach(item =>
+                {
+                    item.DataMarker = new List<double[]>();
+
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                    {
+                        item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
+                        item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);
+                        item.DataMarker.Add(item.DataPoints[restrike.TransientPeakSample]);
+
+                    });
+
+                });
+
+                return voltages.Concat(currents).ToList();
+
+            }
+        }
         #endregion
 
+        #endregion
 
     }
 }

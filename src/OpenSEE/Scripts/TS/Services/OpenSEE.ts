@@ -66,7 +66,8 @@ export default class OpenSEEService{
     relayTrendHandle: JQuery.jqXHR;
     RelayTrendPerformanceHandle: JQuery.jqXHR;
     breakerAnalogsDataHandle: JQuery.jqXHR;
-    
+    breakerRestrikeDataHandle: JQuery.jqXHR;
+
     constructor() {
         this.getWaveformVoltageData = this.getWaveformVoltageData.bind(this);
 
@@ -97,7 +98,7 @@ export default class OpenSEEService{
         this.getRelayTrendData = this.getRelayTrendData.bind(this);
         this.getRelayTrendPerformance = this.getRelayTrendPerformance.bind(this);
         this.getAnalogsData = this.getAnalogsData.bind(this);
-
+        this.getRestrikeData = this.getRestrikeData.bind(this);
     }
     
 
@@ -747,6 +748,23 @@ export default class OpenSEEService{
         return this.overlappingWaveformDataHandle;
     }
 
+    getRestrikeData(eventid: number) {
+        if (this.breakerRestrikeDataHandle !== undefined)
+            this.breakerRestrikeDataHandle.abort();
+
+        this.breakerRestrikeDataHandle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetBreakerRestrikeData?eventId=${eventid}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
+
+        return this.breakerRestrikeDataHandle;
+
+        
+    }
     getHarmonicSpectrumData(eventid: number, cycles: number, startDate?: string, endDate?: string): JQuery.jqXHR {
         if (this.harmonicSpectrumDataHandle !== undefined)
             this.harmonicSpectrumDataHandle.abort();

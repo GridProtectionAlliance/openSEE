@@ -72,6 +72,7 @@ export default class RadioselectWindow extends React.Component{
                 { label: 'Symmetrical Components', analytic: 'SymmetricalComponents' },
                 { label: 'THD', analytic: 'THD' },
                 { label: 'Unbalance', analytic: 'Unbalance' },
+                { label: 'Breaker Restrikes', analytic: 'Restrike' },
             ]
         }
 

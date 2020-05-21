@@ -122,6 +122,9 @@ export default class AnalyticLine extends React.Component<any, any>{
         else if (this.props.analytic == "OverlappingWaveform") {
             return this.openSEEService.getOverlappingWaveformData(eventid)
         }
+        else if (this.props.analytic == "Restrike") {
+            return this.openSEEService.getRestrikeData(eventid)
+        }
         
         return this.openSEEService.getFaultDistanceData(eventid)
     }
