@@ -73,9 +73,9 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             endTimeVis: (query['EndDate'] != undefined ? new Date(query['EndDate'] + "Z").getTime() : new Date(eventEndTime + "Z").getTime()),
 
             EndDate: (query['EndDate'] != undefined ? query['EndDate'] : eventEndTime),
-            displayVolt: true,
-            displayCur: true,
-            displayTCE: query['displayTCE'] == 'true',
+            displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
+            displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
+            displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
             breakerdigitals: query['breakerdigitals'] == '1' || query['breakerdigitals'] == 'true',
             displayAnalogs: query['displayAnalogs'] == 'true' || query['displayAnalogs'] == 'true',
 
@@ -112,6 +112,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 breakerdigitals: query['breakerdigitals'] == '1' || query['breakerdigitals'] == 'true',
                 displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
                 displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
+                displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
+                displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
                 fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null
             });
 
@@ -282,7 +284,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         this.setState(obj, () => {
             var newQueryString = this.toQueryString(this.state);
             var newQuery = queryString.parse(newQueryString);
-
             if (!isEqual(oldQuery, newQuery)) {
                 clearTimeout(this.historyHandle);
                 this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + newQueryString), 500);
@@ -348,9 +349,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.statButtonText;
         delete prop.correlatedSagsButtonText;
         delete prop.PointsTable;
-        delete prop.displayCur;
-        delete prop.displayVolt;
-        delete prop.displaTCE;
         delete prop.PostedData;
         delete prop.nextBackLookup;
         delete prop.overlappingEvents;
