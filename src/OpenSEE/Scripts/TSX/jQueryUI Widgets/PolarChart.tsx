@@ -72,7 +72,9 @@ const closeButton = style({
 
 export interface PolarChartProps {
     data: Array<iD3DataPoint>,
-    callback: Function
+    callback: Function,
+    showV: boolean,
+    showI: boolean,
 }
 
 export default class PolarChart extends React.Component<any, any>{
@@ -271,6 +273,22 @@ export default class PolarChart extends React.Component<any, any>{
             tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
             tblShow[item.label] = true
         })
+
+        if (!this.props.showV) {
+            tblShow.VAB = false
+            tblShow.VAN = false
+            tblShow.VBC = false
+            tblShow.VBN = false
+            tblShow.VCA = false
+            tblShow.VCN = false
+
+        }
+
+        if (!this.props.showI) {
+            tblShow.IAN = false
+            tblShow.IBN = false
+            tblShow.ICN = false
+        }
         //
         //{(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
         
@@ -283,8 +301,12 @@ export default class PolarChart extends React.Component<any, any>{
                         <circle cx="150" cy="150" r={130} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
                         <line x1="150" y1="0" x2="150" y2="300" style={{ stroke: 'lightgrey' , strokeWidth: 2}} />
                         <line x1="0" y1="150" x2="300" y2="150" style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
-                        { dataV.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleV, value.ang)} style={{ stroke: value.color, strokeWidth: 3 }} />)}
-                        { dataI.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleI, value.ang)} strokeDasharray="10,10" style={{ stroke: value.color, strokeWidth: 3 }} />)}
+                        {(this.props.showV ?
+                            dataV.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleV, value.ang)} style={{ stroke: value.color, strokeWidth: 3 }} />) : null
+                        )}
+                        {(this.props.showI ?
+                            dataI.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleI, value.ang)} strokeDasharray="10,10" style={{ stroke: value.color, strokeWidth: 3 }} />) : null
+                        )}
                     </svg>
                     <div style={{ overflowY: 'scroll', maxWidth: 200, maxHeight: 300, float: 'right'}}>
                         <table className="table" style={{  height: 300, float: 'right' }}>

@@ -201,8 +201,8 @@ export default class OpenSEENavbar extends React.Component {
                             </div>
                         </li>
                     </ul>
-                  </div>
-                <PolarChart data={this.props.TableData} callback={this.props.stateSetter} />
+                </div>
+                <PolarChart data={this.props.TableData} callback={this.props.stateSetter} showV={this.props.displayVolt} showI={this.props.displayCur} />
                 <Points pointsData={this.state.pointsData} pointsHeader={this.state.pointsHeader} pointsTable = { this.props.PointsTable } callback={this.props.stateSetter} postedData={this.props.PostedData} />
                 <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
                 <TooltipWithDelta pointdata={this.state.pointsData} pointheader={this.state.pointsHeader} PostedData={this.props.PostedData} callback={this.props.stateSetter} />
