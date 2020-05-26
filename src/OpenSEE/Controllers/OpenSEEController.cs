@@ -467,32 +467,17 @@ namespace OpenSEE
         {
             Dictionary<string, string> query = Request.QueryParameters();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings")) {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA")) {
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
 
                 meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
 
-                DateTime epoch = new DateTime(1970, 1, 1);
-                DateTime startTime = evt.StartTime;
-                DateTime endTime = evt.EndTime;
+           
+                DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
+                List<D3Series> resultList = GetBreakerLookup(dataGroup);
 
-                DataTable table;
-
-                int calcCycle = connection.ExecuteScalar<int?>("SELECT CalculationCycle FROM FaultSummary WHERE EventID = {0} AND IsSelectedAlgorithm = 1", evt.ID) ?? -1;
-
-                List<D3Series> resultList = new List<D3Series>();
-
-                table = connection.RetrieveData("select ID from Event WHERE StartTime <= {0} AND EndTime >= {1} and MeterID = {2} AND AssetID = {3}", ToDateTime2(connection, endTime), ToDateTime2(connection, startTime), evt.MeterID, evt.AssetID);
-                foreach (DataRow row in table.Rows)
-                {
-                    int eventID = row.ConvertField<int>("ID");
-
-                    DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                    resultList = resultList.Concat(GetBreakerLookup(dataGroup)).ToList();
-                   
-                }           
                 
                 JsonReturn returnDict = new JsonReturn();
                 
