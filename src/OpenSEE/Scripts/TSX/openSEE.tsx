@@ -95,7 +95,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             comparedEvents: (query["comparedEvents"] != undefined ? (Array.isArray(query["comparedEvents"]) ? query["comparedEvents"].map(a => parseInt(a)) : [parseInt(query["comparedEvents"])]) : []),
             overlappingEvents: [],
             analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
-            AnalyticSettings: { harmonic: 5, order: 1, Trc: 100, fftWindow: 1 },
+            AnalyticSettings: {
+                harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
+                order: (query["order"] != undefined ? query['order'] : 1),
+                Trc: (query["Trc"] != undefined ? query['Trc'] : 100),
+                fftWindow: (query["fftWindow"] != undefined ? query['fftWindow'] : 1)
+            },
             fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
             barChartReset: null
            
@@ -114,7 +119,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
                 displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
                 displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
-                fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null
+                fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
+                AnalyticSettings: {
+                    harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
+                    order: (query["order"] != undefined ? query['order'] : 1),
+                    Trc: (query["Trc"] != undefined ? query['Trc'] : 100),
+                    fftWindow: (query["fftWindow"] != undefined ? query['fftWindow'] : 1)
+                },
             });
 
 
@@ -354,6 +365,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.overlappingEvents;
         delete prop.TooltipWithDeltaTable;
         delete prop.barChartReset;
+        delete prop.AnalyticSettings;
+
+        prop.harmonic = state.AnalyticSettings.harmonic;
+        prop.order = state.AnalyticSettings.order;
+        prop.Trc = state.AnalyticSettings.Trc;
+        prop.fftWindow = state.AnalyticSettings.fftWindow;
 
         return queryString.stringify(prop, { encode: false });
 }
