@@ -29,10 +29,16 @@ import * as moment from 'moment';
 
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
+
+interface VoltageChartProps extends D3LineChartBaseProps {
+    timeUnit: Unit,
+    voltageUnit: Unit
+}
 
 export default class Voltage extends React.Component<any, any>{
     openSEEService: OpenSEEService;
-    props: D3LineChartBaseProps;
+    props: VoltageChartProps;
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -124,6 +130,8 @@ export default class Voltage extends React.Component<any, any>{
             tableSetter={this.props.tableSetter}
             tableReset={this.props.tableReset}
             pointTable={this.props.pointTable}
+            xunit={this.props.timeUnit}
+            yunit={this.props.voltageUnit}
         />
     }
 

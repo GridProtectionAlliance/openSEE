@@ -29,6 +29,7 @@ import { utc } from "moment";
 import D3Legend from './D3Legend';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, getData?: boolean) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
@@ -42,7 +43,8 @@ export interface D3LineChartBaseProps {
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string, openSEEServiceFunction: StandardAnalyticServiceFunction
     getData?: GetDataFunction,
-
+    xunit: Unit,
+    yunit: Unit
    
 }
 
@@ -343,11 +345,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
         
         if (ctrl.props.options.showXLabel) {
-            let timeLabel = "Time";
-            if ((this.props.endTimeVis - this.props.startTimeVis) < 100)
-                timeLabel = timeLabel + " (ms)"
-            else
-                timeLabel = timeLabel + " (s)";
+            let timeLabel = this.getTimeAxisLabel((this.props.endTimeVis - this.props.startTimeVis), this.props.xunit)
+
 
             this.xlabel = svg.append("text")
                 .attr("transform", "translate(" + ((container.node().getBoundingClientRect().width - 100) / 2) + " ," + (this.props.height - 20) + ")")
@@ -466,12 +465,33 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        let TS = moment(d);
        let h = ctrl.xScale.domain()[1] - ctrl.xScale.domain()[0]
 
-        if (h < 100)
-            return TS.format("SSS.S")
-        else if (h < 1000)
-            return TS.format("ss.SS")
-        else
-            return TS.format("ss.S")
+       if (ctrl.props.xunit == 'None') {
+           if (h < 100)
+               return TS.format("SSS.S")
+           else if (h < 1000)
+               return TS.format("ss.SS")
+           else
+               return TS.format("ss.S")
+       }
+       else if (ctrl.props.xunit == 's') {
+           if (h < 100)
+               return TS.format("ss.SSS")
+           else if (h < 1000)
+               return TS.format("ss.SS")
+           else
+               return TS.format("ss.S")
+       }
+       else if (ctrl.props.xunit == 'ms')
+           if (h < 100)
+               return TS.format("SSS.S")
+           else
+               return TS.format("SSS")
+
+       else if (ctrl.props.xunit == 'min')
+           return TS.format("mm:ss")
+
+
+        
             
     }
 
@@ -795,17 +815,29 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
 
         if (ctrl.props.options.showXLabel) {
-            let timeLabel = "Time"
-
-            if ((endTime - startTime) < 100) 
-                timeLabel = timeLabel + " (ms)";
-            else 
-                timeLabel = timeLabel + " (s)";
-            
-            ctrl.xlabel.text(timeLabel)
+            ctrl.xlabel.text(ctrl.getTimeAxisLabel((endTime - startTime), ctrl.props.xunit))
         }
     }
 
+    getTimeAxisLabel(difference: number, unit: Unit) {
+        
+        let timeLabel = "Time"
+        if (unit == 'None') {
+            if (difference < 100)
+                timeLabel = timeLabel + " (ms)";
+            else
+                timeLabel = timeLabel + " (s)";
+        }
+        else if (unit == 's')
+            timeLabel = timeLabel + " (s)";
+        else if (unit == 'ms')
+            timeLabel = timeLabel + " (ms)";
+        else if (unit == 'min')
+            timeLabel = timeLabel + " (min)";
+
+        return timeLabel
+        
+    }
     // Get current Y axis limits
     getYLimits(ctrl: D3LineChartBase, xMin: number, xMax: number, lines: any[]) {
 

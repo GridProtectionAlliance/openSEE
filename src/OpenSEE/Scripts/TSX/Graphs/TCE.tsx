@@ -27,10 +27,16 @@ import * as React  from 'react';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import * as moment from 'moment';
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
+
+interface TCEChartProps extends D3LineChartBaseProps {
+    timeUnit: Unit,
+    tceUnit: Unit
+}
 
 export default class TCE extends React.Component<D3LineChartBaseProps, any>{
     openSEEService: OpenSEEService;
-    props: D3LineChartBaseProps
+    props: TCEChartProps
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -85,6 +91,8 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
             pointTable={this.props.pointTable}
+            xunit={this.props.timeUnit}
+            yunit={this.props.tceUnit}
         />
     }
 

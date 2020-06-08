@@ -27,10 +27,16 @@ import * as React  from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import * as moment from 'moment';
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
+
+interface CurrentLineChartProps extends D3LineChartBaseProps {
+    timeUnit: Unit,
+    currentUnit: Unit
+}
 
 export default class Current extends React.Component<any, any>{
     openSEEService: OpenSEEService;
-    props: D3LineChartBaseProps
+    props: CurrentLineChartProps
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -118,6 +124,8 @@ export default class Current extends React.Component<any, any>{
             tableSetter={this.props.tableSetter}
             tableReset={this.props.tableReset}
             pointTable={this.props.pointTable}
+            xunit={this.props.timeUnit}
+            yunit={this.props.currentUnit}
         />
     }
 

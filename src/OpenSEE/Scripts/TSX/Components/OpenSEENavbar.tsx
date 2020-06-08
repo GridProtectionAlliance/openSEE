@@ -34,6 +34,7 @@ import LightningData from './../jQueryUI Widgets/LightningData';
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
 import { clone } from 'lodash';
+import SettingWindow, { Units } from '../jQueryUI Widgets/SettingWindow';
 
 declare var homePath: string;
 
@@ -60,6 +61,8 @@ export default class OpenSEENavbar extends React.Component {
         filterOrder: number,
         Trc: number,
         harmonic: number,
+
+        unitData: Units,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -170,12 +173,17 @@ export default class OpenSEENavbar extends React.Component {
                                 
                             </div>
                         </li>
-                        <li className="nav-item" style={{ width: 'calc(100% - 450px)', textAlign: 'center' }}>
+                        <li className="nav-item" style={{ width: 'calc(100% - 534px)', textAlign: 'center' }}>
                             <img src={`${homePath}Images/openSEE - Waveform Viewer Header.png`}/>
                         </li>
                         <li className="nav-item" style={{ width: '156px' }}>
                             <button className="btn btn-primary" onClick={this.props.resetZoom}>Reset Zoom</button>
 
+                        </li>
+                        <li className="nav-item" style={{ width: '84px' }}>
+                            <button className="btn btn-primary" onClick={this.showhideSetting.bind(this)}>
+                                <i className="fa fa-cog" ></i>
+                            </button>
                         </li>
                         <li className="nav-item" style={{ width: '193px' }}>
                             <div className="input-group mb-3">
@@ -200,6 +208,7 @@ export default class OpenSEENavbar extends React.Component {
                                 </div>
                             </div>
                         </li>
+                        
                     </ul>
                 </div>
                 <PolarChart data={this.props.TableData} callback={this.props.stateSetter} showV={this.props.displayVolt} showI={this.props.displayCur} />
@@ -210,6 +219,7 @@ export default class OpenSEENavbar extends React.Component {
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
+                <SettingWindow showI={this.props.displayCur} showV={this.props.displayVolt} stateSetter={this.props.stateSetter} units={this.props.unitData} />
             </nav>
         );
  
@@ -251,6 +261,10 @@ export default class OpenSEENavbar extends React.Component {
 
     showhideLightningData() {
         $('#lightningquery').show();
+    }
+
+    showhideSetting() {
+        $('#settings').show();
     }
 
 

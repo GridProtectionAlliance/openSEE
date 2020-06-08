@@ -24,8 +24,13 @@
 import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
 
-export default function Analog(props: D3LineChartBaseProps): JSX.Element {
+interface AnalogLineChartProps extends D3LineChartBaseProps {
+    timeUnit: Unit
+}
+
+export default function Analog(props: AnalogLineChartProps): JSX.Element {
     
     var openSEEService = new OpenSEEService();
     return createElement(D3LineChartBase, {
@@ -43,6 +48,8 @@ export default function Analog(props: D3LineChartBaseProps): JSX.Element {
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
         pointTable: props.pointTable,
+        xunit: props.timeUnit,
+        yunit: 'None'
     }, null);
 
 }

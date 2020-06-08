@@ -26,8 +26,12 @@
 import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
+import { Unit } from '../jQueryUI Widgets/SettingWindow';
 
-export default function Digital(props: D3LineChartBaseProps): JSX.Element {
+interface DigitalChartProps extends D3LineChartBaseProps {
+    timeUnit: Unit,
+}
+export default function Digital(props: DigitalChartProps): JSX.Element {
     
     var openSEEService = new OpenSEEService();
     return createElement(D3LineChartBase, {
@@ -44,7 +48,9 @@ export default function Digital(props: D3LineChartBaseProps): JSX.Element {
         hover: props.hover,
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
-        pointTable: props.pointTable
+        pointTable: props.pointTable,
+        yunit: 'None',
+        xunit: props.timeUnit
     }, null);
 
 }

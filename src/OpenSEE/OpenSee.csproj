@@ -56,6 +56,8 @@
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
     <Content Include="Images\openSEELogo.png" />
+    <Content Include="Scripts\ColorPicker\bootstrap.colorpickersliders.min.css" />
+    <Content Include="Scripts\ColorPicker\bootstrap.colorpickersliders.min.js" />
     <Content Include="Scripts\jquery-1.6.4.js" />
     <Content Include="Scripts\jquery-1.6.4.min.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.js" />
@@ -86,6 +88,7 @@
     </Compile>
     <Compile Include="GlobalSettings.cs" />
     <Compile Include="Model\AppModel.cs" />
+    <Compile Include="Model\System\UserSetting.cs" />
     <Compile Include="Model\System\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
@@ -419,6 +422,10 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\jQueryUI Widgets\SettingWindow.tsx" />
+  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
