@@ -125,6 +125,14 @@ export default class SettingWindow extends React.Component<any, any>{
             { label: "kiloVolt (kV)", option: "kilo" as Unit }
         ]
 
+        let currentAmp = "A"
+        let currentUnits = [
+            { label: "Per Unit (pu)", option: "pu" as Unit },
+            { label: "Amp (A)", option: "None" as Unit },
+            { label: "milliAmp (mA)", option: "milli" as Unit },
+            { label: "kiloAmp (kA)", option: "kilo" as Unit }
+        ]
+
         return (
             <div id="settings" className="ui-widget-content" style={outerDiv}>
                 <div id="settingshandle" className={handle}></div>
@@ -149,6 +157,11 @@ export default class SettingWindow extends React.Component<any, any>{
                                     {this.props.showV ? SelectUnit("Voltage [" + currentVolt + "]", voltageUnits, (op: Unit) => {
                                         let settings = clone(this.props.units)
                                         settings.Voltage = op;
+                                        this.props.stateSetter({ plotUnits: settings })
+                                    }) : null}
+                                    {this.props.showI ? SelectUnit("Current [" + currentAmp + "]", currentUnits, (op: Unit) => {
+                                        let settings = clone(this.props.units)
+                                        settings.Current = op;
                                         this.props.stateSetter({ plotUnits: settings })
                                     }) : null}
 
