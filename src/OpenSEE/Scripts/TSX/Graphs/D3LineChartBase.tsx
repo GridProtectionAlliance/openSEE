@@ -138,7 +138,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     
 
-    getData(props: D3LineChartBaseProps) {
+   getData(props: D3LineChartBaseProps) {
         var handle = this.props.openSEEServiceFunction(props.eventId).then((data: iD3DataSet) => {
             if (data == null) {
                 return;
@@ -164,7 +164,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     }
 
-    createLegendRows(data) {
+   createLegendRows(data) {
         var ctrl = this;
 
         let legend: Array<iD3DataSeries> = [];
@@ -201,7 +201,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     }
 
-    componentWillReceiveProps(nextProps: D3LineChartBaseClassProps) {
+   componentWillReceiveProps(nextProps: D3LineChartBaseClassProps) {
         var props = clone(this.props) as any;
         var nextPropsClone = clone(nextProps);
 
@@ -293,7 +293,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
    
     // create Plot
-    createDataRows(data) {
+   createDataRows(data) {
         
         // if start and end date are not provided calculate them from the data set
         var ctrl = this;
@@ -495,34 +495,46 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             
     }
 
-    formatValueTick(ctrl: D3LineChartBase, d: number) {
+   formatValueTick(ctrl: D3LineChartBase, d: number) {
        
         let h = ctrl.yScale.domain()[1] - ctrl.yScale.domain()[0]
         let val = d;
-        if (h > 10000000) {
-            val = val / 1000000.0
-            return val.toFixed(1) + "M"
+
+        if (ctrl.props.yunit == 'None') {
+            if (h > 10000000) {
+                val = val / 1000000.0
+                return val.toFixed(1) + "M"
+            }
+            if (h > 1000000) {
+                val = val / 1000000.0
+                return val.toFixed(2) + "M"
+            }
+            if (h > 10000) {
+                val = val / 1000.0;
+                return val.toFixed(1) + "k"
+            }
+            if (h > 1000) {
+                val = val / 1000.0;
+                return val.toFixed(2) + "k"
+            }
+            if (h > 10)
+                return val.toFixed(1)
+            else
+                return d.toFixed(2)
         }
-        if (h > 1000000) {
-            val = val / 1000000.0
-            return val.toFixed(2) + "M"
+        else {
+            if (h > 100) 
+                return val.toFixed(0)
+            
+            if (h > 10)
+                return val.toFixed(1)
+            else
+                return d.toFixed(2)
         }
-        if (h > 10000) {
-            val = val / 1000.0;
-            return val.toFixed(1) + "k"
-        }
-        if (h > 1000) {
-            val = val / 1000.0;
-            return val.toFixed(2) + "k"
-        }
-        if (h > 10)
-            return val.toFixed(1)
-        else
-            return d.toFixed(2)
     }
 
 
-    updateZoom(ctrl: D3LineChartBase, startTime: number, endTime: number) {
+   updateZoom(ctrl: D3LineChartBase, startTime: number, endTime: number) {
 
         
         ctrl.xScale.domain([startTime, endTime]);
