@@ -135,6 +135,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         { Label: "auto", Short: "auto", Factor: 0 }
                     ]
                 },
+                Angle: {
+                    current: { Label: "degree", Short: "deg", Factor: 1 },
+                    options: [
+                        { Label: "degree", Short: "deg", Factor: 1 },
+                        { Label: "radians", Short: "rad", Factor: 0.0174532925 }
+                    ]
+                },
                 TCE: {
                     current: { Label: "auto", Short: "auto", Factor: 0 },
                     options: [

@@ -85,6 +85,7 @@ export interface GraphUnits {
     Time: UnitSetting,
     Voltage: UnitSetting,
     Current: UnitSetting,
+    Angle: UnitSetting,
     TCE: UnitSetting,
 }
 export type Unit = {
@@ -147,6 +148,11 @@ export default class SettingWindow extends React.Component<any, any>{
                                         settings.Current.current = op;
                                         this.props.stateSetter({ plotUnits: settings })
                                     }) : null}
+                                    {this.props.showI || this.props.showV ? SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
+                                        let settings = cloneDeep(this.props.unitSetting)
+                                        settings.Angle.current = op;
+                                        this.props.stateSetter({ plotUnits: settings })
+                                    }) : null}
 
                                 </div>
                             </div> 
@@ -183,7 +189,7 @@ const SelectUnit = (label: string, current: Unit, options: Array<Unit>, setter: 
     let entries = options.map((option, index) => <a key={"option-" + index} className="dropdown-item" onClick={() => setter(option)}> {option.Label} </a>)
 
     return (
-        <div className="btn-group dropright" style={{ marginLeft: '20px' }}>
+        <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
             <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 {label + " [" + current.Short + "]"}
             </button>

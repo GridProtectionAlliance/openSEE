@@ -86,7 +86,6 @@ export interface iD3DataPoint {
     Time: number,
 }
 
-
 export default class D3LineChartBase extends React.Component<D3LineChartBaseClassProps, any>{
 
     yAxis: any;
@@ -98,12 +97,20 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     hover: any;
     area: any;
     xlabel: any;
+    ylabel: any;
     cycle: any;
     movingCycle: boolean;
 
     mousedownX: number;
     cycleStart: number;
     cycleEnd: number;
+
+    yMax: number;
+    yMin: number;
+    dataMax: number;
+    dataMin: number;
+
+    ActiveUnits: GraphUnits;
 
     state: { dataSet: iD3DataSet, dataHandle: JQuery.jqXHR }
     constructor(props, context) {
@@ -116,7 +123,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 Data: null,
             } , 
             dataHandle: undefined,
-          
         };
         
         if (ctrl.props.getData != undefined) ctrl.getData = (props) => ctrl.props.getData(props, ctrl);
@@ -255,7 +261,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         if (this.props.startTimeVis && this.props.endTimeVis) {
             if (this.xScale != null && (this.props.startTimeVis != prevProps.startTimeVis || this.props.endTimeVis != prevProps.endTimeVis)) {
-                this.updateZoom(this, this.props.startTimeVis, this.props.endTimeVis);
+                this.updateZoom(this);
             }
         }
 
@@ -309,20 +315,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .attr("height", this.props.height).append("g")
             .attr("transform", "translate(40,10)");
 
-       var lines = [];
-       let resolveUnit = ctrl.resolveAutoScale(ctrl, ctrl.props.unitSettings, data)
-       data.forEach((row, key, map) => {
-            if (row.Enabled) {
-                lines.push(this.scaleYValues(resolveUnit,row));
 
-            }
-        });
+       // First Thing is we Resolve any auto Units properly
+       ctrl.updateYLimits(ctrl)
+       ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
+       ctrl.updateYLimits(ctrl)
 
-        ctrl.yScale = d3.scaleLinear()
-            .domain(this.getYLimits(ctrl, this.props.startTimeVis, this.props.endTimeVis, lines))
-            .range([this.props.height - 60, 0]);
+       //Then Create Axisis
+       ctrl.yScale = d3.scaleLinear()
+           .domain([ctrl.yMin,ctrl.yMax])
+           .range([this.props.height - 60, 0]);
 
-        ctrl.xScale = d3.scaleLinear()
+       ctrl.xScale = d3.scaleLinear()
             .domain([this.props.startTimeVis, this.props.endTimeVis])
             .range([20, container.node().getBoundingClientRect().width - 100])
             ;
@@ -343,7 +347,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
         
        if (ctrl.props.options.showXLabel) {
-           let timeLabel = this.getTimeAxisLabel((this.props.endTimeVis - this.props.startTimeVis), this.props.unitSettings.Time.current)
+           let timeLabel = this.getTimeAxisLabel(ctrl)
 
 
             this.xlabel = svg.append("text")
@@ -352,19 +356,20 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 .text(timeLabel);
         }
 
-        const distinct = (value, index, self) => {
-            return self.indexOf(value) === index;
-        }
+       //Add the YLabel
+        
 
-        let yLabel = lines.map(item => item.XaxisLabel).filter(distinct).join("/");
+       let yUnitLabel = ""
+       if (ctrl.state.dataSet.Data != null)
+           yUnitLabel = this.getYAxisLabel(ctrl)
        
-        svg.append("text")
+        this.ylabel = svg.append("text")
             .attr("transform", "rotate(-90)")
             .attr("y",-30)
             .attr("x", -(this.props.height / 2 - 30))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(yLabel);
+            .text(yUnitLabel);
 
         this.hover = svg.append("line")
             .attr("stroke", "#000")
@@ -411,40 +416,40 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
         ctrl.paths = svg.append("g").attr("id","path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
 
-        
-        lines.forEach((row, key, map) => {
-            ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1] } })).attr("fill", "none")
-                .attr("stroke", row.Color)
-                .attr("stroke-width", 2.0)
-                .attr("d", d3.line()
-                    .x(function (d) { return ctrl.xScale(d.x) })
-                    .y(function (d) { return ctrl.yScale(d.y) })
-                    .defined(function (d) {
-                        let tx = !isNaN(parseFloat(ctrl.yScale(d.x)));
-                        let ty = !isNaN(parseFloat(ctrl.yScale(d.y)));
-                        return tx && ty;
+       if (ctrl.state.dataSet.Data != null)
+           ctrl.state.dataSet.Data.filter(item => item.Enabled).forEach((row, key, map) => {
+               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.XaxisLabel } })).attr("fill", "none")
+                    .attr("stroke", row.Color)
+                    .attr("stroke-width", 2.0)
+                    .attr("d", d3.line()
+                        .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
+                        .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl,d)) })
+                        .defined(function (d) {
+                            let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                            let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                            return tx && ty;
+                        })
+                );
+
+                if (row.DataMarker && row.DataMarker.length > 0) {
+                    let markers = ctrl.paths.append("g")
+                    row.DataMarker.forEach(item => {
+                        let r = { x: item[0], y: item[1], units: row.XaxisLabel }
+                        markers.append("circle").datum(r)
+                            .attr("fill", row.Color)
+                            .attr("r", 5.0)
+                            .attr("cx", function (d) {
+                                return ctrl.xScale(ctrl.AdjustX(ctrl, d))
+                            })
+                            .attr("cy", function (d) {
+                                return ctrl.yScale(ctrl.AdjustY(ctrl, d))
+                            })
                     })
-            );
-
-            if (row.DataMarker && row.DataMarker.length > 0) {
-                let markers = ctrl.paths.append("g")
-                row.DataMarker.forEach(item => {
-                    let r = { x: item[0], y: item[1] }
-                    markers.append("circle").datum(r)
-                        .attr("fill", row.Color)
-                        .attr("r", 5.0)
-                        .attr("cx", function (d) {
-                            return ctrl.xScale(d.x)
-                        })
-                        .attr("cy", function (d) {
-                            return ctrl.yScale(d.y)
-                        })
-                })
                     
-            }
+                }
 
 
-        });      
+            });      
 
         this.area = svg.append("g").append("svg:rect")
             .attr("width", 'calc(100% - 120px)')
@@ -457,6 +462,19 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .on('mousedown', function () { ctrl.mousedown(ctrl) })
             .on('mouseup', function () { ctrl.mouseup(ctrl) })
             .on("wheel", function () { ctrl.mousewheel(ctrl) })
+    }
+
+    AdjustX(ctrl: D3LineChartBase, d: any) {
+        return d.x
+    }
+
+    AdjustY(ctrl: D3LineChartBase, d: any) {
+        return d.y * ctrl.ActiveUnits[d.unit].current.Factor
+    }
+
+    AdjustTime(ctrl: D3LineChartBase, d: number) {
+        let a = { x: d }
+        return ctrl.AdjustX(ctrl, a);
     }
 
    formatTimeTick(ctrl: D3LineChartBase, d: number) {
@@ -511,30 +529,36 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
     }
 
+   updateZoom(ctrl: D3LineChartBase) {
 
-   updateZoom(ctrl: D3LineChartBase, startTime: number, endTime: number) {
+       // First Update auto Units and Y Limits
+       ctrl.updateYLimits(ctrl)
+       ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
+       ctrl.updateYLimits(ctrl)
 
-        
-        ctrl.xScale.domain([startTime, endTime]);
+       ctrl.xScale.domain([ctrl.props.startTimeVis, ctrl.props.endTimeVis]);
 
-        ctrl.updateTimeAxis(ctrl, startTime, endTime)
+       ctrl.updateTimeAxis(ctrl)
 
-        ctrl.yScale.domain(ctrl.getYLimits(ctrl, startTime, endTime, undefined));
-        ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
+       ctrl.yScale.domain([ctrl.yMin, ctrl.yMax]);
 
-        ctrl.paths.selectAll('path')
+       ctrl.ylabel.text(ctrl.getYAxisLabel(ctrl))
+
+       ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
+
+       ctrl.paths.selectAll('path')
             .transition()
             .duration(1000)
             .attr("d", d3.line()
                 .x(function (d) {
-                    return ctrl.xScale(d.x)
+                    return ctrl.xScale(ctrl.AdjustX(ctrl,d))
                 })
                 .y(function (d) {
-                    return ctrl.yScale(d.y)
+                    return ctrl.yScale(ctrl.AdjustY(ctrl, d))
                 })
                 .defined(function (d) {
-                    let tx = !isNaN(parseFloat(ctrl.yScale(d.x)));
-                    let ty = !isNaN(parseFloat(ctrl.yScale(d.y)));
+                    let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                    let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
                     return tx && ty;
                 })
         )
@@ -543,24 +567,23 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .transition()
             .duration(1000)
             .attr("cx", function (d) {
-                return ctrl.xScale(d.x)
+                return ctrl.xScale(ctrl.AdjustX(ctrl, d))
             })
             .attr("cy", function (d) {
-                return ctrl.yScale(d.y)
+                return ctrl.yScale(ctrl.AdjustY(ctrl, d))
             })
 
 
 
 
-        if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
+       if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
+           if (ctrl.cycleStart == -1)
+               return
 
             ctrl.cycle.transition()
                 .duration(1000)
-                .attr("x", this.xScale(ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) -this.xScale(ctrl.cycleStart)))
+                .attr("x", this.AdjustTime(ctrl,ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) -this.xScale(ctrl.cycleStart)))
         }
-        
-
-
     }
 
     mousemove(ctrl: D3LineChartBase) {
@@ -629,7 +652,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     updateCycle(ctrl: D3LineChartBase, cycleStart?: number, cycleWindow?: number) {
-
+        console.log("updating cycle")
         if (cycleStart && cycleWindow) {
             ctrl.cycleStart = cycleStart;
             
@@ -800,145 +823,101 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.props.stateSetter({ startTimeVis: newStartTime, endTimeVis: newEndTime });
     }
     
-    updateTimeAxis(ctrl: D3LineChartBase, startTime: number, endTime: number) {
+    updateTimeAxis(ctrl: D3LineChartBase) {
 
         ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
 
         if (ctrl.props.options.showXLabel) {
-            ctrl.xlabel.text(ctrl.getTimeAxisLabel((endTime - startTime), ctrl.props.unitSettings.Time.current))
+            ctrl.xlabel.text(ctrl.getTimeAxisLabel(ctrl))
         }
     }
 
-    getTimeAxisLabel(difference: number, unit: Unit) {
+    getTimeAxisLabel(ctrl: D3LineChartBase) {
 
+        let difference = ctrl.props.endTimeVis - ctrl.props.startTimeVis
         let timeLabel = "Time"
-        if (unit.Short == 'auto') {
+        if (ctrl.ActiveUnits.Time.current.Short == 'auto') {
             if (difference < 100)
                 timeLabel = timeLabel + " (ms)";
             else
                 timeLabel = timeLabel + " (s)";
         }
         else
-            timeLabel = timeLabel + " (" + unit.Short + ")";
+            timeLabel = timeLabel + " (" + ctrl.ActiveUnits.Time.current.Short + ")";
 
         return timeLabel
         
     }
-    // Get current Y axis limits
-    getYLimits(ctrl: D3LineChartBase, xMin: number, xMax: number, lines: any[]) {
 
-        if (lines == undefined) {
-            lines = [];
-            let resolveUnit = ctrl.resolveAutoScale(ctrl, ctrl.props.unitSettings, ctrl.state.dataSet.Data)
-            ctrl.state.dataSet.Data.forEach((row, key, map) => {
-                if (row.Enabled) {
-                    lines.push(ctrl.scaleYValues(resolveUnit, row));
-                }
-            });
+    getYAxisLabel(ctrl: D3LineChartBase) {
+        const distinct = (value, index, self) => {
+            return self.indexOf(value) === index;
         }
 
-        let ymax = Math.min.apply(null, lines.map(item => Math.min.apply(null, item.DataPoints.map(item => item[1]).map(ctrl.isNumberMax))));
-        let ymin = Math.max.apply(null, lines.map(item => Math.max.apply(null, item.DataPoints.map(item => item[1]).map(ctrl.isNumberMin))));
+        return ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
+            if (ctrl.ActiveUnits[item.XaxisLabel] === undefined)
+                return item.XaxisLabel;
+            else
+                return ctrl.ActiveUnits[item.XaxisLabel].current.Short
+        }).filter(distinct).join("/");
 
-
-        if (!Number.isNaN(xMin) && !Number.isNaN(xMax)) {
-            let xmin = xMin - 1;
-            let xmax = xMax + 1;
-
-            lines.forEach((row, index, map) => {
-                row.DataPoints.forEach((pt, i, points) => {
-                    if (pt[0] < xmax && pt[0] > xmin) {
-                        if (this.isNumberMin(pt[1]) > ymax) {
-                            ymax = this.isNumberMin(pt[1]);
-                        }
-                        if (this.isNumberMax(pt[1]) < ymin) {
-                            ymin = this.isNumberMax(pt[1]);
-                        }
-                    }
-                })
-            })
-        }
-        else {
-            let tmp = ymax;
-            ymax = ymin;
-            ymin = tmp;
-        }
-        if (ymin == Number.MAX_VALUE || !Number.isFinite(ymin)) { ymin = NaN; }
-        if (ymax == Number.MIN_VALUE || !Number.isFinite(ymax)) { ymax = NaN; }
-
-        return [ymin, ymax];
     }
 
-    isNumberMax(d) {
+    // Get current Y axis limits needs work
+    updateYLimits(ctrl: D3LineChartBase) {
+
+        if (ctrl.state.dataSet.Data == null)
+            return
+        let data = ctrl.state.dataSet.Data.filter(item => item.Enabled);
+        let datapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis))
+        let resDatapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis).map(pt => ctrl.AdjustY(ctrl, { y: pt[1], unit: item.XaxisLabel })))
+
+        
+        ctrl.dataMin = Math.min(...datapt.map(series => Math.min(...series.map(pt => pt[1]).filter(ctrl.isNumber))))
+        ctrl.dataMax = Math.max(...datapt.map(series => Math.max(...series.map(pt => pt[1]).filter(ctrl.isNumber))))
+
+        ctrl.yMin = Math.min(...resDatapt.map(series => Math.min(...series.filter(ctrl.isNumber))))
+        ctrl.yMax = Math.max(...resDatapt.map(series => Math.max(...series.filter(ctrl.isNumber))))
+        console.log(ctrl.yMin)
+    }
+
+    isNumber(d): boolean {
         if (!isNaN(parseFloat(d)))
-            return d
-
-        else
-            return Number.MAX_VALUE
-
+            return true
+        return false
     }
+    resolveAutoScale(ctrl: D3LineChartBase): GraphUnits {
 
-    isNumberMin(d) {
-        if (!isNaN(parseFloat(d)))
-            return d
+        if (ctrl.state.dataSet.Data == null)
+            return ctrl.props.unitSettings
 
-        else
-            return Number.MIN_VALUE
-
-    }
-
-    scaleYValues(unit: GraphUnits, data: iD3DataSeries) {
-        let factor = 1.0;
-        let newdata = cloneDeep(data)
-
-        //If the unit does not exist we are done here
-        if (unit[data.XaxisLabel] === undefined)
-            return newdata;
-
-        //If it is auto we have to figure out closest factor as 1000 000, 1000, 1, 0.0001 and find corresponding Label if no label exists we go closer to 1
-        if (unit[data.XaxisLabel].current.Name == 'auto')
-            console.log("This is an issue")
-        //If it is p.u. we have to use base Value But that needs to come from Controller
-        else {
-            factor = unit[data.XaxisLabel].current.Factor
-            newdata.XaxisLabel = unit[data.XaxisLabel].current.Short
-        }
-
-        newdata.DataPoints = newdata.DataPoints.map(item => { item[1] = item[1] * factor; return item; });
-        newdata.DataMarker = newdata.DataMarker.map(item => { item[1] = item[1] * factor; return item; });
-       
-        return newdata;
-    }
-
-    resolveAutoScale(ctrl: D3LineChartBase, units: GraphUnits, data: Array<iD3DataSeries>) {
-
-        let result = cloneDeep(units);
-        for (let property in units) {
+        let result = cloneDeep(ctrl.props.unitSettings);
+        for (let property in ctrl.props.unitSettings) {
             //skip Time since that is resolved on the x axis
             if (property == 'Time')
                 continue
 
-            if (units[property].current.Label == "auto") {
+            if (ctrl.props.unitSettings[property].current.Label == "auto") {
                 
-                let tempData = data.filter(item => item.Enabled && item.XaxisLabel == property)
+                let tempData = ctrl.state.dataSet.Data.filter(item => item.Enabled && item.XaxisLabel == property)
                 if (tempData.length > 0) {
-                    
-                    let yMax = Math.min.apply(null, tempData.map(item => Math.min.apply(null, item.DataPoints.map(item => item[1]).map(ctrl.isNumberMax))));
-                    let yMin = Math.max.apply(null, tempData.map(item => Math.max.apply(null, item.DataPoints.map(item => item[1]).map(ctrl.isNumberMin))));
+
+                    let datapt = tempData.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis))
+                    let ymin = Math.min(...datapt.map(series => Math.min(...series.map(pt => pt[1]))))
+                    let ymax = Math.max(...datapt.map(series => Math.max(...series.map(pt => pt[1]))))
 
                     //Logic to determine Unit
                     let autoFactor = 0.000001
-                    if (Math.max(Math.abs(yMin), Math.abs(yMax)) < 1)
+                    if (Math.max(Math.abs(ymax), Math.abs(ymin)) < 1)
                         autoFactor = 1000
-                    else if (Math.max(Math.abs(yMin), Math.abs(yMax)) < 1000)
+                    else if (Math.max(Math.abs(ymax), Math.abs(ymin)) < 1000)
                         autoFactor = 1
-                    else if (Math.max(Math.abs(yMin), Math.abs(yMax)) < 1000000)
+                    else if (Math.max(Math.abs(ymax), Math.abs(ymin)) < 1000000)
                         autoFactor = 0.001
-
-                    
+                
                     //Logic to move on to next if We can not find that Factor
-                    if (units[property].options.find(item => item.Factor == autoFactor) != undefined)
-                        result[property].current = units[property].options.find(item => item.Factor == autoFactor)
+                    if (ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor) != undefined)
+                        result[property].current = ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor)
                     else {
                         
                         //Unable to find Factor try moving one down/up
@@ -947,16 +926,16 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                         else
                             autoFactor = 1
 
-                        if (units[property].options.find(item => item.Factor == autoFactor) != undefined)
-                            result[property].current = units[property].options.find(item => item.Factor == autoFactor)
+                        if (ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor) != undefined)
+                            result[property].current = ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor)
                         else
-                            result[property].current = units[property].options.find(item => item.Factor != 0)
+                            result[property].current = ctrl.props.unitSettings[property].options.find(item => item.Factor != 0)
                     }
                 }
             }
         }     
 
-        return result
+        return result;
     }
 
    handleSeriesLegendClick(event: React.MouseEvent<HTMLDivElement>, row: iD3DataSeries, key: number, getData?: boolean): void {

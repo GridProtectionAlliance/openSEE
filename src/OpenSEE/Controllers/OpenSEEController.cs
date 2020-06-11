@@ -332,7 +332,7 @@ namespace OpenSEE
                     ChannelID = cdg.RMS.SeriesInfo.Channel.ID,
                     DataPoints = cdg.RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.RMS.SeriesInfo.Channel, "RMS"),
-                    XaxisLabel = GetUnits(cdg.RMS.SeriesInfo.Channel),
+                    XaxisLabel = type,
                     Color = GetColor(cdg.RMS.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
                     SecondaryLegendClass = "RMS",
@@ -347,7 +347,7 @@ namespace OpenSEE
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
 
-                    XaxisLabel = GetUnits(cdg.Peak.SeriesInfo.Channel),
+                    XaxisLabel = type,
                     Color = GetColor(cdg.Peak.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
                     SecondaryLegendClass = "A",
@@ -362,7 +362,7 @@ namespace OpenSEE
                     DataPoints = cdg.Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Phase.SeriesInfo.Channel, "Phase"),
 
-                    XaxisLabel = "deg",
+                    XaxisLabel = "Angle",
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     SecondaryLegendClass = "Ph",
