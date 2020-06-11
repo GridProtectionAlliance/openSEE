@@ -28,10 +28,8 @@ import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { Unit } from '../jQueryUI Widgets/SettingWindow';
 
-interface DigitalChartProps extends D3LineChartBaseProps {
-    timeUnit: Unit,
-}
-export default function Digital(props: DigitalChartProps): JSX.Element {
+
+export default function Digital(props: D3LineChartBaseProps): JSX.Element {
     
     var openSEEService = new OpenSEEService();
     return createElement(D3LineChartBase, {
@@ -49,8 +47,7 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
         pointTable: props.pointTable,
-        yunit: 'None',
-        xunit: props.timeUnit
+        unitSettigs: props.unitSettings
     }, null);
 
 }

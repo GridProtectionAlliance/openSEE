@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { clone } from 'lodash';
+import { clone, cloneDeep } from 'lodash';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -76,22 +76,29 @@ export interface Colors {
     Vc: string,
 }
 
-export interface Units {
-    Time: Unit,
-    Voltage: Unit,
-    Current: Unit,
-    TCE: Unit,
-    Analytic: Unit,
+export type UnitSetting = {
+    current: Unit,
+    options: Array<Unit>
 }
 
-export type Unit = "milli" | "kilo" | "mega" | "pu" | "None" | "event" | "ms" | "s" | "min"
+export interface GraphUnits {
+    Time: UnitSetting,
+    Voltage: UnitSetting,
+    Current: UnitSetting,
+    TCE: UnitSetting,
+}
+export type Unit = {
+    Label: string,
+    Short: string,
+    Factor: number
+}
 
 
 export interface SettingWindowProps {
     stateSetter: Function,
     showV: boolean,
     showI: boolean,
-    units: Units,
+    unitSetting: GraphUnits,
 }
 
 export default class SettingWindow extends React.Component<any, any>{
@@ -108,31 +115,7 @@ export default class SettingWindow extends React.Component<any, any>{
 
     
     render() {
-        let timeUnits = [
-            { label: "auto", option: "None" as Unit },
-            { label: "ms since fault", option: "event" as Unit },
-            { label: "milliseconds", option: "ms" as Unit },
-            { label: "seconds", option: "s" as Unit }
-        ]
-        let currentTime = (this.props.units.Time == 'None' ? "auto" : (this.props.units.Time == 'event' ? "ms since event" : (this.props.units.Time == 'ms' ? "ms" : "sec")))
-
-
-        let currentVolt = "V"
-        let voltageUnits = [
-            { label: "Per Unit (pu)", option: "pu" as Unit },
-            { label: "Volt (V)", option: "None" as Unit },
-            { label: "milliVolt (mV)", option: "milli" as Unit },
-            { label: "kiloVolt (kV)", option: "kilo" as Unit }
-        ]
-
-        let currentAmp = "A"
-        let currentUnits = [
-            { label: "Per Unit (pu)", option: "pu" as Unit },
-            { label: "Amp (A)", option: "None" as Unit },
-            { label: "milliAmp (mA)", option: "milli" as Unit },
-            { label: "kiloAmp (kA)", option: "kilo" as Unit }
-        ]
-
+        
         return (
             <div id="settings" className="ui-widget-content" style={outerDiv}>
                 <div id="settingshandle" className={handle}></div>
@@ -149,19 +132,19 @@ export default class SettingWindow extends React.Component<any, any>{
                         
                             <div id="collapseUnit" className="collapse show" aria-labelledby="headingUnit" data-parent="#panelSettings">
                                 <div className="card-body">
-                                    {SelectUnit("Time [" + currentTime + "]", timeUnits, (op: Unit) => {
-                                        let settings = clone(this.props.units)
-                                        settings.Time = op;
+                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                        let settings = cloneDeep(this.props.unitSetting)
+                                        settings.Time.current = op;
                                         this.props.stateSetter({ plotUnits: settings })
                                     })}
-                                    {this.props.showV ? SelectUnit("Voltage [" + currentVolt + "]", voltageUnits, (op: Unit) => {
-                                        let settings = clone(this.props.units)
-                                        settings.Voltage = op;
+                                    {this.props.showV ? SelectUnit("Voltage", this.props.unitSetting.Voltage.current, this.props.unitSetting.Voltage.options, (op: Unit) => {
+                                        let settings = cloneDeep(this.props.unitSetting)
+                                        settings.Voltage.current = op;
                                         this.props.stateSetter({ plotUnits: settings })
                                     }) : null}
-                                    {this.props.showI ? SelectUnit("Current [" + currentAmp + "]", currentUnits, (op: Unit) => {
-                                        let settings = clone(this.props.units)
-                                        settings.Current = op;
+                                    {this.props.showI ? SelectUnit("Current", this.props.unitSetting.Current.current, this.props.unitSetting.Current.options, (op: Unit) => {
+                                        let settings = cloneDeep(this.props.unitSetting)
+                                        settings.Current.current = op;
                                         this.props.stateSetter({ plotUnits: settings })
                                     }) : null}
 
@@ -195,14 +178,14 @@ export default class SettingWindow extends React.Component<any, any>{
     }
 }
 
-const SelectUnit = (label: string, options: Array<{ label: string, option: Unit }>, setter: (option: Unit) => void) => {
+const SelectUnit = (label: string, current: Unit, options: Array<Unit>, setter: (option: Unit) => void) => {
 
-    let entries = options.map((option, index) => <a key={"option-" + index} className="dropdown-item" onClick={() => setter(option.option)}> {option.label} </a>)
+    let entries = options.map((option, index) => <a key={"option-" + index} className="dropdown-item" onClick={() => setter(option)}> {option.Label} </a>)
 
     return (
         <div className="btn-group dropright" style={{ marginLeft: '20px' }}>
             <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {label}
+                {label + " [" + current.Short + "]"}
             </button>
             <div className="dropdown-menu">
                 {entries}

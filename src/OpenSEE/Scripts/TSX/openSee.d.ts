@@ -123,7 +123,7 @@ declare interface OpenSEEState {
     endTimeVis: number,
     fftStartTime: number,
     barChartReset?: Function,
-    plotUnits: Units,
+    plotUnits: GraphUnits,
 }
 
 declare interface iListObject {

@@ -27,12 +27,10 @@ import * as moment from 'moment';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './D3LineChartBase';
 import { AnalyticParamters } from '../Components/RadioselectWindow';
-import { Unit } from '../jQueryUI Widgets/SettingWindow';
+
 interface AnalyticLineprops extends D3LineChartBaseProps {
     analytic: string,
     analyticParameter: AnalyticParamters,
-    timeUnit: Unit,
-    analyticUnit: Unit
 }
 
 export default class AnalyticLine extends React.Component<any, any>{
@@ -148,8 +146,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
             pointTable={this.props.pointTable}
-            xunit={this.props.timeUnit}
-            yunit={this.props.analyticUnit}
+            unitSettings={this.props.unitSettings}
         />
     }
 
