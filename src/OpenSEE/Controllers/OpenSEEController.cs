@@ -204,7 +204,7 @@ namespace OpenSEE
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
                         ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                        XaxisLabel = type,
+                        XaxisLabel = (type == "TripCoilCurrent"? "TCE" : type),
                         Color = GetColor(ds.SeriesInfo.Channel),
                         LegendClass = GetVoltageType(ds.SeriesInfo.Channel),
                         SecondaryLegendClass = GetSignalType(ds.SeriesInfo.Channel),
@@ -448,7 +448,7 @@ namespace OpenSEE
                    {
                        ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
-                       XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                       XaxisLabel = " ",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendClass = "",
                        SecondaryLegendClass = "",
@@ -500,7 +500,7 @@ namespace OpenSEE
                    {
                        ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
-                       XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                       XaxisLabel = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendClass = "",
                        SecondaryLegendClass = "",
