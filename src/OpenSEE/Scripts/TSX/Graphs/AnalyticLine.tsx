@@ -147,6 +147,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             fftStartTime={this.props.fftStartTime}
             pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
+            colorSettings={this.props.colorSettings}
         />
     }
 

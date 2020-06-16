@@ -56,8 +56,6 @@
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
     <Content Include="Images\openSEELogo.png" />
-    <Content Include="Scripts\ColorPicker\bootstrap.colorpickersliders.min.css" />
-    <Content Include="Scripts\ColorPicker\bootstrap.colorpickersliders.min.js" />
     <Content Include="Scripts\jquery-1.6.4.js" />
     <Content Include="Scripts\jquery-1.6.4.min.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.js" />

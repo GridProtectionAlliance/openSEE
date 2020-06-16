@@ -244,17 +244,17 @@ namespace OpenSEE
                     switch (channel.Phase.Name)
                     {
                         case ("AN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AN'") ?? "#A30000";
+                            return "Va";
                         case ("BN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BN'") ?? "#0029A3";
+                            return "Vb";
                         case ("CN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CN'") ??  "#007A29";
+                            return "Vc";
                         case ("AB"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'AB'") ?? "#A30000";
+                            return "Va";
                         case ("BC"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'BC'") ?? "#0029A3";
+                            return "Vb";
                         case ("CA"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'CA'") ?? "#007A29";
+                            return "Vc";
                         case ("NG"):
                             return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'NG'") ?? "#d3d3d3";
                         default: // Should be random
@@ -266,15 +266,15 @@ namespace OpenSEE
                     switch (channel.Phase.Name)
                     {
                         case ("AN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'AN'") ?? "#FF0000";
+                            return "Ia";
                         case ("BN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'BN'") ?? "#0066CC";
+                            return "Ib";
                         case ("CN"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'CN'") ?? "#33CC33";
+                            return "Ic";
                         case ("NG"):
                             return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'NG'") ?? "#d3d3d3";
                         case ("RES"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'RES'") ?? "#d3d3d3";
+                            return "Ires";
                         default: // Should be random
                             return random;
                     }

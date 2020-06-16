@@ -125,6 +125,7 @@ export default class Voltage extends React.Component<any, any>{
             tableReset={this.props.tableReset}
             pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
+            colorSettings={this.props.colorSettings}
         />
     }
 

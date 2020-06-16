@@ -29,7 +29,7 @@ import { utc } from "moment";
 import D3Legend from './D3Legend';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
-import { Unit, GraphUnits } from '../jQueryUI Widgets/SettingWindow';
+import { Unit, GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, getData?: boolean) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
@@ -37,6 +37,7 @@ export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBas
 export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
     unitSettings: GraphUnits,
+    colorSettings: Colors,
     pointTable?: Array<iD3DataPoint>,
     options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function, 
 };
@@ -140,8 +141,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             this.setState({ dataHandle: undefined });
         }
     }
-
-    
 
    getData(props: D3LineChartBaseProps) {
         var handle = this.props.openSEEServiceFunction(props.eventId).then((data: iD3DataSet) => {
@@ -258,6 +257,12 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.pointTable;
         delete nextPropsClone.pointTable;
 
+        delete props.unitSettings;
+        delete nextPropsClone.unitSettings;
+
+        delete props.colorSettings;
+        delete nextPropsClone.colorSettings;
+
 
         if (this.props.startTimeVis && this.props.endTimeVis) {
             if (this.xScale != null && (this.props.startTimeVis != prevProps.startTimeVis || this.props.endTimeVis != prevProps.endTimeVis)) {
@@ -288,6 +293,14 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 this.updateCycle(this, null, null);
             
        }
+
+        if (!(isEqual(prevProps.colorSettings, this.props.colorSettings))) {
+            this.createDataRows(this.state.dataSet.Data);
+        }
+
+        if (!(isEqual(prevProps.unitSettings, this.props.unitSettings))) {
+            this.createDataRows(this.state.dataSet.Data);
+        }
 
        if (!(isEqual(props, nextPropsClone))) {
            this.getData(this.props);
@@ -419,7 +432,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        if (ctrl.state.dataSet.Data != null)
            ctrl.state.dataSet.Data.filter(item => item.Enabled).forEach((row, key, map) => {
                ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.XaxisLabel } })).attr("fill", "none")
-                    .attr("stroke", row.Color)
+                   .attr("stroke", ctrl.getColor(ctrl,row.Color))
                     .attr("stroke-width", 2.0)
                     .attr("d", d3.line()
                         .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
@@ -436,7 +449,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     row.DataMarker.forEach(item => {
                         let r = { x: item[0], y: item[1], units: row.XaxisLabel }
                         markers.append("circle").datum(r)
-                            .attr("fill", row.Color)
+                            .attr("fill", ctrl.getColor(ctrl, row.Color))
                             .attr("r", 5.0)
                             .attr("cx", function (d) {
                                 return ctrl.xScale(ctrl.AdjustX(ctrl, d))
@@ -950,12 +963,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             this.getData(this.props);
     }
 
+    getColor(ctrl: D3LineChartBase, color: string) {
+
+        if (ctrl.props.colorSettings[color] !== undefined)
+            return ctrl.props.colorSettings[color]
+        return ctrl.props.colorSettings.random
+    }
 
     render() {
         return (
             <div>
-                <div id={"graphWindow-" + this.props.legendKey + "-" + this.props.eventId} style={{ height: this.props.height, float: 'left', width: 'calc(100% - 220px)'}}></div>
-                <D3Legend data={this.state.dataSet.Data} callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height}/>
+                <div id={"graphWindow-" + this.props.legendKey + "-" + this.props.eventId} style={{ height: this.props.height, float: 'left', width: 'calc(100% - 220px)' }}></div>
+                <D3Legend colors={this.props.colorSettings} data = { this.state.dataSet.Data } callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height} />
             </div>
         );
     }

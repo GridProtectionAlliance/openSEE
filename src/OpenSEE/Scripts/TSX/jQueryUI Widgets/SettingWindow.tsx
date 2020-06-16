@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { style } from "typestyle"
 import { clone, cloneDeep } from 'lodash';
+import { BlockPicker } from 'react-color';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -74,6 +75,11 @@ export interface Colors {
     Va: string,
     Vb: string,
     Vc: string,
+    Ia: string,
+    Ib: string,
+    Ic: string,
+    Ires: string,
+    random: string
 }
 
 export type UnitSetting = {
@@ -100,10 +106,12 @@ export interface SettingWindowProps {
     showV: boolean,
     showI: boolean,
     unitSetting: GraphUnits,
+    colorSetting: Colors,
 }
 
 export default class SettingWindow extends React.Component<any, any>{
     props: SettingWindowProps;
+   
     constructor(props) {
         super(props);
     }
@@ -133,26 +141,56 @@ export default class SettingWindow extends React.Component<any, any>{
                         
                             <div id="collapseUnit" className="collapse show" aria-labelledby="headingUnit" data-parent="#panelSettings">
                                 <div className="card-body">
-                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                        let settings = cloneDeep(this.props.unitSetting)
-                                        settings.Time.current = op;
-                                        this.props.stateSetter({ plotUnits: settings })
-                                    })}
-                                    {this.props.showV ? SelectUnit("Voltage", this.props.unitSetting.Voltage.current, this.props.unitSetting.Voltage.options, (op: Unit) => {
-                                        let settings = cloneDeep(this.props.unitSetting)
-                                        settings.Voltage.current = op;
-                                        this.props.stateSetter({ plotUnits: settings })
-                                    }) : null}
-                                    {this.props.showI ? SelectUnit("Current", this.props.unitSetting.Current.current, this.props.unitSetting.Current.options, (op: Unit) => {
-                                        let settings = cloneDeep(this.props.unitSetting)
-                                        settings.Current.current = op;
-                                        this.props.stateSetter({ plotUnits: settings })
-                                    }) : null}
-                                    {this.props.showI || this.props.showV ? SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
-                                        let settings = cloneDeep(this.props.unitSetting)
-                                        settings.Angle.current = op;
-                                        this.props.stateSetter({ plotUnits: settings })
-                                    }) : null}
+                                    <div className="container">
+                                        {this.props.showV ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Time.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Voltage", this.props.unitSetting.Voltage.current, this.props.unitSetting.Voltage.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Voltage.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Angle.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                            </div>
+                                            </div> : null}
+                                        {this.props.showI ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Time.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Current", this.props.unitSetting.Current.current, this.props.unitSetting.Current.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Current.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Angle.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                            </div> : null}
+                                    </div>
 
                                 </div>
                             </div> 
@@ -162,13 +200,38 @@ export default class SettingWindow extends React.Component<any, any>{
                             <div className="card-header" id="headingTwo">
                                 <h2 className="mb-0">
                                     <button className="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                        Collapsible Group Item #2
+                                        Plot Colors
                                     </button>
                                 </h2>
                             </div>
                             <div id="collapseTwo" className="collapse" aria-labelledby="headingTwo" data-parent="#panelSettings">
                                 <div className="card-body">
-                                    Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                                    <div className="container">
+                                        {this.props.showV ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"V-A"} color={this.props.colorSetting.Va} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Va = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"V-B"} color={this.props.colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vb = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"V-C"} color={this.props.colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vc = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null}
+                                        {this.props.showI ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"I-A"} color={this.props.colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ia = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"I-B"} color={this.props.colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ib = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"I-C"} color={this.props.colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ic = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null}
+                                    </div>                                
                                 </div>
                             </div>
                         </div>
@@ -199,3 +262,49 @@ const SelectUnit = (label: string, current: Unit, options: Array<Unit>, setter: 
         </div>
     );
 }
+
+class ColorButton extends React.Component {
+    props: { label: string, statesetter: Function, color:string };
+
+    state = {
+        displayColorPicker: false,
+    };
+
+    handleClick = () => {
+        this.setState({ displayColorPicker: !this.state.displayColorPicker })
+    };
+
+    handleClose = () => {
+        this.setState({ displayColorPicker: false })
+    };
+
+    updateColor = (color, event) => {
+        this.props.statesetter(color.hex);
+    };
+
+    render() {
+        const popover: React.CSSProperties =
+        {
+            position: "absolute",
+            zIndex: 1010,
+        }
+        const cover: React.CSSProperties =
+        {
+            position: 'fixed',
+            top: '0px',
+            right: '0px',
+            bottom: '0px',
+            left: '0px',
+        }
+        return (
+            <div>
+                <button className="btn btn-primary" onClick={this.handleClick} style={{ backgroundColor:  this.props.color }}>{this.props.label}</button>
+                {this.state.displayColorPicker ? <div style={popover}>
+                    <div style={cover} onClick={this.handleClose} />
+                    <BlockPicker onChangeComplete={this.updateColor} color={this.props.color} />
+                </div> : null}
+            </div>
+        )
+    }
+}
+

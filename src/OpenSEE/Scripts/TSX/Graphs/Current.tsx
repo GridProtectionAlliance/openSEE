@@ -120,6 +120,7 @@ export default class Current extends React.Component<any, any>{
             tableReset={this.props.tableReset}
             pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
+            colorSettings={this.props.colorSettings}
         />
     }
 

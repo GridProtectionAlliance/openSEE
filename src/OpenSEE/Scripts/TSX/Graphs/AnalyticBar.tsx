@@ -126,6 +126,7 @@ export default class AnalyticBar extends React.Component<any, any>{
             startTime={this.props.startTime}
             stateSetter={this.props.stateSetter}
             options={this.props.options}
+            colorSettings={this.props.colorSettings}
         />
     }
 

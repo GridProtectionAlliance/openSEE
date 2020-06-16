@@ -23,6 +23,7 @@
 import * as React from 'react';
 import * as _ from 'lodash';
 import { LegendClickCallback, iD3DataSeries } from './D3LineChartBase';
+import { Colors } from '../jQueryUI Widgets/SettingWindow';
 
 
 
@@ -31,6 +32,7 @@ export interface iD3LegendProps {
     data: Array<iD3DataSeries>
     callback: LegendClickCallback,
     height: number,
+    colors: Colors
 }
 
 export default class D3Legend extends React.Component<any, any>{
@@ -58,7 +60,7 @@ export default class D3Legend extends React.Component<any, any>{
                     current_group = row.LegendGroup
                     rows.push(<Row key={"header-" + current_group} label={current_group} color="#000000" enabled={true} isheader={true} callback={(e) => { }} />);
                 }
-                rows.push(<Row key={key} label={row.ChartLabel} color={row.Color} enabled={row.Enabled} isheader={false} callback={(e) => {
+                rows.push(<Row key={key} label={row.ChartLabel} color={this.getColor(this,row.Color)} enabled={row.Enabled} isheader={false} callback={(e) => {
 
                     if (row.Enabled) {
                         var legend = $(this.refs.legend);
@@ -132,6 +134,13 @@ export default class D3Legend extends React.Component<any, any>{
         });
 
         this.props.callback();
+    }
+
+    getColor(ctrl: D3Legend, color: string) {
+
+        if (ctrl.props.colors[color] !== undefined)
+            return ctrl.props.colors[color]
+        return ctrl.props.colors.random
     }
 
 }

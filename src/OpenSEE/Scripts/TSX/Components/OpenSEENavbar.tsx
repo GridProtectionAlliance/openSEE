@@ -34,7 +34,7 @@ import LightningData from './../jQueryUI Widgets/LightningData';
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
 import { clone } from 'lodash';
-import SettingWindow, { GraphUnits } from '../jQueryUI Widgets/SettingWindow';
+import SettingWindow, { GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
 
 declare var homePath: string;
 
@@ -63,6 +63,7 @@ export default class OpenSEENavbar extends React.Component {
         harmonic: number,
 
         unitData: GraphUnits,
+        colorData: Colors,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -219,7 +220,7 @@ export default class OpenSEENavbar extends React.Component {
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
-                <SettingWindow showI={this.props.displayCur} showV={this.props.displayVolt} stateSetter={this.props.stateSetter} unitSetting={this.props.unitData} />
+                <SettingWindow showI={this.props.displayCur} showV={this.props.displayVolt} stateSetter={this.props.stateSetter} unitSetting={this.props.unitData} colorSetting={this.props.colorData} />
             </nav>
         );
  

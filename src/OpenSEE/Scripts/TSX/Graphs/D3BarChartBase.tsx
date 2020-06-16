@@ -32,11 +32,13 @@ import FFTTable from '../jQueryUI Widgets/FFTTable';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import * as moment from 'moment';
 import { LegendClickCallback, D3PlotOptions, iD3DataSet, iD3DataSeries  } from './D3LineChartBase'
+import { Colors } from '../jQueryUI Widgets/SettingWindow';
 
 export type GetDataFunction = (props: D3BarChartBaseProps, ctrl: D3BarChartBase) => void;
 
 export interface D3BarChartBaseProps {
     eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, fftWindow: number,
+    colorSettings: Colors
 };
 
 interface D3BarChartBaseClassProps extends D3BarChartBaseProps{
@@ -187,7 +189,10 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
         delete props.legendKey;
         delete nextPropsClone.legendKey;
 
+        delete nextPropsClone.colorSettings;
+        delete props.colorSettings;
        
+
         if (nextProps.legendKey != this.props.legendKey) {
             this.setState({
                 dataSet: {
@@ -644,7 +649,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             <div>
                 <FFTTable dataSet={this.state.dataSet} />
                 <div id={"graphWindow-" + this.props.legendKey} style={{ height: this.props.height, float: 'left', width: 'calc(100% - 220px)'}}></div>
-                <D3Legend data={this.state.dataSet.Data} callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height}/>
+                <D3Legend colors={this.props.colorSettings} data={this.state.dataSet.Data} callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height}/>
             </div>
         );
     }

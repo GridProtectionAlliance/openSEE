@@ -124,6 +124,7 @@ declare interface OpenSEEState {
     fftStartTime: number,
     barChartReset?: Function,
     plotUnits: GraphUnits,
+    plotColors: Colors,
 }
 
 declare interface iListObject {

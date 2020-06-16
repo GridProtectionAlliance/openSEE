@@ -45,7 +45,8 @@ export default function Analog(props: D3LineChartBaseProps): JSX.Element {
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
         pointTable: props.pointTable,
-        unitSettings: props.unitSettings
+        unitSettings: props.unitSettings,
+        colorSettings: props.colorSettings
     }, null);
 
 }
