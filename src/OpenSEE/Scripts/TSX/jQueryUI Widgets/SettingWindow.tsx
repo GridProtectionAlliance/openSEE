@@ -40,7 +40,7 @@ const outerDiv: React.CSSProperties = {
     left: 0,
     display: 'none',
     backgroundColor: 'white',
-    width: 530,
+    width: 700,
     height: 340
 };
 
@@ -107,6 +107,11 @@ export interface SettingWindowProps {
     showI: boolean,
     unitSetting: GraphUnits,
     colorSetting: Colors,
+
+    showTCE: boolean,
+    showdigitals: boolean,
+    showAnalogs: boolean,
+    showAnalytics: string,
 }
 
 export default class SettingWindow extends React.Component<any, any>{
@@ -128,7 +133,7 @@ export default class SettingWindow extends React.Component<any, any>{
         return (
             <div id="settings" className="ui-widget-content" style={outerDiv}>
                 <div id="settingshandle" className={handle}></div>
-                <div id="phasorchart" style={{ width: '526px', height: '300px', zIndex: 1001 }}>
+                <div id="phasorchart" style={{ width: '696px', height: '300px', zIndex: 1001, overflowY: 'scroll' }}>
                     <div className="accordion" id="panelSettings">
                         <div className="card">
                             <div className="card-header" id="headingUnit">
@@ -210,25 +215,28 @@ export default class SettingWindow extends React.Component<any, any>{
                                         {this.props.showV ?
                                             <div className="row">
                                                 <div className="col">
-                                                    <ColorButton label={"V-A"} color={this.props.colorSetting.Va} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Va = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"VAN/VAB"} color={this.props.colorSetting.Va} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Va = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                                 <div className="col">
-                                                    <ColorButton label={"V-B"} color={this.props.colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vb = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"VBN/VBC"} color={this.props.colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vb = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                                 <div className="col">
-                                                    <ColorButton label={"V-C"} color={this.props.colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vc = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"VCN/VCA"} color={this.props.colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vc = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                             </div> : null}
                                         {this.props.showI ?
                                             <div className="row">
                                                 <div className="col">
-                                                    <ColorButton label={"I-A"} color={this.props.colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ia = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"IAN"} color={this.props.colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ia = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                                 <div className="col">
-                                                    <ColorButton label={"I-B"} color={this.props.colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ib = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"IBN"} color={this.props.colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ib = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                                 <div className="col">
-                                                    <ColorButton label={"I-C"} color={this.props.colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ic = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"ICN"} color={this.props.colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ic = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"IRES"} color={this.props.colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ires = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                             </div> : null}
                                     </div>                                
@@ -297,11 +305,13 @@ class ColorButton extends React.Component {
             left: '0px',
         }
         return (
-            <div>
+            <div style={{ margin: ' 5px 10px 5px 10px' }}>
                 <button className="btn btn-primary" onClick={this.handleClick} style={{ backgroundColor:  this.props.color }}>{this.props.label}</button>
                 {this.state.displayColorPicker ? <div style={popover}>
                     <div style={cover} onClick={this.handleClose} />
-                    <BlockPicker onChangeComplete={this.updateColor} color={this.props.color} />
+                    <div style={{ position: 'fixed' }}>
+                        <BlockPicker onChangeComplete={this.updateColor} color={this.props.color} />
+                    </div>
                 </div> : null}
             </div>
         )

@@ -220,7 +220,17 @@ export default class OpenSEENavbar extends React.Component {
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <LightningData eventId={this.props.eventid} callback={this.props.stateSetter} />
-                <SettingWindow showI={this.props.displayCur} showV={this.props.displayVolt} stateSetter={this.props.stateSetter} unitSetting={this.props.unitData} colorSetting={this.props.colorData} />
+                <SettingWindow
+                    showI={this.props.displayCur}
+                    showV={this.props.displayVolt}
+                    stateSetter={this.props.stateSetter}
+                    unitSetting={this.props.unitData}
+                    colorSetting={this.props.colorData}
+                    showAnalogs={this.props.displayAnalogs}
+                    showdigitals={this.props.breakerdigitals}
+                    showTCE={this.props.displayTCE}
+                    showAnalytics={this.props.displayAnalytics}
+                />
             </nav>
         );
  
