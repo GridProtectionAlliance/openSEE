@@ -99,6 +99,9 @@ export interface GraphUnits {
     Current: UnitSetting,
     Angle: UnitSetting,
     TCE: UnitSetting,
+    VoltageperSecond: UnitSetting,
+    CurrentperSecond: UnitSetting,
+
 }
 export type Unit = {
     Label: string,
@@ -218,6 +221,31 @@ export default class SettingWindow extends React.Component<any, any>{
                                                     })}
                                                 </div>
                                             </div> : null}
+                                        {this.props.showAnalytics == "FirstDerivative" ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Time.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("V Derrivative", this.props.unitSetting.VoltageperSecond.current, this.props.unitSetting.VoltageperSecond.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.VoltageperSecond.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("I Derrivative", this.props.unitSetting.CurrentperSecond.current, this.props.unitSetting.CurrentperSecond.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.CurrentperSecond.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                            </div> : null}
+
 
                                     </div>
 
@@ -297,9 +325,33 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                             </div> : null}
-
-
-
+                                        {this.props.showAnalytics == "FirstDerivative" && !this.props.showI?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"IAN"} color={this.props.colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ia = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"IBN"} color={this.props.colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ib = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"ICN"} color={this.props.colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ic = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"IRES"} color={this.props.colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ires = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null}
+                                        {this.props.showAnalytics == "FirstDerivative" && !this.props.showV ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"VAN/VAB"} color={this.props.colorSetting.Va} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Va = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"VBN/VBC"} color={this.props.colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vb = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"VCN/VCA"} color={this.props.colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Vc = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null}
                                     </div>                                
                                 </div>
                             </div>

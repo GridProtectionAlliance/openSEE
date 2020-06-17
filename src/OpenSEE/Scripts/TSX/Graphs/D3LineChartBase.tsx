@@ -665,7 +665,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     updateCycle(ctrl: D3LineChartBase, cycleStart?: number, cycleWindow?: number) {
-        console.log("updating cycle")
         if (cycleStart && cycleWindow) {
             ctrl.cycleStart = cycleStart;
             
@@ -891,7 +890,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         ctrl.yMin = Math.min(...resDatapt.map(series => Math.min(...series.filter(ctrl.isNumber))))
         ctrl.yMax = Math.max(...resDatapt.map(series => Math.max(...series.filter(ctrl.isNumber))))
-        console.log(ctrl.yMin)
     }
 
     isNumber(d): boolean {
@@ -911,7 +909,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 continue
 
             if (ctrl.props.unitSettings[property].current.Label == "auto") {
-                
+
                 let tempData = ctrl.state.dataSet.Data.filter(item => item.Enabled && item.XaxisLabel == property)
                 if (tempData.length > 0) {
 
@@ -927,15 +925,14 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                         autoFactor = 1
                     else if (Math.max(Math.abs(ymax), Math.abs(ymin)) < 1000000)
                         autoFactor = 0.001
-                
+
                     //Logic to move on to next if We can not find that Factor
                     if (ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor) != undefined)
                         result[property].current = ctrl.props.unitSettings[property].options.find(item => item.Factor == autoFactor)
                     else {
-                        
                         //Unable to find Factor try moving one down/up
-                        if (autoFactor > 1)
-                            autoFactor = autoFactor / 1000
+                        if (autoFactor < 1)
+                            autoFactor = autoFactor * 1000
                         else
                             autoFactor = 1
 

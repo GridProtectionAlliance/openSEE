@@ -445,7 +445,7 @@ namespace OpenSEE
             D3Series D3Series = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.Channel.ID,
-                XaxisLabel = OpenSEEController.GetUnits(dataSeries.SeriesInfo.Channel) + "/s",
+                XaxisLabel = (dataSeries.SeriesInfo.Channel.MeasurementType.Name) + "perSecond",
                 Color = OpenSEEController.GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = legenclass,
                 SecondaryLegendClass = type,

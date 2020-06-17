@@ -151,7 +151,28 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         { Label: "Per Unit", Short: "pu", Factor: 0 },
                         { Label: "auto", Short: "auto", Factor: 0 }
                     ]
-                }
+                },
+                VoltageperSecond: {
+                    current: { Label: "auto", Short: "auto", Factor: 0 },
+                    options: [
+                        { Label: "Volt per sec", Short: "V/s", Factor: 1 },
+                        { Label: "kiloVolts per sec", Short: "kV/s", Factor: 0.001 },
+                        { Label: "milliVolts per sec", Short: "mV/s", Factor: 1000 },
+                        { Label: "Per Unit", Short: "pu/s", Factor: 0 },
+                        { Label: "auto", Short: "auto", Factor: 0 }
+                    ]
+                },
+                CurrentperSecond: {
+                    current: { Label: "auto", Short: "auto", Factor: 0 },
+                    options: [
+                        { Label: "Amps per sec", Short: "A/s", Factor: 1 },
+                        { Label: "kiloAmps per sec", Short: "kA/s", Factor: 0.001 },
+                        { Label: "milliAmps per sec", Short: "mA/s", Factor: 1000 },
+                        { Label: "Per Unit", Short: "pu/s", Factor: 0 },
+                        { Label: "auto", Short: "auto", Factor: 0 }
+                    ]
+                },
+
             },
             plotColors: {
                 Va: "#A30000",
