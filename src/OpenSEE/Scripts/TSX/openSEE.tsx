@@ -161,7 +161,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 Ib: "#0066CC",
                 Ic: "#33CC33",
                 Ires: "#d3d3d3",
-                random: "#4287f5"
+                random: "#4287f5",
+                faultDistSimple: "#edc240",
+                faultDistReact: "#afd8f8",
+                faultDistTakagi: "#cb4b4b",
+                faultDistModTakagi: "#4da74d",
+                faultDistNovosel: "#9440ed",
+                faultDistDoubleEnd: "#BD9B33",
             }
            
         }

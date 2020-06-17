@@ -79,7 +79,13 @@ export interface Colors {
     Ib: string,
     Ic: string,
     Ires: string,
-    random: string
+    random: string,
+    faultDistSimple: string,
+    faultDistReact: string,
+    faultDistTakagi: string,
+    faultDistModTakagi: string,
+    faultDistNovosel: string,
+    faultDistDoubleEnd: string,
 }
 
 export type UnitSetting = {
@@ -195,6 +201,24 @@ export default class SettingWindow extends React.Component<any, any>{
                                                     })}
                                                 </div>
                                             </div> : null}
+                                        {this.props.showTCE ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Time.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Trip Coil Current", this.props.unitSetting.TCE.current, this.props.unitSetting.TCE.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.TCE.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                            </div> : null}
+
                                     </div>
 
                                 </div>
@@ -239,6 +263,43 @@ export default class SettingWindow extends React.Component<any, any>{
                                                     <ColorButton label={"IRES"} color={this.props.colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ires = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                             </div> : null}
+                                        {this.props.showTCE ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"IAN"} color={this.props.colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ia = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"IBN"} color={this.props.colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ib = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"ICN"} color={this.props.colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.Ic = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                
+                                            </div> : null}
+                                        {this.props.showAnalytics == "FaultDistance" ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"Simple"} color={this.props.colorSetting.faultDistSimple} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistSimple = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"Reactance"} color={this.props.colorSetting.faultDistReact} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistReact = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"Takagi"} color={this.props.colorSetting.faultDistTakagi} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistTakagi = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                        <ColorButton label={"Modified Takagi"} color={this.props.colorSetting.faultDistModTakagi} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistModTakagi = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                        <ColorButton label={"Novosel"} color={this.props.colorSetting.faultDistNovosel} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistNovosel = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                        <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null}
+
+
+
                                     </div>                                
                                 </div>
                             </div>

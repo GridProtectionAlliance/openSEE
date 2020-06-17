@@ -256,7 +256,7 @@ namespace OpenSEE
                         case ("CA"):
                             return "Vc";
                         case ("NG"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.voltage' AND Name = 'NG'") ?? "#d3d3d3";
+                            return "Ires";
                         default: // Should be random
                             return random;
                     }
@@ -272,7 +272,7 @@ namespace OpenSEE
                         case ("CN"):
                             return "Ic";
                         case ("NG"):
-                            return connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Scope = 'color.current' AND Name = 'NG'") ?? "#d3d3d3";
+                            return "Ires";
                         case ("RES"):
                             return "Ires";
                         default: // Should be random

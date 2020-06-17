@@ -464,19 +464,19 @@ namespace OpenSEE
             switch (algorithm)
             {
                 case ("Simple"):
-                    return "#edc240";
+                    return "faultDistSimple";
                 case ("Reactance"):
-                    return "#afd8f8";
+                    return "faultDistReact";
                 case ("Takagi"):
-                    return "#cb4b4b";
+                    return "faultDistTakagi";
                 case ("ModifiedTakagi"):
-                    return "#4da74d";
+                    return "faultDistModTakagi";
                 case ("Novosel"):
-                    return "#9440ed";
+                    return "faultDistNovosel";
                 case ("DoubleEnded"):
-                    return "#BD9B33";
+                    return "faultDistDoubleEnd";
                 default: 
-                    return random;
+                    return "random";
             }
         }
         #endregion
