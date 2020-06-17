@@ -521,7 +521,7 @@ namespace OpenSEE
             {
                 ChannelID = 0,
                 ChartLabel = label + " Fixed Clipping",
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                XaxisLabel = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 LegendClass = "",
                 SecondaryLegendClass = type,
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
