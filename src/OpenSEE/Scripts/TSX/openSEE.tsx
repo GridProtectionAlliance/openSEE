@@ -172,6 +172,17 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         { Label: "auto", Short: "auto", Factor: 0 }
                     ]
                 },
+                Freq: {
+                    current: { Label: "auto", Short: "auto", Factor: 0 },
+                    options: [
+                        { Label: "Hertz", Short: "Hz", Factor: 1 },
+                        { Label: "milliHertz", Short: "mHz", Factor: 1000 },
+                        { Label: "kiloHertz", Short: "kHz", Factor: 0.001 },
+                        { Label: "Per Unit", Short: "pu", Factor: 0 },
+                        { Label: "auto", Short: "auto", Factor: 0 }
+                    ]
+                },
+
 
             },
             plotColors: {
@@ -189,6 +200,10 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 faultDistModTakagi: "#4da74d",
                 faultDistNovosel: "#9440ed",
                 faultDistDoubleEnd: "#BD9B33",
+                freqAll: "#edc240",
+                freqVa: "#A30000",
+                freqVb: "#0029A3",
+                freqVc: "#007A29",
             }
            
         }

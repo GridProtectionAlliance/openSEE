@@ -659,8 +659,8 @@ namespace OpenSEE
             {
                 ChartLabel = label + " Frequency",
                 ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                XaxisLabel = "Freq",
+                Color = "freq" + GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.Phase.Name == "CN" ? "C" : (dataSeries.SeriesInfo.Channel.Phase.Name == "BN"? "B" : "A")),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
@@ -691,8 +691,8 @@ namespace OpenSEE
             {
                 ChartLabel = "Frequency",
                 ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = "#a452a4",
+                XaxisLabel = "Freq",
+                Color = "freqAll",
                 LegendClass = "",
                 SecondaryLegendClass = "Avg",
                 LegendGroup = "System Average",
@@ -723,13 +723,13 @@ namespace OpenSEE
         {
             D3Series output = new D3Series()
             {
-                ChartLabel = "Frequency",
-                ChannelID = 0,
-                XaxisLabel = "Hz",
-                Color = "#a452a4",
-                LegendClass = "",
-                SecondaryLegendClass = "",
-                LegendGroup = "System Average",
+                ChartLabel = input.ChartLabel,
+                ChannelID = input.ChannelID,
+                XaxisLabel = input.XaxisLabel,
+                Color = input.Color,
+                LegendClass = input.LegendClass,
+                SecondaryLegendClass = input.SecondaryLegendClass,
+                LegendGroup = input.LegendGroup,
                 DataPoints = new List<double[]>()
             };
 

@@ -86,6 +86,10 @@ export interface Colors {
     faultDistModTakagi: string,
     faultDistNovosel: string,
     faultDistDoubleEnd: string,
+    freqAll: string,
+    freqVa: string,
+    freqVb: string,
+    freqVc: string,
 }
 
 export type UnitSetting = {
@@ -101,7 +105,7 @@ export interface GraphUnits {
     TCE: UnitSetting,
     VoltageperSecond: UnitSetting,
     CurrentperSecond: UnitSetting,
-
+    Freq: UnitSetting,
 }
 export type Unit = {
     Label: string,
@@ -156,7 +160,7 @@ export default class SettingWindow extends React.Component<any, any>{
                             <div id="collapseUnit" className="collapse show" aria-labelledby="headingUnit" data-parent="#panelSettings">
                                 <div className="card-body">
                                     <div className="container">
-                                        {this.props.showV ?
+                                        {(this.props.showV ?
                                             <div className="row">
                                                 <div className="col">
                                                     {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
@@ -178,9 +182,9 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         settings.Angle.current = op;
                                                         this.props.stateSetter({ plotUnits: settings })
                                                     })}
-                                            </div>
-                                            </div> : null}
-                                        {this.props.showI ?
+                                                </div>
+                                            </div> : null)}
+                                        {(this.props.showI ?
                                             <div className="row">
                                                 <div className="col">
                                                     {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
@@ -203,8 +207,8 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         this.props.stateSetter({ plotUnits: settings })
                                                     })}
                                                 </div>
-                                            </div> : null}
-                                        {this.props.showTCE ?
+                                            </div> : null)}
+                                        {(this.props.showTCE ?
                                             <div className="row">
                                                 <div className="col">
                                                     {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
@@ -220,8 +224,8 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         this.props.stateSetter({ plotUnits: settings })
                                                     })}
                                                 </div>
-                                            </div> : null}
-                                        {this.props.showAnalytics == "FirstDerivative" ?
+                                            </div> : null)}
+                                        {(this.props.showAnalytics == "FirstDerivative" ?
                                             <div className="row">
                                                 <div className="col">
                                                     {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
@@ -244,8 +248,8 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         this.props.stateSetter({ plotUnits: settings })
                                                     })}
                                                 </div>
-                                            </div> : null}
-                                        {this.props.showAnalytics == "ClippedWaveforms" ?
+                                            </div> : null )}
+                                        {(this.props.showAnalytics == "ClippedWaveforms" ?
                                             <div className="row">
                                                 <div className="col">
                                                     {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
@@ -268,11 +272,24 @@ export default class SettingWindow extends React.Component<any, any>{
                                                         this.props.stateSetter({ plotUnits: settings })
                                                     })}
                                                 </div>
-                                            </div> : null}
-
-
-
-                                        
+                                            </div> : null)}
+                                        {(this.props.showAnalytics == "Frequency" ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Time.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                                <div className="col">
+                                                    {SelectUnit("Frequency", this.props.unitSetting.Freq.current, this.props.unitSetting.Freq.options, (op: Unit) => {
+                                                        let settings = cloneDeep(this.props.unitSetting)
+                                                        settings.Freq.current = op;
+                                                        this.props.stateSetter({ plotUnits: settings })
+                                                    })}
+                                                </div>
+                                            </div> : null)}
 
                                     </div>
 
@@ -291,11 +308,11 @@ export default class SettingWindow extends React.Component<any, any>{
                             <div id="collapseTwo" className="collapse" aria-labelledby="headingTwo" data-parent="#panelSettings">
                                 <div className="card-body">
                                     <div className="container">
-                                        {this.props.showV ? VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
-                                        {this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
-                                        {this.props.showTCE && !this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, false) : null}
+                                        {(this.props.showV ? VoltageColors(this.props.colorSetting, this.props.stateSetter) : null)}
+                                        {(this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null)}
+                                        {(this.props.showTCE && !this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, false) : null)}
                                             
-                                        {this.props.showAnalytics == "FaultDistance" ?
+                                        {(this.props.showAnalytics == "FaultDistance" ?
                                             <div className="row">
                                                 <div className="col">
                                                     <ColorButton label={"Simple"} color={this.props.colorSetting.faultDistSimple} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistSimple = color; this.props.stateSetter({ plotColors: col }); }} />
@@ -315,18 +332,30 @@ export default class SettingWindow extends React.Component<any, any>{
                                                 <div className="col">
                                                         <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
-                                            </div> : null}
+                                            </div> : null)}
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showI?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} : null}
+                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} 
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showV ?
                                             VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
                                         {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showI ?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} : null}
+                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
                                         {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
-
-                                        
-
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}     
+                                        {(this.props.showAnalytics == "Frequency" ?
+                                            <div className="row">
+                                                <div className="col">
+                                                    <ColorButton label={"f AN"} color={this.props.colorSetting.freqVa} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVa = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"f BN"} color={this.props.colorSetting.freqVb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVb = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"f CN"} color={this.props.colorSetting.freqVc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVc = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                                <div className="col">
+                                                    <ColorButton label={"f avg"} color={this.props.colorSetting.freqAll} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqAll = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                </div>
+                                            </div> : null)}
                                     </div>                                
                                 </div>
                             </div>
