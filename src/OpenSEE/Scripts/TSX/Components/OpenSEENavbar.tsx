@@ -31,7 +31,7 @@ import ScalarStats from './../jQueryUI Widgets/ScalarStats';
 import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
-import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import { iD3DataPoint, ZoomMode } from '../Graphs/D3LineChartBase';
 import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
 import { clone } from 'lodash';
 import SettingWindow, { GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
@@ -64,6 +64,7 @@ export default class OpenSEENavbar extends React.Component {
 
         unitData: GraphUnits,
         colorData: Colors,
+        zoomMode: ZoomMode,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -149,7 +150,10 @@ export default class OpenSEENavbar extends React.Component {
     }
 
     render() {
-                
+                //fa fa-arrows
+                //fa fa-arrows-h
+                //fa fa-arrows-V
+
         return (
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
 
@@ -174,12 +178,32 @@ export default class OpenSEENavbar extends React.Component {
                                 
                             </div>
                         </li>
-                        <li className="nav-item" style={{ width: 'calc(100% - 534px)', textAlign: 'center' }}>
+                        <li className="nav-item" style={{ width: 'calc(100% - 618px)', textAlign: 'center' }}>
                             <img src={`${homePath}Images/openSEE - Waveform Viewer Header.png`}/>
                         </li>
                         <li className="nav-item" style={{ width: '156px' }}>
                             <button className="btn btn-primary" onClick={this.props.resetZoom}>Reset Zoom</button>
 
+                        </li>
+                        <li className="nav-item" style={{ width: '84px' }}>
+                            <div className="btn-group dropright">
+                                <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }}>
+                                    {this.props.zoomMode == "x" ? < i className="fa fa-arrows-h" ></i> : null}
+                                    {this.props.zoomMode == "y" ? < i className="fa fa-arrows-v" ></i> : null}
+                                    {this.props.zoomMode == "xy" ? < i className="fa fa-arrows" ></i> : null}
+                                </button>
+                                <div className="dropdown-menu">
+                                    <a key={"option-x"} className="dropdown-item" onClick={() => { }}>
+                                        <i className="fa fa-arrows-h" ></i> Time
+                                    </a>
+                                    <a key={"option-y"} className="dropdown-item" onClick={() => { }}>
+                                        <i className="fa fa-arrows-v" ></i> Value
+                                    </a>
+                                    <a key={"option-xy"} className="dropdown-item" onClick={() => { }}>
+                                        <i className="fa fa-arrows" ></i> Rectangle
+                                    </a>
+                                </div>
+                            </div>
                         </li>
                         <li className="nav-item" style={{ width: '84px' }}>
                             <button className="btn btn-primary" onClick={this.showhideSetting.bind(this)}>

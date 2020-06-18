@@ -33,6 +33,7 @@ import { Unit, GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, getData?: boolean) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
+export type ZoomMode = "x" | "y" | "xy"
 
 export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,

@@ -125,6 +125,7 @@ declare interface OpenSEEState {
     barChartReset?: Function,
     plotUnits: GraphUnits,
     plotColors: Colors,
+    zoomMode: ZoomMode,
 }
 
 declare interface iListObject {

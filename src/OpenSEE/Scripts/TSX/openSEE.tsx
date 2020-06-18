@@ -48,7 +48,7 @@ import AnalyticBar from './Graphs/AnalyticBar';
 import OpenSEENavbar from './Components/OpenSEENavbar';
 import About from './Components/About';
 
-import { D3LineChartBaseProps, iD3DataPoint } from './Graphs/D3LineChartBase';
+import { D3LineChartBaseProps, iD3DataPoint, ZoomMode } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
 import { Unit, GraphUnits, UnitSetting } from './jQueryUI Widgets/SettingWindow';
 
@@ -104,6 +104,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             },
             fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
             barChartReset: null,
+            zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
             plotUnits: {
                 Time: {
                     current: { Label: "auto", Short: "auto", Factor: 0 },
@@ -222,6 +223,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
                 displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
                 fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
+                zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
+
                 AnalyticSettings: {
                     harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
                     order: (query["order"] != undefined ? query['order'] : 1),
@@ -372,6 +375,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         harmonic={this.state.AnalyticSettings.harmonic}
                         unitData={this.state.plotUnits}
                         colorData={this.state.plotColors}
+                        zoomMode={this.state.zoomMode}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         <ViewerWindow colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTimeVis={this.state.startTimeVis} endTimeVis={this.state.endTimeVis} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
