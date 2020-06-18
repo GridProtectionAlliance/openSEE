@@ -162,133 +162,37 @@ export default class SettingWindow extends React.Component<any, any>{
                                     <div className="container">
                                         {(this.props.showV ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Voltage", this.props.unitSetting.Voltage.current, this.props.unitSetting.Voltage.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Voltage.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Angle.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
+                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits} />
                                             </div> : null)}
                                         {(this.props.showI ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Current", this.props.unitSetting.Current.current, this.props.unitSetting.Current.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Current.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Phase", this.props.unitSetting.Angle.current, this.props.unitSetting.Angle.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Angle.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits} />
                                             </div> : null)}
                                         {(this.props.showTCE ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Trip Coil Current", this.props.unitSetting.TCE.current, this.props.unitSetting.TCE.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.TCE.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"TCE"} unit={this.props.unitSetting.TCE} setter={this.updateTCEUnits} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "FirstDerivative" ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("V Derrivative", this.props.unitSetting.VoltageperSecond.current, this.props.unitSetting.VoltageperSecond.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.VoltageperSecond.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("I Derrivative", this.props.unitSetting.CurrentperSecond.current, this.props.unitSetting.CurrentperSecond.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.CurrentperSecond.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"dV/dt"} unit={this.props.unitSetting.VoltageperSecond} setter={this.updatedVdtUnits} />
+                                                <UnitSelector label={"dI/dt"} unit={this.props.unitSetting.CurrentperSecond} setter={this.updatedIdtUnits} />
                                             </div> : null )}
                                         {(this.props.showAnalytics == "ClippedWaveforms" ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Voltage", this.props.unitSetting.Voltage.current, this.props.unitSetting.Voltage.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Voltage.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Current", this.props.unitSetting.Current.current, this.props.unitSetting.Current.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Current.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "Frequency" ?
                                             <div className="row">
-                                                <div className="col">
-                                                    {SelectUnit("Time", this.props.unitSetting.Time.current, this.props.unitSetting.Time.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Time.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
-                                                <div className="col">
-                                                    {SelectUnit("Frequency", this.props.unitSetting.Freq.current, this.props.unitSetting.Freq.options, (op: Unit) => {
-                                                        let settings = cloneDeep(this.props.unitSetting)
-                                                        settings.Freq.current = op;
-                                                        this.props.stateSetter({ plotUnits: settings })
-                                                    })}
-                                                </div>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Frequency"} unit={this.props.unitSetting.Freq} setter={this.updateFrequencyUnits} />
                                             </div> : null)}
 
                                     </div>
@@ -370,22 +274,55 @@ export default class SettingWindow extends React.Component<any, any>{
             </div>
         );
     }
-}
 
-const SelectUnit = (label: string, current: Unit, options: Array<Unit>, setter: (option: Unit) => void) => {
+    updateTimeUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.Time = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
 
-    let entries = options.map((option, index) => <a key={"option-" + index} className="dropdown-item" onClick={() => setter(option)}> {option.Label} </a>)
+    updateVoltageUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.Voltage = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
 
-    return (
-        <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
-            <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {label + " [" + current.Short + "]"}
-            </button>
-            <div className="dropdown-menu">
-                {entries}
-          </div>
-        </div>
-    );
+    updateCurrentUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.Current = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
+    updatePhaseUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.Angle = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
+    updatedVdtUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.VoltageperSecond = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
+    updatedIdtUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.CurrentperSecond = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
+    updateFrequencyUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.Freq = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
+    updateTCEUnits(unit: UnitSetting) {
+        let settings = cloneDeep(this.props.unitSetting)
+        settings.TCE = unit;
+        this.props.stateSetter({ plotUnits: settings })
+    }
+
 }
 
 const VoltageColors = (colorSetting: Colors, stateSetter: Function) => {
@@ -465,7 +402,7 @@ class ColorButton extends React.Component {
                 {this.state.displayColorPicker ? <div style={popover}>
                     <div style={cover} onClick={this.handleClose} />
                     <div style={{ position: 'fixed' }}>
-                        <BlockPicker onChangeComplete={this.updateColor} color={this.props.color} />
+                        <BlockPicker onChangeComplete={this.updateColor} color={this.props.color} triangle={"hide"}/>
                     </div>
                 </div> : null}
             </div>
@@ -473,3 +410,30 @@ class ColorButton extends React.Component {
     }
 }
 
+class UnitSelector extends React.Component {
+    props: { label: string, setter: (result: UnitSetting) => void, unit: UnitSetting };
+
+    render() {
+
+        let entries = this.props.unit.options.map((option, index) => <a key={"option-" + index} className="dropdown-item"
+            onClick={() => {
+                let r = this.props.unit;
+                r.current = option;
+                this.props.setter(r)
+            }
+            }> {option.Label} </a>)
+
+        return (
+            <div className="col">
+                <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
+                    <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {this.props.label + " [" + this.props.unit.current.Short + "]"}
+                    </button>
+                    <div className="dropdown-menu" style={{ position: 'fixed' }}>
+                        {entries}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
