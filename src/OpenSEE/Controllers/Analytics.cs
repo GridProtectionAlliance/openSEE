@@ -1362,7 +1362,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1383,7 +1383,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1404,7 +1404,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VCN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1424,7 +1424,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1445,7 +1445,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1465,7 +1465,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "ICN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1512,7 +1512,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1532,7 +1532,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1553,7 +1553,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VCN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "V",
+                    XaxisLabel = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1574,7 +1574,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1595,7 +1595,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1615,7 +1615,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "ICN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    XaxisLabel = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",

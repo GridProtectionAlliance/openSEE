@@ -194,6 +194,18 @@ export default class SettingWindow extends React.Component<any, any>{
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
                                                 <UnitSelector label={"Frequency"} unit={this.props.unitSetting.Freq} setter={this.updateFrequencyUnits} />
                                             </div> : null)}
+                                        {(this.props.showAnalytics == "LowPassFilter" ?
+                                            <div className="row">
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                            </div> : null)}
+                                        {(this.props.showAnalytics == "HighPassFilter" ?
+                                            <div className="row">
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                            </div> : null)}
 
                                     </div>
 
@@ -260,6 +272,15 @@ export default class SettingWindow extends React.Component<any, any>{
                                                     <ColorButton label={"f avg"} color={this.props.colorSetting.freqAll} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqAll = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
                                             </div> : null)}
+                                        {this.props.showAnalytics == "LowPassFilter" && !this.props.showI ?
+                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
+                                        {this.props.showAnalytics == "LowPassFilter" && !this.props.showV ?
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
+                                        {this.props.showAnalytics == "HighPassFilter" && !this.props.showI ?
+                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
+                                        {this.props.showAnalytics == "HighPassFilter" && !this.props.showV ?
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
+
                                     </div>                                
                                 </div>
                             </div>
@@ -429,7 +450,7 @@ class UnitSelector extends React.Component {
                     <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {this.props.label + " [" + this.props.unit.current.Short + "]"}
                     </button>
-                    <div className="dropdown-menu" style={{ position: 'fixed' }}>
+                    <div className="dropdown-menu">
                         {entries}
                     </div>
                 </div>
