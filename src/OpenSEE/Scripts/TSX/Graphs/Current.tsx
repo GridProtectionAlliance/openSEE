@@ -62,8 +62,8 @@ export default class Current extends React.Component<any, any>{
             else
                 dataSet = data;
 
-            if (this.props.endTimeVis == null) this.props.stateSetter({ endTimeVis: this.props.endTime });
-            if (this.props.startTimeVis == null) this.props.stateSetter({ startTimeVis: this.props.startTime });
+            if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
+            if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
             dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
 
@@ -84,8 +84,8 @@ export default class Current extends React.Component<any, any>{
                 else
                     dataSet = data;
 
-                if (this.props.endTimeVis == null) this.props.stateSetter({ endTimeVis: this.props.endTime });
-                if (this.props.startTimeVis == null) this.props.stateSetter({ startTimeVis: this.props.startTime });
+                if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
+                if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
                 dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
 
@@ -111,8 +111,6 @@ export default class Current extends React.Component<any, any>{
             options={this.props.options}
             startTime={this.props.startTime}
             endTime={this.props.endTime}
-            startTimeVis={this.props.startTimeVis}
-            endTimeVis={this.props.endTimeVis}
             hover={this.props.hover}
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}

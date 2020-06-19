@@ -85,7 +85,7 @@ export default class AnalyticBar extends React.Component<any, any>{
                 return (
                     val.ChannelID == data.Data[index].ChannelID &&
                     val.ChartLabel == data.Data[index].ChartLabel &&
-                    val.XaxisLabel == data.Data[index].XaxisLabel &&
+                    val.Unit == data.Data[index].Unit &&
                     val.LegendClass == data.Data[index].LegendClass &&
                     val.LegendGroup == data.Data[index].LegendGroup &&
                     val.SecondaryLegendClass == data.Data[index].SecondaryLegendClass )

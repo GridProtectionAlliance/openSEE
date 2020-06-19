@@ -63,19 +63,23 @@ namespace OpenSEE
         public class JsonReturn
         {
             public List<D3Series> Data;
+            public double EventStartTime;
+            public double EventEndTime;
+            public double FaultTime;
+
         }
         
         // New D3 Ploting initially only for Voltage
         public class D3Series
         {
             public string ChartLabel;
-            public string XaxisLabel;
+            public string Unit;
             public string Color;
             public string LegendClass; //Determines which Button this will be under in the Legend
             public string SecondaryLegendClass; //Determines which Button this will be under in the Legend
-            public string LegendGroup; //Determines the Group TYhis will be under in the Legend 
+            public string LegendGroup; //Determines the Group This will be under in the Legend 
             public int ChannelID;
-            
+            public double BaseValue;
             public List<double[]> DataPoints = new List<double[]>();
             public List<double[]> DataMarker = new List<double[]>();
         }
@@ -188,6 +192,9 @@ namespace OpenSEE
 
 
                 returnDict.Data = returnList;
+                returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
+
 
                 return returnDict;
             }           
@@ -198,24 +205,34 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup;
 
+            //Determine Sbase
+                            
+            double Sbase = 0;
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
 
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
-                    ds => new D3Series()
-                    {
-                        ChannelID = ds.SeriesInfo.Channel.ID,
-                        ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                        XaxisLabel = (type == "TripCoilCurrent"? "TCE" : type),
-                        Color = GetColor(ds.SeriesInfo.Channel),
-                        LegendClass = GetVoltageType(ds.SeriesInfo.Channel),
-                        SecondaryLegendClass = GetSignalType(ds.SeriesInfo.Channel),
-                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                        DataMarker = new List<double[]>()
-                    }).ToList();
+                ds => new D3Series()
+                {
+                    ChannelID = ds.SeriesInfo.Channel.ID,
+                    ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                    Unit = (type == "TripCoilCurrent" ? "TCE" : type),
+                    Color = GetColor(ds.SeriesInfo.Channel),
+                    LegendClass = GetVoltageType(ds.SeriesInfo.Channel),
+                    SecondaryLegendClass = GetSignalType(ds.SeriesInfo.Channel),
+                    LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                    DataMarker = new List<double[]>(),
+                    BaseValue = (type == "Voltage" ? ds.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV) )
+                }).ToList();
 
             return dataLookup;
         }
 
+        private double GetIbase(double Sbase, double Vbase)
+        {
+            return (Sbase / (Math.Sqrt(3) * Vbase * 1000));
+        }
         public static string GetUnits(Channel channel)
         {
             if (channel.MeasurementType.Name == "Voltage")
@@ -226,14 +243,17 @@ namespace OpenSEE
                 return " ";
         }
 
+        /// <summary>
+        /// Determines Color based on Channel Information
+        /// </summary>
+        /// <param name="channel">Channel that represents the signal</param>
+        /// <returns>a color designation</returns>
         public static string GetColor(Channel channel)
         {
-            
-            string random = string.Format("#{0:X6}", m_random.Next(0x1000001));
-
+          
             if (channel == null)
             {
-                return random;
+                return "random";
             }
 
             using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
@@ -258,7 +278,7 @@ namespace OpenSEE
                         case ("NG"):
                             return "Ires";
                         default: // Should be random
-                            return random;
+                            return "random";
                     }
                 }
                 else if (channel.MeasurementType.Name == "Current")
@@ -276,12 +296,12 @@ namespace OpenSEE
                         case ("RES"):
                             return "Ires";
                         default: // Should be random
-                            return random;
+                            return "random";
                     }
                 }
             }
             //Should be Random
-            return random;
+            return "random";
 
         }
 
@@ -321,6 +341,11 @@ namespace OpenSEE
 
         private List<D3Series> GetD3FrequencyDataLookup(VICycleDataGroup vICycleDataGroup, string type)
         {
+            //Determine Sbase
+            double Sbase = 0;
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
+
             IEnumerable<string> names = vICycleDataGroup.CycleDataGroups.Where(ds => ds.RMS.SeriesInfo.Channel.MeasurementType.Name == type).Select(ds => ds.RMS.SeriesInfo.Channel.Phase.Name);
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -332,11 +357,12 @@ namespace OpenSEE
                     ChannelID = cdg.RMS.SeriesInfo.Channel.ID,
                     DataPoints = cdg.RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.RMS.SeriesInfo.Channel, "RMS"),
-                    XaxisLabel = type,
+                    Unit = type,
                     Color = GetColor(cdg.RMS.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
                     SecondaryLegendClass = "RMS",
                     LegendGroup = cdg.Asset.AssetName,
+                    BaseValue = Math.Sqrt(2) * (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
                 dataLookup.Add(flotSeriesRMS);
@@ -347,11 +373,12 @@ namespace OpenSEE
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
 
-                    XaxisLabel = type,
+                    Unit = type,
                     Color = GetColor(cdg.Peak.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
                     SecondaryLegendClass = "A",
                     LegendGroup = cdg.Asset.AssetName,
+                    BaseValue = (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
                 dataLookup.Add(flotSeriesWaveAmp);
@@ -362,11 +389,12 @@ namespace OpenSEE
                     DataPoints = cdg.Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Phase.SeriesInfo.Channel, "Phase"),
 
-                    XaxisLabel = "Angle",
+                    Unit = "Angle",
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
                     LegendClass = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     SecondaryLegendClass = "Ph",
                     LegendGroup = cdg.Asset.AssetName,
+                    BaseValue = 0
                 };
             
                 dataLookup.Add(flotSeriesPolarAngle);
@@ -448,7 +476,7 @@ namespace OpenSEE
                    {
                        ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
-                       XaxisLabel = " ",
+                       Unit = " ",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendClass = "",
                        SecondaryLegendClass = "",
@@ -500,7 +528,7 @@ namespace OpenSEE
                    {
                        ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
-                       XaxisLabel = "",
+                       Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendClass = "",
                        SecondaryLegendClass = "",

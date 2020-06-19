@@ -445,7 +445,7 @@ namespace OpenSEE
             D3Series D3Series = new D3Series()
             {
                 ChannelID = dataSeries.SeriesInfo.Channel.ID,
-                XaxisLabel = (dataSeries.SeriesInfo.Channel.MeasurementType.Name) + "perSecond",
+                Unit = (dataSeries.SeriesInfo.Channel.MeasurementType.Name) + "perSecond",
                 Color = OpenSEEController.GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = legenclass,
                 SecondaryLegendClass = type,
@@ -521,7 +521,7 @@ namespace OpenSEE
             {
                 ChannelID = 0,
                 ChartLabel = label + " Fixed Clipping",
-                XaxisLabel = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
+                Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 LegendClass = "",
                 SecondaryLegendClass = type,
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
@@ -659,7 +659,7 @@ namespace OpenSEE
             {
                 ChartLabel = label + " Frequency",
                 ChannelID = 0,
-                XaxisLabel = "Freq",
+                Unit = "Freq",
                 Color = "freq" + GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.Phase.Name == "CN" ? "C" : (dataSeries.SeriesInfo.Channel.Phase.Name == "BN"? "B" : "A")),
@@ -691,7 +691,7 @@ namespace OpenSEE
             {
                 ChartLabel = "Frequency",
                 ChannelID = 0,
-                XaxisLabel = "Freq",
+                Unit = "Freq",
                 Color = "freqAll",
                 LegendClass = "",
                 SecondaryLegendClass = "Avg",
@@ -725,7 +725,7 @@ namespace OpenSEE
             {
                 ChartLabel = input.ChartLabel,
                 ChannelID = input.ChannelID,
-                XaxisLabel = input.XaxisLabel,
+                Unit = input.Unit,
                 Color = input.Color,
                 LegendClass = input.LegendClass,
                 SecondaryLegendClass = input.SecondaryLegendClass,
@@ -765,7 +765,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -777,7 +777,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -789,7 +789,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -808,7 +808,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -820,7 +820,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -832,7 +832,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "",
@@ -850,7 +850,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -862,7 +862,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -874,7 +874,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "Ohm",
+                    Unit = "Ohm",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -927,7 +927,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VAR",
+                    Unit = "VAR",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -939,7 +939,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "W",
+                    Unit = "W",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -950,7 +950,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VA",
+                    Unit = "VA",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -961,7 +961,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "pf",
+                    Unit = "pf",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "A",
@@ -986,7 +986,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VAR",
+                    Unit = "VAR",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -998,7 +998,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "W",
+                    Unit = "W",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -1009,7 +1009,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VA",
+                    Unit = "VA",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -1020,7 +1020,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "pf",
+                    Unit = "pf",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "B",
@@ -1044,7 +1044,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VAR",
+                    Unit = "VAR",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -1056,7 +1056,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "W",
+                    Unit = "W",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -1067,7 +1067,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VA",
+                    Unit = "VA",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -1078,7 +1078,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "pf",
+                    Unit = "pf",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "C",
@@ -1097,7 +1097,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VAR",
+                    Unit = "VAR",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "Sum",
@@ -1109,7 +1109,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "W",
+                    Unit = "W",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "Sum",
@@ -1120,7 +1120,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "VA",
+                    Unit = "VA",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "Sum",
@@ -1131,7 +1131,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "pf",
+                    Unit = "pf",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "Sum",
@@ -1174,7 +1174,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Pre",
@@ -1185,7 +1185,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Post",
@@ -1210,7 +1210,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Pre",
@@ -1221,7 +1221,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Post",
@@ -1244,7 +1244,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Pre",
@@ -1256,7 +1256,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChannelID = 0,
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "Post",
@@ -1306,7 +1306,7 @@ namespace OpenSEE
                     dataLookup.Add(new D3Series()
                     {
                         ChannelID = 0,
-                        XaxisLabel = "V",
+                        Unit = "V",
                         Color = GetColor(ds.SeriesInfo.Channel),
                         LegendClass = "",
                         SecondaryLegendClass = "Pre",
@@ -1317,7 +1317,7 @@ namespace OpenSEE
                     dataLookup.Add(new D3Series()
                     {
                         ChannelID = 0,
-                        XaxisLabel = "V",
+                        Unit = "V",
                         Color = GetColor(ds.SeriesInfo.Channel),
                         LegendClass = "",
                         SecondaryLegendClass = "Post",
@@ -1362,7 +1362,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1383,7 +1383,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1404,7 +1404,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VCN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1424,7 +1424,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1445,7 +1445,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1465,7 +1465,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "ICN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1512,7 +1512,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1532,7 +1532,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1553,7 +1553,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "VCN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Voltage",
+                    Unit = "Voltage",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1574,7 +1574,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IAN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1595,7 +1595,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "IBN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1615,7 +1615,7 @@ namespace OpenSEE
                 {
                     ChartLabel = "ICN Low Pass Filter",
                     ChannelID = 0,
-                    XaxisLabel = "Current",
+                    Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1669,7 +1669,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Voltage S0",
-                    XaxisLabel = "V",
+                    Unit = "V",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1681,7 +1681,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Voltage S1",
-                    XaxisLabel = "V",
+                    Unit = "V",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1692,7 +1692,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Voltage S2",
-                    XaxisLabel = "V",
+                    Unit = "V",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1735,7 +1735,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Current S0",
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1747,7 +1747,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Current S1",
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1758,7 +1758,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Current S2",
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1838,7 +1838,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "S0/S1 Voltage",
-                    XaxisLabel = "",
+                    Unit = "",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1851,7 +1851,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "S2/S1 Voltage",
-                    XaxisLabel = "",
+                    Unit = "",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "V",
@@ -1896,7 +1896,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "S0/S1 Current",
-                    XaxisLabel = "",
+                    Unit = "",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1909,7 +1909,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "S2/S1 Current",
-                    XaxisLabel = "",
+                    Unit = "",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "I",
@@ -1967,7 +1967,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Voltage Rectifier",
-                    XaxisLabel = "V",
+                    Unit = "V",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "",
@@ -1987,7 +1987,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = "Current Rectifier",
-                    XaxisLabel = "A",
+                    Unit = "A",
                     Color = GetColor(null),
                     LegendClass = "",
                     SecondaryLegendClass = "",
@@ -2033,7 +2033,7 @@ namespace OpenSEE
                 {
                     ChannelID = 0,
                     ChartLabel = label + " Rapid Voltage Change",
-                    XaxisLabel = "V",
+                    Unit = "V",
                     Color = GetColor(dataSeries.SeriesInfo.Channel),
                     LegendClass = "",
                     SecondaryLegendClass = "",
@@ -2099,7 +2099,7 @@ namespace OpenSEE
             D3Series thd = new D3Series()
             {
                 ChannelID = 0,
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Unit = GetUnits(dataSeries.SeriesInfo.Channel),
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
@@ -2166,7 +2166,7 @@ namespace OpenSEE
             D3Series SpecifiedHarmonicMag = new D3Series()
             {
                 ChannelID = 0,
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Unit = GetUnits(dataSeries.SeriesInfo.Channel),
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = "Mag",
@@ -2178,7 +2178,7 @@ namespace OpenSEE
             D3Series SpecifiedHarmonicAng = new D3Series()
             {
                 ChannelID = 0,
-                XaxisLabel = "deg",
+                Unit = "deg",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = "Ang",
@@ -2252,7 +2252,7 @@ namespace OpenSEE
             D3Series series = new D3Series()
             {
                 ChannelID = 0,
-                XaxisLabel = GetUnits(dataSeries.SeriesInfo.Channel),
+                Unit = GetUnits(dataSeries.SeriesInfo.Channel),
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
@@ -2314,7 +2314,7 @@ namespace OpenSEE
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " FFT Mag",
-                XaxisLabel = "",
+                Unit = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Mag",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
@@ -2326,7 +2326,7 @@ namespace OpenSEE
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = ((dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dataSeries.SeriesInfo.Channel.Phase.Name + " FFT Ang",
-                XaxisLabel = "",
+                Unit = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Ang",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
@@ -2389,7 +2389,7 @@ namespace OpenSEE
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} DFT Mag",
-                XaxisLabel = "",
+                Unit = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Mag",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",
@@ -2401,7 +2401,7 @@ namespace OpenSEE
             {
                 ChannelID = dataSeries.SeriesInfo.ChannelID,
                 ChartLabel = $"{dataSeries.SeriesInfo.Channel.Name} DFT Ang",
-                XaxisLabel = "",
+                Unit = "",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendClass = "Ang",
                 SecondaryLegendClass = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I",

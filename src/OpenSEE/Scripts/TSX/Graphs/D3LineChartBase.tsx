@@ -36,7 +36,12 @@ export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBas
 export type ZoomMode = "x" | "y" | "xy"
 
 export interface D3LineChartBaseProps {
-    eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
+    eventId: number,
+    startTime: number,
+    endTime: number,
+    stateSetter: Function,
+    height: number,
+    hover: number,
     unitSettings: GraphUnits,
     colorSettings: Colors,
     zoomMode: ZoomMode,
@@ -56,12 +61,15 @@ export interface D3PlotOptions {
 
 export interface iD3DataSet {
     Data: Array<iD3DataSeries>,
+    EventStartTime: number,
+    EventEndTime: number,
+    FaultTime: number
 }
 
 export interface iD3DataSeries {
     ChannelID: number,
     ChartLabel: string,
-    XaxisLabel: string,
+    Unit: string,
 
     Color: string,
     Display: boolean,
@@ -70,6 +78,7 @@ export interface iD3DataSeries {
     LegendClass: string,
     LegendGroup: string,
     SecondaryLegendClass: string,
+    BaseValue: number,
     DataPoints: Array<[number, number]>,
     DataMarker: Array<[number, number]>,
 }
@@ -81,6 +90,7 @@ export interface iD3DataPoint {
     Color: string,
     LegendKey: string,
     Enabled: boolean,
+    BaseValue: number,
 
     LegendClass: string,
     LegendGroup: string,
@@ -126,6 +136,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.state = {
             dataSet: {
                 Data: null,
+                EventEndTime: 0,
+                EventStartTime: 0,
+                FaultTime: 0
             } , 
             dataHandle: undefined,
         };
@@ -152,15 +165,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 return;
             }
 
-
             var dataSet = this.state.dataSet;
             if (dataSet.Data != undefined)
                 dataSet.Data = dataSet.Data.concat(data.Data);
             else
                 dataSet = data;
 
-            if (this.props.endTimeVis == null) this.props.stateSetter({ endTimeVis: this.props.endTime });
-            if (this.props.startTimeVis == null) this.props.stateSetter({ startTimeVis: this.props.startTime });
+            
+            if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
+            if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
             dataSet.Data = this.createLegendRows(dataSet.Data);
 
@@ -172,7 +185,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     }
 
-   createLegendRows(data) {
+    createLegendRows(data) {
         var ctrl = this;
 
         let legend: Array<iD3DataSeries> = [];
@@ -227,12 +240,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.endTime;
         delete nextPropsClone.endTime;
 
-        delete props.startTimeVis;
-        delete nextPropsClone.startTimeVis;
-        delete props.endTimeVis;
-        delete nextPropsClone.endTimeVis;
-
-
         delete props.hover;
         delete nextPropsClone.hover;
 
@@ -264,11 +271,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete nextPropsClone.zoomMode;
 
 
-        if (this.props.startTimeVis && this.props.endTimeVis) {
-            if (this.xScale != null && (this.props.startTimeVis != prevProps.startTimeVis || this.props.endTimeVis != prevProps.endTimeVis)) {
-                this.updateZoom(this);
-            }
+       
+        if (this.xScale != null && (this.props.startTime != prevProps.startTime || this.props.endTime != prevProps.endTime)) {
+            this.updateZoom(this);
         }
+        
 
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
@@ -308,7 +315,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
     }
 
-   
     // create Plot
    createDataRows(data) {
         
@@ -338,7 +344,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
            .range([this.props.height - 60, 0]);
 
        ctrl.xScale = d3.scaleLinear()
-            .domain([this.props.startTimeVis, this.props.endTimeVis])
+            .domain([this.props.startTime, this.props.endTime])
             .range([20, container.node().getBoundingClientRect().width - 100])
             ;
 
@@ -429,7 +435,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
        if (ctrl.state.dataSet.Data != null)
            ctrl.state.dataSet.Data.filter(item => item.Enabled).forEach((row, key, map) => {
-               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.XaxisLabel } })).attr("fill", "none")
+               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit } })).attr("fill", "none")
                    .attr("stroke", ctrl.getColor(ctrl,row.Color))
                     .attr("stroke-width", 2.0)
                     .attr("d", d3.line()
@@ -445,7 +451,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 if (row.DataMarker && row.DataMarker.length > 0) {
                     let markers = ctrl.paths.append("g")
                     row.DataMarker.forEach(item => {
-                        let r = { x: item[0], y: item[1], units: row.XaxisLabel }
+                        let r = { x: item[0], y: item[1], units: row.Unit }
                         markers.append("circle").datum(r)
                             .attr("fill", ctrl.getColor(ctrl, row.Color))
                             .attr("r", 5.0)
@@ -547,7 +553,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
        ctrl.updateYLimits(ctrl)
 
-       ctrl.xScale.domain([ctrl.props.startTimeVis, ctrl.props.endTimeVis]);
+       ctrl.xScale.domain([ctrl.props.startTime, ctrl.props.endTime]);
 
        ctrl.updateTimeAxis(ctrl)
 
@@ -619,7 +625,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         if (ctrl.movingCycle) {
 
-            let leftEdge = Math.min(selectedData, ctrl.props.endTimeVis - this.props.fftWindow*16.6666)
+            let leftEdge = Math.min(selectedData, ctrl.props.endTime - this.props.fftWindow*16.6666)
             ctrl.updateCycle(ctrl, leftEdge, this.props.fftWindow)
         }
 
@@ -741,7 +747,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                         points.push({
                             ChannelID: row.ChannelID,
                             ChartLabel: row.ChartLabel,
-                            XaxisLabel: row.XaxisLabel,
+                            Unit: row.Unit,
                             Color: row.Color,
                             LegendKey: ctrl.props.legendKey,
 
@@ -750,6 +756,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                             SecondaryLegendClass: row.SecondaryLegendClass,
                             Value: row.DataPoints[i][1],
                             Time: row.DataPoints[i][0],
+                            BaseValue: row.BaseValue,
                             Enabled: row.Enabled
                         })
                     }
@@ -805,7 +812,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     points.push({
                         ChannelID: row.ChannelID,
                         ChartLabel: row.ChartLabel,
-                        XaxisLabel: row.XaxisLabel,
+                        XaxisLabel: row.Unit,
                         Color: row.Color,
                         LegendKey: ctrl.props.legendKey,
 
@@ -814,7 +821,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                         SecondaryLegendClass: row.SecondaryLegendClass,
                         Value: row.DataPoints[i][1],
                         Enabled: row.Enabled,
-                        Time: row.DataPoints[i][0]
+                        Time: row.DataPoints[i][0],
+                        BaseValue: row.BaseValue,
                     })
                 }
             })
@@ -840,10 +848,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             if (Math.abs(xMouse - x0) > 10) {
 
                 if (h < 0) {
-                    ctrl.props.stateSetter({ startTimeVis: xMouse, endTimeVis: x0 });
+                    ctrl.props.stateSetter({ startTime: xMouse, endTime: x0 });
                 }
                 else {
-                    ctrl.props.stateSetter({ startTimeVis: x0, endTimeVis: xMouse });
+                    ctrl.props.stateSetter({ startTime: x0, endTime: xMouse });
                 }
             }
         }
@@ -886,7 +894,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     getTimeAxisLabel(ctrl: D3LineChartBase) {
 
-        let difference = ctrl.props.endTimeVis - ctrl.props.startTimeVis
+        let difference = ctrl.props.endTime - ctrl.props.startTime
         let timeLabel = "Time"
         if (ctrl.ActiveUnits.Time.current.Short == 'auto') {
             if (difference < 100)
@@ -907,10 +915,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
         return ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
-            if (ctrl.ActiveUnits[item.XaxisLabel] === undefined)
-                return item.XaxisLabel;
+            if (ctrl.ActiveUnits[item.Unit] === undefined)
+                return item.Unit;
             else
-                return ctrl.ActiveUnits[item.XaxisLabel].current.Short
+                return ctrl.ActiveUnits[item.Unit].current.Short
         }).filter(distinct).join("/");
 
     }
@@ -921,8 +929,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         if (ctrl.state.dataSet.Data == null)
             return
         let data = ctrl.state.dataSet.Data.filter(item => item.Enabled);
-        let datapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis))
-        let resDatapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis).map(pt => ctrl.AdjustY(ctrl, { y: pt[1], unit: item.XaxisLabel })))
+
+        let datapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime))
+
+        let resDatapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime).map(pt => ctrl.AdjustY(ctrl, { y: pt[1], unit: item.Unit })))
 
         
         ctrl.dataMin = Math.min(...datapt.map(series => Math.min(...series.map(pt => pt[1]).filter(ctrl.isNumber))))
@@ -951,10 +961,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
             if (ctrl.props.unitSettings[property].current.Label == "auto") {
 
-                let tempData = ctrl.state.dataSet.Data.filter(item => item.Enabled && item.XaxisLabel == property)
+                let tempData = ctrl.state.dataSet.Data.filter(item => item.Enabled && item.Unit == property)
                 if (tempData.length > 0) {
 
-                    let datapt = tempData.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTimeVis && pt[0] > ctrl.props.startTimeVis))
+                    let datapt = tempData.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime))
                     let ymin = Math.min(...datapt.map(series => Math.min(...series.map(pt => pt[1]))))
                     let ymax = Math.max(...datapt.map(series => Math.max(...series.map(pt => pt[1]))))
 

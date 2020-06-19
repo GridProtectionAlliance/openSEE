@@ -74,7 +74,10 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
         ctrl.state = {
             dataSet: {
-                Data: null
+                Data: null,
+                EventEndTime: 0,
+                EventStartTime: 0,
+                FaultTime: 0,
             } , 
             dataHandle: undefined,
         };

@@ -119,8 +119,6 @@ declare interface OpenSEEState {
     AnalyticSettings: AnalyticParamters,
     startTime: number,
     endTime: number,
-    startTimeVis: number,
-    endTimeVis: number,
     fftStartTime: number,
     barChartReset?: Function,
     plotUnits: GraphUnits,

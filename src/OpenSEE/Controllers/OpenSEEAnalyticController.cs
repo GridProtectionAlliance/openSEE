@@ -444,7 +444,7 @@ namespace OpenSEE
 
                     ChannelID = 0,
                     ChartLabel = faultCurve.Algorithm,
-                    XaxisLabel = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'"),
+                    Unit = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'"),
                     Color = GetFaultDistanceColort(faultCurve.Algorithm),
                     LegendClass = "",
                     SecondaryLegendClass = "",
@@ -1091,7 +1091,7 @@ namespace OpenSEE
                         {
                             ChannelID = ds.SeriesInfo.Channel.ID,
                             ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                            XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                            Unit = GetUnits(ds.SeriesInfo.Channel),
                             Color = GetColor(ds.SeriesInfo.Channel),
                             LegendClass = "I",
                             SecondaryLegendClass = ds.SeriesInfo.Channel.Phase.Name,
@@ -1106,7 +1106,7 @@ namespace OpenSEE
                         {
                             ChannelID = ds.SeriesInfo.Channel.ID,
                             ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                            XaxisLabel = GetUnits(ds.SeriesInfo.Channel),
+                            Unit = GetUnits(ds.SeriesInfo.Channel),
                             Color = GetColor(ds.SeriesInfo.Channel),
                             LegendClass = "V",
                             SecondaryLegendClass = ds.SeriesInfo.Channel.Phase.Name,

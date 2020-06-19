@@ -41,8 +41,6 @@ export default function Digital(props: D3LineChartBaseProps): JSX.Element {
         options: props.options,
         startTime: props.startTime,
         endTime: props.endTime,
-        startTimeVis: props.startTimeVis,
-        endTimeVis: props.endTimeVis,
         hover: props.hover,
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
