@@ -193,13 +193,13 @@ export default class OpenSEENavbar extends React.Component {
                                     {this.props.zoomMode == "xy" ? < i className="fa fa-arrows" ></i> : null}
                                 </button>
                                 <div className="dropdown-menu">
-                                    <a key={"option-x"} className="dropdown-item" onClick={() => { }}>
+                                    <a key={"option-x"} className="dropdown-item" onClick={() => { this.props.stateSetter({ zoomMode: "x" })}}>
                                         <i className="fa fa-arrows-h" ></i> Time
                                     </a>
-                                    <a key={"option-y"} className="dropdown-item" onClick={() => { }}>
+                                    <a key={"option-y"} className="dropdown-item" onClick={() => { this.props.stateSetter({ zoomMode: "y" })}}>
                                         <i className="fa fa-arrows-v" ></i> Value
                                     </a>
-                                    <a key={"option-xy"} className="dropdown-item" onClick={() => { }}>
+                                    <a key={"option-xy"} className="dropdown-item" onClick={() => { this.props.stateSetter({ zoomMode: "xy" })}}>
                                         <i className="fa fa-arrows" ></i> Rectangle
                                     </a>
                                 </div>

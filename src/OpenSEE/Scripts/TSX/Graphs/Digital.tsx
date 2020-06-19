@@ -49,6 +49,7 @@ export default function Digital(props: D3LineChartBaseProps): JSX.Element {
         pointTable: props.pointTable,
         unitSettigs: props.unitSettings,
         colorSettings: props.colorSettings,
+        zoomMode: props.zoomMode,
     }, null);
 
 }

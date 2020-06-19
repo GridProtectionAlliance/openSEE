@@ -87,6 +87,7 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
+            zoomMode={this.props.zoomMode}
         />
     }
 

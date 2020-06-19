@@ -39,6 +39,7 @@ export interface D3LineChartBaseProps {
     eventId: number, startTime: number, endTime: number, startTimeVis: number, endTimeVis: number, stateSetter: Function, height: number, hover: number,
     unitSettings: GraphUnits,
     colorSettings: Colors,
+    zoomMode: ZoomMode,
     pointTable?: Array<iD3DataPoint>,
     options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function, 
 };
@@ -96,14 +97,16 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     xScale: any;
     paths: any;
     brush: any;
-    hover: any;
+    
     area: any;
     xlabel: any;
     ylabel: any;
     cycle: any;
     movingCycle: boolean;
 
-    mousedownX: number;
+    mousedownPos: { x: number, y: number };
+    hover: any;
+
     cycleStart: number;
     cycleEnd: number;
 
@@ -129,7 +132,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
         if (ctrl.props.getData != undefined) ctrl.getData = (props) => ctrl.props.getData(props, ctrl);
 
-        ctrl.mousedownX = 0;
+        ctrl.mousedownPos = { x: 0, y: 0 };
     }
 
     componentDidMount() {
@@ -212,16 +215,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         delete props.stateSetter;
         delete nextPropsClone.stateSetter;
-        //delete props.tableSetter;
-        //delete nextPropsClone.tableSetter;
-
-
-        //delete props.legendDisplay;
-        //delete nextPropsClone.legendDisplay;
+      
         delete props.openSEEServiceFunction;
         delete nextPropsClone.openSEEServiceFunction;
-        //delete props.legendEnable;
-        //delete nextPropsClone.legendEnable;
 
         delete props.getData;
         delete nextPropsClone.getData;
@@ -264,6 +260,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.colorSettings;
         delete nextPropsClone.colorSettings;
 
+        delete props.zoomMode;
+        delete nextPropsClone.zoomMode;
+
 
         if (this.props.startTimeVis && this.props.endTimeVis) {
             if (this.xScale != null && (this.props.startTimeVis != prevProps.startTimeVis || this.props.endTimeVis != prevProps.endTimeVis)) {
@@ -305,8 +304,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
        if (!(isEqual(props, nextPropsClone))) {
            this.getData(this.props);
-            
-
         }
         
     }
@@ -491,7 +488,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return ctrl.AdjustX(ctrl, a);
     }
 
-   formatTimeTick(ctrl: D3LineChartBase, d: number) {
+    formatTimeTick(ctrl: D3LineChartBase, d: number) {
        let TS = moment(d);
        let h = ctrl.xScale.domain()[1] - ctrl.xScale.domain()[0]
 
@@ -529,7 +526,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             
     }
 
-   formatValueTick(ctrl: D3LineChartBase, d: number) {
+    formatValueTick(ctrl: D3LineChartBase, d: number) {
        
         let h = ctrl.yScale.domain()[1] - ctrl.yScale.domain()[0]
        
@@ -543,7 +540,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
     }
 
-   updateZoom(ctrl: D3LineChartBase) {
+    updateZoom(ctrl: D3LineChartBase) {
 
        // First Update auto Units and Y Limits
        ctrl.updateYLimits(ctrl)
@@ -604,6 +601,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
             // recover coordinate we need
         var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
+        var y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
 
         let selectedData = x0
 
@@ -628,24 +626,62 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
       
         ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
 
-        let h = ctrl.mousedownX - ctrl.xScale(selectedData);
+        let h = ctrl.mousedownPos.x - ctrl.xScale(selectedData);
+        let w = ctrl.mousedownPos.y - ctrl.yScale(y0);
 
-
-        if (h < 0) {
-            ctrl.brush.attr("width", -h)
-                .attr("x", ctrl.mousedownX)
+        if (ctrl.props.zoomMode == "x") {
+            if (h < 0) {
+                ctrl.brush.attr("width", -h)
+                    .attr("x", ctrl.mousedownPos.x)
+                    .attr("y", 0).attr("height", this.props.height - 60)
+            }
+            else {
+                ctrl.brush.attr("width", h)
+                    .attr("x", ctrl.xScale(selectedData))
+                    .attr("y", 0).attr("height", this.props.height - 60)
+            }
         }
-        else {
-            ctrl.brush.attr("width", h)
-                .attr("x", ctrl.xScale(selectedData))
+
+        if (ctrl.props.zoomMode == "y") {
+            if (w < 0) {
+                ctrl.brush.attr("height", -w)
+                    .attr("y", ctrl.mousedownPos.y)
+                    .attr("x", 20).attr("width", 'calc(100% - 120px)')
+                    
+            }
+            else {
+                ctrl.brush.attr("height", w)
+                    .attr("y", ctrl.yScale(y0))
+                    .attr("x", 20).attr("width", 'calc(100% - 120px)')
+            }
         }
 
+        if (ctrl.props.zoomMode == "xy") {
+            if (w < 0) {
+                ctrl.brush.attr("height", -w)
+                    .attr("y", ctrl.mousedownPos.y)
+            }
+            else {
+                ctrl.brush.attr("height", w)
+                    .attr("y", ctrl.yScale(y0))
+            }
+
+            if (h < 0) {
+                ctrl.brush.attr("width", -h)
+                    .attr("x", ctrl.mousedownPos.x)
+            }
+            else {
+                ctrl.brush.attr("width", h)
+                    .attr("x", ctrl.xScale(selectedData))
+            }
+        }
     }
 
     mousedown(ctrl: D3LineChartBase) {
 
         // create square as neccesarry
         var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
+        var y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
 
         //Check if we are clicking in cycle marker
         if (ctrl.cycleStart && ctrl.cycleEnd) {
@@ -655,7 +691,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             }
         }
 
-        ctrl.mousedownX = ctrl.xScale(x0)
+        ctrl.mousedownPos.x = ctrl.xScale(x0)
+        ctrl.mousedownPos.y = ctrl.yScale(y0)
 
         ctrl.brush
             .attr("x", ctrl.xScale(x0))
@@ -733,7 +770,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     mouseout(ctrl: D3LineChartBase) {
         ctrl.setState({ Hover: null });
         ctrl.brush.style("opacity", 0);
-        ctrl.mousedownX = 0;
+        ctrl.mousedownPos = { x: 0, y: 0 };
 
         if (ctrl.movingCycle) {
             ctrl.props.stateSetter({ fftStartTime: ctrl.cycleStart });
@@ -749,15 +786,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return
         }
 
-        if (ctrl.mousedownX < 10) {
+        if (ctrl.mousedownPos.x < 10) {
             ctrl.brush.style("opacity", 0);
-            ctrl.mousedownX = 0;
+            ctrl.mousedownPos.x = 0;
             return;
         }
 
         let x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
 
-        let h = ctrl.mousedownX - ctrl.xScale(x0);
+        let h = ctrl.mousedownPos.x - ctrl.xScale(x0);
 
         if (ctrl.props.pointTable && h < 3 && ($('#accumulatedpoints').css('display') != "none" || $('#tooltipwithdelta').css('display') != "none") ) {
             let points = ctrl.props.pointTable;
@@ -784,33 +821,35 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             ctrl.props.stateSetter({ pointTable: points })
 
             ctrl.brush.style("opacity", 0);
-            ctrl.mousedownX = 0;
+            ctrl.mousedownPos = { x: 0, y: 0 };
             return
             // Add this point to the PointsTable 
         }
 
-        let xMouse = ctrl.xScale.invert(ctrl.mousedownX)
+        let xMouse = ctrl.xScale.invert(ctrl.mousedownPos.x)
 
-        // If we have a cycle window adjust left and right to ensure you are outside the cycle window
-        if (ctrl.cycleStart && ctrl.cycleEnd && ctrl.cycleStart > 0) {
-            xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
-            x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
-               
-        }
+        if (ctrl.props.zoomMode == "x") {
+            // If we have a cycle window adjust left and right to ensure you are outside the cycle window
+            if (ctrl.cycleStart && ctrl.cycleEnd && ctrl.cycleStart > 0) {
+                xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
+                x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
 
-
-        if (Math.abs(xMouse - x0) > 10) {
-            
-            if (h < 0) {
-                ctrl.props.stateSetter({ startTimeVis: xMouse, endTimeVis: x0 });
             }
-            else {
-                ctrl.props.stateSetter({ startTimeVis: x0, endTimeVis: xMouse });
+
+
+            if (Math.abs(xMouse - x0) > 10) {
+
+                if (h < 0) {
+                    ctrl.props.stateSetter({ startTimeVis: xMouse, endTimeVis: x0 });
+                }
+                else {
+                    ctrl.props.stateSetter({ startTimeVis: x0, endTimeVis: xMouse });
+                }
             }
         }
 
         ctrl.brush.style("opacity", 0);
-        ctrl.mousedownX = 0;
+        ctrl.mousedownPos = { x: 0, y: 0 };
     }
 
     mousewheel(ctrl: D3LineChartBase) {
@@ -898,6 +937,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return true
         return false
     }
+
     resolveAutoScale(ctrl: D3LineChartBase): GraphUnits {
 
         if (ctrl.state.dataSet.Data == null)
