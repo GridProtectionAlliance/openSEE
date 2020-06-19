@@ -435,7 +435,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
        if (ctrl.state.dataSet.Data != null)
            ctrl.state.dataSet.Data.filter(item => item.Enabled).forEach((row, key, map) => {
-               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit } })).attr("fill", "none")
+               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue } })).attr("fill", "none")
                    .attr("stroke", ctrl.getColor(ctrl,row.Color))
                     .attr("stroke-width", 2.0)
                     .attr("d", d3.line()
@@ -451,7 +451,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 if (row.DataMarker && row.DataMarker.length > 0) {
                     let markers = ctrl.paths.append("g")
                     row.DataMarker.forEach(item => {
-                        let r = { x: item[0], y: item[1], units: row.Unit }
+                        let r = { x: item[0], y: item[1], units: row.Unit, base: row.BaseValue }
                         markers.append("circle").datum(r)
                             .attr("fill", ctrl.getColor(ctrl, row.Color))
                             .attr("r", 5.0)
@@ -486,6 +486,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     AdjustY(ctrl: D3LineChartBase, d: any) {
+        if (ctrl.ActiveUnits[d.unit].current.Short == "pu")
+            return d.y / d.base;
+
         return d.y * ctrl.ActiveUnits[d.unit].current.Factor
     }
 
@@ -932,7 +935,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         let datapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime))
 
-        let resDatapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime).map(pt => ctrl.AdjustY(ctrl, { y: pt[1], unit: item.Unit })))
+        let resDatapt = data.map(item => item.DataPoints.filter(pt => pt[0] < ctrl.props.endTime && pt[0] > ctrl.props.startTime).map(pt => ctrl.AdjustY(ctrl, { y: pt[1], unit: item.Unit, base: item.BaseValue })))
 
         
         ctrl.dataMin = Math.min(...datapt.map(series => Math.min(...series.map(pt => pt[1]).filter(ctrl.isNumber))))

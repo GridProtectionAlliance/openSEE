@@ -162,43 +162,43 @@ export default class SettingWindow extends React.Component<any, any>{
                                     <div className="container">
                                         {(this.props.showV ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
-                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
+                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showI ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
-                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
+                                                <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showTCE ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"TCE"} unit={this.props.unitSetting.TCE} setter={this.updateTCEUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"TCE"} unit={this.props.unitSetting.TCE} setter={this.updateTCEUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "FirstDerivative" ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"dV/dt"} unit={this.props.unitSetting.VoltageperSecond} setter={this.updatedVdtUnits} />
-                                                <UnitSelector label={"dI/dt"} unit={this.props.unitSetting.CurrentperSecond} setter={this.updatedIdtUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"dV/dt"} unit={this.props.unitSetting.VoltageperSecond} setter={this.updatedVdtUnits.bind(this)} />
+                                                <UnitSelector label={"dI/dt"} unit={this.props.unitSetting.CurrentperSecond} setter={this.updatedIdtUnits.bind(this)} />
                                             </div> : null )}
                                         {(this.props.showAnalytics == "ClippedWaveforms" ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
-                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "Frequency" ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"Frequency"} unit={this.props.unitSetting.Freq} setter={this.updateFrequencyUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Frequency"} unit={this.props.unitSetting.Freq} setter={this.updateFrequencyUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "LowPassFilter" ?
                                             <div className="row">
-                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
-                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
-                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
+                                                <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "HighPassFilter" ?
                                             <div className="row">
