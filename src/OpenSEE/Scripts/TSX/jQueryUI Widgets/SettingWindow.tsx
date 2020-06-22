@@ -75,6 +75,9 @@ export interface Colors {
     Va: string,
     Vb: string,
     Vc: string,
+    Vab: string,
+    Vbc: string,
+    Vca: string,
     Ia: string,
     Ib: string,
     Ic: string,
@@ -113,6 +116,110 @@ export type Unit = {
     Factor: number
 }
 
+export const DefaultUnits = {
+    Time: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "seconds", Short: "s", Factor: 0 },
+            { Label: "minutes", Short: "min", Factor: 0 },
+            { Label: "milliseconds", Short: "ms", Factor: 0 },
+            { Label: "milliseconds since event", Short: "ms since event", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    Voltage: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Volt", Short: "V", Factor: 1 },
+            { Label: "kiloVolts", Short: "kV", Factor: 0.001 },
+            { Label: "milliVolts", Short: "mV", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    Current: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Amps", Short: "A", Factor: 1 },
+            { Label: "kiloAmps", Short: "kA", Factor: 0.001 },
+            { Label: "milliAmps", Short: "mA", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    Angle: {
+        current: { Label: "degree", Short: "deg", Factor: 1 },
+        options: [
+            { Label: "degree", Short: "deg", Factor: 1 },
+            { Label: "radians", Short: "rad", Factor: 0.0174532925 }
+        ]
+    },
+    TCE: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Amps", Short: "A", Factor: 1 },
+            { Label: "kiloAmps", Short: "kA", Factor: 0.001 },
+            { Label: "milliAmps", Short: "mA", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    VoltageperSecond: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Volt per sec", Short: "V/s", Factor: 1 },
+            { Label: "kiloVolts per sec", Short: "kV/s", Factor: 0.001 },
+            { Label: "milliVolts per sec", Short: "mV/s", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu/s", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    CurrentperSecond: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Amps per sec", Short: "A/s", Factor: 1 },
+            { Label: "kiloAmps per sec", Short: "kA/s", Factor: 0.001 },
+            { Label: "milliAmps per sec", Short: "mA/s", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu/s", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    Freq: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Hertz", Short: "Hz", Factor: 1 },
+            { Label: "milliHertz", Short: "mHz", Factor: 1000 },
+            { Label: "kiloHertz", Short: "kHz", Factor: 0.001 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+}
+
+export const DefaultColors = 
+    {
+    Va: "#A30000",
+    Vb: "#0029A3",
+    Vc: "#007A29",
+    Vab: "#A30000",
+    Vbc: "#0029A3",
+    Vca: "#007A29",
+    Ia: "#FF0000",
+    Ib: "#0066CC",
+    Ic: "#33CC33",
+    Ires: "#d3d3d3",
+    random: "#4287f5",
+    faultDistSimple: "#edc240",
+    faultDistReact: "#afd8f8",
+    faultDistTakagi: "#cb4b4b",
+    faultDistModTakagi: "#4da74d",
+    faultDistNovosel: "#9440ed",
+    faultDistDoubleEnd: "#BD9B33",
+    freqAll: "#edc240",
+    freqVa: "#A30000",
+    freqVb: "#0029A3",
+    freqVc: "#007A29",  
+}
 
 export interface SettingWindowProps {
     stateSetter: Function,
@@ -224,7 +331,11 @@ export default class SettingWindow extends React.Component<any, any>{
                             <div id="collapseTwo" className="collapse" aria-labelledby="headingTwo" data-parent="#panelSettings">
                                 <div className="card-body">
                                     <div className="container">
-                                        {(this.props.showV ? VoltageColors(this.props.colorSetting, this.props.stateSetter) : null)}
+                                        {(this.props.showV ?
+                                            <div> 
+                                                VoltageColors(this.props.colorSetting, this.props.stateSetter) 
+                                                VoltageLLColors(this.props.colorSetting, this.props.stateSetter) 
+                                            </div> : null)}
                                         {(this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null)}
                                         {(this.props.showTCE && !this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, false) : null)}
                                             
@@ -351,17 +462,35 @@ const VoltageColors = (colorSetting: Colors, stateSetter: Function) => {
     return (
         <div className="row">
             <div className="col">
-                <ColorButton label={"VAN/VAB"} color={colorSetting.Va} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Va = color; stateSetter({ plotColors: col }); }} />
+                <ColorButton label={"VAN"} color={colorSetting.Va} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Va = color; stateSetter({ plotColors: col }); }} />
             </div>
             <div className="col">
-                <ColorButton label={"VBN/VBC"} color={colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vb = color; stateSetter({ plotColors: col }); }} />
+                <ColorButton label={"VBN"} color={colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vb = color; stateSetter({ plotColors: col }); }} />
             </div>
             <div className="col">
-                <ColorButton label={"VCN/VCA"} color={colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vc = color; stateSetter({ plotColors: col }); }} />
+                <ColorButton label={"VCN"} color={colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vc = color; stateSetter({ plotColors: col }); }} />
             </div>
         </div>
         );
 }
+
+const VoltageLLColors = (colorSetting: Colors, stateSetter: Function) => {
+
+    return (
+        <div className="row">
+            <div className="col">
+                <ColorButton label={"VAB"} color={colorSetting.Vab} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vab = color; stateSetter({ plotColors: col }); }} />
+            </div>
+            <div className="col">
+                <ColorButton label={"VBC"} color={colorSetting.Vbc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vbc = color; stateSetter({ plotColors: col }); }} />
+            </div>
+            <div className="col">
+                <ColorButton label={"VCA"} color={colorSetting.Vca} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vca = color; stateSetter({ plotColors: col }); }} />
+            </div>
+        </div>
+    );
+}
+
 
 const CurrentColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
 
