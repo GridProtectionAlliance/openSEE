@@ -31,7 +31,7 @@ import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
 import { Unit, GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
 
-export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, getData?: boolean) => void;
+export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
 export type ZoomMode = "x" | "y" | "xy"
 
@@ -60,7 +60,7 @@ export interface D3PlotOptions {
 }
 
 export interface iD3DataSet {
-    Data: Array<iD3DataSeries>,
+    Data: Array<GraphSeries>,
     EventStartTime: number,
     EventEndTime: number,
     FaultTime: number
@@ -72,17 +72,27 @@ export interface iD3DataSeries {
     Unit: string,
 
     Color: string,
+
     Display: boolean,
     Enabled: boolean,
     
     LegendClass: string,
     LegendGroup: string,
     SecondaryLegendClass: string,
+
+
     BaseValue: number,
     DataPoints: Array<[number, number]>,
     DataMarker: Array<[number, number]>,
 }
 
+interface GraphSeries extends iD3DataSeries {
+    path: any,
+}
+
+interface D3LineChartBaseState {
+    dataSet: iD3DataSet, dataHandle: JQuery.jqXHR
+}
 export interface iD3DataPoint {
     ChannelID: number,
     ChartLabel: string,
@@ -101,21 +111,27 @@ export interface iD3DataPoint {
 
 export default class D3LineChartBase extends React.Component<D3LineChartBaseClassProps, any>{
 
+    //Graph Elements from D3
     yAxis: any;
     xAxis: any;
     yScale: any;
     xScale: any;
-    paths: any;
-    brush: any;
-    
     area: any;
     xlabel: any;
     ylabel: any;
+
+    paths: any;
+    brush: any;
+    
+    mousedownPos: { x: number, y: number };
+    hover: any;
+
+
     cycle: any;
     movingCycle: boolean;
 
-    mousedownPos: { x: number, y: number };
-    hover: any;
+    
+    ActiveUnits: GraphUnits;
 
     cycleStart: number;
     cycleEnd: number;
@@ -125,9 +141,10 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     dataMax: number;
     dataMin: number;
 
-    ActiveUnits: GraphUnits;
+    
 
-    state: { dataSet: iD3DataSet, dataHandle: JQuery.jqXHR }
+    state: D3LineChartBaseState
+
     constructor(props, context) {
         super(props, context);
         var ctrl = this;
@@ -149,6 +166,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     componentDidMount() {
+        this.createPlot();
+
         this.getData(this.props);
     }
 
@@ -165,64 +184,273 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 return;
             }
 
-            var dataSet = this.state.dataSet;
-            if (dataSet.Data != undefined)
-                dataSet.Data = dataSet.Data.concat(data.Data);
-            else
-                dataSet = data;
+            this.addData(data.Data, this)
 
             
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
-            dataSet.Data = this.createLegendRows(dataSet.Data);
 
-            this.createDataRows(dataSet.Data);
 
-            this.setState({ dataSet: data });
         });
         this.setState({ dataHandle: handle });
 
     }
 
-    createLegendRows(data) {
+    createPlot() {
+        
         var ctrl = this;
+        // remove the previous SVG object
+        d3.select("#graphWindow-" + this.props.legendKey + "-" + this.props.eventId + ">svg").remove()
 
-        let legend: Array<iD3DataSeries> = [];
+        //add new Plot
+        var container = d3.select("#graphWindow-" + this.props.legendKey + "-" + this.props.eventId);
 
-        data.sort((a, b) => {
-            if (a.LegendGroup == b.LegendGroup) {
-                return (a.ChartLabel > b.ChartLabel) ? 1 : ((b.ChartLabel > a.ChartLabel) ? -1 : 0)
-            }
-            return (a.LegendGroup > b.LegendGroup) ? 1 : ((b.LegendGroup > a.LegendGroup) ? -1 : 0)
-        })
+        var svg = container.append("svg")
+            .attr("width", '100%')
+            .attr("height", this.props.height).append("g")
+            .attr("transform", "translate(40,10)");
 
-        let secondaryHeader: Array<string> = Array.from(new Set(data.map(item => item.SecondaryLegendClass)));
-        let primaryHeader: Array<string> = Array.from(new Set(data.map(item => item.LegendClass)));
+        if (this.state.dataSet.Data == null) {
+            return;
+        }
 
+        // First Thing is we Resolve any auto Units properly
+        this.updateYLimits(ctrl)
+        this.ActiveUnits = this.resolveAutoScale(ctrl)
+        this.updateYLimits(ctrl)
 
-        $.each(data, function (i, key) {
+        //Then Create Axisis
+        this.yScale = d3.scaleLinear()
+            .domain([ctrl.yMin, ctrl.yMax])
+            .range([this.props.height - 60, 0]);
 
-            key.Display = false;
-            key.Enabled = false;
+        this.xScale = d3.scaleLinear()
+            .domain([this.props.startTime, this.props.endTime])
+            .range([20, container.node().getBoundingClientRect().width - 100])
+            ;
 
-            if (primaryHeader.length < 2 || key.LegendClass == primaryHeader[0]) {
+        this.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(this.yScale).tickFormat((d, i) => this.formatValueTick(ctrl, d)));
 
-                key.Display = true;
+        this.xAxis = svg.append("g").attr("transform", "translate(0," + (this.props.height - 60) + ")").call(d3.axisBottom(this.xScale).tickFormat((d, i) => this.formatTimeTick(ctrl, d)));
 
-                if (secondaryHeader.length < 2 || key.SecondaryLegendClass == secondaryHeader[0]) {
-                    key.Enabled = true;
-                }
-            }
+        if (this.props.options.showXLabel) {
+            let timeLabel = this.getTimeAxisLabel(this)
 
-            legend.push(key);
+            this.xlabel = svg.append("text")
+                .attr("transform", "translate(" + ((container.node().getBoundingClientRect().width - 100) / 2) + " ," + (this.props.height - 20) + ")")
+                .style("text-anchor", "middle")
+                .text(timeLabel);
+        }
+        else
+            this.xlabel = svg.append("text")
+                .attr("transform", "translate(" + ((container.node().getBoundingClientRect().width - 100) / 2) + " ," + (this.props.height - 20) + ")")
+                .style("text-anchor", "middle")
+                .text("");
+
+        //Add Ylabel
+        let yUnitLabel = ""
+        if (ctrl.state.dataSet.Data != null)
+            yUnitLabel = this.getYAxisLabel(ctrl)
+
+        this.ylabel = svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -30)
+            .attr("x", -(this.props.height / 2 - 30))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text(yUnitLabel);
+
+        //Add Hover
+        this.hover = svg.append("line")
+            .attr("stroke", "#000")
+            .attr("x1", 10).attr("x2", 10)
+            .attr("y1", 0).attr("y2", this.props.height - 60)
+            .style("opacity", 0.5);
+
+        //Add clip Path
+        
+
+        var clip = svg.append("defs").append("svg:clipPath")
+            .attr("id", "clip-" + this.props.legendKey)
+            .append("svg:rect")
+            .attr("width", 'calc(100% - 120px)')
+            .attr("height", '100%')
+            .attr("x", 20)
+            .attr("y", 0);
+        //Add Zoom Window
+        this.brush = svg.append("rect")
+            .attr("stroke", "#000")
+            .attr("x", 10).attr("width", 0)
+            .attr("y", 0).attr("height", this.props.height - 60)
+            .attr("fill", "black")
+            .style("opacity", 0);
+
+        this.paths = svg.append("g").attr("id", "path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
+
+        if (this.state.dataSet.Data !== null)
+            ctrl.setState(function (state, props) {
+                let ste = cloneDeep(state.dataSet)
+                    ste.Data = state.dataSet.Data.map(item => {
+                        let row = item;
+                        if (row.Enabled)
+                            row.path = ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue, color: row.Color } })).attr("fill", "none")
+                                .attr("stroke", ctrl.getColor(ctrl, row.Color))
+                                .attr("stroke-width", 2.0)
+                                .attr("d", d3.line()
+                                    .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
+                                    .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl, d)) })
+                                    .defined(function (d) {
+                                        let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                                        let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                                        return tx && ty;
+                                    })
+                            );
+                        else
+                            row.path = null
+                        return row;
+                    });
+                return { dataSet: ste };
+            });
+
+        this.area = svg.append("g").append("svg:rect")
+            .attr("width", 'calc(100% - 120px)')
+            .attr("height", '100%')
+            .attr("x", 20)
+            .attr("y", 0)
+            .style("opacity", 0)
+            .on('mousemove', function () { ctrl.mousemove(ctrl) })
+            //.on('mouseout', function () { ctrl.mouseout(ctrl) })
+            //.on('mousedown', function () { ctrl.mousedown(ctrl) })
+            //.on('mouseup', function () { ctrl.mouseup(ctrl) })
+
+        this.updateLines(this);
+        this.updatePlot(this);
+       
+    }
+
+    addData(data, ctrl: D3LineChartBase) {
+        ctrl.setState(function (state, props) {
+            let ste = cloneDeep(state.dataSet)
+            if (ste.Data !== null)
+                ste.Data = state.dataSet.Data.concat(data.map(item => {
+                    let row = item;
+                    if (ctrl.paths !== undefined) {
+                        row.path = ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue, color: row.Color} })).attr("fill", "none")
+                            .attr("stroke", ctrl.getColor(ctrl, row.Color))
+                            .attr("stroke-width", 2.0)
+                            .attr("d", d3.line()
+                                .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
+                                .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl, d)) })
+                                .defined(function (d) {
+                                    let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                                    let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                                    return tx && ty;
+                                })
+                            );
+                    }
+                    else
+                        row.path = null;
+
+                    return row;
+                }));
+            else
+                ste.Data = data.map(item => {
+                    let row = item;
+
+                    if (ctrl.paths !== undefined) {
+                        row.path = ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue, color: row.Color} })).attr("fill", "none")
+                            .attr("stroke", ctrl.getColor(ctrl, row.Color))
+                            .attr("stroke-width", 2.0)
+                            .attr("d", d3.line()
+                                .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
+                                .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl, d)) })
+                                .defined(function (d) {
+                                    let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                                    let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                                    return tx && ty;
+                                })
+                            );
+                    }
+                    else
+                        row.path = null
+
+                    return row;
+                });
+
+            return { dataSet: ste};
         });
+    }
 
-        return legend;
+    updatePlot(ctrl: D3LineChartBase) {
+        // Update Units
+        ctrl.updateYLimits(ctrl)
+        ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
+        ctrl.updateYLimits(ctrl)
+
+        if (ctrl.paths == undefined)
+            ctrl.createPlot();
+
+        //Update Axis
+        ctrl.xScale.domain([ctrl.props.startTime, ctrl.props.endTime]);
+        ctrl.updateTimeAxis(ctrl)
+
+        ctrl.yScale.domain([ctrl.yMin, ctrl.yMax]);
+        ctrl.ylabel.text(ctrl.getYAxisLabel(ctrl))
+        ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
+
+        //Set Colors, update Visibility and Points
+
+        ctrl.paths.selectAll('path')
+            .transition()
+            .duration(1000)
+            .attr("d", d3.line()
+                .x(function (d) {
+                    return ctrl.xScale(ctrl.AdjustX(ctrl, d))
+                })
+                .y(function (d) {
+                    return ctrl.yScale(ctrl.AdjustY(ctrl, d))
+                })
+                .defined(function (d) {
+                    let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                    let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                    return tx && ty;
+                })
+        ).attr('stroke', function (d) { return ctrl.getColor(ctrl, d[0].color) });
+
+        
 
     }
 
-    componentDidUpdate(prevProps: D3LineChartBaseClassProps) {
+    updateLines(ctrl: D3LineChartBase) {
+
+
+        ctrl.state.dataSet.Data.map(item => {
+            let row = item;
+            if (!row.Enabled && row.path !== null) {
+                row.path.remove()
+                row.path = null
+            }
+            if (row.Enabled && row.path == null )
+                row.path = ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue, color: row.Color } })).attr("fill", "none")
+                    .attr("stroke", ctrl.getColor(ctrl, row.Color))
+                    .attr("stroke-width", 2.0)
+                    .attr("d", d3.line()
+                        .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
+                        .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl, d)) })
+                        .defined(function (d) {
+                            let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
+                            let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
+                            return tx && ty;
+                        })
+                    );
+        });
+
+    }
+
+    componentDidUpdate(prevProps: D3LineChartBaseClassProps, prevState: D3LineChartBaseState) {
+
+  
         var nextPropsClone = clone(this.props) as any;
         var props = clone(prevProps);
 
@@ -235,22 +463,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.getData;
         delete nextPropsClone.getData;
 
-        delete props.startTime;
-        delete nextPropsClone.startTime;
-        delete props.endTime;
-        delete nextPropsClone.endTime;
-
         delete props.hover;
         delete nextPropsClone.hover;
 
         delete props.legendKey;
         delete nextPropsClone.legendKey;
-
-        delete props.fftWindow;
-        delete nextPropsClone.fftWindow;
-
-        delete props.fftStartTime;
-        delete nextPropsClone.fftStartTime;
 
         delete props.tableSetter;
         delete nextPropsClone.tableSetter;
@@ -261,224 +478,30 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.pointTable;
         delete nextPropsClone.pointTable;
 
-        delete props.unitSettings;
-        delete nextPropsClone.unitSettings;
-
-        delete props.colorSettings;
-        delete nextPropsClone.colorSettings;
-
         delete props.zoomMode;
         delete nextPropsClone.zoomMode;
 
 
-       
-        if (this.xScale != null && (this.props.startTime != prevProps.startTime || this.props.endTime != prevProps.endTime)) {
-            this.updateZoom(this);
-        }
-        
-
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
-            
         }
 
         if (prevProps.legendKey != this.props.legendKey) {
-            this.setState({
-                dataSet: {
-                    Data: null,
-                    startDate: null,
-                    endDate: null
-                } })
+            this.createPlot();
             this.getData(this.props);
+            return;
         }
 
-        if (prevProps.fftStartTime != this.props.fftStartTime || prevProps.fftWindow != this.props.fftWindow) {
-            if (this.props.fftStartTime > 0) 
-                this.updateCycle(this, this.props.fftStartTime, this.props.fftWindow);
-            
-            else 
-                this.updateCycle(this, null, null);
-            
-       }
-
-        if (!(isEqual(prevProps.colorSettings, this.props.colorSettings))) {
-            this.createDataRows(this.state.dataSet.Data);
+        if (!(isEqual(prevState, this.state))) {
+           this.updateLines(this);
+           this.updatePlot(this);
+           return;
         }
 
-        if (!(isEqual(prevProps.unitSettings, this.props.unitSettings))) {
-            this.createDataRows(this.state.dataSet.Data);
-        }
-
-       if (!(isEqual(props, nextPropsClone))) {
-           this.getData(this.props);
+        if (!(isEqual(props, nextPropsClone))) {
+            this.updatePlot(this);
         }
         
-    }
-
-    // create Plot
-   createDataRows(data) {
-        
-        // if start and end date are not provided calculate them from the data set
-       var ctrl = this;
-
-        // remove the previous SVG object
-        d3.select("#graphWindow-" + this.props.legendKey + "-" + this.props.eventId +  ">svg").remove()
-
-        //add new Plot
-        var container = d3.select("#graphWindow-" + this.props.legendKey + "-" + this.props.eventId);
-        
-        var svg = container.append("svg")
-            .attr("width", '100%')
-            .attr("height", this.props.height).append("g")
-            .attr("transform", "translate(40,10)");
-
-
-       // First Thing is we Resolve any auto Units properly
-       ctrl.updateYLimits(ctrl)
-       ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
-       ctrl.updateYLimits(ctrl)
-
-       //Then Create Axisis
-       ctrl.yScale = d3.scaleLinear()
-           .domain([ctrl.yMin,ctrl.yMax])
-           .range([this.props.height - 60, 0]);
-
-       ctrl.xScale = d3.scaleLinear()
-            .domain([this.props.startTime, this.props.endTime])
-            .range([20, container.node().getBoundingClientRect().width - 100])
-            ;
-
-        ctrl.yAxis = svg.append("g").attr("transform", "translate(20,0)").call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)));
-
-        ctrl.xAxis = svg.append("g").attr("transform", "translate(0," + (this.props.height - 60) + ")").call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)));
-
-     
-        // Calculate cycle window if neccesarry
-        if (this.props.fftStartTime && this.props.fftWindow) {
-            this.cycleStart = this.props.fftStartTime;
-            this.cycleEnd = this.props.fftStartTime + this.props.fftWindow * 16.6666
-        }
-        else {
-            this.cycleStart = null;
-            this.cycleEnd = null;
-        }
-        
-       if (ctrl.props.options.showXLabel) {
-           let timeLabel = this.getTimeAxisLabel(ctrl)
-
-
-            this.xlabel = svg.append("text")
-                .attr("transform", "translate(" + ((container.node().getBoundingClientRect().width - 100) / 2) + " ," + (this.props.height - 20) + ")")
-                .style("text-anchor", "middle")
-                .text(timeLabel);
-        }
-
-       //Add the YLabel
-        
-
-       let yUnitLabel = ""
-       if (ctrl.state.dataSet.Data != null)
-           yUnitLabel = this.getYAxisLabel(ctrl)
-       
-        this.ylabel = svg.append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("y",-30)
-            .attr("x", -(this.props.height / 2 - 30))
-            .attr("dy", "1em")
-            .style("text-anchor", "middle")
-            .text(yUnitLabel);
-
-        this.hover = svg.append("line")
-            .attr("stroke", "#000")
-            .attr("x1", 10).attr("x2", 10)
-            .attr("y1", 0).attr("y2", this.props.height - 60)
-            .style("opacity", 0.5);
-
-        // for zooming
-        this.brush = svg.append("rect")
-            .attr("stroke", "#000")
-            .attr("x", 10).attr("width", 0)
-            .attr("y", 0).attr("height", this.props.height - 60)
-            .attr("fill", "black")
-            .style("opacity", 0);
-
-        var clip = svg.append("defs").append("svg:clipPath")
-            .attr("id", "clip-" + this.props.legendKey)
-            .append("svg:rect")
-            .attr("width", 'calc(100% - 120px)')
-            .attr("height", '100%')
-            .attr("x", 20)
-            .attr("y", 0);
-
-        if (this.cycleStart != null && this.cycleEnd != null) {
-            this.cycle = svg.append("rect")
-                .attr("stroke", "#000")
-                .attr("x", this.xScale(this.cycleStart)).attr("width", (this.xScale(this.cycleEnd) - this.xScale(this.cycleStart)))
-                .attr("y", 0).attr("height", this.props.height - 60)
-                .attr("fill", "black")
-                .style("opacity", 0.5)
-                .attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
-        }
-        else
-        {
-            this.cycle = svg.append("rect")
-                .attr("stroke", "#000")
-                .attr("x", 10).attr("width", 0)
-                .attr("y", 0).attr("height", this.props.height - 60)
-                .attr("fill", "black")
-                .style("opacity", 0)
-                .attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
-        }
-
-        
-        ctrl.paths = svg.append("g").attr("id","path-" + this.props.legendKey).attr("clip-path", "url(#clip-" + this.props.legendKey + ")");
-
-       if (ctrl.state.dataSet.Data != null)
-           ctrl.state.dataSet.Data.filter(item => item.Enabled).forEach((row, key, map) => {
-               ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue } })).attr("fill", "none")
-                   .attr("stroke", ctrl.getColor(ctrl,row.Color))
-                    .attr("stroke-width", 2.0)
-                    .attr("d", d3.line()
-                        .x(function (d) { return ctrl.xScale(ctrl.AdjustX(ctrl, d)) })
-                        .y(function (d) { return ctrl.yScale(ctrl.AdjustY(ctrl,d)) })
-                        .defined(function (d) {
-                            let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
-                            let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
-                            return tx && ty;
-                        })
-                );
-
-                if (row.DataMarker && row.DataMarker.length > 0) {
-                    let markers = ctrl.paths.append("g")
-                    row.DataMarker.forEach(item => {
-                        let r = { x: item[0], y: item[1], units: row.Unit, base: row.BaseValue }
-                        markers.append("circle").datum(r)
-                            .attr("fill", ctrl.getColor(ctrl, row.Color))
-                            .attr("r", 5.0)
-                            .attr("cx", function (d) {
-                                return ctrl.xScale(ctrl.AdjustX(ctrl, d))
-                            })
-                            .attr("cy", function (d) {
-                                return ctrl.yScale(ctrl.AdjustY(ctrl, d))
-                            })
-                    })
-                    
-                }
-
-
-            });      
-
-        this.area = svg.append("g").append("svg:rect")
-            .attr("width", 'calc(100% - 120px)')
-            .attr("height", '100%')
-            .attr("x", 20)
-            .attr("y", 0)
-            .style("opacity", 0)
-            .on('mousemove', function () { ctrl.mousemove(ctrl) })
-            .on('mouseout', function () { ctrl.mouseout(ctrl) })
-            .on('mousedown', function () { ctrl.mousedown(ctrl) })
-            .on('mouseup', function () { ctrl.mouseup(ctrl) })
-            .on("wheel", function () { ctrl.mousewheel(ctrl) })
     }
 
     AdjustX(ctrl: D3LineChartBase, d: any) {
@@ -549,63 +572,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
     }
 
-    updateZoom(ctrl: D3LineChartBase) {
-
-       // First Update auto Units and Y Limits
-       ctrl.updateYLimits(ctrl)
-       ctrl.ActiveUnits = ctrl.resolveAutoScale(ctrl)
-       ctrl.updateYLimits(ctrl)
-
-       ctrl.xScale.domain([ctrl.props.startTime, ctrl.props.endTime]);
-
-       ctrl.updateTimeAxis(ctrl)
-
-       ctrl.yScale.domain([ctrl.yMin, ctrl.yMax]);
-
-       ctrl.ylabel.text(ctrl.getYAxisLabel(ctrl))
-
-       ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
-
-       ctrl.paths.selectAll('path')
-            .transition()
-            .duration(1000)
-            .attr("d", d3.line()
-                .x(function (d) {
-                    return ctrl.xScale(ctrl.AdjustX(ctrl,d))
-                })
-                .y(function (d) {
-                    return ctrl.yScale(ctrl.AdjustY(ctrl, d))
-                })
-                .defined(function (d) {
-                    let tx = !isNaN(parseFloat(ctrl.xScale(ctrl.AdjustX(ctrl, d))));
-                    let ty = !isNaN(parseFloat(ctrl.yScale(ctrl.AdjustY(ctrl, d))));
-                    return tx && ty;
-                })
-        )
-
-        ctrl.paths.selectAll("g").selectAll('circle')
-            .transition()
-            .duration(1000)
-            .attr("cx", function (d) {
-                return ctrl.xScale(ctrl.AdjustX(ctrl, d))
-            })
-            .attr("cy", function (d) {
-                return ctrl.yScale(ctrl.AdjustY(ctrl, d))
-            })
-
-
-
-
-       if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
-           if (ctrl.cycleStart == -1)
-               return
-
-            ctrl.cycle.transition()
-                .duration(1000)
-                .attr("x", this.AdjustTime(ctrl,ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) -this.xScale(ctrl.cycleStart)))
-        }
-    }
-
     mousemove(ctrl: D3LineChartBase) {
         
             // recover coordinate we need
@@ -625,14 +591,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 selectedData = x0
         }
 
-
-        if (ctrl.movingCycle) {
-
-            let leftEdge = Math.min(selectedData, ctrl.props.endTime - this.props.fftWindow*16.6666)
-            ctrl.updateCycle(ctrl, leftEdge, this.props.fftWindow)
-        }
-
-      
         ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
 
         let h = ctrl.mousedownPos.x - ctrl.xScale(selectedData);
@@ -685,61 +643,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             }
         }
     }
-
-    mousedown(ctrl: D3LineChartBase) {
-
-        // create square as neccesarry
-        var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
-        var y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
-
-        //Check if we are clicking in cycle marker
-        if (ctrl.cycleStart && ctrl.cycleEnd) {
-            if (x0 > ctrl.cycleStart && x0 < ctrl.cycleEnd) {
-                ctrl.movingCycle = true;
-                return;
-            }
-        }
-
-        ctrl.mousedownPos.x = ctrl.xScale(x0)
-        ctrl.mousedownPos.y = ctrl.yScale(y0)
-
-        ctrl.brush
-            .attr("x", ctrl.xScale(x0))
-            .attr("width", 0)
-            .style("opacity", 0.25)
-        
-
-    }
-
-    updateCycle(ctrl: D3LineChartBase, cycleStart?: number, cycleWindow?: number) {
-        if (cycleStart && cycleWindow) {
-            ctrl.cycleStart = cycleStart;
-            
-            ctrl.cycleEnd = cycleStart + cycleWindow * 16.6666
-        }
-        else {
-            ctrl.cycleStart = null;
-            ctrl.cycleEnd = null;
-        }
-
-        if (ctrl.cycleStart != null && ctrl.cycleEnd != null) {
-            ctrl.cycle.attr("x", ctrl.xScale(ctrl.cycleStart)).attr("width", (this.xScale(ctrl.cycleEnd) - this.xScale(ctrl.cycleStart)))
-                .style("opacity", 0.5);
-        }
-        else {
-            ctrl.cycle.attr("x", 10).attr("width", 0)
-                .style("opacity", 0);
-        }
-
-
-    }
-
+  
     updateHover(ctrl: D3LineChartBase, hover: number) {
+        if (ctrl.hover == null)
+            return;
         if (hover == null) {
             ctrl.hover.style("opacity", 0);
             return;
         }
-
+        /*
         if (ctrl.props.tableSetter && ctrl.state.dataSet) {
 
             let points = [];
@@ -769,7 +681,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             ctrl.props.tableSetter(points)
            
         }
-
+        */
         ctrl.hover.attr("x1", hover)
             .attr("x2", hover)
 
@@ -777,122 +689,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     }
 
-    mouseout(ctrl: D3LineChartBase) {
-        ctrl.setState({ Hover: null });
-        ctrl.brush.style("opacity", 0);
-        ctrl.mousedownPos = { x: 0, y: 0 };
-
-        if (ctrl.movingCycle) {
-            ctrl.props.stateSetter({ fftStartTime: ctrl.cycleStart });
-        }
-        ctrl.movingCycle = false;
-    }
-
-    mouseup(ctrl: D3LineChartBase) {
-
-        if (ctrl.movingCycle) {
-            ctrl.movingCycle = false;
-            ctrl.props.stateSetter({ fftStartTime: ctrl.cycleStart });
-            return
-        }
-
-        if (ctrl.mousedownPos.x < 10) {
-            ctrl.brush.style("opacity", 0);
-            ctrl.mousedownPos.x = 0;
-            return;
-        }
-
-        let x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
-
-        let h = ctrl.mousedownPos.x - ctrl.xScale(x0);
-
-        if (ctrl.props.pointTable && h < 3 && ($('#accumulatedpoints').css('display') != "none" || $('#tooltipwithdelta').css('display') != "none") ) {
-            let points = ctrl.props.pointTable;
-            
-            ctrl.state.dataSet.Data.forEach((row, key, map) => {
-                let i = d3.bisect(row.DataPoints.map(item => item[0]), x0, 1);
-                if (row.Enabled) {
-                    points.push({
-                        ChannelID: row.ChannelID,
-                        ChartLabel: row.ChartLabel,
-                        XaxisLabel: row.Unit,
-                        Color: row.Color,
-                        LegendKey: ctrl.props.legendKey,
-
-                        LegendClass: row.LegendClass,
-                        LegendGroup: row.LegendGroup,
-                        SecondaryLegendClass: row.SecondaryLegendClass,
-                        Value: row.DataPoints[i][1],
-                        Enabled: row.Enabled,
-                        Time: row.DataPoints[i][0],
-                        BaseValue: row.BaseValue,
-                    })
-                }
-            })
-            ctrl.props.stateSetter({ pointTable: points })
-
-            ctrl.brush.style("opacity", 0);
-            ctrl.mousedownPos = { x: 0, y: 0 };
-            return
-            // Add this point to the PointsTable 
-        }
-
-        let xMouse = ctrl.xScale.invert(ctrl.mousedownPos.x)
-
-        if (ctrl.props.zoomMode == "x") {
-            // If we have a cycle window adjust left and right to ensure you are outside the cycle window
-            if (ctrl.cycleStart && ctrl.cycleEnd && ctrl.cycleStart > 0) {
-                xMouse = (h < 0) ? Math.min(xMouse, ctrl.cycleStart) : Math.max(xMouse, ctrl.cycleEnd)
-                x0 = (h > 0) ? Math.min(x0, ctrl.cycleStart) : Math.max(x0, ctrl.cycleEnd)
-
-            }
-
-
-            if (Math.abs(xMouse - x0) > 10) {
-
-                if (h < 0) {
-                    ctrl.props.stateSetter({ startTime: xMouse, endTime: x0 });
-                }
-                else {
-                    ctrl.props.stateSetter({ startTime: x0, endTime: xMouse });
-                }
-            }
-        }
-
-        ctrl.brush.style("opacity", 0);
-        ctrl.mousedownPos = { x: 0, y: 0 };
-    }
-
-    mousewheel(ctrl: D3LineChartBase) {
-
-        // start by figuring out new total
-        let diffX = ctrl.props.endTime - ctrl.props.startTime
-        let diffNew = diffX - diffX * 0.15 * d3.event.wheelDelta / 120;
-
-        let zoomPoint = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
-
-        //then figure out left and right proportion
-        let pLeft = (zoomPoint - ctrl.props.startTime) / diffX
-        let pRight = (ctrl.props.endTime - zoomPoint) / diffX
-
-        if (diffNew < 10) {
-            diffNew = 10;
-        }
-
-        //ensure we do not go beyond startdate and enddate
-        let newStartTime = Math.max((zoomPoint - pLeft * diffNew), ctrl.props.startTime)
-        let newEndTime = Math.min((zoomPoint + pRight * diffNew), ctrl.props.endTime)
-
-        ctrl.props.stateSetter({ startTimeVis: newStartTime, endTimeVis: newEndTime });
-    }
-    
     updateTimeAxis(ctrl: D3LineChartBase) {
 
         ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
 
+        
         if (ctrl.props.options.showXLabel) {
             ctrl.xlabel.text(ctrl.getTimeAxisLabel(ctrl))
         }
+        else
+            if (ctrl.props.options.showXLabel) {
+                ctrl.xlabel.text("")
+            }
     }
 
     getTimeAxisLabel(ctrl: D3LineChartBase) {
@@ -926,7 +734,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     }
 
-    // Get current Y axis limits needs work
     updateYLimits(ctrl: D3LineChartBase) {
 
         if (ctrl.state.dataSet.Data == null)
@@ -1002,18 +809,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return result;
     }
 
-   handleSeriesLegendClick(event: React.MouseEvent<HTMLDivElement>, row: iD3DataSeries, key: number, getData?: boolean): void {
-        if (row != undefined)
-            row.Enabled = !row.Enabled;
-
-        this.setState({ dataSet: this.state.dataSet });    
-
-        this.createDataRows(this.state.dataSet.Data);
-
-       if (getData == true)
-            this.getData(this.props);
-    }
-
     getColor(ctrl: D3LineChartBase, color: string) {
 
         if (ctrl.props.colorSettings[color] !== undefined)
@@ -1021,11 +816,19 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return ctrl.props.colorSettings.random
     }
 
+    handleSeriesLegendClick(event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) {
+        this.setState(function (state, props) {
+            let data = cloneDeep(state.dataSet);
+            data.Data[index].Enabled = !data.Data[index].Enabled;
+            return { dataSet: data };
+        });
+    }
+
     render() {
         return (
             <div>
                 <div id={"graphWindow-" + this.props.legendKey + "-" + this.props.eventId} style={{ height: this.props.height, float: 'left', width: 'calc(100% - 220px)' }}></div>
-                <D3Legend colors={this.props.colorSettings} data = { this.state.dataSet.Data } callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height} />
+                <D3Legend colors={this.props.colorSettings} data={this.state.dataSet.Data} callback={this.handleSeriesLegendClick.bind(this)} type={this.props.legendKey} height={this.props.height} />
             </div>
         );
     }

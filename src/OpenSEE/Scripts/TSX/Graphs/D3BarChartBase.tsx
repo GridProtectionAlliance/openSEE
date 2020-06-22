@@ -122,7 +122,7 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
             else
                 dataSet = data;
 
-            dataSet.Data = this.createLegendRows(dataSet.Data);
+            //dataSet.Data = this.createLegendRows(dataSet.Data);
 
             this.createDataRows(dataSet.Data);
 

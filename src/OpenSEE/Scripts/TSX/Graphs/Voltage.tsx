@@ -52,24 +52,16 @@ export default class Voltage extends React.Component<any, any>{
 
 
     getData(props: D3LineChartBaseProps, baseCtrl: D3LineChartBase, ctrl: Voltage): void {
-        
+
+        baseCtrl.createPlot();
         var eventDataHandle = ctrl.openSEEService.getWaveformVoltageData(props.eventId).then(data => {
             if (data == null) return;
 
-            var dataSet = baseCtrl.state.dataSet;
+            baseCtrl.addData(data.Data, baseCtrl)
 
-            if (dataSet.Data != undefined)
-                dataSet.Data = dataSet.Data.concat(data.Data);
-            else
-                dataSet = data;
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
-
-            dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-            baseCtrl.createDataRows(dataSet.Data);
-
-            baseCtrl.setState({ dataSet: data });
 
         });
         this.setState({ eventDataHandle: eventDataHandle });
@@ -78,22 +70,11 @@ export default class Voltage extends React.Component<any, any>{
             setTimeout(() => {
                 if (data == null) return;
 
-                var dataSet = baseCtrl.state.dataSet;
+                baseCtrl.addData(data.Data, baseCtrl)
 
-                if (dataSet.Data != undefined)
-                    dataSet.Data = dataSet.Data.concat(data.Data);
-                else
-                    dataSet = data;
 
                 if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
                 if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
-
-
-                dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-
-                baseCtrl.createDataRows(dataSet.Data);
-
-                baseCtrl.setState({ dataSet: dataSet });
 
             }, 200);
         })

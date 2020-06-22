@@ -49,18 +49,11 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
 
         var eventDataHandle = ctrl.openSEEService.getWaveformTCEData(props.eventId).then(data => {
             var dataSet = baseCtrl.state.dataSet;
-            if (dataSet.Data != undefined)
-                dataSet.Data = dataSet.Data.concat(data.Data);
-            else
-                dataSet = data;
+            baseCtrl.addData(data.Data, baseCtrl)
+
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
-
-            dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-            baseCtrl.createDataRows(dataSet.Data);
-
-            baseCtrl.setState({ dataSet: data });
         });
 
         this.setState({ eventDataHandle: eventDataHandle });

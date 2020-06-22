@@ -55,20 +55,11 @@ export default class Current extends React.Component<any, any>{
         var eventDataHandle = ctrl.openSEEService.getWaveformCurrentData(props.eventId).then(data => {
             if (data == null) return;
 
-            var dataSet = baseCtrl.state.dataSet;
-            
-            if (dataSet.Data != undefined)
-                dataSet.Data = dataSet.Data.concat(data.Data);
-            else
-                dataSet = data;
+            baseCtrl.addData(data.Data, baseCtrl)
+
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
-
-            dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-
-            baseCtrl.createDataRows(dataSet.Data);
-            baseCtrl.setState({ dataSet: data });
         });
         this.setState({ eventDataHandle: eventDataHandle });
 
@@ -77,20 +68,12 @@ export default class Current extends React.Component<any, any>{
                 if (data == null) return;
 
 
-                var dataSet = baseCtrl.state.dataSet;
+                baseCtrl.addData(data.Data, baseCtrl)
 
-                if (dataSet.Data != undefined)
-                    dataSet.Data = dataSet.Data.concat(data.Data);
-                else
-                    dataSet = data;
 
                 if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
                 if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
-                dataSet.Data = baseCtrl.createLegendRows(dataSet.Data);
-
-                baseCtrl.createDataRows(dataSet.Data)
-                baseCtrl.setState({ dataSet: dataSet });
             }, 200);
         })
 
