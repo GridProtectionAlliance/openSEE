@@ -23,6 +23,7 @@
 
 import * as React  from 'react';
 import * as moment from 'moment';
+import { cloneDeep } from "lodash";
 
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './D3LineChartBase';
@@ -31,6 +32,7 @@ import { AnalyticParamters } from '../Components/RadioselectWindow';
 interface AnalyticLineprops extends D3LineChartBaseProps {
     analytic: string,
     analyticParameter: AnalyticParamters,
+    yAxisLimits: any
 }
 
 export default class AnalyticLine extends React.Component<any, any>{
@@ -121,6 +123,17 @@ export default class AnalyticLine extends React.Component<any, any>{
         
         return this.openSEEService.getFaultDistanceData(eventid)
     }
+
+    setYLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(this.props.yAxisLimits);
+        lim.Analytic.min = ymin;
+        lim.Analytic.max = ymax;
+        lim.Analytic.auto = auto;
+
+        this.props.stateSetter({ yLimits: lim });
+
+    }
+
     render() {
         return <D3LineChartBase
             legendKey={this.props.analytic}
@@ -139,6 +152,13 @@ export default class AnalyticLine extends React.Component<any, any>{
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
+            mouseMode={"zoom"}
+            yLimits={{
+                min: this.props.yAxisLimits.Voltage.min,
+                max: this.props.yAxisLimits.Voltage.max,
+                auto: this.props.yAxisLimits.Voltage.auto,
+                setter: this.setYLimits.bind(this)
+            }}
         />
     }
 

@@ -27,10 +27,14 @@ import * as React  from 'react';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import * as moment from 'moment';
+import { cloneDeep } from "lodash";
+
+export interface TCEChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+
 
 export default class TCE extends React.Component<D3LineChartBaseProps, any>{
     openSEEService: OpenSEEService;
-    props: D3LineChartBaseProps
+    props: TCEChartProps
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -60,6 +64,15 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
         
     }
    
+    setYLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(this.props.yAxisLimits);
+        lim.TCE.min = ymin;
+        lim.TCE.max = ymax;
+        lim.TCE.auto = auto;
+
+        this.props.stateSetter({ yLimits: lim });
+
+    }
 
     render() {
         return <D3LineChartBase
@@ -79,6 +92,13 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
+            mouseMode={"zoom"}
+            yLimits={{
+                min: this.props.yAxisLimits.Voltage.min,
+                max: this.props.yAxisLimits.Voltage.max,
+                auto: this.props.yAxisLimits.Voltage.auto,
+                setter: this.setYLimits.bind(this)
+            }}
         />
     }
 

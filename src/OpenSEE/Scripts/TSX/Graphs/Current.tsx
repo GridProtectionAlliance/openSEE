@@ -28,10 +28,14 @@ import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import * as moment from 'moment';
 import { Unit } from '../jQueryUI Widgets/SettingWindow';
+import { cloneDeep } from "lodash";
+
+export interface CurrentChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+
 
 export default class Current extends React.Component<any, any>{
     openSEEService: OpenSEEService;
-    props: D3LineChartBaseProps
+    props: CurrentChartProps
     constructor(props) {
         super(props);
         this.openSEEService = new OpenSEEService();
@@ -81,7 +85,17 @@ export default class Current extends React.Component<any, any>{
 
 
     }
-    
+
+    setYLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(this.props.yAxisLimits);
+        lim.Current.min = ymin;
+        lim.Current.max = ymax;
+        lim.Current.auto = auto;
+
+        this.props.stateSetter({ yLimits: lim });
+
+    }
+
 
     render() {
         return <D3LineChartBase
@@ -103,6 +117,13 @@ export default class Current extends React.Component<any, any>{
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
+            mouseMode={"zoom"}
+            yLimits={{
+                min: this.props.yAxisLimits.Voltage.min,
+                max: this.props.yAxisLimits.Voltage.max,
+                auto: this.props.yAxisLimits.Voltage.auto,
+                setter: this.setYLimits.bind(this)
+            }}
         />
     }
 

@@ -28,9 +28,11 @@ import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { Unit } from '../jQueryUI Widgets/SettingWindow';
 
+export interface DigitalChartProps extends D3LineChartBaseProps { yAxisLimits: any }
 
-export default function Digital(props: D3LineChartBaseProps): JSX.Element {
-    
+export default function Digital(props: DigitalChartProps): JSX.Element {
+
+
     var openSEEService = new OpenSEEService();
     return createElement(D3LineChartBase, {
         legendKey: "Digital",
@@ -48,6 +50,7 @@ export default function Digital(props: D3LineChartBaseProps): JSX.Element {
         unitSettigs: props.unitSettings,
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
+        mouseMode: "zoom"
     }, null);
 
 }

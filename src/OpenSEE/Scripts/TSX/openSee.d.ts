@@ -124,6 +124,7 @@ declare interface OpenSEEState {
     plotUnits: GraphUnits,
     plotColors: Colors,
     zoomMode: ZoomMode,
+    yLimits: any
 }
 
 declare interface iListObject {
