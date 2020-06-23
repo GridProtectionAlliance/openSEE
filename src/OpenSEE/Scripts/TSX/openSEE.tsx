@@ -355,7 +355,18 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         if (this.state.barChartReset != null)
             this.state.barChartReset()
 
-        this.setState({ startTime: new Date(eventStartTime + "Z").getTime(), endTime: new Date(eventEndTime + "Z").getTime() })
+        let lim = this.state.yLimits;
+        lim.Voltage.auto = true;
+        lim.Current.auto = true;
+        lim.TCE.auto = true;
+        lim.Analog.auto = true;
+        lim.Digital.auto = true;
+        lim.Analytic.auto = true;
+
+
+        this.setState({ startTime: new Date(eventStartTime + "Z").getTime(), endTime: new Date(eventEndTime + "Z").getTime(), yLimits: lim })
+
+
     }
 
     calculateHeights(obj: any) {
@@ -381,6 +392,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.TooltipWithDeltaTable;
         delete prop.barChartReset;
         delete prop.AnalyticSettings;
+
+        //At least for now these Settings should not be URL driven
+        delete prop.zoomMode;
+        delete prop.plotUnits;
+        delete prop.plotColors;
+        delete prop.yLimits;
 
         prop.harmonic = state.AnalyticSettings.harmonic;
         prop.order = state.AnalyticSettings.order;
