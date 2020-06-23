@@ -275,7 +275,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             .attr("id", "clip-" + this.props.legendKey)
             .append("svg:rect")
             .attr("width", 'calc(100% - 120px)')
-            .attr("height", '100%')
+            .attr("height", this.props.height - 60)
             .attr("x", 20)
             .attr("y", 0);
         //Add Zoom Window
@@ -730,10 +730,28 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     }
                 }
             }
+            if (ctrl.props.zoomMode == "xy") {
 
+                if (Math.abs(xMouse - x0) > 10) {
 
+                    if (h < 0) {
+                        ctrl.props.stateSetter({ startTime: xMouse, endTime: x0 });
+                    }
+                    else {
+                        ctrl.props.stateSetter({ startTime: x0, endTime: xMouse });
+                    }
+                }
 
+                if (Math.abs(yMouse - y0) > 0.00001) {
 
+                    if (w < 0) {
+                        ctrl.props.yLimits.setter(y0, yMouse, false);
+                    }
+                    else {
+                        ctrl.props.yLimits.setter(yMouse, y0, false);
+                    }
+                }
+            }
 
             ctrl.brush.style("opacity", 0);
             ctrl.mousedownPos = { x: 0, y: 0 };
@@ -818,6 +836,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     getYAxisLabel(ctrl: D3LineChartBase) {
+
         const distinct = (value, index, self) => {
             return self.indexOf(value) === index;
         }
