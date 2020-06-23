@@ -43,6 +43,7 @@ export interface D3LineChartBaseProps {
     endTime: number,
     stateSetter: Function,
     height: number,
+    width: number,
     hover: number,
     unitSettings: GraphUnits,
     colorSettings: Colors,
@@ -488,6 +489,12 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.mouseMode;
         delete nextPropsClone.mouseMode;
 
+        delete props.height;
+        delete nextPropsClone.height
+        delete props.width;
+        delete nextPropsClone.width;
+
+
 
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
@@ -498,6 +505,13 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             this.getData(this.props);
             return;
         }
+
+        if ((prevProps.height != this.props.height) || (prevProps.width != this.props.width)) {
+            this.createPlot();
+            return;
+        }
+
+
 
         if (!(isEqual(prevState, this.state))) {
            this.updateLines(this);

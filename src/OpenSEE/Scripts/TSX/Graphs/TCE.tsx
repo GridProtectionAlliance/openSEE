@@ -81,6 +81,7 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             getData={(props, ctrl) => this.getData(props, ctrl, this)}
             eventId={this.props.eventId}
             height={this.props.height}
+            width={this.props.width}
             stateSetter={this.props.stateSetter}
             options={this.props.options}
             startTime={this.props.startTime}

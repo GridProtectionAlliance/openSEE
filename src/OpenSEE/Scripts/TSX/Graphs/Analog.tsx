@@ -37,6 +37,7 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         openSEEServiceFunction: (eventid) => openSEEService.getAnalogsData(eventid),
         eventId: props.eventId,
         height: props.height,
+        width: props.width,
         stateSetter: props.stateSetter,
         options: props.options,
         startTime: props.startTime,
