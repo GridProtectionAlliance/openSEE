@@ -75,6 +75,7 @@ export interface Colors {
     Va: string,
     Vb: string,
     Vc: string,
+    Vn: string,
     Vab: string,
     Vbc: string,
     Vca: string,
@@ -82,6 +83,7 @@ export interface Colors {
     Ib: string,
     Ic: string,
     Ires: string,
+    In: string,
     random: string,
     faultDistSimple: string,
     faultDistReact: string,
@@ -210,6 +212,7 @@ export const DefaultColors =
     Va: "#A30000",
     Vb: "#0029A3",
     Vc: "#007A29",
+    Vn: "#d3d3d3",
     Vab: "#A30000",
     Vbc: "#0029A3",
     Vca: "#007A29",
@@ -217,6 +220,7 @@ export const DefaultColors =
     Ib: "#0066CC",
     Ic: "#33CC33",
     Ires: "#d3d3d3",
+    In: "#d3d3d3",
     random: "#4287f5",
     faultDistSimple: "#edc240",
     faultDistReact: "#afd8f8",
@@ -350,8 +354,8 @@ export default class SettingWindow extends React.Component<any, any>{
                                         {(this.props.showV ?
                                             <>
                                                 {PlotHeader("Voltage")}
-                                                VoltageColors(this.props.colorSetting, this.props.stateSetter) 
-                                                VoltageLLColors(this.props.colorSetting, this.props.stateSetter) 
+                                                {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                                {VoltageLLColors(this.props.colorSetting, this.props.stateSetter)} 
                                             
                                             </>: null)}
                                         {(this.props.showI ?
@@ -392,11 +396,11 @@ export default class SettingWindow extends React.Component<any, any>{
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showI?
                                             CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} 
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
                                         {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showI ?
                                             CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
                                         {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}     
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}     
                                         {(this.props.showAnalytics == "Frequency" ?
                                             <div className="row">
                                                 <div className="col">
@@ -415,11 +419,11 @@ export default class SettingWindow extends React.Component<any, any>{
                                         {this.props.showAnalytics == "LowPassFilter" && !this.props.showI ?
                                             CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
                                         {this.props.showAnalytics == "LowPassFilter" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
                                         {this.props.showAnalytics == "HighPassFilter" && !this.props.showI ?
                                             CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
                                         {this.props.showAnalytics == "HighPassFilter" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter) : null}
+                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
 
                                     </div>                                
                                 </div>
@@ -503,7 +507,7 @@ export default class SettingWindow extends React.Component<any, any>{
 
 }
 
-const VoltageColors = (colorSetting: Colors, stateSetter: Function) => {
+const VoltageColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
     
     return (
         <div className="row">
@@ -515,6 +519,9 @@ const VoltageColors = (colorSetting: Colors, stateSetter: Function) => {
             </div>
             <div className="col">
                 <ColorButton label={"VCN"} color={colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vc = color; stateSetter({ plotColors: col }); }} />
+            </div>
+            <div className="col">
+                <ColorButton label={"VN"} color={colorSetting.Vn} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vn = color; stateSetter({ plotColors: col }); }} />
             </div>
         </div>
         );
@@ -563,6 +570,10 @@ const CurrentColors = (colorSetting: Colors, stateSetter: Function, showIres: bo
             {showIres ?
                 <div className="col">
                     <ColorButton label={"IRES"} color={colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ires = color; stateSetter({ plotColors: col }); }} />
+                </div> : null}
+            {showIres ?
+                <div className="col">
+                    <ColorButton label={"IN"} color={colorSetting.In} statesetter={(color) => { let col = cloneDeep(colorSetting); col.In = color; stateSetter({ plotColors: col }); }} />
                 </div> : null}
         </div>
     );
