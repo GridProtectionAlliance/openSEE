@@ -180,7 +180,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
     }
 
-   getData(props: D3LineChartBaseProps) {
+    getData(props: D3LineChartBaseProps) {
         var handle = this.props.openSEEServiceFunction(props.eventId).then((data: iD3DataSet) => {
             if (data == null) {
                 return;
@@ -500,7 +500,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete nextPropsClone.yLimits;
 
 
-
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
         }
@@ -530,6 +529,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
            return;
         }
 
+        
         if (!(isEqual(props, nextPropsClone))) {
             this.updatePlot(this);
         }

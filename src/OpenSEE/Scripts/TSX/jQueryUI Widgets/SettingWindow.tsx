@@ -282,49 +282,49 @@ export default class SettingWindow extends React.Component<any, any>{
                         
                             <div id="collapseUnit" className="collapse show" aria-labelledby="headingUnit" data-parent="#panelSettings">
                                 <div className="card-body">
-                                    <div className="container">
+                                    <div>
                                         {(this.props.showV ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
                                                 <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showI ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
                                                 <UnitSelector label={"Phase"} unit={this.props.unitSetting.Angle} setter={this.updatePhaseUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showTCE ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"TCE"} unit={this.props.unitSetting.TCE} setter={this.updateTCEUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "FirstDerivative" ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"dV/dt"} unit={this.props.unitSetting.VoltageperSecond} setter={this.updatedVdtUnits.bind(this)} />
                                                 <UnitSelector label={"dI/dt"} unit={this.props.unitSetting.CurrentperSecond} setter={this.updatedIdtUnits.bind(this)} />
                                             </div> : null )}
                                         {(this.props.showAnalytics == "ClippedWaveforms" ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
                                                 <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "Frequency" ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"Frequency"} unit={this.props.unitSetting.Freq} setter={this.updateFrequencyUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "LowPassFilter" ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits.bind(this)} />
                                                 <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits.bind(this)} />
                                             </div> : null)}
                                         {(this.props.showAnalytics == "HighPassFilter" ?
-                                            <div className="row">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
                                                 <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
                                                 <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
@@ -470,51 +470,35 @@ export default class SettingWindow extends React.Component<any, any>{
     }
 
     updateTimeUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.Time = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Time: unit } })
     }
 
     updateVoltageUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.Voltage = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Voltage: unit } })
     }
 
     updateCurrentUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.Current = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Current: unit } })
     }
 
     updatePhaseUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.Angle = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Angle: unit } })
     }
 
     updatedVdtUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.VoltageperSecond = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, VoltageperSecond: unit } })
     }
 
     updatedIdtUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.CurrentperSecond = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, CurrentperSecond: unit } })
     }
 
     updateFrequencyUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.Freq = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Freq: unit } })
     }
 
     updateTCEUnits(unit: UnitSetting) {
-        let settings = cloneDeep(this.props.unitSetting)
-        settings.TCE = unit;
-        this.props.stateSetter({ plotUnits: settings })
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, TCE: unit } })
     }
 
 }
@@ -638,21 +622,17 @@ class UnitSelector extends React.Component {
 
         let entries = this.props.unit.options.map((option, index) => <a key={"option-" + index} className="dropdown-item"
             onClick={() => {
-                let r = this.props.unit;
-                r.current = option;
-                this.props.setter(r)
+                this.props.setter({ ...this.props.unit, current: option })
             }
             }> {option.Label} </a>)
 
         return (
-            <div className="col">
-                <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
-                    <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {this.props.label + " [" + this.props.unit.current.Short + "]"}
-                    </button>
-                    <div className="dropdown-menu">
-                        {entries}
-                    </div>
+            <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
+                <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {this.props.label + " [" + this.props.unit.current.Short + "]"}
+                </button>
+                <div className="dropdown-menu">
+                    {entries}
                 </div>
             </div>
         );
