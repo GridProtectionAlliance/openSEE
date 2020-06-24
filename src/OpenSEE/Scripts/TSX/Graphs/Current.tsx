@@ -59,7 +59,7 @@ export default class Current extends React.Component<any, any>{
         var eventDataHandle = ctrl.openSEEService.getWaveformCurrentData(props.eventId).then(data => {
             if (data == null) return;
 
-            baseCtrl.addData(data.Data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl)
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
@@ -72,7 +72,7 @@ export default class Current extends React.Component<any, any>{
                 if (data == null) return;
 
 
-                baseCtrl.addData(data.Data, baseCtrl)
+                baseCtrl.addData(data, baseCtrl)
 
 
                 if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });

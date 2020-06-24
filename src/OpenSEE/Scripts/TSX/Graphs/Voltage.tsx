@@ -60,7 +60,7 @@ export default class Voltage extends React.Component<any, any>{
         var eventDataHandle = ctrl.openSEEService.getWaveformVoltageData(props.eventId).then(data => {
             if (data == null) return;
 
-            baseCtrl.addData(data.Data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl)
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
@@ -73,7 +73,7 @@ export default class Voltage extends React.Component<any, any>{
             setTimeout(() => {
                 if (data == null) return;
 
-                baseCtrl.addData(data.Data, baseCtrl)
+                baseCtrl.addData(data, baseCtrl)
 
 
                 if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
@@ -88,8 +88,6 @@ export default class Voltage extends React.Component<any, any>{
     }
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
-        console.log("updating")
-        console.log(ymin)
         let lim = cloneDeep(this.props.yAxisLimits);
         console.log()
         lim.Voltage.min = ymin;

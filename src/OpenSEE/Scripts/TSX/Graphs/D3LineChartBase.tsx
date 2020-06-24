@@ -29,6 +29,7 @@ import { utc } from "moment";
 import D3Legend from './D3Legend';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
+import duration from "moment"
 import { Unit, GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) => void;
@@ -67,7 +68,7 @@ export interface D3PlotOptions {
 }
 
 export interface iD3DataSet {
-    Data: Array<GraphSeries>,
+    Data: Array<iD3DataSeries>,
     EventStartTime: number,
     EventEndTime: number,
     FaultTime: number
@@ -91,10 +92,8 @@ export interface iD3DataSeries {
     BaseValue: number,
     DataPoints: Array<[number, number]>,
     DataMarker: Array<[number, number]>,
-}
 
-interface GraphSeries extends iD3DataSeries {
-    path: any,
+    path?: any,
 }
 
 interface D3LineChartBaseState {
@@ -189,7 +188,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 return;
             }
 
-            this.addData(data.Data, this)
+            this.addData(data, this)
 
             
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
@@ -332,11 +331,18 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        
     }
 
-    addData(data, ctrl: D3LineChartBase) {
+    addData(data: iD3DataSet, ctrl: D3LineChartBase) {
         ctrl.setState(function (state, props) {
             let ste = cloneDeep(state.dataSet)
+
+            if (ste.EventEndTime == 0)
+                ste.EventEndTime = data.EventEndTime;
+
+            if (ste.EventStartTime == 0)
+                ste.EventStartTime = data.EventStartTime;
+
             if (ste.Data !== null)
-                ste.Data = state.dataSet.Data.concat(data.map(item => {
+                ste.Data = state.dataSet.Data.concat(data.Data.map(item => {
                     let row = item;
                     if (ctrl.paths !== undefined) {
                         row.path = ctrl.paths.append("path").datum(row.DataPoints.map(item => { return { x: item[0], y: item[1], unit: row.Unit, base: row.BaseValue, color: row.Color} })).attr("fill", "none")
@@ -358,7 +364,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                     return row;
                 }));
             else
-                ste.Data = data.map(item => {
+                ste.Data = data.Data.map(item => {
                     let row = item;
 
                     if (ctrl.paths !== undefined) {
@@ -552,38 +558,51 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        let TS = moment(d);
        let h = ctrl.xScale.domain()[1] - ctrl.xScale.domain()[0]
 
-       if (ctrl.props.unitSettings.Time.current.Short == 'auto') {
-           if (h < 100)
-               return TS.format("SSS.S")
-           else if (h < 1000)
-               return TS.format("ss.SS")
-           else
-               return TS.format("ss.S")
-       }
-       else if (ctrl.props.unitSettings.Time.current.Short == 's') {
-           if (h < 100)
-               return TS.format("ss.SSS")
-           else if (h < 1000)
-               return TS.format("ss.SS")
-           else
-               return TS.format("ss.S")
-       }
-       else if (ctrl.props.unitSettings.Time.current.Short == 'ms')
-           if (h < 100)
-               return TS.format("SSS.S")
-           else
-               return TS.format("SSS")
+        if (ctrl.props.unitSettings.Time.current.Short == 'auto') {
+            if (h < 100)
+                return TS.format("SSS.S")
+            else if (h < 1000)
+                return TS.format("ss.SS")
+            else
+                return TS.format("ss.S")
+        }
+        else if (ctrl.props.unitSettings.Time.current.Short == 's') {
+            if (h < 100)
+                return TS.format("ss.SSS")
+            else if (h < 1000)
+                return TS.format("ss.SS")
+            else
+                return TS.format("ss.S")
+        }
+        else if (ctrl.props.unitSettings.Time.current.Short == 'ms')
+            if (h < 100)
+                return TS.format("SSS.S")
+            else
+                return TS.format("SSS")
 
-       else if (ctrl.props.unitSettings.Time.current.Short == 'min')
-           return TS.format("mm:ss")
+        else if (ctrl.props.unitSettings.Time.current.Short == 'min')
+            return TS.format("mm:ss")
 
-       else if (ctrl.props.unitSettings.Time.current.Short == 'ms since event')
-           if (h < 100)
-               return TS.format("SSS.S")
-           else
-               return TS.format("SSS")
-        
-            
+        else if (ctrl.props.unitSettings.Time.current.Short == 'ms since event') {
+            let ms = d - ctrl.state.dataSet.EventStartTime
+            if (h < 2)
+                return ms.toFixed(3)
+            if (h < 5)
+                return ms.toFixed(2)
+            else
+                return ms.toFixed(1)
+        }
+
+        else if (ctrl.props.unitSettings.Time.current.Short == 'cycles') {
+            let cyc = (d - ctrl.state.dataSet.EventStartTime) * 60.0 / 1000.0;
+            h = h * 60.0 / 1000.0;
+            if (h < 2)
+                return cyc.toFixed(3)
+            if (h < 5)
+                return cyc.toFixed(2)
+            else
+                return cyc.toFixed(1)
+        }
     }
 
     formatValueTick(ctrl: D3LineChartBase, d: number) {
@@ -823,7 +842,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.hover.style("opacity", 1);
 
     }
-
 
     updateTimeAxis(ctrl: D3LineChartBase) {
 

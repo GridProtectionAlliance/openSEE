@@ -124,6 +124,7 @@ export const DefaultUnits = {
             { Label: "minutes", Short: "min", Factor: 0 },
             { Label: "milliseconds", Short: "ms", Factor: 0 },
             { Label: "milliseconds since event", Short: "ms since event", Factor: 0 },
+            { Label: "cycles since event", Short: "cycles", Factor: 0 },
             { Label: "auto", Short: "auto", Factor: 0 }
         ]
     },

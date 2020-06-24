@@ -300,8 +300,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     stateSetter(obj) {
-        console.log(JSON.parse(JSON.stringify(obj)))
-
         if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
             obj.fftStartTime = this.state.startTime;
         }

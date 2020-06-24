@@ -56,7 +56,7 @@ export default class AnalyticLine extends React.Component<any, any>{
 
         var eventDataHandle = this.openSEEServiceFunction(props.eventId).then(data => {
 
-            baseCtrl.addData(data.Data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl)
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
