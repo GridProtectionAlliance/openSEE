@@ -350,82 +350,57 @@ export default class SettingWindow extends React.Component<any, any>{
                             </div>
                             <div id="collapseTwo" className="collapse" aria-labelledby="headingTwo" data-parent="#panelSettings">
                                 <div className="card-body">
-                                    <div className="container">
                                         {(this.props.showV ?
-                                            <>
-                                                {PlotHeader("Voltage")}
-                                                {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
-                                                {VoltageLLColors(this.props.colorSetting, this.props.stateSetter)} 
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                            {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                            {VoltageLLColors(this.props.colorSetting, this.props.stateSetter)} 
                                             
-                                            </>: null)}
+                                        </div>: null)}
                                         {(this.props.showI ?
-                                            <>
-                                                {PlotHeader("Current")}
-                                                CurrentColors(this.props.colorSetting, this.props.stateSetter, true)
-                                            </> : null)}
-                                        {(this.props.showTCE && !this.props.showI ?
-                                            <>
-                                                {PlotHeader("TCE")}
-                                                CurrentColors(this.props.colorSetting, this.props.stateSetter, false)
-                                            </> : null)}
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                                {CurrentColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                            </div> : null)}
+                                        {(this.props.showTCE?
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                                {CurrentColors(this.props.colorSetting, this.props.stateSetter, false)}
+                                            </div> : null)}
                                                 
                                         {(this.props.showAnalytics == "FaultDistance" ?
-                                            <>
-                                            {PlotHeader("Fault Distance")}
-                                            <div className="row">
-                                                <div className="col">
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                     <ColorButton label={"Simple"} color={this.props.colorSetting.faultDistSimple} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistSimple = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
                                                     <ColorButton label={"Reactance"} color={this.props.colorSetting.faultDistReact} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistReact = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
                                                     <ColorButton label={"Takagi"} color={this.props.colorSetting.faultDistTakagi} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistTakagi = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                        <ColorButton label={"Modified Takagi"} color={this.props.colorSetting.faultDistModTakagi} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistModTakagi = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                        <ColorButton label={"Novosel"} color={this.props.colorSetting.faultDistNovosel} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistNovosel = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                        <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                            </div> 
-                                            </>: null)}
-                                        {this.props.showAnalytics == "FirstDerivative" && !this.props.showI?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} 
-                                        {this.props.showAnalytics == "FirstDerivative" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
-                                        {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showI ?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
-                                        {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}     
-                                        {(this.props.showAnalytics == "Frequency" ?
-                                            <div className="row">
-                                                <div className="col">
-                                                    <ColorButton label={"f AN"} color={this.props.colorSetting.freqVa} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVa = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                    <ColorButton label={"f BN"} color={this.props.colorSetting.freqVb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVb = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                    <ColorButton label={"f CN"} color={this.props.colorSetting.freqVc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVc = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
-                                                <div className="col">
-                                                    <ColorButton label={"f avg"} color={this.props.colorSetting.freqAll} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqAll = color; this.props.stateSetter({ plotColors: col }); }} />
-                                                </div>
+                                                    <ColorButton label={"Modified Takagi"} color={this.props.colorSetting.faultDistModTakagi} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistModTakagi = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"Novosel"} color={this.props.colorSetting.faultDistNovosel} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistNovosel = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
                                             </div> : null)}
-                                        {this.props.showAnalytics == "LowPassFilter" && !this.props.showI ?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
-                                        {this.props.showAnalytics == "LowPassFilter" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
-                                        {this.props.showAnalytics == "HighPassFilter" && !this.props.showI ?
-                                            CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null}
-                                        {this.props.showAnalytics == "HighPassFilter" && !this.props.showV ?
-                                            VoltageColors(this.props.colorSetting, this.props.stateSetter, false) : null}
-
-                                    </div>                                
+                                    {this.props.showAnalytics == "FirstDerivative" ?
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                            {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                            {CurrentColors(this.props.colorSetting, this.props.stateSetter, true)} 
+                                        </div>: null}
+                                    {this.props.showAnalytics == "ClippedWaveforms" && !this.props.showI ?
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                            {CurrentColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                            {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                        </div> : null}     
+                                    {(this.props.showAnalytics == "Frequency" ?
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                                    <ColorButton label={"f AN"} color={this.props.colorSetting.freqVa} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVa = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"f BN"} color={this.props.colorSetting.freqVb} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVb = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"f CN"} color={this.props.colorSetting.freqVc} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqVc = color; this.props.stateSetter({ plotColors: col }); }} />
+                                                    <ColorButton label={"f avg"} color={this.props.colorSetting.freqAll} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.freqAll = color; this.props.stateSetter({ plotColors: col }); }} />
+                                        </div> : null)}
+                                    {this.props.showAnalytics == "LowPassFilter" ?
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                            {VoltageColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                            {CurrentColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                        </div>: null}
+                                    {this.props.showAnalytics == "HighPassFilter" && !this.props.showI ?
+                                        <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                            {VoltageColors(this.props.colorSetting, this.props.stateSetter, false)}
+                                            {CurrentColors(this.props.colorSetting, this.props.stateSetter, true)}
+                                        </div> : null}       
                                 </div>
                             </div>
                         </div>
@@ -441,21 +416,35 @@ export default class SettingWindow extends React.Component<any, any>{
                                 <div className="card-body">
                                     <div className="container">
                                         {(this.props.showV ? 
-                                            <>
-                                                {PlotHeader("Voltage")}
                                                 <YLimitSetting
                                                     limit={this.props.voltageLimits}
                                                     setter={(update) => { this.props.stateSetter({ voltageLimits: update }); }}
-                                                />
-                                                </>: null)}
+                                                /> : null)}
                                         {(this.props.showI ?
-                                            <>
-                                                {PlotHeader("Current")}
-                                                <YLimitSetting
-                                                    limit={this.props.currentLimits}
+                                            <YLimitSetting
+                                                limit={this.props.currentLimits}
                                                 setter={(update) => { this.props.stateSetter({ currentLimits: update }); }}
-                                                /> 
-                                            </>: null)}
+                                            /> : null)}
+                                        {(this.props.showTCE ?
+                                            <YLimitSetting
+                                                limit={this.props.tceLimits}
+                                                setter={(update) => { this.props.stateSetter({ tceLimits: update }); }}
+                                            /> : null)}
+                                        {(this.props.showAnalogs ?
+                                            <YLimitSetting
+                                                limit={this.props.analogLimits}
+                                                setter={(update) => { this.props.stateSetter({ analogLimits: update }); }}
+                                            /> : null)}
+                                        {(this.props.showdigitals ?
+                                            <YLimitSetting
+                                                limit={this.props.digitalLimits}
+                                                setter={(update) => { this.props.stateSetter({ digitalLimits: update }); }}
+                                            /> : null)}
+                                        {(this.props.showAnalytics !== "" ?
+                                            <YLimitSetting
+                                                limit={this.props.analyticLimits}
+                                                setter={(update) => { this.props.stateSetter({ analyticLimits: update }); }}
+                                            /> : null)}
                                     </div>
                                 </div>
                             </div>
@@ -507,22 +496,14 @@ export default class SettingWindow extends React.Component<any, any>{
 
 }
 
-const VoltageColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
+const VoltageColors = (colorSetting: Colors, stateSetter: Function, showNeutral: boolean) => {
     
     return (
-        <div className="row">
-            <div className="col">
-                <ColorButton label={"VAN"} color={colorSetting.Va} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Va = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"VBN"} color={colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vb = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"VCN"} color={colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vc = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"VN"} color={colorSetting.Vn} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vn = color; stateSetter({ plotColors: col }); }} />
-            </div>
+        <div>
+            <ColorButton label={"VAN"} color={colorSetting.Va} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Va = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"VBN"} color={colorSetting.Vb} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vb = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"VCN"} color={colorSetting.Vc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vc = color; stateSetter({ plotColors: col }); }} />
+            {(showNeutral ? < ColorButton label={"VN"} color={colorSetting.Vn} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vn = color; stateSetter({ plotColors: col }); }} /> : null)}
         </div>
         );
 }
@@ -530,26 +511,10 @@ const VoltageColors = (colorSetting: Colors, stateSetter: Function, showIres: bo
 const VoltageLLColors = (colorSetting: Colors, stateSetter: Function) => {
 
     return (
-        <div className="row">
-            <div className="col">
-                <ColorButton label={"VAB"} color={colorSetting.Vab} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vab = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"VBC"} color={colorSetting.Vbc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vbc = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"VCA"} color={colorSetting.Vca} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vca = color; stateSetter({ plotColors: col }); }} />
-            </div>
-        </div>
-    );
-}
-
-const PlotHeader = (label: string) =>{
-    return (
-        <div className="row">
-            <div className="col">
-                <h4 className="display-6">{label} Plot</h4>
-            </div>
+        <div>
+            <ColorButton label={"VAB"} color={colorSetting.Vab} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vab = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"VBC"} color={colorSetting.Vbc} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vbc = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"VCA"} color={colorSetting.Vca} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Vca = color; stateSetter({ plotColors: col }); }} />
         </div>
     );
 }
@@ -557,24 +522,12 @@ const PlotHeader = (label: string) =>{
 const CurrentColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
 
     return (
-        <div className="row">
-            <div className="col">
-                <ColorButton label={"IAN"} color={colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ia = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"IBN"} color={colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ib = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            <div className="col">
-                <ColorButton label={"ICN"} color={colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ic = color; stateSetter({ plotColors: col }); }} />
-            </div>
-            {showIres ?
-                <div className="col">
-                    <ColorButton label={"IRES"} color={colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ires = color; stateSetter({ plotColors: col }); }} />
-                </div> : null}
-            {showIres ?
-                <div className="col">
-                    <ColorButton label={"IN"} color={colorSetting.In} statesetter={(color) => { let col = cloneDeep(colorSetting); col.In = color; stateSetter({ plotColors: col }); }} />
-                </div> : null}
+        <div>
+            <ColorButton label={"IAN"} color={colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ia = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"IBN"} color={colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ib = color; stateSetter({ plotColors: col }); }} />
+            <ColorButton label={"ICN"} color={colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ic = color; stateSetter({ plotColors: col }); }} />
+            {showIres ? <ColorButton label={"IRES"} color={colorSetting.Ires} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ires = color; stateSetter({ plotColors: col }); }} /> : null}
+            {showIres ? <ColorButton label={"IN"} color={colorSetting.In} statesetter={(color) => { let col = cloneDeep(colorSetting); col.In = color; stateSetter({ plotColors: col }); }} /> : null}
         </div>
     );
 }
@@ -707,37 +660,33 @@ class YLimitSetting extends React.Component {
 
     render() {
         return (
-            <div className="row">
-                <div className="col">
-                    <div className="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label className={"btn btn-secondary " + (!this.props.limit.auto ? "" : "active")} onClick={() => {
-                            let result = this.props.limit;
-                            result.auto = true;
-                            this.props.setter(result);
-                        }}>
-                            <input type="radio" defaultChecked={this.props.limit.auto}/>
-                            auto
-                        </label>
-                        <label className={"btn btn-secondary " + (this.props.limit.auto? "": "active")} onClick={() => {
-                            let result = this.props.limit;
-                            result.auto = false;
-                            this.props.setter(result);
-                        }}>
-                            <input type="radio" checked={!this.props.limit.auto} onChange={() => { console.log("here") }} />
-                            manual
-                        </label>
+            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                <div className="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label className={"btn btn-secondary " + (!this.props.limit.auto ? "" : "active")} onClick={() => {
+                        let result = this.props.limit;
+                        result.auto = true;
+                        this.props.setter(result);
+                    }}>
+                        <input type="radio" defaultChecked={this.props.limit.auto}/>
+                        auto
+                    </label>
+                    <label className={"btn btn-secondary " + (this.props.limit.auto? "": "active")} onClick={() => {
+                        let result = this.props.limit;
+                        result.auto = false;
+                        this.props.setter(result);
+                    }}>
+                        <input type="radio" checked={!this.props.limit.auto} onChange={() => { console.log("here") }} />
+                        manual
+                    </label>
+                </div>
+                <div className="input-group">
+                    <input type="number" className={"form-control " + (this.state.errorMin ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.min} onChange={this.changedMin.bind(this)} />
+                    <input type="number" className={"form-control " + (this.state.errorMax ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.max} onChange={this.changedMax.bind(this)} />
+                    <div className="input-group-append">
+                        <span className="input-group-text">..</span>
                     </div>
                 </div>
-                <div className="col">
-                    <div className="input-group">
-                        <input type="number" className={"form-control " + (this.state.errorMin ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.min} onChange={this.changedMin.bind(this)} />
-                        <input type="number" className={"form-control " + (this.state.errorMax ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.max} onChange={this.changedMax.bind(this)} />
-                        <div className="input-group-append">
-                            <span className="input-group-text">..</span>
-                        </div>
-                    </div>
-                </div>
-            </div> 
+            </div>
         );
     }
 }
