@@ -34,7 +34,7 @@ import LightningData from './../jQueryUI Widgets/LightningData';
 import { iD3DataPoint, ZoomMode } from '../Graphs/D3LineChartBase';
 import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
 import { clone } from 'lodash';
-import SettingWindow, { GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
+import SettingWindow, { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
 
 declare var homePath: string;
 
@@ -65,7 +65,12 @@ export default class OpenSEENavbar extends React.Component {
         unitData: GraphUnits,
         colorData: Colors,
         zoomMode: ZoomMode,
-        yLimits: any,
+        voltageLimits: yLimits,
+        currentLimits: yLimits,
+        tceLimits: yLimits,
+        digitalLimits: yLimits,
+        analogLimits: yLimits,
+        analyticLimits: yLimits,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -255,8 +260,13 @@ export default class OpenSEENavbar extends React.Component {
                     showdigitals={this.props.breakerdigitals}
                     showTCE={this.props.displayTCE}
                     showAnalytics={this.props.displayAnalytics}
-                    yLimits={this.props.yLimits}
-                />
+                    voltageLimits={this.props.voltageLimits}
+                    currentLimits={this.props.currentLimits}
+                    tceLimits={this.props.tceLimits}
+                    digitalLimits={this.props.digitalLimits}
+                    analogLimits={this.props.analogLimits}
+                    analyticLimits={this.props.analyticLimits}
+    />
             </nav>
         );
  

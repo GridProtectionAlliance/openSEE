@@ -30,7 +30,7 @@ import * as moment from 'moment';
 import { Unit } from '../jQueryUI Widgets/SettingWindow';
 import { cloneDeep } from "lodash";
 
-export interface CurrentChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+export interface CurrentChartProps extends D3LineChartBaseProps { }
 
 
 export default class Current extends React.Component<any, any>{
@@ -87,12 +87,12 @@ export default class Current extends React.Component<any, any>{
     }
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(this.props.yAxisLimits);
-        lim.Current.min = ymin;
-        lim.Current.max = ymax;
-        lim.Current.auto = auto;
+        let lim = cloneDeep(this.props.yLimits);
+        lim.min = ymin;
+        lim.max = ymax;
+        lim.auto = auto;
 
-        this.props.stateSetter({ yLimits: lim });
+        this.props.stateSetter({ currentLimits: lim });
 
     }
 
@@ -119,12 +119,7 @@ export default class Current extends React.Component<any, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={"zoom"}
-            yLimits={{
-                min: this.props.yAxisLimits.Current.min,
-                max: this.props.yAxisLimits.Current.max,
-                auto: this.props.yAxisLimits.Current.auto,
-                setter: this.setYLimits.bind(this)
-            }}
+            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
         />
     }
 

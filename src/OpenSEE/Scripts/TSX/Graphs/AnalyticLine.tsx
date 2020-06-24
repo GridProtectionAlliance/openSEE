@@ -32,7 +32,6 @@ import { AnalyticParamters } from '../Components/RadioselectWindow';
 interface AnalyticLineprops extends D3LineChartBaseProps {
     analytic: string,
     analyticParameter: AnalyticParamters,
-    yAxisLimits: any
 }
 
 export default class AnalyticLine extends React.Component<any, any>{
@@ -125,12 +124,12 @@ export default class AnalyticLine extends React.Component<any, any>{
     }
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(this.props.yAxisLimits);
-        lim.Analytic.min = ymin;
-        lim.Analytic.max = ymax;
-        lim.Analytic.auto = auto;
+        let lim = cloneDeep(this.props.yLimits);
+        lim.min = ymin;
+        lim.max = ymax;
+        lim.auto = auto;
 
-        this.props.stateSetter({ yLimits: lim });
+        this.props.stateSetter({ analyticLimits: lim });
 
     }
 
@@ -154,12 +153,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={"zoom"}
-            yLimits={{
-                min: this.props.yAxisLimits.Voltage.min,
-                max: this.props.yAxisLimits.Voltage.max,
-                auto: this.props.yAxisLimits.Voltage.auto,
-                setter: this.setYLimits.bind(this)
-            }}
+            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
         />
     }
 

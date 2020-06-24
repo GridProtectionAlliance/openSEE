@@ -30,7 +30,7 @@ import D3Legend from './D3Legend';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
 import duration from "moment"
-import { Unit, GraphUnits, Colors } from '../jQueryUI Widgets/SettingWindow';
+import { Unit, GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
@@ -49,16 +49,14 @@ export interface D3LineChartBaseProps {
     unitSettings: GraphUnits,
     colorSettings: Colors,
     zoomMode: ZoomMode,
+    yLimits: yLimits,
     pointTable?: Array<iD3DataPoint>,
     options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function, 
 };
 
-export type axisLimits = {min: number, max: number, auto: boolean, setter: Function}
-
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string, openSEEServiceFunction: StandardAnalyticServiceFunction,
     mouseMode: MouseMode,
-    yLimits?: axisLimits
     getData?: GetDataFunction,
    
 }

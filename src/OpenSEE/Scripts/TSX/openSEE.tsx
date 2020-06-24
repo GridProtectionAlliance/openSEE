@@ -50,7 +50,7 @@ import About from './Components/About';
 
 import { D3LineChartBaseProps, iD3DataPoint, ZoomMode } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
-import { Unit, GraphUnits, UnitSetting, DefaultUnits, DefaultColors } from './jQueryUI Widgets/SettingWindow';
+import { Unit, GraphUnits, UnitSetting, DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
 
 export class OpenSEE extends React.Component<{}, OpenSEEState>{
     history: object;
@@ -105,15 +105,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
             plotUnits: DefaultUnits,
             plotColors: DefaultColors,
-            yLimits: {
-                Voltage: { min: 0, max: 0, auto: true},
-                Current: { min: 0, max: 0, auto: true},
-                TCE: { min: 0, max: 0, auto: true},
-                Analog: { min: 0, max: 0, auto: true},
-                Digital: { min: 0, max: 0, auto: true },
-                Analytic: { min: 0, max: 0, auto: true },
-            }
-           
+            voltageLimits: { min: 0, max: 0, auto: true },
+            currentLimits: { min: 0, max: 0, auto: true },
+            tceLimits: { min: 0, max: 0, auto: true },
+            digitalLimits: { min: 0, max: 0, auto: true },
+            analogLimits: { min: 0, max: 0, auto: true },
+            analyticLimits: { min: 0, max: 0, auto: true }
         }
 
         this.TableData = [];
@@ -283,15 +280,20 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         unitData={this.state.plotUnits}
                         colorData={this.state.plotColors}
                         zoomMode={this.state.zoomMode}
-                        yLimits={this.state.yLimits}
+                        voltageLimits={this.state.voltageLimits}
+                        currentLimits={this.state.currentLimits}
+                        tceLimits={this.state.tceLimits}
+                        digitalLimits={this.state.digitalLimits}
+                        analogLimits={this.state.analogLimits}
+                        analyticLimits={this.state.analyticLimits}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
-                        <ViewerWindow width={this.state.Width} yAxisLimits = { this.state.yLimits } zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
-                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow width={this.state.Width} yAxisLimits={this.state.yLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} key={a} eventId={a} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>} />) : null)}
+                        <ViewerWindow width={this.state.Width} yLimits={this.state.voltageLimits} currentLimits={this.state.currentLimits} tceLimits={this.state.tceLimits} analogLimits={this.state.analogLimits} digitalLimits={this.state.digitalLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
+                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow width={this.state.Width} yLimits={this.state.voltageLimits} currentLimits={this.state.currentLimits} tceLimits={this.state.tceLimits} analogLimits={this.state.analogLimits} digitalLimits={this.state.digitalLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} key={a} eventId={a} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>} />) : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
                             <AnalyticBar colorSettings={this.state.plotColors} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic != "FFT" && this.state.analytic != "HarmonicSpectrum") ?
-                            <AnalyticLine width={this.state.Width} yAxisLimits={this.state.yLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} options={{ showXLabel: true }} /> : null)}
+                            <AnalyticLine width={this.state.Width} yLimits={this.state.analyticLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} options={{ showXLabel: true }} /> : null)}
 
                     </div>
                 </div>
@@ -354,16 +356,16 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         if (this.state.barChartReset != null)
             this.state.barChartReset()
 
-        let lim = this.state.yLimits;
-        lim.Voltage.auto = true;
-        lim.Current.auto = true;
-        lim.TCE.auto = true;
-        lim.Analog.auto = true;
-        lim.Digital.auto = true;
-        lim.Analytic.auto = true;
-
-
-        this.setState({ startTime: new Date(eventStartTime + "Z").getTime(), endTime: new Date(eventEndTime + "Z").getTime(), yLimits: lim })
+        this.setState({
+            startTime: new Date(eventStartTime + "Z").getTime(),
+            endTime: new Date(eventEndTime + "Z").getTime(),
+            voltageLimits: { min: 0, max: 0, auto: true },
+            currentLimits: { min: 0, max: 0, auto: true },
+            tceLimits: { min: 0, max: 0, auto: true },
+            digitalLimits: { min: 0, max: 0, auto: true },
+            analogLimits: { min: 0, max: 0, auto: true },
+            analyticLimits: { min: 0, max: 0, auto: true }
+        })
 
 
     }
@@ -396,7 +398,14 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.zoomMode;
         delete prop.plotUnits;
         delete prop.plotColors;
-        delete prop.yLimits;
+
+        delete prop.voltageLimits;
+        delete prop.currentLimits;
+        delete prop.tceLimits;
+        delete prop.digitalLimits;
+        delete prop.analogLimits;
+        delete prop.analyticLimits;
+
 
         prop.harmonic = state.AnalyticSettings.harmonic;
         prop.order = state.AnalyticSettings.order;
@@ -413,7 +422,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 }
 
 interface ViewerWindowProps extends D3LineChartBaseProps {
-    isCompare: boolean, displayVolt: boolean, displayCur: boolean, displayTCE: boolean, displayDigitals: boolean, displayAnalogs: boolean, label: string | JSX.Element, yAxisLimits: any
+    isCompare: boolean, displayVolt: boolean, displayCur: boolean, displayTCE: boolean, displayDigitals: boolean, displayAnalogs: boolean, label: string | JSX.Element,
+    currentLimits: yLimits, digitalLimits: yLimits, analogLimits: yLimits, tceLimits: yLimits
 }
 
 const ViewerWindow = (props: ViewerWindowProps) => {
@@ -421,20 +431,20 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
             <div className="card-header">{props.label}</div>
             <div className="card-body" style={{ padding: 0 }}>
-                {(props.displayVolt ? <Voltage width={props.width} yAxisLimits = { props.yAxisLimits } zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayCur ? <Current width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayDigitals ? <Digital width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayAnalogs ? <Analog width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
-                {(props.displayTCE ? <TripCoilCurrent width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
+                {(props.displayVolt ? <Voltage width={props.width} yLimits={props.yLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayCur ? <Current width={props.width} yLimits={props.currentLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayDigitals ? <Digital width={props.width} yLimits={props.digitalLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
+                {(props.displayAnalogs ? <Analog width={props.width} yLimits={props.analogLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
+                {(props.displayTCE ? <TripCoilCurrent width={props.width} yLimits={props.tceLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
             </div>
         </div>
         :
         <div>
-            {(props.displayVolt ? <Voltage width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayCur ? <Current width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayDigitals ? <Digital width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayAnalogs ? <Analog width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
-            {(props.displayTCE ? <TripCoilCurrent width={props.width} yAxisLimits={props.yAxisLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
+            {(props.displayVolt ? <Voltage width={props.width} yLimits={props.yLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayCur ? <Current width={props.width} yLimits={props.currentLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayDigitals ? <Digital width={props.width} yLimits={props.digitalLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
+            {(props.displayAnalogs ? <Analog width={props.width} yLimits={props.analogLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
+            {(props.displayTCE ? <TripCoilCurrent width={props.width} yLimits={props.tceLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
         </div>
             
         );

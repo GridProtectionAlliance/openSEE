@@ -124,7 +124,12 @@ declare interface OpenSEEState {
     plotUnits: GraphUnits,
     plotColors: Colors,
     zoomMode: ZoomMode,
-    yLimits: any
+    voltageLimits: yLimits,
+    currentLimits: yLimits,
+    tceLimits: yLimits,
+    digitalLimits: yLimits,
+    analogLimits: yLimits,
+    analyticLimits: yLimits,
 }
 
 declare interface iListObject {

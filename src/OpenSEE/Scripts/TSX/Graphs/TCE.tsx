@@ -29,7 +29,7 @@ import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBa
 import * as moment from 'moment';
 import { cloneDeep } from "lodash";
 
-export interface TCEChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+export interface TCEChartProps extends D3LineChartBaseProps { }
 
 
 export default class TCE extends React.Component<D3LineChartBaseProps, any>{
@@ -65,12 +65,12 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
     }
    
     setYLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(this.props.yAxisLimits);
-        lim.TCE.min = ymin;
-        lim.TCE.max = ymax;
-        lim.TCE.auto = auto;
+        let lim = cloneDeep(this.props.yLimits);
+        lim.min = ymin;
+        lim.max = ymax;
+        lim.auto = auto;
 
-        this.props.stateSetter({ yLimits: lim });
+        this.props.stateSetter({ tceLimits: lim });
 
     }
 
@@ -94,12 +94,7 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={"zoom"}
-            yLimits={{
-                min: this.props.yAxisLimits.Voltage.min,
-                max: this.props.yAxisLimits.Voltage.max,
-                auto: this.props.yAxisLimits.Voltage.auto,
-                setter: this.setYLimits.bind(this)
-            }}
+            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
         />
     }
 

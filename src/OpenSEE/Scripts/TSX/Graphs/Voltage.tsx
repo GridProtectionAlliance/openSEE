@@ -31,7 +31,7 @@ import { cloneDeep } from "lodash";
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 
-export interface VoltageChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+export interface VoltageChartProps extends D3LineChartBaseProps { }
 
 export default class Voltage extends React.Component<any, any>{
     openSEEService: OpenSEEService;
@@ -88,13 +88,13 @@ export default class Voltage extends React.Component<any, any>{
     }
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(this.props.yAxisLimits);
-        console.log()
-        lim.Voltage.min = ymin;
-        lim.Voltage.max = ymax;
-        lim.Voltage.auto = auto;
+        let lim = cloneDeep(this.props.yLimits);
 
-        this.props.stateSetter({ yLimits: lim });
+        lim.min = ymin;
+        lim.max = ymax;
+        lim.auto = auto;
+
+        this.props.stateSetter({ voltageLimits: lim });
 
     }
 
@@ -120,12 +120,7 @@ export default class Voltage extends React.Component<any, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={"zoom"}
-            yLimits={{
-                min: this.props.yAxisLimits.Voltage.min,
-                max: this.props.yAxisLimits.Voltage.max,
-                auto: this.props.yAxisLimits.Voltage.auto,
-                setter: this.setYLimits.bind(this)
-            }}
+            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this)}}
         />
     }
 

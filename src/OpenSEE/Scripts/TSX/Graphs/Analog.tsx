@@ -25,12 +25,23 @@ import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { Unit } from '../jQueryUI Widgets/SettingWindow';
+import { cloneDeep } from "lodash";
 
-export interface DigitalChartProps extends D3LineChartBaseProps { yAxisLimits: any }
+export interface DigitalChartProps extends D3LineChartBaseProps { }
 
 
 export default function Analog(props: DigitalChartProps): JSX.Element {
-    
+
+    function setYLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.yLimits);
+        lim.min = ymin;
+        lim.max = ymax;
+        lim.auto = auto;
+
+        props.stateSetter({ analogLimits: lim });
+
+    }
+
     var openSEEService = new OpenSEEService();
     return createElement(D3LineChartBase, {
         legendKey: "Analog",
@@ -49,7 +60,8 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         unitSettings: props.unitSettings,
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
-        mousemode: "zoom"
+        mousemode: "zoom",
+        yLimits: { ...props.yLimits, setter: setYLimits }
     }, null);
 
 }

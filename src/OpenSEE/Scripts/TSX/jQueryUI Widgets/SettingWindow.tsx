@@ -110,6 +110,14 @@ export interface GraphUnits {
     CurrentperSecond: UnitSetting,
     Freq: UnitSetting,
 }
+
+export interface yLimits {
+    min: number,
+    max: number,
+    auto: boolean,
+    setter?: (min: number, max: number, auto: boolean) => void
+}
+
 export type Unit = {
     Label: string,
     Short: string,
@@ -233,13 +241,13 @@ export interface SettingWindowProps {
     showdigitals: boolean,
     showAnalogs: boolean,
     showAnalytics: string,
-    yLimits: any,
-}
 
-interface limitSettings {
-    min: number,
-    max: number,
-    auto: boolean
+    voltageLimits: yLimits,
+    currentLimits: yLimits,
+    tceLimits: yLimits,
+    digitalLimits: yLimits,
+    analogLimits: yLimits,
+    analyticLimits: yLimits,
 }
 
 export default class SettingWindow extends React.Component<any, any>{
@@ -432,16 +440,16 @@ export default class SettingWindow extends React.Component<any, any>{
                                             <>
                                                 {PlotHeader("Voltage")}
                                                 <YLimitSetting
-                                                        limit={this.props.yLimits.Voltage}
-                                                        setter={(update) => { let lim = this.props.yLimits; lim.Voltage = update; this.props.stateSetter({ yLimits: lim }); }}
+                                                    limit={this.props.voltageLimits}
+                                                    setter={(update) => { this.props.stateSetter({ voltageLimits: update }); }}
                                                 />
                                                 </>: null)}
                                         {(this.props.showI ?
                                             <>
                                                 {PlotHeader("Current")}
                                                 <YLimitSetting
-                                                limit={this.props.yLimits.Current}
-                                                setter={(update) => { let lim = this.props.yLimits; lim.Current = update; this.props.stateSetter({ yLimits: lim }); }}
+                                                    limit={this.props.currentLimits}
+                                                setter={(update) => { this.props.stateSetter({ currentLimits: update }); }}
                                                 /> 
                                             </>: null)}
                                     </div>
@@ -652,7 +660,7 @@ class UnitSelector extends React.Component {
 }
 
 class YLimitSetting extends React.Component {
-    props: { limit: limitSettings, setter: (result: limitSettings) => void }
+    props: { limit: yLimits, setter: (result: yLimits) => void }
     state: { max: string, min: string, errorMax: boolean, errorMin: boolean }
 
     constructor(props, context) {
