@@ -120,9 +120,9 @@ export default class Current extends React.Component<any, any>{
             zoomMode={this.props.zoomMode}
             mouseMode={"zoom"}
             yLimits={{
-                min: this.props.yAxisLimits.Voltage.min,
-                max: this.props.yAxisLimits.Voltage.max,
-                auto: this.props.yAxisLimits.Voltage.auto,
+                min: this.props.yAxisLimits.Current.min,
+                max: this.props.yAxisLimits.Current.max,
+                auto: this.props.yAxisLimits.Current.auto,
                 setter: this.setYLimits.bind(this)
             }}
         />

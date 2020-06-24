@@ -65,6 +65,7 @@ export default class OpenSEENavbar extends React.Component {
         unitData: GraphUnits,
         colorData: Colors,
         zoomMode: ZoomMode,
+        yLimits: any,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -254,6 +255,7 @@ export default class OpenSEENavbar extends React.Component {
                     showdigitals={this.props.breakerdigitals}
                     showTCE={this.props.displayTCE}
                     showAnalytics={this.props.displayAnalytics}
+                    yLimits={this.props.yLimits}
                 />
             </nav>
         );

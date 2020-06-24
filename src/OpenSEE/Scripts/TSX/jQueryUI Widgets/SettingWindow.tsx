@@ -232,6 +232,13 @@ export interface SettingWindowProps {
     showdigitals: boolean,
     showAnalogs: boolean,
     showAnalytics: string,
+    yLimits: any,
+}
+
+interface limitSettings {
+    min: number,
+    max: number,
+    auto: boolean
 }
 
 export default class SettingWindow extends React.Component<any, any>{
@@ -332,14 +339,26 @@ export default class SettingWindow extends React.Component<any, any>{
                                 <div className="card-body">
                                     <div className="container">
                                         {(this.props.showV ?
-                                            <div> 
+                                            <>
+                                                {PlotHeader("Voltage")}
                                                 VoltageColors(this.props.colorSetting, this.props.stateSetter) 
                                                 VoltageLLColors(this.props.colorSetting, this.props.stateSetter) 
-                                            </div> : null)}
-                                        {(this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null)}
-                                        {(this.props.showTCE && !this.props.showI ? CurrentColors(this.props.colorSetting, this.props.stateSetter, false) : null)}
                                             
+                                            </>: null)}
+                                        {(this.props.showI ?
+                                            <>
+                                                {PlotHeader("Current")}
+                                                CurrentColors(this.props.colorSetting, this.props.stateSetter, true)
+                                            </> : null)}
+                                        {(this.props.showTCE && !this.props.showI ?
+                                            <>
+                                                {PlotHeader("TCE")}
+                                                CurrentColors(this.props.colorSetting, this.props.stateSetter, false)
+                                            </> : null)}
+                                                
                                         {(this.props.showAnalytics == "FaultDistance" ?
+                                            <>
+                                            {PlotHeader("Fault Distance")}
                                             <div className="row">
                                                 <div className="col">
                                                     <ColorButton label={"Simple"} color={this.props.colorSetting.faultDistSimple} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistSimple = color; this.props.stateSetter({ plotColors: col }); }} />
@@ -359,7 +378,8 @@ export default class SettingWindow extends React.Component<any, any>{
                                                 <div className="col">
                                                         <ColorButton label={"Double Ended"} color={this.props.colorSetting.faultDistDoubleEnd} statesetter={(color) => { let col = cloneDeep(this.props.colorSetting); col.faultDistDoubleEnd = color; this.props.stateSetter({ plotColors: col }); }} />
                                                 </div>
-                                            </div> : null)}
+                                            </div> 
+                                            </>: null)}
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showI?
                                             CurrentColors(this.props.colorSetting, this.props.stateSetter, true) : null} 
                                         {this.props.showAnalytics == "FirstDerivative" && !this.props.showV ?
@@ -396,6 +416,39 @@ export default class SettingWindow extends React.Component<any, any>{
                                 </div>
                             </div>
                         </div>
+                        <div className="card">
+                            <div className="card-header" id="headingThree">
+                                <h2 className="mb-0">
+                                    <button className="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        Axis Limits
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapseThree" className="collapse" aria-labelledby="headingThree" data-parent="#panelSettings">
+                                <div className="card-body">
+                                    <div className="container">
+                                        {(this.props.showV ? 
+                                            <>
+                                                {PlotHeader("Voltage")}
+                                                <YLimitSetting
+                                                        limit={this.props.yLimits.Voltage}
+                                                        setter={(update) => { let lim = this.props.yLimits; lim.Voltage = update; this.props.stateSetter({ yLimits: lim }); }}
+                                                />
+                                                </>: null)}
+                                        {(this.props.showI ?
+                                            <>
+                                                {PlotHeader("Current")}
+                                                <YLimitSetting
+                                                limit={this.props.yLimits.Current}
+                                                setter={(update) => { let lim = this.props.yLimits; lim.Current = update; this.props.stateSetter({ yLimits: lim }); }}
+                                                /> 
+                                            </>: null)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                     </div>
                     
                 </div>
@@ -491,6 +544,15 @@ const VoltageLLColors = (colorSetting: Colors, stateSetter: Function) => {
     );
 }
 
+const PlotHeader = (label: string) =>{
+    return (
+        <div className="row">
+            <div className="col">
+                <h4 className="display-6">{label} Plot</h4>
+            </div>
+        </div>
+    );
+}
 
 const CurrentColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
 
@@ -584,6 +646,98 @@ class UnitSelector extends React.Component {
                     </div>
                 </div>
             </div>
+        );
+    }
+}
+
+class YLimitSetting extends React.Component {
+    props: { limit: limitSettings, setter: (result: limitSettings) => void }
+    state: { max: string, min: string, errorMax: boolean, errorMin: boolean }
+
+    constructor(props, context) {
+        super(props, context);
+
+        this.state = {
+            max: props.limit.max,
+            min: props.limit.min,
+            errorMax: false,
+            errorMin: false
+        };
+    }
+
+    componentDidUpdate(prevProps: any, prevState: any) {
+
+        if ((prevProps.limit.min !== this.props.limit.min) || (prevProps.limit.max !== this.props.limit.max)) 
+            this.setState({
+                min: this.props.limit.min.toString(),
+                max: this.props.limit.max.toString(),
+                errorMax: false,
+                errorMin: false
+            })
+    }
+    
+
+    isNumber(d): boolean {
+        if (!isNaN(parseFloat(d)))
+            return true
+        return false
+    }
+
+    changedMin(event) {
+        if (this.props.limit.auto)
+            return;
+        this.setState({ min: event.target.value, errorMin: !this.isNumber(event.target.value) });
+        if (this.isNumber(event.target.value) && parseFloat(event.target.value) !== this.props.limit.min) {
+            let lim = this.props.limit;
+            lim.min = parseFloat(event.target.value);
+            this.props.setter(lim)
+        }
+    }
+
+    changedMax(event) {
+        if (this.props.limit.auto)
+            return;
+        this.setState({ max: event.target.value, errorMax: !this.isNumber(event.target.value) });
+        if (this.isNumber(event.target.value) && parseFloat(event.target.value) !== this.props.limit.max) {
+            let lim = this.props.limit;
+            lim.max = parseFloat(event.target.value);
+            this.props.setter(lim)
+        }
+    }
+
+    render() {
+        return (
+            <div className="row">
+                <div className="col">
+                    <div className="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label className={"btn btn-secondary " + (!this.props.limit.auto ? "" : "active")} onClick={() => {
+                            let result = this.props.limit;
+                            result.auto = true;
+                            this.props.setter(result);
+                        }}>
+                            <input type="radio" defaultChecked={this.props.limit.auto}/>
+                            auto
+                        </label>
+                        <label className={"btn btn-secondary " + (this.props.limit.auto? "": "active")} onClick={() => {
+                            let result = this.props.limit;
+                            result.auto = false;
+                            this.props.setter(result);
+                        }}>
+                            <input type="radio" checked={!this.props.limit.auto} onChange={() => { console.log("here") }} />
+                            manual
+                        </label>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="input-group">
+                        <input type="number" className={"form-control " + (this.state.errorMin ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.min} onChange={this.changedMin.bind(this)} />
+                        <input type="number" className={"form-control " + (this.state.errorMax ? "is-invalid" : "")} disabled={this.props.limit.auto} value={this.state.max} onChange={this.changedMax.bind(this)} />
+                        <div className="input-group-append">
+                            <span className="input-group-text">..</span>
+                        </div>
+                    </div>
+                </div>
+            </div> 
         );
     }
 }

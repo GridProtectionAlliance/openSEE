@@ -283,6 +283,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         unitData={this.state.plotUnits}
                         colorData={this.state.plotColors}
                         zoomMode={this.state.zoomMode}
+                        yLimits={this.state.yLimits}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         <ViewerWindow width={this.state.Width} yAxisLimits = { this.state.yLimits } zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
@@ -299,7 +300,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     stateSetter(obj) {
-        
+        console.log(JSON.parse(JSON.stringify(obj)))
 
         if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
             obj.fftStartTime = this.state.startTime;

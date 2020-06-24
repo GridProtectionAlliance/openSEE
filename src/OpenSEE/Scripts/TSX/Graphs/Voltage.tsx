@@ -88,7 +88,10 @@ export default class Voltage extends React.Component<any, any>{
     }
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
+        console.log("updating")
+        console.log(ymin)
         let lim = cloneDeep(this.props.yAxisLimits);
+        console.log()
         lim.Voltage.min = ymin;
         lim.Voltage.max = ymax;
         lim.Voltage.auto = auto;

@@ -133,11 +133,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     mousedownPos: { x: number, y: number };
     hover: any;
 
-
     cycle: any;
     movingCycle: boolean;
 
-    
     ActiveUnits: GraphUnits;
 
     cycleStart: number;
@@ -494,6 +492,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.width;
         delete nextPropsClone.width;
 
+        delete props.yLimits;
+        delete nextPropsClone.yLimits;
+
 
 
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
@@ -511,7 +512,13 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return;
         }
 
+        if (prevProps.yLimits.auto != this.props.yLimits.auto) {
+            this.updatePlot(this);
+        }
 
+        if (((prevProps.yLimits.max != this.props.yLimits.max) || (prevProps.yLimits.min != this.props.yLimits.min)) && !this.props.yLimits.auto) {
+            this.updatePlot(this);
+        }
 
         if (!(isEqual(prevState, this.state))) {
            this.updateLines(this);
@@ -891,6 +898,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             ctrl.yMin = ctrl.props.yLimits.min
             ctrl.yMax = ctrl.props.yLimits.max
         }
+        if (ctrl.props.yLimits.auto) 
+            ctrl.props.yLimits.setter(ctrl.yMin, ctrl.yMax, ctrl.props.yLimits.auto)
+        
+        
+
     }
 
     isNumber(d): boolean {
