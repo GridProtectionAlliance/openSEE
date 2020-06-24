@@ -110,7 +110,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             tceLimits: { min: 0, max: 0, auto: true },
             digitalLimits: { min: 0, max: 0, auto: true },
             analogLimits: { min: 0, max: 0, auto: true },
-            analyticLimits: { min: 0, max: 0, auto: true }
+            analyticLimits: { min: 0, max: 0, auto: true },
+            mouseMode: "zoom"
         }
 
         this.TableData = [];
@@ -286,6 +287,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         digitalLimits={this.state.digitalLimits}
                         analogLimits={this.state.analogLimits}
                         analyticLimits={this.state.analyticLimits}
+                        mouseMode={this.state.mouseMode}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         <ViewerWindow width={this.state.Width} yLimits={this.state.voltageLimits} currentLimits={this.state.currentLimits} tceLimits={this.state.tceLimits} analogLimits={this.state.analogLimits} digitalLimits={this.state.digitalLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />

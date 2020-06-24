@@ -130,6 +130,7 @@ declare interface OpenSEEState {
     digitalLimits: yLimits,
     analogLimits: yLimits,
     analyticLimits: yLimits,
+    mouseMode: MouseMode,
 }
 
 declare interface iListObject {

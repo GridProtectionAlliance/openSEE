@@ -31,7 +31,7 @@ import ScalarStats from './../jQueryUI Widgets/ScalarStats';
 import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
-import { iD3DataPoint, ZoomMode } from '../Graphs/D3LineChartBase';
+import { iD3DataPoint, ZoomMode, MouseMode } from '../Graphs/D3LineChartBase';
 import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
 import { clone } from 'lodash';
 import SettingWindow, { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
@@ -65,6 +65,7 @@ export default class OpenSEENavbar extends React.Component {
         unitData: GraphUnits,
         colorData: Colors,
         zoomMode: ZoomMode,
+        mouseMode: MouseMode,
         voltageLimits: yLimits,
         currentLimits: yLimits,
         tceLimits: yLimits,
@@ -184,13 +185,20 @@ export default class OpenSEENavbar extends React.Component {
                                 
                             </div>
                         </li>
-                        <li className="nav-item" style={{ width: 'calc(100% - 618px)', textAlign: 'center' }}>
-                            <img src={`${homePath}Images/openSEE - Waveform Viewer Header.png`}/>
-                        </li>
-                        <li className="nav-item" style={{ width: '156px' }}>
-                            <button className="btn btn-primary" onClick={this.props.resetZoom}>Reset Zoom</button>
+                        <li className="nav-item" style={{ width: 'calc(100% - 741px)', textAlign: 'center' }}>
 
                         </li>
+                        <li className="nav-item" style={{ width: '123px' }}>
+                            <div className="btn-group" role="group">
+                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "zoom" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "zoom" })}>
+                                    <i className="fa fa-search" ></i>
+                                </button>
+                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "pan" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "pan" })}>
+                                    <i className="fa fa-arrows" ></i>
+                                </button>
+                            </div>
+                        </li>
+
                         <li className="nav-item" style={{ width: '84px' }}>
                             <div className="btn-group dropright">
                                 <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }}>
@@ -210,6 +218,9 @@ export default class OpenSEENavbar extends React.Component {
                                     </a>
                                 </div>
                             </div>
+                        </li>
+                        <li className="nav-item" style={{ width: '156px' }}>
+                            <button className="btn btn-primary" onClick={this.props.resetZoom}>Reset Zoom</button>
                         </li>
                         <li className="nav-item" style={{ width: '84px' }}>
                             <button className="btn btn-primary" onClick={this.showhideSetting.bind(this)}>
