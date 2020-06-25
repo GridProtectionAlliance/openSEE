@@ -190,10 +190,12 @@ export default class OpenSEENavbar extends React.Component {
                         </li>
                         <li className="nav-item" style={{ width: '123px' }}>
                             <div className="btn-group" role="group">
-                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "zoom" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "zoom" })}>
+                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "zoom" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "zoom" })}
+                                    data-toggle="tooltip" data-placement="bottom" title="Zoom">
                                     <i className="fa fa-search" ></i>
                                 </button>
-                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "pan" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "pan" })}>
+                                <button type="button" className={"btn btn-primary " + (this.props.mouseMode == "pan" ? "active" : "")} onClick={() => this.props.stateSetter({ mouseMode: "pan" })}
+                                    data-toggle="tooltip" data-placement="bottom" title="Pan">
                                     <i className="fa fa-arrows" ></i>
                                 </button>
                             </div>

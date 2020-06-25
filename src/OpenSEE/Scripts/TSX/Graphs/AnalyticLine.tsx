@@ -152,7 +152,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
-            mouseMode={"zoom"}
+            mouseMode={this.props.mouseMode}
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
         />
     }

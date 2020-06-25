@@ -50,13 +50,14 @@ export interface D3LineChartBaseProps {
     colorSettings: Colors,
     zoomMode: ZoomMode,
     yLimits: yLimits,
+    mouseMode: MouseMode,
     pointTable?: Array<iD3DataPoint>,
-    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function, 
+    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function,
+    
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string, openSEEServiceFunction: StandardAnalyticServiceFunction,
-    mouseMode: MouseMode,
     getData?: GetDataFunction,
    
 }
@@ -127,7 +128,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     paths: any;
     brush: any;
     
-    mousedownPos: { x: number, y: number };
+    mousedownPos: { x: number, y: number, t: number, data: number };
+    isMouseDown: boolean;
     hover: any;
 
     cycle: any;
@@ -164,7 +166,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         
         if (ctrl.props.getData != undefined) ctrl.getData = (props) => ctrl.props.getData(props, ctrl);
 
-        ctrl.mousedownPos = { x: 0, y: 0 };
+        ctrl.mousedownPos = { x: 0, y: 0, t: 0, data: 0 };
+        ctrl.isMouseDown = false;
     }
 
     componentDidMount() {
@@ -398,19 +401,22 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         if (ctrl.paths == undefined)
             ctrl.createPlot();
 
+        let t = 0;
+        if (ctrl.props.mouseMode == "zoom")
+            t = 1000
+
         //Update Axis
         ctrl.xScale.domain([ctrl.props.startTime, ctrl.props.endTime]);
         ctrl.updateTimeAxis(ctrl)
 
         ctrl.yScale.domain([ctrl.yMin, ctrl.yMax]);
         ctrl.ylabel.text(ctrl.getYAxisLabel(ctrl))
-        ctrl.yAxis.transition().duration(1000).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
+        ctrl.yAxis.transition().duration(t).call(d3.axisLeft(ctrl.yScale).tickFormat((d, i) => ctrl.formatValueTick(ctrl, d)))
 
         //Set Colors, update Visibility and Points
-
         ctrl.paths.selectAll('path')
             .transition()
-            .duration(1000)
+            .duration(t)
             .attr("d", d3.line()
                 .x(function (d) {
                     return ctrl.xScale(ctrl.AdjustX(ctrl, d))
@@ -431,6 +437,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     updateLines(ctrl: D3LineChartBase) {
 
+        if (ctrl.state.dataSet.Data == null)
+            return;
 
         ctrl.state.dataSet.Data.map(item => {
             let row = item;
@@ -619,28 +627,47 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     mousemove(ctrl: D3LineChartBase) {
         
-            // recover coordinate we need
-        var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
-        var y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
+        // t is in ms, x,y are in px, d is in Units (see ActiveUnits to get actual units depending on line)
+        var t0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
+        var d0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
+        var x0 = d3.mouse(ctrl.area.node())[0];
+        var y0 = d3.mouse(ctrl.area.node())[1];
 
-        let selectedData = x0
+        let selectedData = t0
 
         if (!ctrl.state.dataSet.Data)
             return
 
         if (ctrl.state.dataSet.Data.length > 0) {
-            let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), x0, 1);
+            let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), t0, 1);
             if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
                 selectedData = ctrl.state.dataSet.Data[0].DataPoints[i][0]
             else
-                selectedData = x0
+                selectedData = t0
         }
 
-        ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
+        //Note that we don't want to doublecall the statesetter so we only call it for Hover if we are not about to move the axis
+        if (ctrl.props.mouseMode == "pan" && ctrl.isMouseDown) {
+            let w = x0 - ctrl.mousedownPos.x;
+            let deltaMove = ctrl.xScale.invert(w) - ctrl.props.startTime;
+            let deltaTotal = ctrl.props.endTime - ctrl.props.startTime;
+            let deltaOriginal = ctrl.xScale.invert(ctrl.mousedownPos.x) - ctrl.props.startTime
+            let originalStart = ctrl.mousedownPos.t - deltaOriginal;
+
+            ctrl.props.stateSetter({
+                Hover: x0,
+                startTime: originalStart - deltaMove,
+                endTime: originalStart - deltaMove + deltaTotal,
+            });
+
+        }
+        else
+            ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
 
         if (ctrl.props.mouseMode == "zoom") {
+            //h and w are in px
             let h = ctrl.mousedownPos.x - ctrl.xScale(selectedData);
-            let w = ctrl.mousedownPos.y - ctrl.yScale(y0);
+            let w = ctrl.mousedownPos.y - y0;
 
             if (ctrl.props.zoomMode == "x") {
                 if (h < 0) {
@@ -664,7 +691,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 }
                 else {
                     ctrl.brush.attr("height", w)
-                        .attr("y", ctrl.yScale(y0))
+                        .attr("y", y0)
                         .attr("x", 20).attr("width", 'calc(100% - 120px)')
                 }
             }
@@ -676,7 +703,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 }
                 else {
                     ctrl.brush.attr("height", w)
-                        .attr("y", ctrl.yScale(y0))
+                        .attr("y", y0)
                 }
 
                 if (h < 0) {
@@ -693,6 +720,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     mousedown(ctrl: D3LineChartBase) {
 
+        ctrl.isMouseDown = true;
         // create square as neccesarry
         var x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
         var y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
@@ -700,7 +728,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         ctrl.mousedownPos.x = ctrl.xScale(x0)
         ctrl.mousedownPos.y = ctrl.yScale(y0)
-
+        ctrl.mousedownPos.t = x0
+       
         //Check if we are clicking in cycle marker
         // This is unneccesarry for now
         if (ctrl.props.mouseMode == "collect") {
@@ -714,18 +743,22 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         if (ctrl.props.mouseMode == "zoom")
             ctrl.brush
-                .attr("x", ctrl.xScale(x0))
+                .attr("x", ctrl.mousedownPos.x)
                 .attr("width", 0)
                 .style("opacity", 0.25)
+
     }
 
     mouseout(ctrl: D3LineChartBase) {
+        ctrl.isMouseDown = false;
         ctrl.setState({ Hover: null });
         ctrl.brush.style("opacity", 0);
-        ctrl.mousedownPos = { x: 0, y: 0 };
+        ctrl.mousedownPos = { x: 0, y: 0, t: 0, data: 0 };
     }
 
     mouseup(ctrl: D3LineChartBase) {
+
+        ctrl.isMouseDown = false;
 
         let x0 = ctrl.xScale.invert(d3.mouse(ctrl.area.node())[0]);
         let y0 = ctrl.yScale.invert(d3.mouse(ctrl.area.node())[1]);
@@ -792,7 +825,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             }
 
             ctrl.brush.style("opacity", 0);
-            ctrl.mousedownPos = { x: 0, y: 0 };
+            ctrl.mousedownPos = { x: 0, y: 0, t: 0, data: 0 };
         }        
     }
 
@@ -843,7 +876,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
     updateTimeAxis(ctrl: D3LineChartBase) {
 
-        ctrl.xAxis.transition().duration(1000).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
+        let t = 0;
+        if (ctrl.props.mouseMode == "zoom")
+            t = 1000
+
+        ctrl.xAxis.transition().duration(t).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
 
         
         if (ctrl.props.options.showXLabel) {

@@ -60,7 +60,7 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         unitSettings: props.unitSettings,
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
-        mousemode: "zoom",
+        mousemode: props.mouseMode,
         yLimits: { ...props.yLimits, setter: setYLimits }
     }, null);
 
