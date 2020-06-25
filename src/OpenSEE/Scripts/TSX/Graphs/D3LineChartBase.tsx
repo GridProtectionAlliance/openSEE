@@ -648,34 +648,25 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         //Note that we don't want to doublecall the statesetter so we only call it for Hover if we are not about to move the axis
         if (ctrl.props.mouseMode == "pan" && ctrl.isMouseDown) {
-            let w = x0 - ctrl.mousedownPos.x;
-            let deltaMoveX = ctrl.xScale.invert(w) - ctrl.props.startTime;
-            let deltaTotalX = ctrl.props.endTime - ctrl.props.startTime;
-            let deltaOriginalX = ctrl.xScale.invert(ctrl.mousedownPos.x) - ctrl.props.startTime
-            let originalStartTime = ctrl.mousedownPos.t - deltaOriginalX;
-
-            let h = y0 - ctrl.mousedownPos.y;
-            let deltaMoveY = ctrl.yScale.invert(h) - ctrl.yMax;
-            let deltaTotalY = ctrl.yMax - ctrl.yMin;
-            let deltaOriginalY = ctrl.yScale.invert(ctrl.mousedownPos.y) - ctrl.yMin
-            let originalStartY = ctrl.mousedownPos.data - deltaOriginalY;
+            let deltaT = t0 - ctrl.mousedownPos.t;
+            let deltaData = d0 - ctrl.mousedownPos.data;
 
             if (ctrl.props.zoomMode == "x")
                 ctrl.props.stateSetter({
                     Hover: x0,
-                    startTime: originalStartTime - deltaMoveX,
-                    endTime: originalStartTime - deltaMoveX + deltaTotalX,
+                    startTime: ctrl.xScale.domain()[0] - deltaT,
+                    endTime: ctrl.xScale.domain()[1] - deltaT,
                 });
             if (ctrl.props.zoomMode == "y") {
-                ctrl.props.yLimits.setter(originalStartY - deltaMoveY, originalStartY - deltaMoveY + deltaTotalY, false);
+                ctrl.props.yLimits.setter(ctrl.yScale.domain()[0] - deltaData, ctrl.yScale.domain()[1] - deltaData, false);
                 ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
             }
             if (ctrl.props.zoomMode == "xy") {
-                ctrl.props.yLimits.setter(originalStartY - deltaMoveY, originalStartY - deltaMoveY + deltaTotalY, false);
+                ctrl.props.yLimits.setter(ctrl.yScale.domain()[0] - deltaData, ctrl.yScale.domain()[1] - deltaData, false);
                 ctrl.props.stateSetter({
                     Hover: x0,
-                    startTime: originalStartTime - deltaMoveX,
-                    endTime: originalStartTime - deltaMoveX + deltaTotalX,
+                    startTime: ctrl.xScale.domain()[0] - deltaT,
+                    endTime: ctrl.xScale.domain()[1] - deltaT,
                 });
             }
 
@@ -748,7 +739,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         ctrl.mousedownPos.x = ctrl.xScale(x0)
         ctrl.mousedownPos.y = ctrl.yScale(y0)
         ctrl.mousedownPos.t = x0
-       
+        ctrl.mousedownPos.data = y0
+
         //Check if we are clicking in cycle marker
         // This is unneccesarry for now
         if (ctrl.props.mouseMode == "collect") {

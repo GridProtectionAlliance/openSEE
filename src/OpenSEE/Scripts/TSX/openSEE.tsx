@@ -111,7 +111,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             digitalLimits: { min: 0, max: 0, auto: true },
             analogLimits: { min: 0, max: 0, auto: true },
             analyticLimits: { min: 0, max: 0, auto: true },
-            mouseMode: "zoom"
+            mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom"
         }
 
         this.TableData = [];
@@ -129,7 +129,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
                 fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
                 zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
-
+                mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom",
                 AnalyticSettings: {
                     harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
                     order: (query["order"] != undefined ? query['order'] : 1),
@@ -397,7 +397,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.AnalyticSettings;
 
         //At least for now these Settings should not be URL driven
-        delete prop.zoomMode;
         delete prop.plotUnits;
         delete prop.plotColors;
 
