@@ -670,6 +670,14 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 ctrl.props.yLimits.setter(originalStartY - deltaMoveY, originalStartY - deltaMoveY + deltaTotalY, false);
                 ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
             }
+            if (ctrl.props.zoomMode == "xy") {
+                ctrl.props.yLimits.setter(originalStartY - deltaMoveY, originalStartY - deltaMoveY + deltaTotalY, false);
+                ctrl.props.stateSetter({
+                    Hover: x0,
+                    startTime: originalStartTime - deltaMoveX,
+                    endTime: originalStartTime - deltaMoveX + deltaTotalX,
+                });
+            }
 
         }
         else
