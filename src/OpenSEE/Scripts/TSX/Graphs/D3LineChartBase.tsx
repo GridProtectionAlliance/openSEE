@@ -649,16 +649,27 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         //Note that we don't want to doublecall the statesetter so we only call it for Hover if we are not about to move the axis
         if (ctrl.props.mouseMode == "pan" && ctrl.isMouseDown) {
             let w = x0 - ctrl.mousedownPos.x;
-            let deltaMove = ctrl.xScale.invert(w) - ctrl.props.startTime;
-            let deltaTotal = ctrl.props.endTime - ctrl.props.startTime;
-            let deltaOriginal = ctrl.xScale.invert(ctrl.mousedownPos.x) - ctrl.props.startTime
-            let originalStart = ctrl.mousedownPos.t - deltaOriginal;
+            let deltaMoveX = ctrl.xScale.invert(w) - ctrl.props.startTime;
+            let deltaTotalX = ctrl.props.endTime - ctrl.props.startTime;
+            let deltaOriginalX = ctrl.xScale.invert(ctrl.mousedownPos.x) - ctrl.props.startTime
+            let originalStartTime = ctrl.mousedownPos.t - deltaOriginalX;
 
-            ctrl.props.stateSetter({
-                Hover: x0,
-                startTime: originalStart - deltaMove,
-                endTime: originalStart - deltaMove + deltaTotal,
-            });
+            let h = y0 - ctrl.mousedownPos.y;
+            let deltaMoveY = ctrl.yScale.invert(h) - ctrl.yMax;
+            let deltaTotalY = ctrl.yMax - ctrl.yMin;
+            let deltaOriginalY = ctrl.yScale.invert(ctrl.mousedownPos.y) - ctrl.yMin
+            let originalStartY = ctrl.mousedownPos.data - deltaOriginalY;
+
+            if (ctrl.props.zoomMode == "x")
+                ctrl.props.stateSetter({
+                    Hover: x0,
+                    startTime: originalStartTime - deltaMoveX,
+                    endTime: originalStartTime - deltaMoveX + deltaTotalX,
+                });
+            if (ctrl.props.zoomMode == "y") {
+                ctrl.props.yLimits.setter(originalStartY - deltaMoveY, originalStartY - deltaMoveY + deltaTotalY, false);
+                ctrl.props.stateSetter({ Hover: ctrl.xScale(selectedData) });
+            }
 
         }
         else
