@@ -72,13 +72,18 @@ namespace OpenSEE
         // New D3 Ploting initially only for Voltage
         public class D3Series
         {
-            public string ChartLabel;
+ 
+            public string ChartLabel; // -> not sure We need this one
+            public string LegendGroup;// LegendGroup -> Button on Top
+            // LegendHorizontal => Horizontal Category
+            // LegendVertical => Vertical category
+            // LegendVertGrp => Buttons on side
             public string Unit;
             public string Color;
             public string LegendClass; //Determines which Button this will be under in the Legend
             public string SecondaryLegendClass; //Determines which Button this will be under in the Legend
-            public string LegendGroup; //Determines the Group This will be under in the Legend 
-            public int ChannelID;
+           
+            public int ChannelID; // Probably don't need this
             public double BaseValue;
             public List<double[]> DataPoints = new List<double[]>();
             public List<double[]> DataMarker = new List<double[]>();
