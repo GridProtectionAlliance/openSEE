@@ -75,6 +75,7 @@ export interface iD3DataSet {
 
 export interface iD3DataSeries {
     LegendHorizontal: string,
+    LegendVertical: string,
     LegendGroup: string,
 
     ChannelID: number,

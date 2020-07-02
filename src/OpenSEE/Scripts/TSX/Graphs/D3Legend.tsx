@@ -45,6 +45,7 @@ export default class D3Legend extends React.Component<any, any>{
     state: {
         categories: Array<ICategory>,
         horizontal: Array<string>,
+        vertical: Array<string>,
 
     };
 
@@ -54,6 +55,7 @@ export default class D3Legend extends React.Component<any, any>{
         this.state = {
             categories: [],
             horizontal: [],
+            vertical: [],
         };
     }
 
@@ -89,6 +91,7 @@ export default class D3Legend extends React.Component<any, any>{
         if (!(isEqual(dataPrev, dataNext))) {
             const categories: Array<ICategory> = [];
             const horizontals: Array<string> = [];
+            const verticals: Array<string> = [];
 
             this.props.data.forEach(item => {
                 let index = categories.findIndex(category => category.label === item.LegendGroup);
@@ -102,10 +105,14 @@ export default class D3Legend extends React.Component<any, any>{
                 index = horizontals.findIndex(category => category === item.LegendHorizontal);
                 if (index === -1)
                     horizontals.push(item.LegendHorizontal)
+
+                index = verticals.findIndex(category => category === item.LegendVertical);
+                if (index === -1)
+                    verticals.push(item.LegendVertical)
             });
             
 
-            this.setState({ categories: categories, horizontal: horizontals });
+            this.setState({ categories: categories, horizontal: horizontals, vertical: verticals });
         }
 
     }
@@ -149,6 +156,18 @@ export default class D3Legend extends React.Component<any, any>{
                                 </div>
                             </td>)}
                         </tr>
+                        {this.state.vertical.map(item =>
+                            <tr>
+                                <td style={{ width: hWidth }}>
+                                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
+                                        <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{item}</span>
+                                    </div>
+                                </td>
+                                {this.state.horizontal.map(hitem => 
+                                    <td style={{ width: hWidth }}> </td>
+                                    )}
+                            </tr>)}
+
                     </tbody>
                 </table>
 
