@@ -72,10 +72,15 @@ namespace OpenSEE
         // New D3 Ploting initially only for Voltage
         public class D3Series
         {
+            public D3Series()
+            {
+                this.LegendHorizontal = "";
+            }
  
             public string ChartLabel; // -> not sure We need this one
-            public string LegendGroup;// LegendGroup -> Button on Top
-            // LegendHorizontal => Horizontal Category
+            public string LegendGroup;// -> Button on Top
+                                      // LegendVertGrp => Buttons on side
+            public string LegendHorizontal; //=> Horizontal Category
             // LegendVertical => Vertical category
             // LegendVertGrp => Buttons on side
             public string Unit;
@@ -219,6 +224,7 @@ namespace OpenSEE
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
                 ds => new D3Series()
                 {
+                    LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
                     ChannelID = ds.SeriesInfo.Channel.ID,
                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
                     Unit = (type == "TripCoilCurrent" ? "TCE" : type),
@@ -359,6 +365,7 @@ namespace OpenSEE
 
                 D3Series flotSeriesRMS = new D3Series
                 {
+                    LegendHorizontal = "RMS",
                     ChannelID = cdg.RMS.SeriesInfo.Channel.ID,
                     DataPoints = cdg.RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.RMS.SeriesInfo.Channel, "RMS"),
@@ -374,6 +381,7 @@ namespace OpenSEE
 
                 D3Series flotSeriesWaveAmp = new D3Series
                 {
+                    LegendHorizontal = "A",
                     ChannelID = cdg.Peak.SeriesInfo.Channel.ID,
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
@@ -390,6 +398,7 @@ namespace OpenSEE
 
                 D3Series flotSeriesPolarAngle = new D3Series
                 {
+                    LegendHorizontal = "Ph",
                     ChannelID = cdg.Phase.SeriesInfo.Channel.ID,
                     DataPoints = cdg.Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Phase.SeriesInfo.Channel, "Phase"),

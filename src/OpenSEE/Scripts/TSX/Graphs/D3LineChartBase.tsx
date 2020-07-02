@@ -74,17 +74,19 @@ export interface iD3DataSet {
 }
 
 export interface iD3DataSeries {
+    LegendHorizontal: string,
+    LegendGroup: string,
+
     ChannelID: number,
     ChartLabel: string,
-    Unit: string,
 
+    Unit: string,
     Color: string,
 
     Display: boolean,
     Enabled: boolean,
     
     LegendClass: string,
-    LegendGroup: string,
     SecondaryLegendClass: string,
 
 
@@ -99,6 +101,7 @@ interface D3LineChartBaseState {
     dataSet: iD3DataSet, dataHandle: JQuery.jqXHR
 }
 export interface iD3DataPoint {
+    LegendHorizontal: string,
     ChannelID: number,
     ChartLabel: string,
     XaxisLabel: string,

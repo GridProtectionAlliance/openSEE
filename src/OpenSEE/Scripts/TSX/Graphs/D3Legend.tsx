@@ -39,17 +39,21 @@ interface ICategory {
     enabled: boolean,
     label: string,
 }
+
 export default class D3Legend extends React.Component<any, any>{
     props: ID3LegendProps;
     state: {
         categories: Array<ICategory>,
+        horizontal: Array<string>,
+
     };
 
 
     constructor(props) {
         super(props);
         this.state = {
-            categories: []
+            categories: [],
+            horizontal: [],
         };
     }
 
@@ -84,6 +88,7 @@ export default class D3Legend extends React.Component<any, any>{
 
         if (!(isEqual(dataPrev, dataNext))) {
             const categories: Array<ICategory> = [];
+            const horizontals: Array<string> = [];
 
             this.props.data.forEach(item => {
                 let index = categories.findIndex(category => category.label === item.LegendGroup);
@@ -94,8 +99,13 @@ export default class D3Legend extends React.Component<any, any>{
                 if (item.Enabled)
                     categories[index].enabled = true;
 
+                index = horizontals.findIndex(category => category === item.LegendHorizontal);
+                if (index === -1)
+                    horizontals.push(item.LegendHorizontal)
             });
-            this.setState({ categories: categories });
+            
+
+            this.setState({ categories: categories, horizontal: horizontals });
         }
 
     }
@@ -114,6 +124,7 @@ export default class D3Legend extends React.Component<any, any>{
 
 
         const tableHeight = this.props.height - 38;
+        const hWidth = (200 - 4) / (this.state.horizontal.length + 1);
 
         return (
 
@@ -127,6 +138,19 @@ export default class D3Legend extends React.Component<any, any>{
                         });
                 }} />)}
                 </div>
+
+                <table style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
+                    <tbody style={{ width: "100%", display: "table" }}>
+                        <tr>
+                            <td style={{ width: hWidth }} ></td>
+                            {this.state.horizontal.map(item => <td style={{ width: hWidth }}>
+                                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign:"center" }}>
+                                    <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{item}</span>
+                                </div>
+                            </td>)}
+                        </tr>
+                    </tbody>
+                </table>
 
                 <table ref="table" style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
                     <tbody style={{ width: "100%", display: "table"}}>
