@@ -140,13 +140,7 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
             <div ref="legend" id={this.props.type + "-legend"} className="legend" style={{ float: "right", width: "200px", height: this.props.height - 38, marginTop: "6px", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden" }}>
                 <div className="btn-group btn-group-sm" role="group" aria-label="...">
-                    {this.state.categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => {
-                        this.setState((state, props) => {
-                            const tmp = cloneDeep(state.categories);
-                            tmp[index].enabled = !tmp[index].enabled;
-                            return { categories: tmp };
-                        });
-                }} />)}
+                    {this.state.categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => this.changeCategory(index,item)} />)}
                 </div>
 
                 <table style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
@@ -175,7 +169,6 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
         return result;
     }
 
-    
     getColor(ctrl: D3Legend, color: string) {
 
         if (ctrl.props.colors[color] !== undefined)
@@ -183,6 +176,30 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
         return ctrl.props.colors.random;
     }
 
+    changeCategory(index: number, item: ICategory) {
+
+        this.setState((state, props) => {
+            const tmp = cloneDeep(state.categories);
+            tmp[index].enabled = !tmp[index].enabled;
+
+            // Also Disable or enable associated Traces and corresponding Grid entries....
+            let traces: Array<number> = [];
+
+            if (tmp[index].enabled)
+                this.state.grid.forEach(data => {
+                    if (data.traces.has(item.label) && data.enabled)
+                        traces = traces.concat(data.traces.get(item.label));
+                });
+            else
+                this.state.grid.forEach(data => {
+                    if (data.traces.has(item.label))
+                        traces = traces.concat(data.traces.get(item.label));
+                });
+
+            this.props.callback(null, traces, tmp[index].enabled)
+            return { categories: tmp };
+        });
+    }
 }
 
 const Category = (props: { key: number, label: string, enabled: boolean, onclick: () => void}) => {
