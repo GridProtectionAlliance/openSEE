@@ -111,7 +111,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             digitalLimits: { min: 0, max: 0, auto: true },
             analogLimits: { min: 0, max: 0, auto: true },
             analyticLimits: { min: 0, max: 0, auto: true },
-            mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom"
+            mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom",
+            showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
         }
 
         this.TableData = [];
@@ -130,6 +131,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
                 zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
                 mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom",
+                showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
                 AnalyticSettings: {
                     harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
                     order: (query["order"] != undefined ? query['order'] : 1),
@@ -288,10 +290,71 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         analogLimits={this.state.analogLimits}
                         analyticLimits={this.state.analyticLimits}
                         mouseMode={this.state.mouseMode}
+                        displayCompare={this.state.tab == "Compare"}
+                        showCompareChart={this.state.showCompareCharts}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
-                        <ViewerWindow mouseMode={this.state.mouseMode} width={this.state.Width} yLimits={this.state.voltageLimits} currentLimits={this.state.currentLimits} tceLimits={this.state.tceLimits} analogLimits={this.state.analogLimits} digitalLimits={this.state.digitalLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} tableReset={() => this.ResetTable()} tableSetter={(obj) => this.tableUpdater(obj)} key={this.state.eventid} eventId={this.state.eventid} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayDigitals={this.state.breakerdigitals} displayAnalogs={this.state.displayAnalogs} isCompare={(this.state.tab == "Compare")} label={this.state.PostedData.postedAssetName} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} />
-                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 ? this.state.comparedEvents.map(a => <ViewerWindow mouseMode={this.state.mouseMode} width={this.state.Width} yLimits={this.state.voltageLimits} currentLimits={this.state.currentLimits} tceLimits={this.state.tceLimits} analogLimits={this.state.analogLimits} digitalLimits={this.state.digitalLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} key={a} eventId={a} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} displayVolt={this.state.displayVolt} displayCur={this.state.displayCur} displayTCE={this.state.displayTCE} displayAnalogs={this.state.displayAnalogs} displayDigitals={this.state.breakerdigitals} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} isCompare={true} label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>} />) : null)}
+                        <ViewerWindow
+                            mouseMode={this.state.mouseMode}
+                            width={this.state.Width}
+                            yLimits={this.state.voltageLimits}
+                            currentLimits={this.state.currentLimits}
+                            tceLimits={this.state.tceLimits}
+                            analogLimits={this.state.analogLimits}
+                            digitalLimits={this.state.digitalLimits}
+                            zoomMode={this.state.zoomMode}
+                            colorSettings={this.state.plotColors}
+                            unitSettings={this.state.plotUnits}
+                            pointTable={this.state.PointsTable}
+                            tableReset={() => this.ResetTable()}
+                            tableSetter={(obj) => this.tableUpdater(obj)}
+                            key={this.state.eventid}
+                            eventId={this.state.eventid}
+                            startTime={this.state.startTime}
+                            endTime={this.state.endTime}
+                            stateSetter={this.stateSetter.bind(this)}
+                            height={height}
+                            hover={this.state.Hover}
+                            displayVolt={this.state.displayVolt}
+                            displayCur={this.state.displayCur}
+                            displayTCE={this.state.displayTCE}
+                            displayDigitals={this.state.breakerdigitals}
+                            displayAnalogs={this.state.displayAnalogs}
+                            isCompare={(this.state.tab == "Compare" && this.state.showCompareCharts)}
+                            label={this.state.PostedData.postedAssetName}
+                            fftStartTime={this.state.fftStartTime}
+                            fftWindow={this.state.AnalyticSettings.fftWindow}
+                        />
+                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 && this.state.showCompareCharts ?
+                            this.state.comparedEvents.map(a =>
+                                <ViewerWindow
+                                    mouseMode={this.state.mouseMode}
+                                    width={this.state.Width}
+                                    yLimits={this.state.voltageLimits}
+                                    currentLimits={this.state.currentLimits}
+                                    tceLimits={this.state.tceLimits}
+                                    analogLimits={this.state.analogLimits}
+                                    digitalLimits={this.state.digitalLimits}
+                                    zoomMode={this.state.zoomMode}
+                                    colorSettings={this.state.plotColors}
+                                    unitSettings={this.state.plotUnits}
+                                    key={a}
+                                    eventId={a}
+                                    startTime={this.state.startTime}
+                                    endTime={this.state.endTime}
+                                    stateSetter={this.stateSetter.bind(this)}
+                                    height={height} hover={this.state.Hover}
+                                    displayVolt={this.state.displayVolt}
+                                    displayCur={this.state.displayCur}
+                                    displayTCE={this.state.displayTCE}
+                                    displayAnalogs={this.state.displayAnalogs}
+                                    displayDigitals={this.state.breakerdigitals}
+                                    fftStartTime={this.state.fftStartTime}
+                                    fftWindow={this.state.AnalyticSettings.fftWindow}
+                                    isCompare={true}
+                                    label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>}
+                                />
+                            ): null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
                             <AnalyticBar colorSettings={this.state.plotColors} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic != "FFT" && this.state.analytic != "HarmonicSpectrum") ?
@@ -373,7 +436,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     calculateHeights(obj: any) {
-        if (obj.tab == "Compare") return 300;
+        if (obj.tab == "Compare" && obj.showCompareCharts) return 300;
         return (window.innerHeight - 100 - 30) / (Number(obj.displayVolt) + Number(obj.displayCur) + Number(obj.breakerdigitals) + Number(obj.displayTCE) + Number(obj.displayAnalogs) + Number(obj.tab == "Analytics"))
     }
 

@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { clone, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { BlockPicker } from 'react-color';
 
 // styles
@@ -240,11 +240,14 @@ export interface SettingWindowProps {
     showI: boolean,
     unitSetting: GraphUnits,
     colorSetting: Colors,
+    compareChart: boolean,
 
     showTCE: boolean,
     showdigitals: boolean,
     showAnalogs: boolean,
     showAnalytics: string,
+    showCompare: boolean,
+    
 
     voltageLimits: yLimits,
     currentLimits: yLimits,
@@ -273,7 +276,7 @@ export default class SettingWindow extends React.Component<any, any>{
         return (
             <div id="settings" className="ui-widget-content" style={outerDiv}>
                 <div id="settingshandle" className={handle}></div>
-                <div id="phasorchart" style={{ width: '696px', height: '300px', zIndex: 1001, overflowY: 'scroll' }}>
+                <div style={{ width: '696px', height: '300px', zIndex: 1001, overflowY: 'scroll' }}>
                     <div className="accordion" id="panelSettings">
                         <div className="card">
                             <div className="card-header" id="headingUnit">
@@ -450,6 +453,38 @@ export default class SettingWindow extends React.Component<any, any>{
                             </div>
                         </div>
 
+                        {(this.props.showCompare ? 
+                        <div className="card">
+                            <div className="card-header" id="headingCompare">
+                                <h2 className="mb-0">
+                                        <button className="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseCompare" aria-expanded="true" aria-controls="collapseCompare">
+                                        Compare Options
+                                    </button>
+                                </h2>
+                            </div>
+                            
+                            <div id="collapseCompare" className="collapse" aria-labelledby="headingCompare" data-parent="#panelSettings">
+                                <div className="card-body">
+                                    <div>
+                                            <div className="btn-group btn-group-toggle" data-toggle="buttons">
+                                                <label className={"btn btn-secondary " + (!this.props.compareChart ? "" : "active")} onClick={() => {
+                                                    this.props.stateSetter({ showCompareCharts: !this.props.compareChart })
+                                                }}>
+                                                    <input type="radio" defaultChecked={this.props.compareChart} />
+                                                    show events individually
+                                                </label>
+                                                <label className={"btn btn-secondary " + (this.props.compareChart ? "" : "active")} onClick={() => {
+                                                    this.props.stateSetter({ showCompareCharts: !this.props.compareChart })
+                                                }}>
+                                                    <input type="radio" checked={!this.props.compareChart} onChange={() => {  }} />
+                                                    overlay events on graph
+                                                </label>
+                                            </div>
+                                    </div>
+
+                                </div>
+                            </div> 
+                        </div> : null)}
 
                     </div>
                     
@@ -522,7 +557,7 @@ const VoltageLLColors = (colorSetting: Colors, stateSetter: Function) => {
 const CurrentColors = (colorSetting: Colors, stateSetter: Function, showIres: boolean) => {
 
     return (
-        <div>
+        <div style={{display: "inline-flex"}}>
             <ColorButton label={"IAN"} color={colorSetting.Ia} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ia = color; stateSetter({ plotColors: col }); }} />
             <ColorButton label={"IBN"} color={colorSetting.Ib} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ib = color; stateSetter({ plotColors: col }); }} />
             <ColorButton label={"ICN"} color={colorSetting.Ic} statesetter={(color) => { let col = cloneDeep(colorSetting); col.Ic = color; stateSetter({ plotColors: col }); }} />

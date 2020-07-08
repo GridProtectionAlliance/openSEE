@@ -131,6 +131,7 @@ declare interface OpenSEEState {
     analogLimits: yLimits,
     analyticLimits: yLimits,
     mouseMode: MouseMode,
+    showCompareCharts: boolean,
 }
 
 declare interface iListObject {

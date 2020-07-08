@@ -57,6 +57,8 @@ export default class OpenSEENavbar extends React.Component {
         displayTCE:boolean,
         breakerdigitals: boolean,
         displayAnalogs: boolean,
+        showCompareChart: boolean,
+        displayCompare: boolean,
         displayAnalytics: string,
         filterOrder: number,
         Trc: number,
@@ -279,6 +281,8 @@ export default class OpenSEENavbar extends React.Component {
                     digitalLimits={this.props.digitalLimits}
                     analogLimits={this.props.analogLimits}
                     analyticLimits={this.props.analyticLimits}
+                    showCompare={this.props.displayCompare}
+                    compareChart={this.props.showCompareChart}
     />
             </nav>
         );
