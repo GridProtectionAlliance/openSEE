@@ -30,9 +30,9 @@ import D3Legend from './D3Legend';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
 import duration from "moment"
-import { Unit, GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
+import { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
 
-export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) => void;
+export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, index?: Array<number>, enabled?: boolean) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
 export type ZoomMode = "x" | "y" | "xy"
 export type MouseMode = "pan" | "zoom" | "collect"
@@ -1037,10 +1037,14 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return ctrl.props.colorSettings.random
     }
 
-    handleSeriesLegendClick(event?: React.MouseEvent<HTMLDivElement>, row?: iD3DataSeries, index?: number) {
+    handleSeriesLegendClick(event?: React.MouseEvent<HTMLDivElement>, index?: Array<number>, enabled?: boolean) {
         this.setState(function (state, props) {
             let data = cloneDeep(state.dataSet);
-            data.Data[index].Enabled = !data.Data[index].Enabled;
+
+            index.forEach(item =>
+                data.Data[item].Enabled = enabled
+            );
+
             return { dataSet: data };
         });
     }

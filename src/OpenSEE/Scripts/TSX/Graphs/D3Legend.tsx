@@ -40,13 +40,19 @@ interface ICategory {
     label: string,
 }
 
+interface ILegendGrid {
+    enabled: boolean,
+    hLabel: string,
+    vLabel: string,
+    color: string,
+    traces: Map<string,Array<number>>
+}
+
 export default class D3Legend extends React.Component<any, any>{
     props: ID3LegendProps;
     state: {
         categories: Array<ICategory>,
-        horizontal: Array<string>,
-        vertical: Array<string>,
-
+        grid: Array<ILegendGrid>,
     };
 
 
@@ -54,8 +60,7 @@ export default class D3Legend extends React.Component<any, any>{
         super(props);
         this.state = {
             categories: [],
-            horizontal: [],
-            vertical: [],
+            grid: [],
         };
     }
 
@@ -69,8 +74,6 @@ export default class D3Legend extends React.Component<any, any>{
 
         this.props.data.forEach(item => {
             const itemClone = cloneDeep(item) as any;
-            delete itemClone.Color;
-            delete itemClone.Enabled;
             delete itemClone.DataPoints;
             delete itemClone.DataMarker;
             delete itemClone.path;
@@ -80,8 +83,6 @@ export default class D3Legend extends React.Component<any, any>{
         if (prevProps.data != null)
             prevProps.data.forEach(item => {
                 const itemClone = cloneDeep(item) as any;
-                delete itemClone.Color;
-                delete itemClone.Enabled;
                 delete itemClone.DataPoints;
                 delete itemClone.DataMarker;
                 delete itemClone.path;
@@ -90,10 +91,9 @@ export default class D3Legend extends React.Component<any, any>{
 
         if (!(isEqual(dataPrev, dataNext))) {
             const categories: Array<ICategory> = [];
-            const horizontals: Array<string> = [];
-            const verticals: Array<string> = [];
+            const grid: Array<ILegendGrid> = [];
 
-            this.props.data.forEach(item => {
+            this.props.data.forEach((item, dataIndex) => {
                 let index = categories.findIndex(category => category.label === item.LegendGroup);
                 if (index === -1) {
                     categories.push({ label: item.LegendGroup, enabled: false });
@@ -102,17 +102,22 @@ export default class D3Legend extends React.Component<any, any>{
                 if (item.Enabled)
                     categories[index].enabled = true;
 
-                index = horizontals.findIndex(category => category === item.LegendHorizontal);
-                if (index === -1)
-                    horizontals.push(item.LegendHorizontal)
+                index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical);
+                if (index === -1) {
+                    grid.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>() })
+                    index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical);
+                }
+                if (item.Enabled)
+                    grid[index].enabled = true;
 
-                index = verticals.findIndex(category => category === item.LegendVertical);
-                if (index === -1)
-                    verticals.push(item.LegendVertical)
+                if (grid[index].traces.has(item.LegendGroup))
+                    grid[index].traces.get(item.LegendGroup).push(dataIndex)
+                else
+                    grid[index].traces.set(item.LegendGroup, [dataIndex])
             });
             
 
-            this.setState({ categories: categories, horizontal: horizontals, vertical: verticals });
+            this.setState({ categories: categories, grid: grid });
         }
 
     }
@@ -120,18 +125,23 @@ export default class D3Legend extends React.Component<any, any>{
     render() {
         if (this.props.data == null || this.props.data.length === 0) return null;
 
-        const rows: Array<JSX.Element> = [];
 
-        this.props.data.forEach((row, key, map) => {
-            rows.push(<Row key={key} label={row.ChartLabel} color={this.getColor(this, row.Color)} enabled={row.Enabled} callback={(e) => {
-                this.props.callback(e, row, key);
-            }} />);
-
-        });
-
-
+        const hHeaders = this.groupBy(this.state.grid, item => { return item.hLabel }); 
+        const vHeaders = this.groupBy(this.state.grid, item => item.vLabel);
         const tableHeight = this.props.height - 38;
-        const hWidth = (200 - 4) / (this.state.horizontal.length + 1);
+        const hWidth = (200 - 4) / (hHeaders.size + 1);
+
+        const headerRow: Array<JSX.Element> = []
+        const tblData: Array<JSX.Element> = []
+
+        hHeaders.forEach((value, key) =>
+            headerRow.push(
+                <td key={headerRow.length} style={{ width: hWidth }}>
+                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
+                        <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{key}</span>
+                    </div>
+                </td>));
+        vHeaders.forEach((value, key) => tblData.push(<NewRow key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
 
         return (
 
@@ -149,66 +159,30 @@ export default class D3Legend extends React.Component<any, any>{
                 <table style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
                     <tbody style={{ width: "100%", display: "table" }}>
                         <tr>
-                            <td style={{ width: hWidth }} ></td>
-                            {this.state.horizontal.map(item => <td style={{ width: hWidth }}>
-                                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign:"center" }}>
-                                    <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{item}</span>
-                                </div>
-                            </td>)}
+                            <td style={{ width: hWidth }} id="header-vertical"></td>
+                            {headerRow}
                         </tr>
-                        {this.state.vertical.map(item =>
-                            <tr>
-                                <td style={{ width: hWidth }}>
-                                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
-                                        <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{item}</span>
-                                    </div>
-                                </td>
-                                {this.state.horizontal.map(hitem => 
-                                    <td style={{ width: hWidth }}> </td>
-                                    )}
-                            </tr>)}
-
+                        {tblData}
                     </tbody>
                 </table>
 
-                <table ref="table" style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
-                    <tbody style={{ width: "100%", display: "table"}}>
-                    {rows}
-                    </tbody>
-                </table>
             </div>
         );
     }
 
-   
-    toggleAll(active: Array<string>, value: string, type: string) {
+    groupBy(list: Array<ILegendGrid>, fnct: (val: ILegendGrid) => string) {
+        let result: Map<string, ILegendGrid[]> = new Map<string, ILegendGrid[]>();
 
-        this.props.data.forEach((row, key, map) => {
-            var enabled = row.Enabled && row.SecondaryLegendClass !== value;
-
-            //If type is Radio we hide all that are not in this one
-            if (type === "radio") {
-                row.Display = row.LegendClass === value;
-                enabled = false;
-
-                if (row.Display && $(this.refs.legend).find("label.active").toArray().some(x => $(x).text() === row.LegendClass)) {
-                    enabled = true;
-                }
-            }
-            else {
-                if (row.Display && $(this.refs.legend).find("label.active").toArray().some(x => $(x).text() === row.SecondaryLegendClass)) {
-                    enabled = true;
-                }
-            }
-
-            row.Enabled = enabled;
-            $(`[name='${key}']`).prop("checked", row.Enabled);
-
-        });
-
-        this.props.callback();
+        list.forEach(item => {
+            if (result.has(fnct(item)))
+                result.get(fnct(item)).push(item);
+            else
+                result.set(fnct(item), [item]);
+        })
+        return result;
     }
 
+    
     getColor(ctrl: D3Legend, color: string) {
 
         if (ctrl.props.colors[color] !== undefined)
@@ -224,27 +198,53 @@ const Category = (props: { key: number, label: string, enabled: boolean, onclick
     );
 };
 
-const Row = (props: { label: string, enabled: boolean, color: string, callback: LegendClickCallback }) => {
+const NewRow = (props: { label: string, data: Array<ILegendGrid>, width: number, ctrl: D3Legend }) => {
+    let activeCategories = props.ctrl.state.categories.filter(item => item.enabled).map(item => item.label);
 
-        return (
-            <tr>
-                <td>
-                    <input name={props.label} className="legendCheckbox" type="checkbox" style={{ display: "none" }} defaultChecked={props.enabled} />
-                </td>
-                <td>
-                    <div style={{ border: "1px solid #ccc", padding: "1px", width: "14px" }}>
-                        <div style={{ width: " 4px", height: 0, border: "5px solid", borderColor: (props.enabled ? convertHex(props.color, 100) : convertHex(props.color, 50)), overflow: "hidden" }} onClick={props.callback}>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span style={{ color: props.color, fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{
-                        props.label}</span>
-                </td>
-            </tr>
-        );
-    };
+    function hasData(data: ILegendGrid) {
+        let n = 0;
+        data.traces.forEach((val, key) => {
+            if (activeCategories.indexOf(key) !== -1)
+                n = n + val.length;
+        })
 
+        return n > 0;
+    }
+
+    return (
+        <tr>
+            <td style={{ width: props.width }} key={0}>
+                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
+                    <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{props.label}</span>
+                </div>
+            </td>
+            {props.data.map((item,index) =>
+                (hasData(item) ?
+                    <TraceButton width={props.width} data={item} ctrl={props.ctrl} activeCategory={activeCategories} key={index} /> :
+                    <td key={index} style={{ width: props.width, backgroundColor: "rgb(204,204,204)" }}> </td>)
+            )}
+        </tr>
+        )
+}
+
+const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: number, ctrl: D3Legend }) => {
+
+    function onClick(sender) {
+        let traces: Array<number> = [];
+        props.data.traces.forEach((val, key) => {
+            if (props.activeCategory.indexOf(key) !== -1)
+                traces = traces.concat(val);
+        })
+        props.ctrl.props.callback(sender, traces, !props.data.enabled)
+    }
+
+    return (
+        <td style={{ width: props.width }}>
+                <div style={{ backgroundColor: props.ctrl.getColor(props.ctrl, props.data.color), border: "1px solid #ccc", padding: "1px", margin: "1px", textAlign: "center" }} onClick={onClick} >
+                {(props.data.enabled ? <i className="fa fa-minus" ></i> : <i className="fa fa-plus" ></i>)}
+            </div>
+        </td>)
+};
 
 function convertHex(hex: string, opacity: number) {
     hex = hex.replace("#", "");
