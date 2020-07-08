@@ -48,13 +48,15 @@ interface ILegendGrid {
     traces: Map<string,Array<number>>
 }
 
-export default class D3Legend extends React.Component<any, any>{
+export default class D3Legend extends React.Component<ID3LegendProps, any>{
     props: ID3LegendProps;
     state: {
         categories: Array<ICategory>,
         grid: Array<ILegendGrid>,
     };
-
+    hHeader: Map<string, ILegendGrid[]>; 
+    vHeader: Map<string, ILegendGrid[]>;
+    nData: number;
 
     constructor(props) {
         super(props);
@@ -62,86 +64,77 @@ export default class D3Legend extends React.Component<any, any>{
             categories: [],
             grid: [],
         };
+        this.hHeader = new Map<string, ILegendGrid[]>();
+        this.vHeader = new Map<string, ILegendGrid[]>();
+        this.nData = 0;
+
     }
 
     componentDidUpdate(prevProps: ID3LegendProps, prevState: any) {
 
-        const dataPrev = [];
-        const dataNext = [];
-
         if (this.props.data == null)
             return;
 
-        this.props.data.forEach(item => {
-            const itemClone = cloneDeep(item) as any;
-            delete itemClone.DataPoints;
-            delete itemClone.DataMarker;
-            delete itemClone.path;
-            dataNext.push(itemClone);
-        });
+        if (this.props.data.length == this.nData)
+            return;
 
-        if (prevProps.data != null)
-            prevProps.data.forEach(item => {
-                const itemClone = cloneDeep(item) as any;
-                delete itemClone.DataPoints;
-                delete itemClone.DataMarker;
-                delete itemClone.path;
-                dataPrev.push(itemClone);
-            });
+        const categories: Array<ICategory> = [];
+        const grid: Array<ILegendGrid> = [];
 
-        if (!(isEqual(dataPrev, dataNext))) {
-            const categories: Array<ICategory> = [];
-            const grid: Array<ILegendGrid> = [];
+        this.props.data.forEach((item, dataIndex) => {
+            let index = categories.findIndex(category => category.label === item.LegendGroup);
+            if (index === -1) {
+                categories.push({ label: item.LegendGroup, enabled: false });
+                index = categories.findIndex(category => category.label === item.LegendGroup);
+            }
+            if (item.Enabled)
+                categories[index].enabled = true;
 
-            this.props.data.forEach((item, dataIndex) => {
-                let index = categories.findIndex(category => category.label === item.LegendGroup);
-                if (index === -1) {
-                    categories.push({ label: item.LegendGroup, enabled: false });
-                    index = categories.findIndex(category => category.label === item.LegendGroup);
-                }
-                if (item.Enabled)
-                    categories[index].enabled = true;
-
+            index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical);
+            if (index === -1) {
+                grid.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>() })
                 index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical);
-                if (index === -1) {
-                    grid.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>() })
-                    index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical);
-                }
-                if (item.Enabled)
-                    grid[index].enabled = true;
+            }
+            if (item.Enabled)
+                grid[index].enabled = true;
 
-                if (grid[index].traces.has(item.LegendGroup))
-                    grid[index].traces.get(item.LegendGroup).push(dataIndex)
-                else
-                    grid[index].traces.set(item.LegendGroup, [dataIndex])
-            });
+            if (grid[index].traces.has(item.LegendGroup))
+                grid[index].traces.get(item.LegendGroup).push(dataIndex)
+            else
+                grid[index].traces.set(item.LegendGroup, [dataIndex])
+        });
             
 
-            this.setState({ categories: categories, grid: grid });
-        }
+        this.nData = this.props.data.length;
+
+        this.hHeader = this.groupBy(grid, item => item.hLabel);
+        this.vHeader = this.groupBy(grid, item => item.vLabel);
+
+        this.setState({ categories: categories, grid: grid });
+
+        
+
 
     }
 
     render() {
         if (this.props.data == null || this.props.data.length === 0) return null;
 
-
-        const hHeaders = this.groupBy(this.state.grid, item => { return item.hLabel }); 
-        const vHeaders = this.groupBy(this.state.grid, item => item.vLabel);
         const tableHeight = this.props.height - 38;
-        const hWidth = (200 - 4) / (hHeaders.size + 1);
+        const hWidth = (200 - 4) / (this.hHeader.size + 1);
 
         const headerRow: Array<JSX.Element> = []
         const tblData: Array<JSX.Element> = []
 
-        hHeaders.forEach((value, key) =>
+        this.hHeader.forEach((value, key) =>
             headerRow.push(
                 <td key={headerRow.length} style={{ width: hWidth }}>
                     <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
                         <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{key}</span>
                     </div>
                 </td>));
-        vHeaders.forEach((value, key) => tblData.push(<NewRow key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
+
+        this.vHeader.forEach((value, key) => tblData.push(<NewRow key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
 
         return (
 
@@ -235,7 +228,8 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
             if (props.activeCategory.indexOf(key) !== -1)
                 traces = traces.concat(val);
         })
-        props.ctrl.props.callback(sender, traces, !props.data.enabled)
+        props.data.enabled = !props.data.enabled;
+        props.ctrl.props.callback(sender, traces, props.data.enabled)
     }
 
     return (
