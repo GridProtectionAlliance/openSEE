@@ -120,6 +120,7 @@ export default class Current extends React.Component<any, any>{
             zoomMode={this.props.zoomMode}
             mouseMode={this.props.mouseMode}
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
+            compareEvents={this.props.compareEvents}
         />
     }
 

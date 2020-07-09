@@ -154,6 +154,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             zoomMode={this.props.zoomMode}
             mouseMode={this.props.mouseMode}
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
+            compareEvents={this.props.compareEvents}
         />
     }
 

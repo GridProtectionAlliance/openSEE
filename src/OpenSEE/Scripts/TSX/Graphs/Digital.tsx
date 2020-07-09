@@ -62,7 +62,8 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
         mouseMode: props.mouseMode,
-        yLimits: { ...props.yLimits, setter: setYLimits }
+        yLimits: { ...props.yLimits, setter: setYLimits },
+        compareEvents: props.compareEvents,
     }, null);
 
 }

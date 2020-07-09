@@ -324,6 +324,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             label={this.state.PostedData.postedAssetName}
                             fftStartTime={this.state.fftStartTime}
                             fftWindow={this.state.AnalyticSettings.fftWindow}
+                            compareEvents={(this.state.tab == "Compare" && !this.state.showCompareCharts) ? this.state.comparedEvents : []}
                         />
                         {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 && this.state.showCompareCharts ?
                             this.state.comparedEvents.map(a =>
@@ -353,12 +354,44 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                                     fftWindow={this.state.AnalyticSettings.fftWindow}
                                     isCompare={true}
                                     label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>}
+                                    compareEvents={[]}
                                 />
                             ): null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
-                            <AnalyticBar colorSettings={this.state.plotColors} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} startTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} pixels={this.state.Width} stateSetter={this.stateSetter.bind(this)} height={height} options={{ showXLabel: true }} /> : null)}
+                            <AnalyticBar
+                                colorSettings={this.state.plotColors}
+                                analytic={this.state.analytic}
+                                analyticParameter={this.state.AnalyticSettings}
+                                eventId={this.state.eventid}
+                                startTime={this.state.fftStartTime}
+                                fftWindow={this.state.AnalyticSettings.fftWindow}
+                                pixels={this.state.Width}
+                                stateSetter={this.stateSetter.bind(this)}
+                                height={height}
+                                options={{ showXLabel: true }}
+                            /> : null)}
                         {(this.state.tab == "Analytics" && (this.state.analytic != "FFT" && this.state.analytic != "HarmonicSpectrum") ?
-                            <AnalyticLine mouseMode={this.state.mouseMode} width={this.state.Width} yLimits={this.state.analyticLimits} zoomMode={this.state.zoomMode} colorSettings={this.state.plotColors} unitSettings={this.state.plotUnits} pointTable={this.state.PointsTable} analytic={this.state.analytic} analyticParameter={this.state.AnalyticSettings} eventId={this.state.eventid} fftStartTime={this.state.fftStartTime} fftWindow={this.state.AnalyticSettings.fftWindow} startTime={this.state.startTime} endTime={this.state.endTime} stateSetter={this.stateSetter.bind(this)} height={height} hover={this.state.Hover} options={{ showXLabel: true }} /> : null)}
+                            <AnalyticLine
+                                mouseMode={this.state.mouseMode}
+                                width={this.state.Width}
+                                yLimits={this.state.analyticLimits}
+                                zoomMode={this.state.zoomMode}
+                                colorSettings={this.state.plotColors}
+                                unitSettings={this.state.plotUnits}
+                                pointTable={this.state.PointsTable}
+                                analytic={this.state.analytic}
+                                analyticParameter={this.state.AnalyticSettings}
+                                eventId={this.state.eventid}
+                                fftStartTime={this.state.fftStartTime}
+                                fftWindow={this.state.AnalyticSettings.fftWindow}
+                                startTime={this.state.startTime}
+                                endTime={this.state.endTime}
+                                stateSetter={this.stateSetter.bind(this)}
+                                compareEvents={[]}
+                                height={height}
+                                hover={this.state.Hover}
+                                options={{ showXLabel: true }}
+                            /> : null)}
 
                     </div>
                 </div>
@@ -495,20 +528,206 @@ const ViewerWindow = (props: ViewerWindowProps) => {
         <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
             <div className="card-header">{props.label}</div>
             <div className="card-body" style={{ padding: 0 }}>
-                {(props.displayVolt ? <Voltage mouseMode={props.mouseMode} width={props.width} yLimits={props.yLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayCur ? <Current mouseMode={props.mouseMode} width={props.width} yLimits={props.currentLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayDigitals ? <Digital mouseMode={props.mouseMode} width={props.width} yLimits={props.digitalLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
-                {(props.displayAnalogs ? <Analog mouseMode={props.mouseMode} width={props.width} yLimits={props.analogLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
-                {(props.displayTCE ? <TripCoilCurrent mouseMode={props.mouseMode} width={props.width} yLimits={props.tceLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
+                {(props.displayVolt ? <Voltage
+                    mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.yLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    pointTable={props.pointTable}
+                    tableReset={props.tableReset}
+                    tableSetter={props.tableSetter}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    compareEvents={props.compareEvents}
+                    options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
+                /> : null)}
+                {(props.displayCur ? <Current
+                    mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.currentLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    pointTable={props.pointTable}
+                    tableReset={props.tableReset}
+                    tableSetter={props.tableSetter}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    compareEvents={props.compareEvents}
+                    options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
+                /> : null)}
+                {(props.displayDigitals ? <Digital
+                    mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.digitalLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
+                    compareEvents={props.compareEvents}
+                /> : null)}
+                {(props.displayAnalogs ? <Analog
+                    mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.analogLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    pointTable={props.pointTable}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    options={{ showXLabel: !(props.displayTCE) }}
+                    compareEvents={props.compareEvents}
+                /> : null)}
+                {(props.displayTCE ? <TripCoilCurrent
+                    mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.tceLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    pointTable={props.pointTable}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    options={{ showXLabel: true }}
+                    compareEvents={props.compareEvents}
+                /> : null)}
             </div>
         </div>
         :
         <div>
-            {(props.displayVolt ? <Voltage mouseMode={props.mouseMode} width={props.width} yLimits={props.yLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayCur ? <Current mouseMode={props.mouseMode} width={props.width} yLimits={props.currentLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} tableReset={props.tableReset} tableSetter={props.tableSetter} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId}  startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayDigitals ? <Digital mouseMode={props.mouseMode} width={props.width} yLimits={props.digitalLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }} /> : null)}
-            {(props.displayAnalogs ? <Analog mouseMode={props.mouseMode} width={props.width} yLimits={props.analogLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: !(props.displayTCE) }} /> : null)}
-            {(props.displayTCE ? <TripCoilCurrent mouseMode={props.mouseMode} width={props.width} yLimits={props.tceLimits} zoomMode={props.zoomMode} colorSettings={props.colorSettings} unitSettings={props.unitSettings} pointTable={props.pointTable} fftStartTime={props.fftStartTime} fftWindow={props.fftWindow} eventId={props.eventId} startTime={props.startTime} endTime={props.endTime} stateSetter={props.stateSetter} height={props.height} hover={props.hover} options={{ showXLabel: true }} /> : null)}
+            {(props.displayVolt ?
+                <Voltage mouseMode={props.mouseMode}
+                    width={props.width}
+                    yLimits={props.yLimits}
+                    zoomMode={props.zoomMode}
+                    colorSettings={props.colorSettings}
+                    unitSettings={props.unitSettings}
+                    pointTable={props.pointTable}
+                    tableSetter={props.tableSetter}
+                    fftStartTime={props.fftStartTime}
+                    fftWindow={props.fftWindow}
+                    eventId={props.eventId}
+                    startTime={props.startTime}
+                    endTime={props.endTime}
+                    stateSetter={props.stateSetter}
+                    height={props.height}
+                    hover={props.hover}
+                    options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
+                    compareEvents={props.compareEvents}
+                /> : null)}
+            {(props.displayCur ? <Current
+                mouseMode={props.mouseMode}
+                width={props.width}
+                yLimits={props.currentLimits}
+                zoomMode={props.zoomMode}
+                colorSettings={props.colorSettings}
+                unitSettings={props.unitSettings}
+                pointTable={props.pointTable}
+                tableReset={props.tableReset}
+                tableSetter={props.tableSetter}
+                fftStartTime={props.fftStartTime}
+                fftWindow={props.fftWindow}
+                eventId={props.eventId}
+                startTime={props.startTime}
+                endTime={props.endTime}
+                stateSetter={props.stateSetter}
+                height={props.height}
+                hover={props.hover}
+                options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
+                compareEvents={props.compareEvents}
+            /> : null)}
+            {(props.displayDigitals ? <Digital
+                mouseMode={props.mouseMode}
+                width={props.width}
+                yLimits={props.digitalLimits}
+                zoomMode={props.zoomMode}
+                colorSettings={props.colorSettings}
+                unitSettings={props.unitSettings}
+                pointTable={props.pointTable}
+                fftStartTime={props.fftStartTime}
+                fftWindow={props.fftWindow}
+                eventId={props.eventId}
+                startTime={props.startTime}
+                endTime={props.endTime}
+                stateSetter={props.stateSetter}
+                height={props.height}
+                hover={props.hover}
+                options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
+                compareEvents={props.compareEvents}
+            /> : null)}
+            {(props.displayAnalogs ? <Analog
+                mouseMode={props.mouseMode}
+                width={props.width}
+                yLimits={props.analogLimits}
+                zoomMode={props.zoomMode}
+                colorSettings={props.colorSettings}
+                unitSettings={props.unitSettings}
+                pointTable={props.pointTable}
+                fftStartTime={props.fftStartTime}
+                fftWindow={props.fftWindow}
+                eventId={props.eventId}
+                startTime={props.startTime}
+                endTime={props.endTime}
+                stateSetter={props.stateSetter}
+                height={props.height}
+                hover={props.hover}
+                options={{ showXLabel: !(props.displayTCE) }}
+                compareEvents={props.compareEvents}
+            /> : null)}
+            {(props.displayTCE ? <TripCoilCurrent
+                mouseMode={props.mouseMode}
+                width={props.width}
+                yLimits={props.tceLimits}
+                zoomMode={props.zoomMode}
+                colorSettings={props.colorSettings}
+                unitSettings={props.unitSettings}
+                pointTable={props.pointTable}
+                fftStartTime={props.fftStartTime}
+                fftWindow={props.fftWindow}
+                eventId={props.eventId}
+                startTime={props.startTime}
+                endTime={props.endTime}
+                stateSetter={props.stateSetter}
+                height={props.height}
+                hover={props.hover}
+                options={{ showXLabel: true }}
+                compareEvents={props.compareEvents}
+            /> : null)}
         </div>
             
         );

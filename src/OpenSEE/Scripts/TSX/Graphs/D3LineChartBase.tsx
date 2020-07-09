@@ -40,6 +40,7 @@ export type MouseMode = "pan" | "zoom" | "collect"
 
 export interface D3LineChartBaseProps {
     eventId: number,
+    compareEvents: Array<number>,
     startTime: number,
     endTime: number,
     stateSetter: Function,
@@ -52,12 +53,17 @@ export interface D3LineChartBaseProps {
     yLimits: yLimits,
     mouseMode: MouseMode,
     pointTable?: Array<iD3DataPoint>,
-    options?: D3PlotOptions, fftStartTime?: number, fftWindow?: number, tableSetter?: Function, tableReset?: Function,
+    options?: D3PlotOptions,
+    fftStartTime?: number,
+    fftWindow?: number,
+    tableSetter?: Function,
+    tableReset?: Function,
     
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
-    legendKey: string, openSEEServiceFunction: StandardAnalyticServiceFunction,
+    legendKey: string,
+    openSEEServiceFunction: StandardAnalyticServiceFunction,
     getData?: GetDataFunction,
    
 }
@@ -336,17 +342,20 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
        
     }
 
-    addData(data: iD3DataSet, ctrl: D3LineChartBase) {
+    addData(data: iD3DataSet, ctrl: D3LineChartBase, clear?: boolean) {
+
+        clear = (clear == undefined ? false : clear);
+
         ctrl.setState(function (state, props) {
             let ste = cloneDeep(state.dataSet)
 
-            if (ste.EventEndTime == 0)
+            if (ste.EventEndTime === 0)
                 ste.EventEndTime = data.EventEndTime;
 
-            if (ste.EventStartTime == 0)
+            if (ste.EventStartTime === 0)
                 ste.EventStartTime = data.EventStartTime;
 
-            if (ste.Data !== null)
+            if (ste.Data !== null && !clear)
                 ste.Data = state.dataSet.Data.concat(data.Data.map(item => {
                     let row = item;
                     if (ctrl.paths !== undefined) {
@@ -511,12 +520,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.yLimits;
         delete nextPropsClone.yLimits;
 
+        delete props.compareEvents;
+        delete nextPropsClone.compareEvents;
+
 
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
         }
 
-        if (prevProps.legendKey != this.props.legendKey) {
+        if ((prevProps.legendKey != this.props.legendKey) || (!isEqual(this.props.compareEvents, prevProps.compareEvents))) {
             this.createPlot();
             this.getData(this.props);
             return;

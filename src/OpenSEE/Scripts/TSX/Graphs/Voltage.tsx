@@ -42,12 +42,18 @@ export default class Voltage extends React.Component<any, any>{
     }
 
     componentWillUnmount() {
-        if (this.state.eventDataHandle !== undefined && this.state.eventDataHandle.abort !== undefined) {
-            this.state.eventDataHandle.abort();
+        if (this.state.eventDataHandle !== undefined) {
+            this.state.eventDataHandle.forEach(item => {
+                if (item.abort !== undefined)
+                    item.abort();
+            })
             this.setState({ eventDataHandle: undefined });
         }
-        if (this.state.frequencyDataHandle !== undefined && this.state.frequencyDataHandle.abort !== undefined) {
-            this.state.frequencyDataHandle.abort();
+        if (this.state.frequencyDataHandle !== undefined) {
+            this.state.frequencyDataHandle.forEach(item => {
+                if (item.abort !== undefined)
+                    item.abort();
+            });
             this.setState({ frequencyDataHandle: undefined });
         }
 
@@ -57,19 +63,27 @@ export default class Voltage extends React.Component<any, any>{
     getData(props: D3LineChartBaseProps, baseCtrl: D3LineChartBase, ctrl: Voltage): void {
 
         baseCtrl.createPlot();
-        var eventDataHandle = ctrl.openSEEService.getWaveformVoltageData(props.eventId).then(data => {
+        const eventDataHandle = ctrl.openSEEService.getWaveformVoltageData(props.eventId).then(data => {
             if (data == null) return;
 
-            baseCtrl.addData(data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl, true);
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
 
         });
-        this.setState({ eventDataHandle: eventDataHandle });
+        this.setState((props, state) => {
+            if (state.evendDataHandle == undefined)
+                return { eventDataHandle: [eventDataHandle] }
+            else {
+                let tmp = state.eventDataHandle;
+                tmp.push(eventDataHandle);
+                return { eventDataHandle: tmp }
+            }
+        });
 
-        var frequencyDataHandle = this.openSEEService.getFrequencyData(props.eventId, "Voltage").then(data => {
+        const frequencyDataHandle = this.openSEEService.getFrequencyData(props.eventId, "Voltage").then(data => {
             setTimeout(() => {
                 if (data == null) return;
 
@@ -82,8 +96,53 @@ export default class Voltage extends React.Component<any, any>{
             }, 200);
         })
 
-        this.setState({ frequencyDataHandle: frequencyDataHandle });
+        this.setState((props, state) => {
+            if (state.frequencyDataHandle == undefined)
+                return { frequencyDataHandle: [frequencyDataHandle] }
+            else {
+                let tmp = state.frequencyDataHandle;
+                tmp.push(frequencyDataHandle);
+                return { frequencyDataHandle: tmp }
+            }
+        });
 
+       
+        this.props.compareEvents.forEach(evtID => {
+            const compareDataHandle = ctrl.openSEEService.getWaveformVoltageData(evtID).then(data => {
+                setTimeout(() => {
+                    if (data == null) return;
+                    baseCtrl.addData(data, baseCtrl);
+                }, 200);
+            });
+
+            const compareFrequencyDataHandle = ctrl.openSEEService.getFrequencyData(evtID, "Voltage").then(data => {
+                setTimeout(() => {
+                    if (data == null) return;
+                    baseCtrl.addData(data, baseCtrl);
+                }, 200);
+            });
+
+            this.setState((props, state) => {
+                if (state.evendDataHandle == undefined)
+                    return { eventDataHandle: [compareDataHandle] }
+                else {
+                    let tmp = state.eventDataHandle;
+                    tmp.push(compareDataHandle);
+                    return { eventDataHandle: tmp }
+                }
+            });
+
+            this.setState((props, state) => {
+                if (state.frequencyDataHandle == undefined)
+                    return { frequencyDataHandle: [compareFrequencyDataHandle] }
+                else {
+                    let tmp = state.frequencyDataHandle;
+                    tmp.push(compareFrequencyDataHandle);
+                    return { frequencyDataHandle: tmp }
+                }
+            });
+
+        })
 
     }
 
@@ -120,7 +179,8 @@ export default class Voltage extends React.Component<any, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={this.props.mouseMode}
-            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this)}}
+            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
+            compareEvents={this.props.compareEvents}
         />
     }
 
