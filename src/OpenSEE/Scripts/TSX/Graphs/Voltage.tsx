@@ -24,8 +24,6 @@
 //******************************************************************************************************
 
 import * as React  from 'react';
-import { utc } from "moment";
-import * as moment from 'moment';
 import { cloneDeep } from "lodash";
 
 import OpenSEEService from './../../TS/Services/OpenSEE';
@@ -62,7 +60,6 @@ export default class Voltage extends React.Component<any, any>{
 
     getData(props: D3LineChartBaseProps, baseCtrl: D3LineChartBase, ctrl: Voltage): void {
 
-        baseCtrl.createPlot();
         const eventDataHandle = ctrl.openSEEService.getWaveformVoltageData(props.eventId).then(data => {
             if (data == null) return;
 

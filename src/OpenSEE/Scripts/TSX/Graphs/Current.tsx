@@ -26,8 +26,6 @@
 import * as React  from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
-import * as moment from 'moment';
-import { Unit } from '../jQueryUI Widgets/SettingWindow';
 import { cloneDeep } from "lodash";
 
 export interface CurrentChartProps extends D3LineChartBaseProps { }
@@ -42,35 +40,48 @@ export default class Current extends React.Component<any, any>{
     }
 
     componentWillUnmount() {
-        if (this.state.eventDataHandle !== undefined && this.state.eventDataHandle.abort !== undefined) {
-            this.state.eventDataHandle.abort();
+        if (this.state.eventDataHandle !== undefined) {
+            this.state.eventDataHandle.forEach(item => {
+                if (item.abort !== undefined)
+                    item.abort();
+            })
             this.setState({ eventDataHandle: undefined });
         }
-        if (this.state.frequencyDataHandle !== undefined && this.state.frequencyDataHandle.abort !== undefined) {
-            this.state.frequencyDataHandle.abort();
+        if (this.state.frequencyDataHandle !== undefined) {
+            this.state.frequencyDataHandle.forEach(item => {
+                if (item.abort !== undefined)
+                    item.abort();
+            });
             this.setState({ frequencyDataHandle: undefined });
         }
-
     }
 
 
     getData(props: D3LineChartBaseProps, baseCtrl: D3LineChartBase, ctrl: Current): void {
 
-        var eventDataHandle = ctrl.openSEEService.getWaveformCurrentData(props.eventId).then(data => {
+        const eventDataHandle = ctrl.openSEEService.getWaveformCurrentData(props.eventId).then(data => {
             if (data == null) return;
 
-            baseCtrl.addData(data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl, true);
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
-        });
-        this.setState({ eventDataHandle: eventDataHandle });
 
-        var frequencyDataHandle = this.openSEEService.getFrequencyData(props.eventId, "Current").then(data => {
+        });
+        this.setState((props, state) => {
+            if (state.evendDataHandle == undefined)
+                return { eventDataHandle: [eventDataHandle] }
+            else {
+                let tmp = state.eventDataHandle;
+                tmp.push(eventDataHandle);
+                return { eventDataHandle: tmp }
+            }
+        });
+
+        const frequencyDataHandle = this.openSEEService.getFrequencyData(props.eventId, "Current").then(data => {
             setTimeout(() => {
                 if (data == null) return;
-
 
                 baseCtrl.addData(data, baseCtrl)
 
@@ -81,7 +92,53 @@ export default class Current extends React.Component<any, any>{
             }, 200);
         })
 
-        this.setState({ frequencyDataHandle: frequencyDataHandle });
+        this.setState((props, state) => {
+            if (state.frequencyDataHandle == undefined)
+                return { frequencyDataHandle: [frequencyDataHandle] }
+            else {
+                let tmp = state.frequencyDataHandle;
+                tmp.push(frequencyDataHandle);
+                return { frequencyDataHandle: tmp }
+            }
+        });
+
+
+        this.props.compareEvents.forEach(evtID => {
+            const compareDataHandle = ctrl.openSEEService.getWaveformCurrentData(evtID).then(data => {
+                setTimeout(() => {
+                    if (data == null) return;
+                    baseCtrl.addData(data, baseCtrl);
+                }, 200);
+            });
+
+            const compareFrequencyDataHandle = ctrl.openSEEService.getFrequencyData(evtID, "Current").then(data => {
+                setTimeout(() => {
+                    if (data == null) return;
+                    baseCtrl.addData(data, baseCtrl);
+                }, 200);
+            });
+
+            this.setState((props, state) => {
+                if (state.evendDataHandle == undefined)
+                    return { eventDataHandle: [compareDataHandle] }
+                else {
+                    let tmp = state.eventDataHandle;
+                    tmp.push(compareDataHandle);
+                    return { eventDataHandle: tmp }
+                }
+            });
+
+            this.setState((props, state) => {
+                if (state.frequencyDataHandle == undefined)
+                    return { frequencyDataHandle: [compareFrequencyDataHandle] }
+                else {
+                    let tmp = state.frequencyDataHandle;
+                    tmp.push(compareFrequencyDataHandle);
+                    return { frequencyDataHandle: tmp }
+                }
+            });
+
+        })
 
 
     }

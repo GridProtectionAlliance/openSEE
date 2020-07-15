@@ -565,6 +565,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     }
 
     AdjustY(ctrl: D3LineChartBase, d: any) {
+        if (ctrl.ActiveUnits[d.unit] == undefined)
+            return d.y
         if (ctrl.ActiveUnits[d.unit].current.Short == "pu")
             return d.y / d.base;
 

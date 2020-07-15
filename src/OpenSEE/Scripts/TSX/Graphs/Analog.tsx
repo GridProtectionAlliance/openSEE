@@ -24,7 +24,6 @@
 import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
-import { Unit } from '../jQueryUI Widgets/SettingWindow';
 import { cloneDeep } from "lodash";
 
 export interface DigitalChartProps extends D3LineChartBaseProps { }

@@ -250,7 +250,7 @@ export default class OpenSEEService{
 
         this.breakerAnalogsDataHandle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetAnalogs?eventId=${eventid}`,
+            url: `${homePath}api/OpenSEE/GetAnalogsData?eventId=${eventid}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,

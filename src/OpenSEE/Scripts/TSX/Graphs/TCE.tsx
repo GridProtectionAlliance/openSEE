@@ -26,7 +26,6 @@
 import * as React  from 'react';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
-import * as moment from 'moment';
 import { cloneDeep } from "lodash";
 
 export interface TCEChartProps extends D3LineChartBaseProps { }
@@ -41,8 +40,11 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
     }
 
     componentWillUnmount() {
-        if (this.state.eventDataHandle !== undefined && this.state.eventDataHandle.abort !== undefined) {
-            this.state.eventDataHandle.abort();
+        if (this.state.eventDataHandle !== undefined) {
+            this.state.eventDataHandle.forEach(item => {
+                if (item.abort !== undefined)
+                    item.abort();
+            })
             this.setState({ eventDataHandle: undefined });
         }
        
@@ -50,17 +52,46 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
 
 
     getData(props: D3LineChartBaseProps, baseCtrl: D3LineChartBase, ctrl: TCE): void {
+        
+        const eventDataHandle = ctrl.openSEEService.getWaveformTCEData(props.eventId).then(data => {
+            if (data == null) return;
 
-        var eventDataHandle = ctrl.openSEEService.getWaveformTCEData(props.eventId).then(data => {
-            var dataSet = baseCtrl.state.dataSet;
-            baseCtrl.addData(data, baseCtrl)
+            baseCtrl.addData(data, baseCtrl, true);
 
 
             if (this.props.endTime == 0) this.props.stateSetter({ graphEndTime: this.props.endTime });
             if (this.props.startTime == 0) this.props.stateSetter({ graphStartTime: this.props.startTime });
+
+        });
+        this.setState((props, state) => {
+            if (state.evendDataHandle == undefined)
+                return { eventDataHandle: [eventDataHandle] }
+            else {
+                let tmp = state.eventDataHandle;
+                tmp.push(eventDataHandle);
+                return { eventDataHandle: tmp }
+            }
         });
 
-        this.setState({ eventDataHandle: eventDataHandle });
+        this.props.compareEvents.forEach(evtID => {
+            const compareDataHandle = ctrl.openSEEService.getWaveformTCEData(evtID).then(data => {
+                setTimeout(() => {
+                    if (data == null) return;
+                    baseCtrl.addData(data, baseCtrl);
+                }, 200);
+            });
+
+            this.setState((props, state) => {
+                if (state.evendDataHandle == undefined)
+                    return { eventDataHandle: [compareDataHandle] }
+                else {
+                    let tmp = state.eventDataHandle;
+                    tmp.push(compareDataHandle);
+                    return { eventDataHandle: tmp }
+                }
+            });
+
+        })
         
     }
    

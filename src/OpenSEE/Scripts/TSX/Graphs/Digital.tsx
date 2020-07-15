@@ -26,7 +26,6 @@
 import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
-import { Unit } from '../jQueryUI Widgets/SettingWindow';
 import { cloneDeep } from "lodash";
 
 export interface DigitalChartProps extends D3LineChartBaseProps { }
@@ -58,7 +57,7 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
         pointTable: props.pointTable,
-        unitSettigs: props.unitSettings,
+        unitSettings: props.unitSettings,
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
         mouseMode: props.mouseMode,

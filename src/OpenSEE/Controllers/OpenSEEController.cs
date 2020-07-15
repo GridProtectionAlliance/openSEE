@@ -76,18 +76,21 @@ namespace OpenSEE
             {
                 this.LegendHorizontal = "";
                 this.LegendVertical = "";
+                this.LegendClass = "";
+                this.SecondaryLegendClass = "";
+                this.ChannelID = 0;
             }
  
             public string ChartLabel; // -> not sure We need this one
             public string LegendGroup;// -> Button on Top
-                                      // LegendVertGrp => Buttons on side
             public string LegendHorizontal; // => Horizontal Category
             public string LegendVertical; // => Vertical category
             // LegendVertGrp => Buttons on side
             public string Unit;
             public string Color;
+
             public string LegendClass; //Determines which Button this will be under in the Legend
-            public string SecondaryLegendClass; //Determines which Button this will be under in the Legend
+            public string SecondaryLegendClass;
            
             public int ChannelID; // Probably don't need this
             public double BaseValue;
@@ -223,21 +226,34 @@ namespace OpenSEE
                 Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
 
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
-                ds => new D3Series()
+                ds => (type == "TripCoilCurrent"? 
+                new D3Series()
                 {
-                    LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
-                    LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase.Name),
-                    ChannelID = ds.SeriesInfo.Channel.ID,
+                    LegendHorizontal = "TCE ",
+                    LegendVertical = ds.SeriesInfo.Channel.Asset.AssetName,
                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                    Unit = (type == "TripCoilCurrent" ? "TCE" : type),
+                    Unit = "TCE",
                     Color = GetColor(ds.SeriesInfo.Channel),
-                    LegendClass = GetVoltageType(ds.SeriesInfo.Channel),
-                    SecondaryLegendClass = GetSignalType(ds.SeriesInfo.Channel),
-                    LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = "",
                     DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     DataMarker = new List<double[]>(),
-                    BaseValue = (type == "Voltage" ? ds.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV) )
-                }).ToList();
+                    BaseValue =  GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV)
+                } :
+                 new D3Series()
+                 {
+                     LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
+                     LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase.Name),
+                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                     Unit = type,
+                     Color = GetColor(ds.SeriesInfo.Channel),
+                     LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                     DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                     DataMarker = new List<double[]>(),
+                     BaseValue = (type == "Voltage" ? ds.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
+                 })).ToList();
+
+            if (type == "TripCoilCurrent")
+                AdjustLegendNumbering(dataLookup);
 
             return dataLookup;
         }
@@ -493,19 +509,30 @@ namespace OpenSEE
             List<D3Series>  dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital").Select(ds =>
                 new D3Series()
                    {
-                       ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
-                       Unit = " ",
+                       Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
-                       LegendClass = "",
-                       SecondaryLegendClass = "",
+                       LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
+                       LegendVertical = "D ",
                        LegendGroup = "",
                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                   }).ToList();
+                }).ToList();
 
+            AdjustLegendNumbering(dataLookup);
             return dataLookup;
         }
 
+        private void AdjustLegendNumbering(List<D3Series> data)
+        {
+            Dictionary<string, int> index = new Dictionary<string, int>();
+            data.Select(item => item.LegendHorizontal).Distinct().ToList().ForEach(item => index.Add(item, 0));
+
+            data.ForEach(item =>
+            {
+                index[item.LegendHorizontal]++;
+                item.LegendVertical = item.LegendVertical + index[item.LegendHorizontal].ToString();
+            });
+        }
         #endregion
 
         #region [ Analogs Data ]
@@ -545,17 +572,16 @@ namespace OpenSEE
                 ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds => 
                    new D3Series()
                    {
-                       ChannelID = ds.SeriesInfo.Channel.ID,
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
                        Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendClass = "",
-                       SecondaryLegendClass = "",
-                       LegendGroup = "",
+                       LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
+                       LegendVertical = "A ",
                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                    }).ToList();
 
-           
+            AdjustLegendNumbering(dataLookup);
             return dataLookup;
         }
 
@@ -1191,17 +1217,7 @@ namespace OpenSEE
                 if (isAdmin) return null;
                 else return StatusCode(HttpStatusCode.Forbidden);
             }
-            //    ISecurityProvider securityProvider = SecurityProviderUtility.CreateProvider(username);
-            //securityProvider.PassthroughPrincipal = User;
-
-            //if (!securityProvider.Authenticate())
-            //    return StatusCode(HttpStatusCode.Forbidden);
-
-            //SecurityIdentity approverIdentity = new SecurityIdentity(securityProvider);
-            //SecurityPrincipal approverPrincipal = new SecurityPrincipal(approverIdentity);
-
-            //if (!approverPrincipal.IsInRole("Administrator"))
-            //    return StatusCode(HttpStatusCode.Forbidden);
+            
 
         }
         #endregion
