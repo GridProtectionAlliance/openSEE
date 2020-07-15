@@ -50,26 +50,31 @@ interface ILegendGrid {
     traces: Map<string,Array<number>>
 }
 
+
+
 export default class D3Legend extends React.Component<ID3LegendProps, any>{
     props: ID3LegendProps;
     state: {
         categories: Array<ICategory>,
         grid: Array<ILegendGrid>,
+        showCategories: boolean,
     };
     hHeader: Map<string, ILegendGrid[]>; 
     vHeader: Map<string, ILegendGrid[]>;
     nData: number;
+    refDropDown: any;
 
     constructor(props) {
         super(props);
         this.state = {
             categories: [],
             grid: [],
+            showCategories: false,
         };
         this.hHeader = new Map<string, ILegendGrid[]>();
         this.vHeader = new Map<string, ILegendGrid[]>();
         this.nData = 0;
-
+        this.refDropDown = React.createRef();
     }
 
     componentDidUpdate(prevProps: ID3LegendProps, prevState: any) {
@@ -105,7 +110,9 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
             else
                 grid[index].traces.set(item.LegendGroup, [dataIndex])
         });
-            
+
+        if (categories.length == 1)
+            categories[0].enabled = true
 
         this.nData = this.props.data.length;
 
@@ -127,33 +134,41 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
         const headerRow: Array<JSX.Element> = []
         const tblData: Array<JSX.Element> = []
-
+       
         this.hHeader.forEach((value, key) =>
-            headerRow.push(
-                <td key={headerRow.length} style={{ width: hWidth }}>
-                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
-                        <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{key}</span>
-                    </div>
-                </td>));
+        headerRow.push(
+            <div key={headerRow.length} style={{ width: hWidth, borderLeft: "2px solid #b2b2b2"}}>
+                    <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)"}}>{key}</span>
+            </div>));
 
-        this.vHeader.forEach((value, key) => tblData.push(<NewRow key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
+        this.vHeader.forEach((value, key) => tblData.push(<Row key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
 
+        console.log(this.state.categories.filter(item => item.label.trim() !== "").length)
         return (
 
             <div ref="legend" id={this.props.type + "-legend"} className="legend" style={{ float: "right", width: "200px", height: this.props.height - 38, marginTop: "6px", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden" }}>
-                <div className="btn-group btn-group-sm" role="group" aria-label="...">
-                    {this.state.categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => this.changeCategory(index,item)} />)}
+                <div className="btn-group" style={{ width: '100%' }}>
+
+                    {(this.state.categories.length > 1 ?
+                        <button onClick={() => this.setState((state, prop) => { return { showCategories: !state.showCategories} })} type="button" style={{ borderRadius: 0 }} className="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
+                            <span className="sr-only">Toggle Dropdown</span>
+                        </button> : null)}
+                    <button style={{ width: '100%', borderRadius: 0 }} className="btn btn-secondary btn-sm active" type="button">
+                        {this.state.categories.filter(item => item.enabled).map(item => item.label).join(", ")}
+                    </button>
+
+                    <div className={"dropdown-menu " + (this.state.showCategories ? "show" : "")} style={{ marginTop: 0 }} onMouseLeave={() => { if (this.state.showCategories) this.setState({ showCategories: false }) }}>
+                        {(this.state.categories.filter(item => item.label.trim() !== "").length === 0 ? this.props.type
+                            : this.state.categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => this.changeCategory(index, item)} />)
+                        )}
+                    </div>
                 </div>
 
-                <table style={{ maxHeight: tableHeight, overflowY: "auto", display: "block", width: "100%" }}>
-                    <tbody style={{ width: "100%", display: "table" }}>
-                        <tr>
-                            <td style={{ width: hWidth }} id="header-vertical"></td>
-                            {headerRow}
-                        </tr>
-                        {tblData}
-                    </tbody>
-                </table>
+                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2" }}>
+                    <div style={{ width: hWidth, backgroundColor:  "#b2b2b2"}}></div>
+                    {headerRow}
+                </div>
+                {tblData}
 
             </div>
         );
@@ -206,11 +221,11 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
 const Category = (props: { key: number, label: string, enabled: boolean, onclick: () => void}) => {
     return (
-        <button type="button" className={"btn btn-secondary " + (props.enabled ? "active" : "")} onClick={() => props.onclick()}>{props.label}</button>
+        <a className={"dropdown-item " + (props.enabled ? "active" : "")} onClick={() => props.onclick()}>{props.label}</a>
     );
 };
 
-const NewRow = (props: { label: string, data: Array<ILegendGrid>, width: number, ctrl: D3Legend }) => {
+const Row = (props: { label: string, data: Array<ILegendGrid>, width: number, ctrl: D3Legend }) => {
     let activeCategories = props.ctrl.state.categories.filter(item => item.enabled).map(item => item.label);
 
     function hasData(data: ILegendGrid) {
@@ -224,20 +239,19 @@ const NewRow = (props: { label: string, data: Array<ILegendGrid>, width: number,
     }
 
     return (
-        <tr>
-            <td style={{ width: props.width }} key={0}>
-                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center" }}>
+        <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderTop: "2px solid #b2b2b2" }}>
+            <div style={{ width: props.width, overflow: "hidden", textAlign: "center" }} key={0}>
                     <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{props.label}</span>
-                </div>
-            </td>
-            {props.data.map((item,index) =>
+            </div>
+            {props.data.map((item, index) =>
                 (hasData(item) ?
                     <TraceButton width={props.width} data={item} ctrl={props.ctrl} activeCategory={activeCategories} key={index} /> :
-                    <td key={index} style={{ width: props.width, backgroundColor: "rgb(204,204,204)" }}> </td>)
+                    <div key={index} style={{ width: props.width, backgroundColor: "b2b2b2", borderLeft: "2px solid #b2b2b2" }}> </div>)
             )}
-        </tr>
-        )
+        </div>
+    )
 }
+
 
 const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: number, ctrl: D3Legend }) => {
 
@@ -252,11 +266,9 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
     }
 
     return (
-        <td style={{ width: props.width }}>
-                <div style={{ backgroundColor: props.ctrl.getColor(props.ctrl, props.data.color), border: "1px solid #ccc", padding: "1px", margin: "1px", textAlign: "center" }} onClick={onClick} >
-                {(props.data.enabled ? <i className="fa fa-minus" ></i> : <i className="fa fa-plus" ></i>)}
-            </div>
-        </td>)
+        <div style={{ width: props.width, backgroundColor: convertHex(props.ctrl.getColor(props.ctrl, props.data.color),(props.data.enabled? 100 : 50)), borderLeft: "2px solid #b2b2b2" }} onClick={onClick} >
+            {(props.data.enabled ? <i className="fa fa-minus" ></i> : <i className="fa fa-plus" ></i>)}
+        </div>)
 };
 
 function convertHex(hex: string, opacity: number) {
