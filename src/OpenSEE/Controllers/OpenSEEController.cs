@@ -1017,7 +1017,7 @@ namespace OpenSEE
         {
             Dictionary<string, string> query = Request.QueryParameters();
             int eventID = int.Parse(query["eventId"]);
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 const string SQL = "SELECT * FROM EventNote WHERE EventID = {0}";
 
@@ -1053,7 +1053,7 @@ namespace OpenSEE
 
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     EventNote record = new EventNote()
                     {
@@ -1085,7 +1085,7 @@ namespace OpenSEE
 
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     DateTime now = DateTime.Now;
                     List<EventNote> records = new List<EventNote>();
@@ -1125,7 +1125,7 @@ namespace OpenSEE
 
                 if (result != null) return result;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     EventNote record = new TableOperations<EventNote>(connection).QueryRecordWhere("ID = {0}", note.ID);
                     new TableOperations<EventNote>(connection).DeleteRecord(record);
@@ -1152,7 +1152,7 @@ namespace OpenSEE
 
                 if (result != null) return result;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     connection.ExecuteNonQuery(@"
                         DELETE FROM EventNote WHERE Note = {0} AND UserAccount = {1} AND Timestamp = {2}
@@ -1178,7 +1178,7 @@ namespace OpenSEE
             if (result != null) return result;
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     EventNote record = new TableOperations<EventNote>(connection).QueryRecordWhere("ID = {0}", note.ID);
 
