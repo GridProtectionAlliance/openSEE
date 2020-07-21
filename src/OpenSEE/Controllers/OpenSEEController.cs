@@ -606,7 +606,7 @@ namespace OpenSEE
             {
                 using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
-                    List<byte[]> data = ChannelData.DataFromEvent(eventID, connection);
+                    List<byte[]> data = ChannelData.DataFromEvent(eventID, "dbOpenXDA");
                     return ToDataGroup(meter, data);
                 }
             });
