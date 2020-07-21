@@ -467,7 +467,7 @@ namespace OpenSEE
         {
             Dictionary<string, string> query = Request.QueryParameters();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings")) {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA")) {
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -531,7 +531,7 @@ namespace OpenSEE
         {
             Dictionary<string, string> query = Request.QueryParameters();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
