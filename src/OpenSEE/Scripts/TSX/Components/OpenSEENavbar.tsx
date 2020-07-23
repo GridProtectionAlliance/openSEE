@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import PolarChart from './../jQueryUI Widgets/PolarChart';
-import Points from './../jQueryUI Widgets/AccumulatedPoints';
+import Points, { iD3PointOfInterest } from './../jQueryUI Widgets/AccumulatedPoints';
 import Tooltip from './../jQueryUI Widgets/Tooltip';
 import TooltipWithDelta from './../jQueryUI Widgets/TooltipWithDelta';
 
@@ -32,16 +32,14 @@ import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
 import { iD3DataPoint, ZoomMode, MouseMode } from '../Graphs/D3LineChartBase';
-import { iD3DataRow, iD3TableHeader } from './../jQueryUI Widgets/AccumulatedPoints';
-import { clone } from 'lodash';
+import { iD3DataRow } from './../jQueryUI Widgets/AccumulatedPoints';
 import SettingWindow, { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
 
 declare var homePath: string;
 
 export default class OpenSEENavbar extends React.Component {
     props: {
-        TableData: Array<iD3DataPoint>,
-        PointsTable: Array<iD3DataPoint>,
+        TableData: Map<string, Array<iD3PointOfInterest>>,
         eventid: number,
         resetZoom: any,
         stateSetter: Function,
@@ -78,7 +76,6 @@ export default class OpenSEENavbar extends React.Component {
     state: {
         showComtradeExportButton: boolean,
         pointsData: Array<iD3DataRow>,
-        pointsHeader: Array<iD3TableHeader>
     }
     constructor(props, context) {
         super(props, context);
@@ -86,60 +83,15 @@ export default class OpenSEENavbar extends React.Component {
         this.state = {
             showComtradeExportButton: false,
             pointsData: [],
-            pointsHeader: [],
         }
     }
 
 
     componentWillReceiveProps(nextProps) {
 
-        let headerData: Array<iD3TableHeader> = [];
         let availableTimes = [];
         let tblData: Array<iD3DataRow> = [];
           
-        nextProps.PointsTable.forEach((item, i) => {
-            let channelIndex = headerData.findIndex(d => (
-                d.Asset == item.LegendGroup && d.Channel == item.ChartLabel
-            ));
-
-            let timeIndex = availableTimes.findIndex(d => (
-                d == item.Time
-            ));
-
-            if (channelIndex < 0) {
-                headerData.push({ Asset: item.LegendGroup, Channel: item.ChartLabel, Color: item.Color });
-                channelIndex = headerData.length - 1;
-                if (tblData.length > 0 && tblData[0].Value.length < channelIndex) {
-                    tblData.forEach(item => {
-                        item.Value.push(NaN);
-                        item.DeltaValue.push(NaN);
-                    })
-                }
-            }
-
-            if (timeIndex < 0) {
-                let nData = headerData.length;
-                let t = item.Time - this.props.PostedData.postedEventMilliseconds
-                tblData.push({
-                    Time: t,
-                    DeltaTime: (tblData.length > 0) ? t - tblData[tblData.length - 1].Time : NaN,
-                    Value: Array(nData).fill(NaN),
-                    DeltaValue: Array(nData).fill(NaN),
-                    Indices: []
-                })
-                availableTimes.push(item.Time)
-                timeIndex = availableTimes.length - 1;
-            }
-
-            tblData[timeIndex].Value[channelIndex] = item.Value;
-            tblData[timeIndex].DeltaValue[channelIndex] = (timeIndex > 0) ? item.Value - tblData[timeIndex-1].Value[channelIndex] : NaN;
-            tblData[timeIndex].Indices.push(i)
-        })
-
-
-        this.setState({ pointsData: tblData, pointsHeader: headerData})
-        
-
     }
  
     componentDidMount() {
@@ -257,10 +209,13 @@ export default class OpenSEENavbar extends React.Component {
                         
                     </ul>
                 </div>
-                <PolarChart data={this.props.TableData} callback={this.props.stateSetter} showV={this.props.displayVolt} showI={this.props.displayCur} />
-                <Points pointsData={this.state.pointsData} pointsHeader={this.state.pointsHeader} pointsTable = { this.props.PointsTable } callback={this.props.stateSetter} postedData={this.props.PostedData} />
-                <Tooltip data={this.props.TableData} hover={this.props.Hover} callback={this.props.stateSetter} />
-                <TooltipWithDelta pointdata={this.state.pointsData} pointheader={this.state.pointsHeader} PostedData={this.props.PostedData} callback={this.props.stateSetter} />
+                <PolarChart data={[]} callback={this.props.stateSetter} showV={this.props.displayVolt} showI={this.props.displayCur} />
+                <Points data={this.props.TableData}
+                    callback={this.props.stateSetter}
+                    postedData={this.props.PostedData}
+                />
+                <Tooltip data={[]} hover={this.props.Hover} callback={this.props.stateSetter} />
+                
                 <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
@@ -288,7 +243,7 @@ export default class OpenSEENavbar extends React.Component {
         );
  
         //   {this.state.showComtradeExportButton ? <a className="dropdown-item" onClick={this.exportComtrade.bind(this)}>Export COMTRADE</a> : null}   
-
+        //<TooltipWithDelta pointdata={this.state.pointsData} PostedData={this.props.PostedData} callback={this.props.stateSetter} />
     }
 
     showhidePoints(evt) {

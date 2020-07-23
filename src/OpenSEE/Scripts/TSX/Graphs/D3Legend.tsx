@@ -113,6 +113,11 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
         if (categories.length == 1)
             categories[0].enabled = true
+        else {
+            if (!categories.some(item => item.enabled))
+                categories[0].enabled = true
+        }
+
 
         this.nData = this.props.data.length;
 
@@ -143,7 +148,6 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
         this.vHeader.forEach((value, key) => tblData.push(<Row key={tblData.length} label={key} data={value} ctrl={this} width={hWidth} />));
 
-        console.log(this.state.categories.filter(item => item.label.trim() !== "").length)
         return (
 
             <div ref="legend" id={this.props.type + "-legend"} className="legend" style={{ float: "right", width: "200px", height: this.props.height - 38, marginTop: "6px", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden" }}>

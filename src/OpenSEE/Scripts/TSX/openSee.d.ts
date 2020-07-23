@@ -106,8 +106,6 @@ declare interface OpenSEEState {
     displayAnalogs: boolean,
     Width: number,
     Hover: number,
-    PointsTable: Array<iD3DataPoint>,
-    TableData: Array<iD3DataPoint>,
     PostedData: iPostedData,
     nextBackLookup: iNextBackLookup,
     navigation: string,
@@ -132,6 +130,7 @@ declare interface OpenSEEState {
     analyticLimits: yLimits,
     mouseMode: MouseMode,
     showCompareCharts: boolean,
+    tableData: Map<string, Array<iD3PointOfInterest>>,
 }
 
 declare interface iListObject {

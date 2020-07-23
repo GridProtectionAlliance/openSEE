@@ -55,7 +55,6 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         hover: props.hover,
         fftWindow: props.fftWindow,
         fftStartTime: props.fftStartTime,
-        pointTable: props.pointTable,
         unitSettings: props.unitSettings,
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,

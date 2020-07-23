@@ -148,7 +148,6 @@ export default class AnalyticLine extends React.Component<any, any>{
             hover={this.props.hover}
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
-            pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}

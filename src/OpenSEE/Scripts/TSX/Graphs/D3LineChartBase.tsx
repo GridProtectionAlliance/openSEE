@@ -52,20 +52,17 @@ export interface D3LineChartBaseProps {
     zoomMode: ZoomMode,
     yLimits: yLimits,
     mouseMode: MouseMode,
-    pointTable?: Array<iD3DataPoint>,
     options?: D3PlotOptions,
     fftStartTime?: number,
     fftWindow?: number,
     tableSetter?: Function,
-    tableReset?: Function,
-    
+    activeUnitSetter?: (fx: Function, plotLbl: string) => void,
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string,
     openSEEServiceFunction: StandardAnalyticServiceFunction,
-    getData?: GetDataFunction,
-   
+    getData?: GetDataFunction,   
 }
 
 export interface D3PlotOptions {
@@ -104,9 +101,12 @@ export interface iD3DataSeries {
     path?: any,
 }
 
+
+
 interface D3LineChartBaseState {
     dataSet: iD3DataSet, dataHandle: JQuery.jqXHR
 }
+
 export interface iD3DataPoint {
     LegendHorizontal: string,
     ChannelID: number,
@@ -184,6 +184,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         this.createPlot();
 
         this.getData(this.props);
+
+        if (this.props.activeUnitSetter !== undefined)
+            this.props.activeUnitSetter(this.GetCurrentUnit.bind(this), this.props.legendKey);
     }
 
     componentWillUnmount() {
@@ -500,12 +503,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.tableSetter;
         delete nextPropsClone.tableSetter;
 
-        delete props.tableReset;
-        delete nextPropsClone.tableReset;
-
-        delete props.pointTable;
-        delete nextPropsClone.pointTable;
-
         delete props.zoomMode;
         delete nextPropsClone.zoomMode;
 
@@ -523,7 +520,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.compareEvents;
         delete nextPropsClone.compareEvents;
 
-
+        
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
         }
@@ -802,11 +799,31 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return;
         }
 
+        let xMouse = ctrl.xScale.invert(ctrl.mousedownPos.x)
+        let yMouse = ctrl.yScale.invert(ctrl.mousedownPos.y)
+
+        if ((Math.abs(h)) < 10 && (Math.abs(w) < 10)) {
+            ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
+                let idx = item.DataPoints.findIndex(pt => pt[0] > x0);
+                if (idx === -1)
+                    idx = item.DataPoints.length - 1;
+                return {
+                    LegendHorizontal: item.LegendHorizontal,
+                    LegendVertical: item.LegendVertical,
+                    LegendGroup: item.LegendGroup,
+                    Unit: item.Unit,
+                    Color: item.Color,
+                    Current: [0, 0],
+                    Selected: [item.DataPoints[idx]],
+                    ChannelName: item.ChartLabel
+                }
+            }));
+
+        }
+
 
         if (ctrl.props.mouseMode == "zoom") {
-            let xMouse = ctrl.xScale.invert(ctrl.mousedownPos.x)
-            let yMouse = ctrl.yScale.invert(ctrl.mousedownPos.y)
-
+            
             if (ctrl.props.zoomMode == "x") {
                 if (Math.abs(xMouse - x0) > 10) {
 
@@ -1072,7 +1089,11 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         );
     }
 
+    GetCurrentUnit() {
+        return this.ActiveUnits;
+    }
 
+  
 
 
     

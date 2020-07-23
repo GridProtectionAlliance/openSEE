@@ -48,16 +48,18 @@ import AnalyticBar from './Graphs/AnalyticBar';
 import OpenSEENavbar from './Components/OpenSEENavbar';
 import About from './Components/About';
 
-import { D3LineChartBaseProps, iD3DataPoint, ZoomMode } from './Graphs/D3LineChartBase';
+import { D3LineChartBaseProps, iD3DataPoint } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
-import { Unit, GraphUnits, UnitSetting, DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
+import { DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
+import { iD3PointOfInterest } from './jQueryUI Widgets/AccumulatedPoints';
+
 
 export class OpenSEE extends React.Component<{}, OpenSEEState>{
     history: object;
     historyHandle: any;
     openSEEService: OpenSEEService;
     resizeId: any;
-    TableData: Array<iD3DataPoint>;
+    TableData: Map<string, Array<iD3PointOfInterest>>;
 
     constructor(props) {
         super(props);
@@ -80,8 +82,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 
             Width: window.innerWidth - 300,
             Hover: null,
-            PointsTable: new Array<iD3DataPoint>(),
-            TableData: new Array<iD3DataPoint>(),
+            tableData: new Map<string,Array < iD3PointOfInterest >>(),
             PostedData: {},
             nextBackLookup:{
                 Meter: {},
@@ -115,7 +116,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
         }
 
-        this.TableData = [];
+        this.TableData = new Map<string, Array<iD3PointOfInterest>>();
 
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
@@ -263,14 +264,13 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         Hover={this.state.Hover}
                         key="navbar"
                         nextBackLookup={this.state.nextBackLookup}
-                        PointsTable={this.state.PointsTable}
                         PostedData={this.state.PostedData}
                         ref="navbar"
                         resetZoom={this.resetZoom.bind(this)}
                         selected={this.state.navigation}
                         startDate={this.state.StartDate}
                         stateSetter={this.stateSetter.bind(this)}
-                        TableData={this.state.TableData}
+                        TableData={this.state.tableData}
                         displayVolt={this.state.displayVolt}
                         displayCur={this.state.displayCur}
                         displayTCE={this.state.displayTCE}
@@ -305,9 +305,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             zoomMode={this.state.zoomMode}
                             colorSettings={this.state.plotColors}
                             unitSettings={this.state.plotUnits}
-                            pointTable={this.state.PointsTable}
-                            tableReset={() => this.ResetTable()}
-                            tableSetter={(obj) => this.tableUpdater(obj)}
+                            tableSetter={(lbl,data) => this.tableUpdater(lbl,data)}
                             key={this.state.eventid}
                             eventId={this.state.eventid}
                             startTime={this.state.startTime}
@@ -378,7 +376,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                                 zoomMode={this.state.zoomMode}
                                 colorSettings={this.state.plotColors}
                                 unitSettings={this.state.plotUnits}
-                                pointTable={this.state.PointsTable}
                                 analytic={this.state.analytic}
                                 analyticParameter={this.state.AnalyticSettings}
                                 eventId={this.state.eventid}
@@ -417,33 +414,41 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     ResetTable() {
-        this.TableData = [];
-        this.setState({ PointsTable: [] })
+        this.setState({ tableData: new Map<string, Array<iD3PointOfInterest>>() })
     }
 
-    tableUpdater(obj: Array<iD3DataPoint>) {
+    tableUpdater(graphLabel: string, data: Array<iD3PointOfInterest>) {
+        this.setState((prevstate) => {
+            let current = new Array<iD3PointOfInterest>();
 
-        
-        obj.forEach(item => {
-            let i = this.TableData.findIndex(d => {
-                return (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == item.ChartLabel &&
-                    d.XaxisLabel == item.XaxisLabel &&
-                    d.LegendClass == item.LegendClass &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.SecondaryLegendClass == item.SecondaryLegendClass &&
-                    d.LegendKey == item.LegendKey
-                )
-            });
-            if (i > -1) {
-                this.TableData[i] = item
-            }
-            else
-                this.TableData.push(item)
-        });
+            if (prevstate.tableData.has(graphLabel))
+                prevstate.tableData.get(graphLabel).forEach(item => {
+                    let index = data.findIndex(series => (
+                        series.LegendHorizontal === item.LegendHorizontal &&
+                        series.LegendVertical === item.LegendVertical &&
+                        series.LegendGroup === item.LegendGroup)
+                    );
+                    if (index !== -1)
+                        current.push(item);
+                });
 
-        this.setState({ TableData: this.TableData });
+            data.forEach(item => {
+                let index = current.findIndex(series => (
+                    series.LegendHorizontal === item.LegendHorizontal &&
+                    series.LegendVertical === item.LegendVertical &&
+                    series.LegendGroup === item.LegendGroup)
+                );
+                if (index == -1)
+                    current.push(item);
+                else {
+                    current[index].Current = item.Current;
+                    current[index].Selected = current[index].Selected.concat(item.Selected);
+                }
+            })
+
+            prevstate.tableData.set(graphLabel, current);
+            return { tableData: prevstate.tableData };
+        })
     }
 
     resetZoom() {
@@ -535,8 +540,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}
-                    pointTable={props.pointTable}
-                    tableReset={props.tableReset}
                     tableSetter={props.tableSetter}
                     fftStartTime={props.fftStartTime}
                     fftWindow={props.fftWindow}
@@ -556,8 +559,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}
-                    pointTable={props.pointTable}
-                    tableReset={props.tableReset}
                     tableSetter={props.tableSetter}
                     fftStartTime={props.fftStartTime}
                     fftWindow={props.fftWindow}
@@ -595,7 +596,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}
-                    pointTable={props.pointTable}
                     fftStartTime={props.fftStartTime}
                     fftWindow={props.fftWindow}
                     eventId={props.eventId}
@@ -614,7 +614,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}
-                    pointTable={props.pointTable}
                     fftStartTime={props.fftStartTime}
                     fftWindow={props.fftWindow}
                     eventId={props.eventId}
@@ -637,7 +636,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}
-                    pointTable={props.pointTable}
                     tableSetter={props.tableSetter}
                     fftStartTime={props.fftStartTime}
                     fftWindow={props.fftWindow}
@@ -657,8 +655,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 zoomMode={props.zoomMode}
                 colorSettings={props.colorSettings}
                 unitSettings={props.unitSettings}
-                pointTable={props.pointTable}
-                tableReset={props.tableReset}
                 tableSetter={props.tableSetter}
                 fftStartTime={props.fftStartTime}
                 fftWindow={props.fftWindow}
@@ -678,7 +674,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 zoomMode={props.zoomMode}
                 colorSettings={props.colorSettings}
                 unitSettings={props.unitSettings}
-                pointTable={props.pointTable}
                 fftStartTime={props.fftStartTime}
                 fftWindow={props.fftWindow}
                 eventId={props.eventId}
@@ -697,7 +692,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 zoomMode={props.zoomMode}
                 colorSettings={props.colorSettings}
                 unitSettings={props.unitSettings}
-                pointTable={props.pointTable}
                 fftStartTime={props.fftStartTime}
                 fftWindow={props.fftWindow}
                 eventId={props.eventId}
@@ -716,7 +710,6 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 zoomMode={props.zoomMode}
                 colorSettings={props.colorSettings}
                 unitSettings={props.unitSettings}
-                pointTable={props.pointTable}
                 fftStartTime={props.fftStartTime}
                 fftWindow={props.fftWindow}
                 eventId={props.eventId}

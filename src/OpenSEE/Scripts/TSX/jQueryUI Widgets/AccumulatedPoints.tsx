@@ -21,29 +21,30 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { clone } from "lodash";
+import { clone, uniq } from "lodash";
 import { style } from "typestyle";
-import { iD3DataPoint } from '../Graphs/D3LineChartBase';
 
 export interface iD3DataRow {
     Value: Array<number>,
     DeltaValue: Array<number>,
     Time: number,
     DeltaTime: number,
-    Indices: Array<number>,
+    PointIndex: Array<number>,
+    SeriesIndex: Array<number>
+    GraphLabel: Array<string>
 }
 
-export interface iD3TableHeader {
-    Asset: string,
-    Channel: string,
-    Color: string
+export interface iD3PointOfInterest {
+    LegendHorizontal: string,
+    LegendVertical: string,
+    LegendGroup: string,
+    Unit: string,
+    Color: string,
+    Current: [number, number],
+    Selected: Array<[number, number]>,
+    ChannelName: string,
 }
 
-
-interface pointInformation extends iD3DataPoint {
-    DeltaValue: number,
-    DeltaTime: number
-}
 // styles
 const outerDiv: React.CSSProperties = {
     minWidth: '200px',
@@ -92,9 +93,7 @@ const closeButton = style({
 
 export default class Points extends React.Component<any, any>{
     props: {
-        pointsData: Array<iD3DataRow>,
-        pointsHeader: Array<iD3TableHeader>,
-        pointsTable: Array<iD3DataPoint>,
+        data: Map<string, Array<iD3PointOfInterest>>,
         callback: Function,
         postedData: any
     }
@@ -115,14 +114,63 @@ export default class Points extends React.Component<any, any>{
     render() {
 
 
-        let headers = this.props.pointsHeader.map((a, i) => Header(a,i))
-        if (!headers)
-            headers = []
+        const headerRow: Array<JSX.Element> = [];
+        const headerKeys: Array<string> = [];
 
-        var rows = this.props.pointsData.map((a, i) => {
-            return Row(a, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
+        this.props.data.forEach((val, key) => val.forEach((item, index) => {
+            let asset = ""
+            if (key === "Voltage" || key === "Current")
+                asset = item.LegendGroup;
+            headerRow.push(Header(key, index, asset, item.ChannelName))
+            headerKeys.push(key);
         })
-         
+        );
+
+        let t = [];
+
+        this.props.data.forEach(item => item.forEach(series => series.Selected.forEach(pt => t.push(pt[0]))));
+        
+
+        t = t.sort();
+        t = uniq(t);
+        
+        const dataRows: Array<JSX.Element> = t.map((time, i) => {
+            let val = [];
+            let deltaVal = [];
+            let pointIndex = [];
+            let seriesIndex = [];
+            let label = [];
+            headerKeys.forEach((key) => 
+                this.props.data[key].forEach((series, seriesI) => {
+                    let ptIndex = series.Selected.findIndex(pt => pt[0] === time);
+                    if (ptIndex != -1) {
+                        pointIndex.push(ptIndex);
+                        seriesIndex.push(seriesI);
+                        label.push(key);
+                        val.push(series.Selected[ptIndex][1]);
+                        deltaVal.push((ptIndex > 0 ? series.Selected[ptIndex][1] - series.Selected[ptIndex - 1][1] : NaN))
+                    } else {
+                        pointIndex.push(NaN);
+                        seriesIndex.push(NaN);
+                        label.push(key);
+                        val.push(NaN);
+                        deltaVal.push( NaN)
+                    }
+                }))
+           
+            let row: iD3DataRow = {
+                Value: val,
+                DeltaValue: deltaVal,
+                DeltaTime: (i > 0 ? time[i] - time[i - 1] : NaN),
+                Time: time,
+                GraphLabel: label,
+                PointIndex: pointIndex,
+                SeriesIndex: seriesIndex
+            }
+
+            return Row(row, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
+        })
+      
        
         return (
             <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
@@ -131,11 +179,11 @@ export default class Points extends React.Component<any, any>{
                     <div style={{ overflowY: 'scroll', maxHeight: 950}}>
                         <table className="table table-bordered table-hover">
                             <thead>
-                                <tr><td colSpan={2} key="header-time"></td>{headers}</tr>
-                                {SubHeader(headers.length)}
+                                <tr><td colSpan={2} key="header-time"></td>{headerRow}</tr>
+                                {SubHeader(headerRow.length)}
                             </thead>
                             <tbody>
-                                {rows}
+                                {dataRows}
                             </tbody>
                         </table>
                     </div>
@@ -156,7 +204,7 @@ export default class Points extends React.Component<any, any>{
     }
 
     removePoint() {
-        var data = clone(this.props.pointsTable);
+    /*    var data = clone(this.props.pointsTable);
         var selectedPoint = this.state.selectedPoint;
 
         if (selectedPoint === -1) {
@@ -170,18 +218,18 @@ export default class Points extends React.Component<any, any>{
         this.props.callback({
             PointsTable: data
         });
-        this.setState({ selectedPoint: selectedPoint});
+        this.setState({ selectedPoint: selectedPoint}); */
     }
 
     popAccumulatedPoints() {
-        var data = clone(this.props.pointsTable);
+        /* var data = clone(this.props.pointsTable);
         if (data.length > 0) {
             data = this.removeByIndex(data, this.props.pointsData[this.props.pointsData.length -1].Indices)
         }
 
         this.props.callback({
             PointsTable: data
-        });      
+        });      */
     }
 
     clearAccumulatedPoints() {
@@ -238,9 +286,9 @@ const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, ar
     );
 }
 
-const Header = (header: iD3TableHeader, index: number) => {
+const Header = (graphLabel: string, index: number, asset: string, channel: string) => {
     return (
-        <td colSpan={2} key={"header-" + index}><span>{header.Asset}<br/>{header.Channel}</span> </td>
+        <td colSpan={2} key={"header-" + graphLabel + "-" +  index}><span>{asset}<br/>{channel}</span> </td>
         )
 }
 

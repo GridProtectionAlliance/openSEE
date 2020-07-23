@@ -120,7 +120,6 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             hover={this.props.hover}
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
-            pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}

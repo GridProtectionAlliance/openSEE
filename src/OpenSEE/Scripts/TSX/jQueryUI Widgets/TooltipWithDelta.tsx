@@ -25,7 +25,7 @@ import * as React from 'react';
 import { utc } from "moment";
 import { style } from "typestyle"
 import { iD3DataPoint } from '../Graphs/D3LineChartBase';
-import { iD3TableHeader, iD3DataRow } from './AccumulatedPoints';
+import { iD3DataRow } from './AccumulatedPoints';
 import moment = require('moment');
 
 // styles
@@ -75,7 +75,6 @@ const closeButton = style({
 
 export interface TooltipWithDeltaProps {
     pointdata: Array<iD3DataRow>,
-    pointheader: Array<iD3TableHeader>,
     callback: Function,
     PostedData: any
 }
@@ -102,18 +101,7 @@ export default class TooltipWithDelta extends React.Component<any, any>{
         if (this.props.pointdata.length > 0)
             firstDate = (this.props.pointdata[this.props.pointdata.length - 1].Time) + parseFloat(this.props.PostedData.postedEventMilliseconds);
 
-        if (!isNaN(firstDate)) {
-            this.props.pointheader.forEach((header, i) => {
-                var row;
-
-                if (!isNaN(secondDate))
-                    row = Row(header.Channel, header.Color, this.props.pointdata[this.props.pointdata.length - 1].Value[i], this.props.pointdata[this.props.pointdata.length - 2].Value[i]);
-                else
-                    row = Row(header.Channel, header.Color, this.props.pointdata[this.props.pointdata.length - 1].Value[i], NaN);
-                rows.push(row);
-            });
-        }
-
+      
         return (
             <div id="tooltipwithdelta" className="ui-widget-content" style={outerDiv}>
                 <div id="tooltipwithdeltahandle" className={handle}></div>

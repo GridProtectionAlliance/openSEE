@@ -170,8 +170,6 @@ export default class Voltage extends React.Component<any, any>{
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
             tableSetter={this.props.tableSetter}
-            tableReset={this.props.tableReset}
-            pointTable={this.props.pointTable}
             unitSettings={this.props.unitSettings}
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
