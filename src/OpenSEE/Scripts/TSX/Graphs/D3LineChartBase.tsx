@@ -42,7 +42,7 @@ export interface D3LineChartBaseProps {
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string, openSEEServiceFunction: StandardAnalyticServiceFunction
     getData?: GetDataFunction,
-
+    harmonic?: number
    
 }
 
@@ -281,6 +281,19 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 this.updateCycle(this, null, null);
             
         }
+
+        if (!(isEqual(props.harmonic, nextPropsClone.harmonic))) {
+            this.setState({
+                dataSet: {
+                    Data: null,
+                    startDate: null,
+                    endDate: null
+                }
+            })
+            this.getData(nextProps);
+            return
+        }
+
         if (!(isEqual(props, nextPropsClone))) {
             this.getData(nextProps);
             

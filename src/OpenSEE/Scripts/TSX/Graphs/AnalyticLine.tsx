@@ -142,6 +142,7 @@ export default class AnalyticLine extends React.Component<any, any>{
             fftWindow={this.props.fftWindow}
             fftStartTime={this.props.fftStartTime}
             pointTable={this.props.pointTable}
+            harmonic={this.props.analyticParameter.harmonic}
         />
     }
 
