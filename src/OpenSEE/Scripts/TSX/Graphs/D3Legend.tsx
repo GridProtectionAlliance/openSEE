@@ -108,16 +108,33 @@ export default class D3Legend extends React.Component<any, any>{
    
     toggleAll(active: Array<string>, value: string, type: string) {
 
+        const currentDisplay = this.props.data.map(row => _.clone(row.Display));
+        const currentEnabled = this.props.data.map(row => _.clone(row.Enabled));
+
         this.props.data.forEach((row, key, map) => {
             var enabled = row.Enabled && row.SecondaryLegendClass != value;
 
             //If type is Radio we hide all that are not in this one
             if (type == "radio") {
-                row.Display = row.LegendClass == value;
-                enabled = false;
 
-                if (row.Display && $(this.refs.legend).find('label.active').toArray().some(x => $(x).text() === row.LegendClass)) {
-                    enabled = true;
+                row.Display = row.LegendClass == value;
+                // Special Case with L-L vs L-N This is temporary until the whole deal get's switched over to the 
+                // new Legendstyle in master
+                if (value == "L-L" || value == "L-N") {
+                    let indx = map.findIndex((item, index) => {
+                        let st1 = item.ChartLabel.substr(0, 2) + item.ChartLabel.substr(3);
+                        let st2 = row.ChartLabel.substr(0, 2) + row.ChartLabel.substr(3)
+                        return (st1 == st2 && currentDisplay[index]);
+                    });
+                    enabled = false;
+                    enabled = currentEnabled[indx] && row.Display;
+                }
+                else {
+                    enabled = false;
+
+                    if (row.Display && $(this.refs.legend).find('label.active').toArray().some(x => $(x).text() === row.LegendClass)) {
+                        enabled = true;
+                    }
                 }
             }
             else {
