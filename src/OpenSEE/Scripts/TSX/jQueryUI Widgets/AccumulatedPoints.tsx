@@ -21,8 +21,9 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { clone, uniq } from "lodash";
+import { uniq, cloneDeep } from "lodash";
 import { style } from "typestyle";
+import { iActiveUnits } from '../Graphs/D3LineChartBase';
 
 export interface iD3DataRow {
     Value: Array<number>,
@@ -30,8 +31,9 @@ export interface iD3DataRow {
     Time: number,
     DeltaTime: number,
     PointIndex: Array<number>,
-    SeriesIndex: Array<number>
-    GraphLabel: Array<string>
+    SeriesIndex: Array<number>,
+    GraphLabel: Array<string>,
+    Unit: Array<string>
 }
 
 export interface iD3PointOfInterest {
@@ -92,14 +94,17 @@ const closeButton = style({
 });
 
 export default class Points extends React.Component<any, any>{
+    Data: Array<iD3DataRow>
     props: {
         data: Map<string, Array<iD3PointOfInterest>>,
         callback: Function,
-        postedData: any
+        postedData: any,
+        activeUnits: (lbl: string) => iActiveUnits,
     }
 
     constructor(props) {
         super(props);
+        this.Data = [];
 
         this.state = {
             selectedPoint: -1
@@ -133,15 +138,21 @@ export default class Points extends React.Component<any, any>{
 
         t = t.sort();
         t = uniq(t);
-        
-        const dataRows: Array<JSX.Element> = t.map((time, i) => {
+
+        this.Data = t.map((time, i) => {
             let val = [];
             let deltaVal = [];
             let pointIndex = [];
             let seriesIndex = [];
             let label = [];
-            headerKeys.forEach((key) => 
-                this.props.data[key].forEach((series, seriesI) => {
+            let unit = [];
+            let Toffset = 0;
+            headerKeys.forEach((key) => {
+
+                if (this.props.activeUnits(key).Tstart !== undefined)
+                    Toffset = this.props.activeUnits(key).Tstart;
+
+                this.props.data.get(key).forEach((series, seriesI) => {
                     let ptIndex = series.Selected.findIndex(pt => pt[0] === time);
                     if (ptIndex != -1) {
                         pointIndex.push(ptIndex);
@@ -149,27 +160,32 @@ export default class Points extends React.Component<any, any>{
                         label.push(key);
                         val.push(series.Selected[ptIndex][1]);
                         deltaVal.push((ptIndex > 0 ? series.Selected[ptIndex][1] - series.Selected[ptIndex - 1][1] : NaN))
+                        unit.push(series.Unit)
                     } else {
                         pointIndex.push(NaN);
                         seriesIndex.push(NaN);
                         label.push(key);
                         val.push(NaN);
-                        deltaVal.push( NaN)
+                        deltaVal.push(NaN)
+                        unit.push("Current")
                     }
-                }))
-           
+                })
+            })
+
             let row: iD3DataRow = {
                 Value: val,
                 DeltaValue: deltaVal,
-                DeltaTime: (i > 0 ? time[i] - time[i - 1] : NaN),
-                Time: time,
+                DeltaTime: (i > 0 ? t[i] - t[i - 1] : NaN),
+                Time: time - Toffset,
                 GraphLabel: label,
                 PointIndex: pointIndex,
-                SeriesIndex: seriesIndex
+                SeriesIndex: seriesIndex,
+                Unit: unit
             }
+            return row;
+        });
 
-            return Row(row, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint)
-        })
+        const dataRows: Array<JSX.Element> = this.Data.map((row, i) => Row(row, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint, this.props.activeUnits))
       
        
         return (
@@ -188,9 +204,9 @@ export default class Points extends React.Component<any, any>{
                         </table>
                     </div>
                     <div style={{ margin: '5px', textAlign: 'right' }}>
-                        <input className="btn btn-primary" type="button" value="Remove" onClick={() => this.removePoint()} />
-                        <input className="btn btn-primary" type="button" value="Pop" onClick={() => this.popAccumulatedPoints()} />
-                        <input className="btn btn-primary" type="button" value="Clear" onClick={() => this.clearAccumulatedPoints()} />
+                        <input className="btn btn-primary" type="button" value="Remove" onClick={this.removePoint.bind(this)} />
+                        <input className="btn btn-primary" type="button" value="Pop" onClick={this.popAccumulatedPoints.bind(this)} />
+                        <input className="btn btn-primary" type="button" value="Clear" onClick={this.clearAccumulatedPoints.bind(this)} />
                     </div>
                     <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
                         this.props.callback({ pointsButtonText: "Show Points" });
@@ -204,51 +220,48 @@ export default class Points extends React.Component<any, any>{
     }
 
     removePoint() {
-    /*    var data = clone(this.props.pointsTable);
-        var selectedPoint = this.state.selectedPoint;
+        if (this.state.selectedPoint < 0)
+            return;
 
-        if (selectedPoint === -1) {
-
-        }
-        else {
-            data = this.removeByIndex(data, this.props.pointsData[selectedPoint].Indices)
-        }
-        selectedPoint = -1;
-
-        this.props.callback({
-            PointsTable: data
-        });
-        this.setState({ selectedPoint: selectedPoint}); */
+        const row = this.Data[this.state.selectedPoint]
+        this.props.callback((state) => {
+            const obj = cloneDeep(state.tableData);
+            row.GraphLabel.forEach((label, index) => {
+                let data = obj.get(label);
+                if (!isNaN(row.SeriesIndex[index]))
+                    data[row.SeriesIndex[index]].Selected.splice(row.PointIndex[index], 1);
+            })
+            return { tableData: obj };
+        })
     }
 
     popAccumulatedPoints() {
-        /* var data = clone(this.props.pointsTable);
-        if (data.length > 0) {
-            data = this.removeByIndex(data, this.props.pointsData[this.props.pointsData.length -1].Indices)
-        }
+        if (this.Data.length == 0)
+            return;
 
-        this.props.callback({
-            PointsTable: data
-        });      */
+        const row = this.Data[this.Data.length -1]
+        this.props.callback((state) => {
+            const obj = cloneDeep(state.tableData);
+            row.GraphLabel.forEach((label, index) => {
+                let data = obj.get(label);
+                if (!isNaN(row.SeriesIndex[index]))
+                    data[row.SeriesIndex[index]].Selected.splice(row.PointIndex[index], 1);
+            })
+            return { tableData: obj };
+        })
     }
 
     clearAccumulatedPoints() {
-        this.props.callback({
-            PointsTable: []
-        });
+        this.props.callback((state) => {
+            const obj = cloneDeep(state.tableData);
+            obj.forEach(lst => lst.forEach(pnt => pnt.Selected = []));
+            return { tableData: obj };
+        })
     }
 
-    removeByIndex(array, indices) {
-        indices.sort(function (a, b) { return b - a; });
-
-        for (let i = 0; i< indices.length ; i++)
-            array.splice(indices[i], 1);
-
-        return array
-    }
 }
 
-const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number) => {
+const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number, getUnits: (lbl: string) => iActiveUnits) => {
     function showTime(thetime) {
         return <span>{ thetime.toFixed(7) } sec<br/>{(thetime * Number(systemFrequency)).toFixed(2)} cycles</span>;
     }
@@ -257,12 +270,14 @@ const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, ar
         if (isNaN(deltatime))
             return (<span>N/A</span>)
         if (deltatime)
-        return <span>{deltatime.toFixed(7)} sec<br/>{(deltatime * Number(systemFrequency)).toFixed(2)} cycles</span>;
+            return <span>{deltatime.toFixed(7)} sec<br/>{(deltatime * Number(systemFrequency)).toFixed(2)} cycles</span>;
     }
     function createValue(index) {
-        if (isNaN(row.Value[index]))
+        let unit = getUnits(row.GraphLabel[index])[row.Unit[index]].current;
+        let val = row.Value[index]*unit.Factor
+        if (isNaN(val))
             return (<td key={"Value-" + index}><span>N/A</span></td>)
-        return (<td key={"Value-" + index}>{row.Value[index].toFixed(2)}</td>)
+        return (<td key={"Value-" + index}>{val.toFixed(2) + " " + unit.Short}</td>)
     }
     function createDeltaValue(index) {
         if (isNaN(row.DeltaValue[index]))

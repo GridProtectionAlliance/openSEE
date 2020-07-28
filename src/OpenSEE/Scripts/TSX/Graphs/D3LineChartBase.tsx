@@ -101,12 +101,16 @@ export interface iD3DataSeries {
     path?: any,
 }
 
-
+export interface iActiveUnits extends GraphUnits {
+    TimeLimits?: [number, number],
+    Tstart?: number
+}
 
 interface D3LineChartBaseState {
     dataSet: iD3DataSet, dataHandle: JQuery.jqXHR
 }
 
+// Obsolete
 export interface iD3DataPoint {
     LegendHorizontal: string,
     ChannelID: number,
@@ -145,7 +149,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
     cycle: any;
     movingCycle: boolean;
 
-    ActiveUnits: GraphUnits;
+    ActiveUnits: iActiveUnits;
 
     cycleStart: number;
     cycleEnd: number;
@@ -175,6 +179,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         };
         
         if (ctrl.props.getData != undefined) ctrl.getData = (props) => ctrl.props.getData(props, ctrl);
+        
 
         ctrl.mousedownPos = { x: 0, y: 0, t: 0, data: 0 };
         ctrl.isMouseDown = false;
@@ -185,8 +190,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         this.getData(this.props);
 
-        if (this.props.activeUnitSetter !== undefined)
-            this.props.activeUnitSetter(this.GetCurrentUnit.bind(this), this.props.legendKey);
+        if (this.props.activeUnitSetter !== undefined) this.props.activeUnitSetter(this.GetCurrentUnit.bind(this), this.props.legendKey);
     }
 
     componentWillUnmount() {
@@ -424,6 +428,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         //Update Axis
         ctrl.xScale.domain([ctrl.props.startTime, ctrl.props.endTime]);
         ctrl.updateTimeAxis(ctrl)
+        ctrl.ActiveUnits.TimeLimits = [ctrl.props.endTime, ctrl.props.startTime]
+        ctrl.ActiveUnits.Tstart = ctrl.state.dataSet.EventStartTime
+
 
         ctrl.yScale.domain([ctrl.yMin, ctrl.yMax]);
         ctrl.ylabel.text(ctrl.getYAxisLabel(ctrl))
@@ -520,12 +527,15 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         delete props.compareEvents;
         delete nextPropsClone.compareEvents;
 
+        delete props.activeUnitSetter;
+        delete nextPropsClone.activeUnitSetter;
         
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
         }
 
         if ((prevProps.legendKey != this.props.legendKey) || (!isEqual(this.props.compareEvents, prevProps.compareEvents))) {
+            if (this.props.activeUnitSetter !== undefined) this.props.activeUnitSetter(this.GetCurrentUnit.bind(this), this.props.legendKey);
             this.createPlot();
             this.getData(this.props);
             return;
@@ -928,7 +938,6 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         ctrl.xAxis.transition().duration(t).call(d3.axisBottom(ctrl.xScale).tickFormat((d, i) => ctrl.formatTimeTick(ctrl, d)))
 
-        
         if (ctrl.props.options.showXLabel) {
             ctrl.xlabel.text(ctrl.getTimeAxisLabel(ctrl))
         }
@@ -1010,7 +1019,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return false
     }
 
-    resolveAutoScale(ctrl: D3LineChartBase): GraphUnits {
+    resolveAutoScale(ctrl: D3LineChartBase): iActiveUnits {
 
         if (ctrl.state.dataSet.Data == null)
             return ctrl.props.unitSettings
@@ -1058,7 +1067,12 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             }
         }     
 
+        if (ctrl.ActiveUnits.TimeLimits !== undefined)
+            result['TimeLimits'] = ctrl.ActiveUnits.TimeLimits;
+        if (ctrl.ActiveUnits.Tstart !== undefined)
+            result['Tstart'] = ctrl.ActiveUnits.Tstart;
         return result;
+
     }
 
     getColor(ctrl: D3LineChartBase, color: string) {

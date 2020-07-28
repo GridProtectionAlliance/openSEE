@@ -176,6 +176,7 @@ export default class Current extends React.Component<any, any>{
             mouseMode={this.props.mouseMode}
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
             compareEvents={this.props.compareEvents}
+            activeUnitSetter={this.props.activeUnitSetter}
         />
     }
 

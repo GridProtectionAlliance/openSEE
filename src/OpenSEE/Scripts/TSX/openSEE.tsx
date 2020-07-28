@@ -48,7 +48,7 @@ import AnalyticBar from './Graphs/AnalyticBar';
 import OpenSEENavbar from './Components/OpenSEENavbar';
 import About from './Components/About';
 
-import { D3LineChartBaseProps, iD3DataPoint } from './Graphs/D3LineChartBase';
+import { D3LineChartBaseProps } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
 import { DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
 import { iD3PointOfInterest } from './jQueryUI Widgets/AccumulatedPoints';
@@ -59,7 +59,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     historyHandle: any;
     openSEEService: OpenSEEService;
     resizeId: any;
-    TableData: Map<string, Array<iD3PointOfInterest>>;
+    activeUnits: Map<string, Function>;
 
     constructor(props) {
         super(props);
@@ -116,8 +116,6 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
             showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
         }
 
-        this.TableData = new Map<string, Array<iD3PointOfInterest>>();
-
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
             this.setState({
@@ -143,6 +141,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 
 
         });
+
+        this.activeUnits = new Map<string, Function>();
     }
 
     componentDidMount() {
@@ -289,6 +289,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         digitalLimits={this.state.digitalLimits}
                         analogLimits={this.state.analogLimits}
                         analyticLimits={this.state.analyticLimits}
+                        activeUnits={this.GraphUnitGetter.bind(this)}
                         mouseMode={this.state.mouseMode}
                         displayCompare={this.state.tab == "Compare"}
                         showCompareChart={this.state.showCompareCharts}
@@ -305,7 +306,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             zoomMode={this.state.zoomMode}
                             colorSettings={this.state.plotColors}
                             unitSettings={this.state.plotUnits}
-                            tableSetter={(lbl,data) => this.tableUpdater(lbl,data)}
+                            tableSetter={(lbl, data) => this.tableUpdater(lbl, data)}
                             key={this.state.eventid}
                             eventId={this.state.eventid}
                             startTime={this.state.startTime}
@@ -323,6 +324,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             fftStartTime={this.state.fftStartTime}
                             fftWindow={this.state.AnalyticSettings.fftWindow}
                             compareEvents={(this.state.tab == "Compare" && !this.state.showCompareCharts) ? this.state.comparedEvents : []}
+                            activeUnitSetter={this.GraphUnitSetter.bind(this)}
                         />
                         {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 && this.state.showCompareCharts ?
                             this.state.comparedEvents.map(a =>
@@ -451,6 +453,17 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         })
     }
 
+    GraphUnitSetter(getfx: Function, graphLabel: string) {
+        this.activeUnits.set(graphLabel,getfx)
+    }
+
+    GraphUnitGetter(graphLabel: string) {
+        if (this.activeUnits.has(graphLabel))
+            return this.activeUnits.get(graphLabel)();
+        else
+            return null
+    }
+
     resetZoom() {
         
         clearTimeout(this.historyHandle);
@@ -550,6 +563,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     height={props.height}
                     hover={props.hover}
                     compareEvents={props.compareEvents}
+                    activeUnitSetter={props.activeUnitSetter}
                     options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 /> : null)}
                 {(props.displayCur ? <Current
@@ -569,6 +583,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     height={props.height}
                     hover={props.hover}
                     compareEvents={props.compareEvents}
+                    activeUnitSetter={props.activeUnitSetter}
                     options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 /> : null)}
                 {(props.displayDigitals ? <Digital
@@ -647,6 +662,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                     compareEvents={props.compareEvents}
+                    activeUnitSetter={props.activeUnitSetter}
                 /> : null)}
             {(props.displayCur ? <Current
                 mouseMode={props.mouseMode}
@@ -666,6 +682,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 hover={props.hover}
                 options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 compareEvents={props.compareEvents}
+                activeUnitSetter={props.activeUnitSetter}
             /> : null)}
             {(props.displayDigitals ? <Digital
                 mouseMode={props.mouseMode}

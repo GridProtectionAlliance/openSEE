@@ -31,7 +31,7 @@ import ScalarStats from './../jQueryUI Widgets/ScalarStats';
 import HarmonicStats from './../jQueryUI Widgets/HarmonicStats';
 import TimeCorrelatedSags from './../jQueryUI Widgets/TimeCorrelatedSags';
 import LightningData from './../jQueryUI Widgets/LightningData';
-import { iD3DataPoint, ZoomMode, MouseMode } from '../Graphs/D3LineChartBase';
+import { ZoomMode, MouseMode, iActiveUnits } from '../Graphs/D3LineChartBase';
 import { iD3DataRow } from './../jQueryUI Widgets/AccumulatedPoints';
 import SettingWindow, { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
 
@@ -72,6 +72,7 @@ export default class OpenSEENavbar extends React.Component {
         digitalLimits: yLimits,
         analogLimits: yLimits,
         analyticLimits: yLimits,
+        activeUnits:  (lbl:string) => iActiveUnits,
     }
     state: {
         showComtradeExportButton: boolean,
@@ -213,6 +214,7 @@ export default class OpenSEENavbar extends React.Component {
                 <Points data={this.props.TableData}
                     callback={this.props.stateSetter}
                     postedData={this.props.PostedData}
+                    activeUnits={this.props.activeUnits}
                 />
                 <Tooltip data={[]} hover={this.props.Hover} callback={this.props.stateSetter} />
                 
