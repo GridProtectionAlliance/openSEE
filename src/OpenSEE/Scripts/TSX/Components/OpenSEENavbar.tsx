@@ -112,10 +112,7 @@ export default class OpenSEENavbar extends React.Component {
     }
 
     render() {
-                //fa fa-arrows
-                //fa fa-arrows-h
-                //fa fa-arrows-V
-
+               
         return (
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
 
@@ -216,7 +213,13 @@ export default class OpenSEENavbar extends React.Component {
                     postedData={this.props.PostedData}
                     activeUnits={this.props.activeUnits}
                 />
-                <Tooltip data={[]} hover={this.props.Hover} callback={this.props.stateSetter} />
+                <Tooltip
+                    data={this.props.TableData}
+                    hover={this.props.Hover}
+                    callback={this.props.stateSetter}
+                    colors={this.props.colorData}
+                    activeUnits={this.props.activeUnits}
+                />
                 
                 <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />

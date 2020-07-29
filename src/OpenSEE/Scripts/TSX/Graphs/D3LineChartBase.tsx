@@ -892,37 +892,23 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             ctrl.hover.style("opacity", 0);
             return;
         }
-        /*
-        if (ctrl.props.tableSetter && ctrl.state.dataSet) {
 
-            let points = [];
-            ctrl.state.dataSet.Data.forEach((row, key, map) => {
-                if (row.Display) {
-                    let i = d3.bisect( row.DataPoints.map(item => item[0]), ctrl.xScale.invert(hover), 1);
-                    if (row.DataPoints[i] != undefined) {
-                        points.push({
-                            ChannelID: row.ChannelID,
-                            ChartLabel: row.ChartLabel,
-                            Unit: row.Unit,
-                            Color: row.Color,
-                            LegendKey: ctrl.props.legendKey,
+        ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
+            let idx = item.DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
+            if (idx === -1)
+                idx = item.DataPoints.length - 1;
+            return {
+                LegendHorizontal: item.LegendHorizontal,
+                LegendVertical: item.LegendVertical,
+                LegendGroup: item.LegendGroup,
+                Unit: item.Unit,
+                Color: item.Color,
+                Current: item.DataPoints[idx],
+                Selected: [],
+                ChannelName: item.ChartLabel
+            }
+        }));
 
-                            LegendClass: row.LegendClass,
-                            LegendGroup: row.LegendGroup,
-                            SecondaryLegendClass: row.SecondaryLegendClass,
-                            Value: row.DataPoints[i][1],
-                            Time: row.DataPoints[i][0],
-                            BaseValue: row.BaseValue,
-                            Enabled: row.Enabled
-                        })
-                    }
-                }
-            });
-
-            ctrl.props.tableSetter(points)
-           
-        }
-        */
         ctrl.hover.attr("x1", hover)
             .attr("x2", hover)
 

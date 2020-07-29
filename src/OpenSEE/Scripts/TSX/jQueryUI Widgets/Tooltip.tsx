@@ -23,8 +23,10 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import { iActiveUnits } from '../Graphs/D3LineChartBase';
 import moment = require('moment');
+import { iD3PointOfInterest } from './AccumulatedPoints';
+import { Colors } from './SettingWindow';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -73,9 +75,15 @@ const closeButton = style({
 });
 
 export interface TooltipProps {
-    data: Array<iD3DataPoint>,
+    data: Map<string, Array<iD3PointOfInterest>>,
     hover: number,
-    callback: Function
+    callback: Function,
+    activeUnits: (lbl: string) => iActiveUnits,
+    colors: Colors,
+}
+
+interface iToolTipPoint extends iD3PointOfInterest {
+    plotLabel: string,
 }
 
 declare var window: Window;
@@ -92,17 +100,16 @@ export default class Tooltip extends React.Component<any, any>{
 
     render() {
         let TS = moment(this.props.hover);
-        if (this.props.data.length > 0)
-            TS = moment(this.props.data[0].Time);
+
+        let dataRow: Array<iToolTipPoint> = [];
+        this.props.data.forEach((item,key) => dataRow.push(...item.map(pt => { return { ...pt, plotLabel: key }; })))
+
+        if (dataRow.length > 0)
+            TS = moment(dataRow[0].Current[0]);
 
         //var subsecond = ("0000000" + (this.props.hover * 10000 % 10000000)).slice(-7);
         //var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
-        var rows = [];
-
-        this.props.data.forEach((data,i) => {
-            if (data.Enabled)
-                rows.push(Row(data,i));
-        });
+        const rows = dataRow.map((data, i) => Row(data, i, this.props.colors, this.props.activeUnits));
 
 
         return (
@@ -129,12 +136,15 @@ export default class Tooltip extends React.Component<any, any>{
     }
 }
 
-const Row = (row: iD3DataPoint, key: number) => {
+const Row = (row: iToolTipPoint, key: number, colors: Colors, getUnits: (lbl: string) => iActiveUnits) => {
+    const unit = getUnits(row.plotLabel)[row.Unit].current;
+    const val = row.Current[1] * unit.Factor;
+
     return (
         <tr key={key}>
-            <td className="dot" style={{ background: row.Color, width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
-            <td style={{ textAlign: 'left' }}><b>{row.ChartLabel}</b></td>
-            <td style={{ textAlign: "right" }}><b>{(row.Value).toFixed(2)} {row.XaxisLabel}</b></td>
+            <td className="dot" style={{ background: colors[row.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
+            <td style={{ textAlign: 'left' }}><b>{row.ChannelName}</b></td>
+            <td style={{ textAlign: "right" }}><b>{(val).toFixed(2)} {unit.Short}</b></td>
         </tr>
     );
 }
