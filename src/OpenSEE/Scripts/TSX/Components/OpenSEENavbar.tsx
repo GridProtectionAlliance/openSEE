@@ -76,23 +76,13 @@ export default class OpenSEENavbar extends React.Component {
     }
     state: {
         showComtradeExportButton: boolean,
-        pointsData: Array<iD3DataRow>,
     }
     constructor(props, context) {
         super(props, context);
 
         this.state = {
             showComtradeExportButton: false,
-            pointsData: [],
         }
-    }
-
-
-    componentWillReceiveProps(nextProps) {
-
-        let availableTimes = [];
-        let tblData: Array<iD3DataRow> = [];
-          
     }
  
     componentDidMount() {
@@ -220,7 +210,13 @@ export default class OpenSEENavbar extends React.Component {
                     colors={this.props.colorData}
                     activeUnits={this.props.activeUnits}
                 />
-                
+                <TooltipWithDelta
+                    data={this.props.TableData}
+                    hover={this.props.Hover}
+                    callback={this.props.stateSetter}
+                    colors={this.props.colorData}
+                    activeUnits={this.props.activeUnits}
+                />
                 <ScalarStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <HarmonicStats eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
                 <TimeCorrelatedSags eventId={this.props.eventid} callback={this.props.stateSetter} exportCallback={(type) => this.exportData(type)} />
@@ -248,7 +244,7 @@ export default class OpenSEENavbar extends React.Component {
         );
  
         //   {this.state.showComtradeExportButton ? <a className="dropdown-item" onClick={this.exportComtrade.bind(this)}>Export COMTRADE</a> : null}   
-        //<TooltipWithDelta pointdata={this.state.pointsData} PostedData={this.props.PostedData} callback={this.props.stateSetter} />
+        
     }
 
     showhidePoints(evt) {

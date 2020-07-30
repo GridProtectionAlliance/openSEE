@@ -22,11 +22,12 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { utc } from "moment";
 import { style } from "typestyle"
-import { iD3DataPoint } from '../Graphs/D3LineChartBase';
-import { iD3DataRow } from './AccumulatedPoints';
+import { iActiveUnits } from '../Graphs/D3LineChartBase';
+import { iD3PointOfInterest } from './AccumulatedPoints';
+import { iToolTipPoint, TooltipProps } from './Tooltip';
 import moment = require('moment');
+import { Colors } from './SettingWindow';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -73,14 +74,9 @@ const closeButton = style({
     }
 });
 
-export interface TooltipWithDeltaProps {
-    pointdata: Array<iD3DataRow>,
-    callback: Function,
-    PostedData: any
-}
 
 export default class TooltipWithDelta extends React.Component<any, any>{
-    props: TooltipWithDeltaProps;
+    props: TooltipProps;
     constructor(props) {
         super(props);
     }
@@ -90,18 +86,22 @@ export default class TooltipWithDelta extends React.Component<any, any>{
     }
 
     render() {
-        var rows = [];
 
-        let firstDate: number = NaN;
-        let secondDate: number = NaN;
+        let firstDate = this.props.hover;
+        let secondDate = NaN;
 
-        if (this.props.pointdata.length > 1)
-            secondDate = (this.props.pointdata[this.props.pointdata.length - 2].Time) + parseFloat(this.props.PostedData.postedEventMilliseconds);
+        let dataRow: Array<iToolTipPoint> = [];
+        this.props.data.forEach((item, key) => dataRow.push(...item.map(pt => { return { ...pt, plotLabel: key }; })))
 
-        if (this.props.pointdata.length > 0)
-            firstDate = (this.props.pointdata[this.props.pointdata.length - 1].Time) + parseFloat(this.props.PostedData.postedEventMilliseconds);
+        if (dataRow.length > 0)
+            if (dataRow[0].Selected.length > 0)
+                secondDate = dataRow[0].Selected[dataRow[0].Selected.length - 1][0];
 
-      
+        //var subsecond = ("0000000" + (this.props.hover * 10000 % 10000000)).slice(-7);
+        //var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
+        const rows = dataRow.map((data, i) => Row(data, i, this.props.colors, this.props.activeUnits));
+
+
         return (
             <div id="tooltipwithdelta" className="ui-widget-content" style={outerDiv}>
                 <div id="tooltipwithdeltahandle" className={handle}></div>
@@ -127,14 +127,18 @@ export default class TooltipWithDelta extends React.Component<any, any>{
     }
 }
 
-const Row = ( label: string, color: string, data1: number, data2: number ) => {
+const Row = (row: iToolTipPoint, key: number, colors: Colors, getUnits: (lbl: string) => iActiveUnits) => {
+    const unit = getUnits(row.plotLabel)[row.Unit].current;
+    const val1 = row.Current[1] * unit.Factor;
+    const val2 = row.Current[1] * unit.Factor;
+
     return (
-        <tr key={label}>
-            <td className="dot" style={{ background: color, width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
-            <td style={{ textAlign: 'left' }}><b>{label}</b></td>
-            <td style={{ textAlign: "right" }}><b>{data1.toFixed(2)}</b></td>
-            <td style={{ textAlign: "right" }}><b>{data2.toFixed(2)}</b></td>
-            <td style={{ textAlign: "right" }}><b>{(data2 - data1).toFixed(2)}</b></td>
+        <tr key={key}>
+            <td className="dot" style={{ background: colors[row.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
+            <td style={{ textAlign: 'left' }}><b>{row.ChannelName}</b></td>
+            <td style={{ textAlign: "right" }}><b>{val1.toFixed(2)} {unit.Short}</b></td>
+            <td style={{ textAlign: "right" }}><b>{val2.toFixed(2)} {unit.Short}</b></td>
+            <td style={{ textAlign: "right" }}><b>{(val2 - val1).toFixed(2)} {unit.Short}</b></td>
         </tr>
     );
 }

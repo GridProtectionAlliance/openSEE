@@ -82,7 +82,7 @@ export interface TooltipProps {
     colors: Colors,
 }
 
-interface iToolTipPoint extends iD3PointOfInterest {
+export interface iToolTipPoint extends iD3PointOfInterest {
     plotLabel: string,
 }
 
