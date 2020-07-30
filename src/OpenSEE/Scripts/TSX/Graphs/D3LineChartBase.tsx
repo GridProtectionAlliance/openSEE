@@ -1010,12 +1010,17 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         if (ctrl.state.dataSet.Data == null)
             return ctrl.props.unitSettings
 
+        
         let result = cloneDeep(ctrl.props.unitSettings);
         for (let property in ctrl.props.unitSettings) {
             //skip Time since that is resolved on the x axis
             if (property == 'Time')
                 continue
-
+            if (property == 'TimeLimits')
+                continue
+            if (property == 'Tstart')
+                continue
+           
             if (ctrl.props.unitSettings[property].current.Label == "auto") {
 
                 let tempData = ctrl.state.dataSet.Data.filter(item => item.Enabled && item.Unit == property)
