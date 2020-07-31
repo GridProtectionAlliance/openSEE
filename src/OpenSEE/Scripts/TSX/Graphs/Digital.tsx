@@ -62,6 +62,7 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
         mouseMode: props.mouseMode,
         yLimits: { ...props.yLimits, setter: setYLimits },
         compareEvents: props.compareEvents,
+        tableSetter: props.tableSetter,
     }, null);
 
 }

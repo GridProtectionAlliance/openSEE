@@ -61,6 +61,7 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         mousemode: props.mouseMode,
         yLimits: { ...props.yLimits, setter: setYLimits },
         compareEvents: props.compareEvents,
+        tableSetter: props.tableSetter,
     }, null);
 
 }
