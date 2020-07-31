@@ -31,7 +31,7 @@ import * as ReactDOM from 'react-dom';
 import OpenSEEService from '../TS/Services/OpenSEE';
 import createHistory from "history/createBrowserHistory"
 import * as queryString from "query-string";
-import { clone, isEqual} from "lodash";
+import { clone, isEqual, cloneDeep} from "lodash";
 
 import Current from './Graphs/Current';
 import TripCoilCurrent from './Graphs/TCE';
@@ -60,6 +60,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     openSEEService: OpenSEEService;
     resizeId: any;
     activeUnits: Map<string, Function>;
+    pointGetters: Map<string, Function>;
 
     constructor(props) {
         super(props);
@@ -143,6 +144,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         });
 
         this.activeUnits = new Map<string, Function>();
+        this.pointGetters = new Map<string, Function>();
     }
 
     componentDidMount() {
@@ -325,6 +327,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                             fftWindow={this.state.AnalyticSettings.fftWindow}
                             compareEvents={(this.state.tab == "Compare" && !this.state.showCompareCharts) ? this.state.comparedEvents : []}
                             activeUnitSetter={this.GraphUnitSetter.bind(this)}
+                            getPointSetter={this.GetPointSetter.bind(this)}
                         />
                         {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 && this.state.showCompareCharts ?
                             this.state.comparedEvents.map(a =>
@@ -390,6 +393,9 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                                 height={height}
                                 hover={this.state.Hover}
                                 options={{ showXLabel: true }}
+                                activeUnitSetter={this.GraphUnitSetter.bind(this)}
+                                getPointSetter={this.GetPointSetter.bind(this)}
+                                tableSetter={(lbl, data) => this.tableUpdater(lbl, data)}
                             /> : null)}
 
                     </div>
@@ -420,11 +426,12 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     tableUpdater(graphLabel: string, data: Array<iD3PointOfInterest>) {
-        this.setState((prevstate) => {
+
+        function update(graphLabel: string, data: Array<iD3PointOfInterest>, map: Map<string, Array<iD3PointOfInterest>>) {
             let current = new Array<iD3PointOfInterest>();
 
-            if (prevstate.tableData.has(graphLabel))
-                prevstate.tableData.get(graphLabel).forEach(item => {
+            if (map.has(graphLabel))
+                map.get(graphLabel).forEach(item => {
                     let index = data.findIndex(series => (
                         series.LegendHorizontal === item.LegendHorizontal &&
                         series.LegendVertical === item.LegendVertical &&
@@ -448,13 +455,40 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                 }
             })
 
-            prevstate.tableData.set(graphLabel, current);
-            return { tableData: prevstate.tableData };
+            map.set(graphLabel, current);
+            return map
+        };
+
+        if (data.length == 0)
+            return;
+
+        this.setState((prevstate) => {
+            let newTable = cloneDeep(prevstate.tableData);
+            if (data[0].Selected.length == 0)
+                newTable = update(graphLabel, data, newTable);
+            else {
+                let time = data[0].Selected[data[0].Selected.length - 1][0]
+                prevstate.tableData.forEach((item, key) => {
+                    if (key == graphLabel)
+                        newTable = update(key, data, newTable);
+                    else {
+                        if (this.pointGetters.has(key))
+                            newTable = update(key, this.pointGetters.get(key)(time), newTable);
+                    }
+
+                })
+            }
+
+            return { tableData: newTable };
         })
     }
 
     GraphUnitSetter(getfx: Function, graphLabel: string) {
         this.activeUnits.set(graphLabel,getfx)
+    }
+
+    GetPointSetter(getfx: Function, graphLabel: string) {
+        this.pointGetters.set(graphLabel, getfx)
     }
 
     GraphUnitGetter(graphLabel: string) {
@@ -564,6 +598,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     compareEvents={props.compareEvents}
                     activeUnitSetter={props.activeUnitSetter}
+                    getPointSetter={props.getPointSetter}
                     options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 /> : null)}
                 {(props.displayCur ? <Current
@@ -584,6 +619,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     compareEvents={props.compareEvents}
                     activeUnitSetter={props.activeUnitSetter}
+                    getPointSetter={props.getPointSetter}
                     options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 /> : null)}
                 {(props.displayDigitals ? <Digital
@@ -603,6 +639,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
                     compareEvents={props.compareEvents}
+                    getPointSetter={props.getPointSetter}
+                    tableSetter={props.tableSetter}
                 /> : null)}
                 {(props.displayAnalogs ? <Analog
                     mouseMode={props.mouseMode}
@@ -621,6 +659,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     options={{ showXLabel: !(props.displayTCE) }}
                     compareEvents={props.compareEvents}
+                    getPointSetter={props.getPointSetter}
+                    tableSetter={props.tableSetter}
                 /> : null)}
                 {(props.displayTCE ? <TripCoilCurrent
                     mouseMode={props.mouseMode}
@@ -639,6 +679,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     options={{ showXLabel: true }}
                     compareEvents={props.compareEvents}
+                    getPointSetter={props.getPointSetter}
+                    tableSetter={props.tableSetter}
                 /> : null)}
             </div>
         </div>
@@ -662,6 +704,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                     hover={props.hover}
                     options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                     compareEvents={props.compareEvents}
+                    getPointSetter={props.getPointSetter}
                     activeUnitSetter={props.activeUnitSetter}
                 /> : null)}
             {(props.displayCur ? <Current
@@ -682,6 +725,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 hover={props.hover}
                 options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
                 compareEvents={props.compareEvents}
+                getPointSetter={props.getPointSetter}
                 activeUnitSetter={props.activeUnitSetter}
             /> : null)}
             {(props.displayDigitals ? <Digital
@@ -701,6 +745,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 hover={props.hover}
                 options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
                 compareEvents={props.compareEvents}
+                tableSetter={props.tableSetter}
+                getPointSetter={props.getPointSetter}
             /> : null)}
             {(props.displayAnalogs ? <Analog
                 mouseMode={props.mouseMode}
@@ -719,6 +765,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 hover={props.hover}
                 options={{ showXLabel: !(props.displayTCE) }}
                 compareEvents={props.compareEvents}
+                tableSetter={props.tableSetter}
+                getPointSetter={props.getPointSetter}
             /> : null)}
             {(props.displayTCE ? <TripCoilCurrent
                 mouseMode={props.mouseMode}
@@ -737,6 +785,8 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 hover={props.hover}
                 options={{ showXLabel: true }}
                 compareEvents={props.compareEvents}
+                tableSetter={props.tableSetter}
+                getPointSetter={props.getPointSetter}
             /> : null)}
         </div>
             

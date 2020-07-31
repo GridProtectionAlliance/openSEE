@@ -57,6 +57,7 @@ export interface D3LineChartBaseProps {
     fftWindow?: number,
     tableSetter?: Function,
     activeUnitSetter?: (fx: Function, plotLbl: string) => void,
+    getPointSetter?: (fx: Function, plotLbl: string) => void,
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
@@ -191,6 +192,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         this.getData(this.props);
 
         if (this.props.activeUnitSetter !== undefined) this.props.activeUnitSetter(this.GetCurrentUnit.bind(this), this.props.legendKey);
+        if (this.props.getPointSetter !== undefined) this.props.getPointSetter(this.pointGetter.bind(this), this.props.legendKey);
     }
 
     componentWillUnmount() {
@@ -529,6 +531,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
 
         delete props.activeUnitSetter;
         delete nextPropsClone.activeUnitSetter;
+        delete props.getPointSetter;
+        delete nextPropsClone.getPointSetter;
+
         
         if (this.props.hover != null && prevProps.hover != this.props.hover) {
             this.updateHover(this, this.props.hover);
@@ -813,22 +818,8 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         let yMouse = ctrl.yScale.invert(ctrl.mousedownPos.y)
 
         if ((Math.abs(h)) < 10 && (Math.abs(w) < 10)) {
-            ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
-                let idx = item.DataPoints.findIndex(pt => pt[0] > x0);
-                if (idx === -1)
-                    idx = item.DataPoints.length - 1;
-                return {
-                    LegendHorizontal: item.LegendHorizontal,
-                    LegendVertical: item.LegendVertical,
-                    LegendGroup: item.LegendGroup,
-                    Unit: item.Unit,
-                    Color: item.Color,
-                    Current: [0, 0],
-                    Selected: [item.DataPoints[idx]],
-                    ChannelName: item.ChartLabel
-                }
-            }));
-
+            if (ctrl.props.tableSetter != null)
+                ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.pointGetter(x0));
         }
 
 
@@ -885,6 +876,23 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }        
     }
 
+    pointGetter(t: number) {
+        return this.state.dataSet.Data.filter(item => item.Enabled).map(item => {
+            let idx = item.DataPoints.findIndex(pt => pt[0] >= t);
+            if (idx === -1)
+                idx = item.DataPoints.length - 1;
+            return {
+                LegendHorizontal: item.LegendHorizontal,
+                LegendVertical: item.LegendVertical,
+                LegendGroup: item.LegendGroup,
+                Unit: item.Unit,
+                Color: item.Color,
+                Current: [0, 0],
+                Selected: [item.DataPoints[idx]],
+                ChannelName: item.ChartLabel
+            }
+        })
+    }
     updateHover(ctrl: D3LineChartBase, hover: number) {
         if (ctrl.hover == null)
             return;

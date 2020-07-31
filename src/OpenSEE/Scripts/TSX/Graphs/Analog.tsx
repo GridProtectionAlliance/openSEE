@@ -62,6 +62,7 @@ export default function Analog(props: DigitalChartProps): JSX.Element {
         yLimits: { ...props.yLimits, setter: setYLimits },
         compareEvents: props.compareEvents,
         tableSetter: props.tableSetter,
+        getPointSetter: props.getPointSetter,
     }, null);
 
 }

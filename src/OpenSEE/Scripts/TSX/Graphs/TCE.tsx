@@ -127,6 +127,8 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
             compareEvents={this.props.compareEvents}
             tableSetter={this.props.tableSetter}
+            activeUnitSetter={this.props.activeUnitSetter}
+            getPointSetter={this.props.getPointSetter}
         />
     }
 

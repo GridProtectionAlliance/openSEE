@@ -177,6 +177,7 @@ export default class Voltage extends React.Component<any, any>{
             yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
             compareEvents={this.props.compareEvents}
             activeUnitSetter={this.props.activeUnitSetter}
+            getPointSetter={this.props.getPointSetter}
         />
     }
 
