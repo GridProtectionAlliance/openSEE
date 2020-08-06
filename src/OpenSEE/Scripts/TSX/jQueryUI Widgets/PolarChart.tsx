@@ -23,7 +23,9 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { iD3DataPoint } from '../Graphs/D3LineChartBase';
+import { iD3DataPoint, iActiveUnits } from '../Graphs/D3LineChartBase';
+import { iD3PointOfInterest } from './AccumulatedPoints';
+import { Colors } from './SettingWindow';
 
 // styles
 const outerDiv: React.CSSProperties = {
@@ -71,10 +73,21 @@ const closeButton = style({
 });
 
 export interface PolarChartProps {
-    data: Array<iD3DataPoint>,
+    Vdata: Array<Vector>,
+    Idata: Array<Vector>,
     callback: Function,
+    activeUnits: (lbl: string) => iActiveUnits,
+    colors: Colors,
     showV: boolean,
     showI: boolean,
+}
+
+export interface Vector {
+    Color: string,
+    Mag: number,
+    Phase: number,
+    LegendGroup: string,
+    VerticalLegend: string,
 }
 
 export default class PolarChart extends React.Component<any, any>{
@@ -89,127 +102,21 @@ export default class PolarChart extends React.Component<any, any>{
     }
 
 
-    drawVectorSVG(mag: number, scale: number, angle: number): string {
-        if (mag == undefined || scale == undefined || angle == undefined) return '';
-        var x = mag*scale * Math.cos(angle * Math.PI / 180);
-        var y = mag * scale * Math.sin(angle * Math.PI / 180);
-        return `M 150 150 L ${150 + x} ${150 - y} Z`
-    }
+    
 
     render() {
     
-        var dataV = [];
-
-        var dataI = [];
-
-        this.props.data.forEach(item => {
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VAN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VAN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VAN", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VBN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VBN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VBN", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VCN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VCN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VCN", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VAB RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VAB Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VAB", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VBC RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VBC Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VBC", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Voltage' && item.ChartLabel == "VCA RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "VCA Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Voltage'));
-                if (i) {
-                    dataV.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "VCA", group: item.LegendGroup })
-                }
-            }
-
-            if (item.LegendKey == 'Current' && item.ChartLabel == "IAN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "IAN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Current'));
-                if (i) {
-                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "IAN", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Current' && item.ChartLabel == "IBN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "IBN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Current'));
-                if (i) {
-                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "IBN", group: item.LegendGroup })
-                }
-            }
-            if (item.LegendKey == 'Current' && item.ChartLabel == "ICN RMS") {
-                let i = this.props.data.findIndex(d => (
-                    d.ChannelID == item.ChannelID &&
-                    d.ChartLabel == "ICN Phase" &&
-                    d.LegendGroup == item.LegendGroup &&
-                    d.LegendKey == 'Current'));
-                if (i) {
-                    dataI.push({ mag: item.Value, ang: this.props.data[i].Value, color: item.Color, label: "ICN", group: item.LegendGroup })
-                }
-            }
-
-
-        })
-
-      
         var vMax = 0;
-        $.each(dataV, function (key, series) {
-            if (series.mag > vMax)
-                vMax = series.mag;
+        $.each(this.props.Vdata, function (key, series) {
+            if (series.Mag > vMax)
+                vMax = series.Mag;
         });
         var scaleV = 0.9 * 150 / vMax;
 
         var iMax = 0;
-        $.each(dataI, function (key, series) {
-            if (series.mag > iMax)
-                iMax = series.mag;
+        $.each(this.props.Idata, function (key, series) {
+            if (series.Mag > iMax)
+                iMax = series.Mag;
         });
         var scaleI = 0.9 * 150 / iMax;
 
@@ -230,7 +137,7 @@ export default class PolarChart extends React.Component<any, any>{
 
         let assetData = []
 
-        dataV.forEach(item => {
+        /*dataV.forEach(item => {
             let assetIndex = assetData.findIndex(d => d == item.group);
             if (assetIndex < 0) {
                 assetIndex = assetData.length;
@@ -272,7 +179,7 @@ export default class PolarChart extends React.Component<any, any>{
 
             tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
             tblShow[item.label] = true
-        })
+        }) */
 
         if (!this.props.showV) {
             tblShow.VAB = false
@@ -302,10 +209,10 @@ export default class PolarChart extends React.Component<any, any>{
                         <line x1="150" y1="0" x2="150" y2="300" style={{ stroke: 'lightgrey' , strokeWidth: 2}} />
                         <line x1="0" y1="150" x2="300" y2="150" style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
                         {(this.props.showV ?
-                            dataV.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleV, value.ang)} style={{ stroke: value.color, strokeWidth: 3 }} />) : null
+                            this.props.Vdata.map((value, index) => Vector(value, index, scaleV, this.props.colors)) : null
                         )}
                         {(this.props.showI ?
-                            dataI.map((value, index) => <path key={index} d={this.drawVectorSVG(value.mag, scaleI, value.ang)} strokeDasharray="10,10" style={{ stroke: value.color, strokeWidth: 3 }} />) : null
+                            this.props.Idata.map((value, index) => Vector(value, index, scaleI, this.props.colors)) : null
                         )}
                     </svg>
                     <div style={{ overflowY: 'scroll', maxWidth: 200, maxHeight: 300, float: 'right'}}>
@@ -403,4 +310,16 @@ const Row = (label: string, data: Array<{ Mag: number, Ang: number }>) => {
         </tr>
     );
 }
-   
+
+const Vector = (data: Vector, index: number, scale: number, color: Colors) => {
+    function drawVectorSVG(): string {
+        if (data.Mag == undefined || scale == undefined || data.Phase == undefined) return '';
+        var x = data.Mag * scale * Math.cos(data.Phase * Math.PI / 180);
+        var y = data.Mag * scale * Math.sin(data.Phase * Math.PI / 180);
+        return `M 150 150 L ${150 + x} ${150 - y} Z`
+    }
+
+    return (
+        <path key={index} d={drawVectorSVG()} style={{ stroke: color[data.Color], strokeWidth: 3 }} />
+    )
+}

@@ -27,6 +27,7 @@ import * as React  from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { cloneDeep } from "lodash";
+import { Vector } from '../jQueryUI Widgets/PolarChart';
 
 export interface CurrentChartProps extends D3LineChartBaseProps { }
 
@@ -145,12 +146,19 @@ export default class Current extends React.Component<any, any>{
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
         let lim = cloneDeep(this.props.yLimits);
-        lim.min = ymin;
-        lim.max = ymax;
-        lim.auto = auto;
+        if (this.props.yLimits.max !== ymax || this.props.yLimits.min !== ymin) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = auto;
 
-        this.props.stateSetter({ currentLimits: lim });
 
+            this.props.stateSetter({ currentLimits: lim });
+        }
+
+    }
+
+    setVectors(v: Array<Vector>) {
+        this.props.stateSetter({ iVectors: v });
     }
 
 
@@ -178,6 +186,7 @@ export default class Current extends React.Component<any, any>{
             compareEvents={this.props.compareEvents}
             activeUnitSetter={this.props.activeUnitSetter}
             getPointSetter={this.props.getPointSetter}
+            setVector={this.setVectors.bind(this)}
         />
     }
 

@@ -93,9 +93,12 @@ export default class TooltipWithDelta extends React.Component<any, any>{
         let dataRow: Array<iToolTipPoint> = [];
         this.props.data.forEach((item, key) => dataRow.push(...item.map(pt => { return { ...pt, plotLabel: key }; })))
 
-        if (dataRow.length > 0)
+        if (dataRow.length > 0) {
+            secondDate = dataRow[0].Current[0];
+        
             if (dataRow[0].Selected.length > 0)
-                secondDate = dataRow[0].Selected[dataRow[0].Selected.length - 1][0];
+                firstDate = dataRow[0].Selected[dataRow[0].Selected.length - 1][0];
+        }
 
         //var subsecond = ("0000000" + (this.props.hover * 10000 % 10000000)).slice(-7);
         //var format = ($.plot as any).formatDate(($.plot as any).dateGenerator(this.props.hover, { timezone: "utc" }), "%Y-%m-%d %H:%M:%S") + "." + subsecond;
@@ -130,14 +133,15 @@ export default class TooltipWithDelta extends React.Component<any, any>{
 const Row = (row: iToolTipPoint, key: number, colors: Colors, getUnits: (lbl: string) => iActiveUnits) => {
     const unit = getUnits(row.plotLabel)[row.Unit].current;
     const val1 = row.Current[1] * unit.Factor;
-    const val2 = row.Current[1] * unit.Factor;
+
+    const val2 = (row.Selected.length > 0 ? row.Selected[row.Selected.length - 1][1] * unit.Factor : NaN);
 
     return (
         <tr key={key}>
             <td className="dot" style={{ background: colors[row.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
             <td style={{ textAlign: 'left' }}><b>{row.ChannelName}</b></td>
-            <td style={{ textAlign: "right" }}><b>{val1.toFixed(2)} {unit.Short}</b></td>
             <td style={{ textAlign: "right" }}><b>{val2.toFixed(2)} {unit.Short}</b></td>
+            <td style={{ textAlign: "right" }}><b>{val1.toFixed(2)} {unit.Short}</b></td>
             <td style={{ textAlign: "right" }}><b>{(val2 - val1).toFixed(2)} {unit.Short}</b></td>
         </tr>
     );

@@ -31,6 +31,7 @@ import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import moment from "moment"
 import duration from "moment"
 import { GraphUnits, Colors, yLimits } from '../jQueryUI Widgets/SettingWindow';
+import { Vector } from '../jQueryUI Widgets/PolarChart';
 
 export type LegendClickCallback = (event?: React.MouseEvent<HTMLDivElement>, index?: Array<number>, enabled?: boolean) => void;
 export type GetDataFunction = (props: D3LineChartBaseProps, ctrl: D3LineChartBase) => void;
@@ -58,12 +59,14 @@ export interface D3LineChartBaseProps {
     tableSetter?: Function,
     activeUnitSetter?: (fx: Function, plotLbl: string) => void,
     getPointSetter?: (fx: Function, plotLbl: string) => void,
+
 };
 
 interface D3LineChartBaseClassProps extends D3LineChartBaseProps{
     legendKey: string,
     openSEEServiceFunction: StandardAnalyticServiceFunction,
-    getData?: GetDataFunction,   
+    getData?: GetDataFunction, 
+    setVector?: (vector: Array<Vector>) => void,
 }
 
 export interface D3PlotOptions {
@@ -893,6 +896,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             }
         })
     }
+
     updateHover(ctrl: D3LineChartBase, hover: number) {
         if (ctrl.hover == null)
             return;
@@ -916,6 +920,28 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 ChannelName: item.ChartLabel
             }
         }));
+
+        if (ctrl.props.setVector != null) {
+            let vectors: Array<Vector> = [];
+            ctrl.state.dataSet.Data.filter(item => item.LegendHorizontal == "A").forEach(series => {
+                let iPhase = ctrl.state.dataSet.Data.findIndex(item => item.LegendVertical === series.LegendVertical && series.LegendGroup === item.LegendGroup && item.LegendHorizontal === "Ph")
+                if (iPhase > -1) {
+                    if (ctrl.state.dataSet.Data.some(item => item.LegendVertical == series.LegendVertical && item.LegendGroup == series.LegendGroup && item.Enabled))
+                    {
+                        let idxM = series.DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
+                        if (idxM === -1)
+                            idxM = series.DataPoints.length - 1;
+
+                        let idxP = ctrl.state.dataSet.Data[iPhase].DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
+                        if (idxP === -1)
+                            idxP = ctrl.state.dataSet.Data[iPhase].DataPoints.length - 1;
+                        vectors.push({ LegendGroup: series.LegendGroup, VerticalLegend: series.LegendVertical, Color: series.Color, Mag: series.DataPoints[idxM][1], Phase: ctrl.state.dataSet.Data[iPhase].DataPoints[idxP][1]  })
+                    }
+                }
+            })
+
+            ctrl.props.setVector(vectors)
+        }
 
         ctrl.hover.attr("x1", hover)
             .attr("x2", hover)

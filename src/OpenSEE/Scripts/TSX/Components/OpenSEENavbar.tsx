@@ -22,7 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import PolarChart from './../jQueryUI Widgets/PolarChart';
+import PolarChart, { Vector } from './../jQueryUI Widgets/PolarChart';
 import Points, { iD3PointOfInterest } from './../jQueryUI Widgets/AccumulatedPoints';
 import Tooltip from './../jQueryUI Widgets/Tooltip';
 import TooltipWithDelta from './../jQueryUI Widgets/TooltipWithDelta';
@@ -40,6 +40,8 @@ declare var homePath: string;
 export default class OpenSEENavbar extends React.Component {
     props: {
         TableData: Map<string, Array<iD3PointOfInterest>>,
+        VoltageVectors: Array<Vector>,
+        CurrentVectors: Array<Vector>,
         eventid: number,
         resetZoom: any,
         stateSetter: Function,
@@ -197,7 +199,15 @@ export default class OpenSEENavbar extends React.Component {
                         
                     </ul>
                 </div>
-                <PolarChart data={[]} callback={this.props.stateSetter} showV={this.props.displayVolt} showI={this.props.displayCur} />
+                <PolarChart
+                    showI={this.props.displayCur}
+                    showV={this.props.displayVolt}
+                    Vdata={this.props.VoltageVectors}
+                    Idata={this.props.CurrentVectors}
+                    callback={this.props.stateSetter}
+                    activeUnits={this.props.activeUnits}
+                    colors={this.props.colorData}
+                />
                 <Points data={this.props.TableData}
                     callback={this.props.stateSetter}
                     postedData={this.props.PostedData}

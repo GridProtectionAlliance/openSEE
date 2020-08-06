@@ -28,6 +28,7 @@ import { cloneDeep } from "lodash";
 
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
+import { Vector } from '../jQueryUI Widgets/PolarChart';
 
 export interface VoltageChartProps extends D3LineChartBaseProps { }
 
@@ -145,13 +146,18 @@ export default class Voltage extends React.Component<any, any>{
 
     setYLimits(ymin: number, ymax: number, auto: boolean) {
         let lim = cloneDeep(this.props.yLimits);
+        if (this.props.yLimits.max !== ymax || this.props.yLimits.min !== ymin) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = auto;
 
-        lim.min = ymin;
-        lim.max = ymax;
-        lim.auto = auto;
+            this.props.stateSetter({ voltageLimits: lim });
+        }
 
-        this.props.stateSetter({ voltageLimits: lim });
+    }
 
+    setVectors(v: Array<Vector>) {
+        this.props.stateSetter({ vVectors: v });
     }
 
     render() {
@@ -178,6 +184,7 @@ export default class Voltage extends React.Component<any, any>{
             compareEvents={this.props.compareEvents}
             activeUnitSetter={this.props.activeUnitSetter}
             getPointSetter={this.props.getPointSetter}
+            setVector={this.setVectors.bind(this)}
         />
     }
 

@@ -52,6 +52,7 @@ import { D3LineChartBaseProps } from './Graphs/D3LineChartBase';
 import Analog from './Graphs/Analog';
 import { DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
 import { iD3PointOfInterest } from './jQueryUI Widgets/AccumulatedPoints';
+import { Vector } from './jQueryUI Widgets/PolarChart';
 
 
 export class OpenSEE extends React.Component<{}, OpenSEEState>{
@@ -61,6 +62,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     resizeId: any;
     activeUnits: Map<string, Function>;
     pointGetters: Map<string, Function>;
+    voltageVector: Array<Vector>;
+    currentVector: Array<Vector>;
 
     constructor(props) {
         super(props);
@@ -145,6 +148,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
 
         this.activeUnits = new Map<string, Function>();
         this.pointGetters = new Map<string, Function>();
+        this.voltageVector = [];
+        this.currentVector = [];
     }
 
     componentDidMount() {
@@ -295,6 +300,8 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                         mouseMode={this.state.mouseMode}
                         displayCompare={this.state.tab == "Compare"}
                         showCompareChart={this.state.showCompareCharts}
+                        VoltageVectors={this.voltageVector}
+                        CurrentVectors={this.currentVector}
                     />
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         <ViewerWindow
@@ -405,6 +412,14 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     stateSetter(obj) {
+        if (obj.vVectors != undefined)
+            this.voltageVector = obj.vVectors
+        if (obj.iVectors != undefined)
+            this.currentVector = obj.iVectors
+
+        if (!Object.keys(obj).some(item => item !== "vVectors" && item !== "iVectors"))
+            return;
+
         if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
             obj.fftStartTime = this.state.startTime;
         }
@@ -554,8 +569,7 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         delete prop.digitalLimits;
         delete prop.analogLimits;
         delete prop.analyticLimits;
-
-
+      
         prop.harmonic = state.AnalyticSettings.harmonic;
         prop.order = state.AnalyticSettings.order;
         prop.Trc = state.AnalyticSettings.Trc;
