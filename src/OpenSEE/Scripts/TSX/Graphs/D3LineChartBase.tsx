@@ -672,9 +672,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return
 
         if (ctrl.state.dataSet.Data.length > 0) {
-            let i = d3.bisect(ctrl.state.dataSet.Data[0].DataPoints.map(item => item[0]), t0, 1);
-            if (ctrl.state.dataSet.Data[0].DataPoints[i] != undefined)
-                selectedData = ctrl.state.dataSet.Data[0].DataPoints[i][0]
+            let point = ctrl.GetPoint(ctrl.state.dataSet.Data[0],t0);
+            if (point != undefined)
+                selectedData = point[0]
             else
                 selectedData = t0
         }
@@ -891,7 +891,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 Unit: item.Unit,
                 Color: item.Color,
                 Current: [0, 0],
-                Selected: [item.DataPoints[idx]],
+                Selected: [this.GetPoint(item,t)],
                 ChannelName: item.ChartLabel
             }
         })
@@ -906,16 +906,13 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         }
 
         ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
-            let idx = item.DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
-            if (idx === -1)
-                idx = item.DataPoints.length - 1;
             return {
                 LegendHorizontal: item.LegendHorizontal,
                 LegendVertical: item.LegendVertical,
                 LegendGroup: item.LegendGroup,
                 Unit: item.Unit,
                 Color: item.Color,
-                Current: item.DataPoints[idx],
+                Current: this.GetPoint(item, ctrl.xScale.invert(hover)),
                 Selected: [],
                 ChannelName: item.ChartLabel
             }
@@ -928,14 +925,13 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                 if (iPhase > -1) {
                     if (ctrl.state.dataSet.Data.some(item => item.LegendVertical == series.LegendVertical && item.LegendGroup == series.LegendGroup && item.Enabled))
                     {
-                        let idxM = series.DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
-                        if (idxM === -1)
-                            idxM = series.DataPoints.length - 1;
-
-                        let idxP = ctrl.state.dataSet.Data[iPhase].DataPoints.findIndex(pt => pt[0] > ctrl.xScale.invert(hover));
-                        if (idxP === -1)
-                            idxP = ctrl.state.dataSet.Data[iPhase].DataPoints.length - 1;
-                        vectors.push({ LegendGroup: series.LegendGroup, VerticalLegend: series.LegendVertical, Color: series.Color, Mag: series.DataPoints[idxM][1], Phase: ctrl.state.dataSet.Data[iPhase].DataPoints[idxP][1]  })
+                        vectors.push({
+                            LegendGroup: series.LegendGroup,
+                            VerticalLegend: series.LegendVertical,
+                            Color: series.Color,
+                            Mag: this.GetPoint(series, ctrl.xScale.invert(hover))[1],
+                            Phase: this.GetPoint(ctrl.state.dataSet.Data[iPhase], ctrl.xScale.invert(hover))[1]
+                        })
                     }
                 }
             })
@@ -1132,6 +1128,27 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
         return this.ActiveUnits;
     }
 
+    GetPoint(series: iD3DataSeries, t: number): [number, number] {
+
+        function reduceIndex(series: iD3DataSeries, upper: number, lower: number, t: number): number {
+            if (upper == lower)
+                return upper;
+
+            if (t >= series.DataPoints[upper][0])
+                return upper;
+            if (t <= series.DataPoints[lower][0])
+                return lower;
+
+            const middle = Math.ceil((upper + lower) / 2.0);
+            if (t >= series.DataPoints[middle][0])
+                return reduceIndex(series, upper, middle, t);
+            else
+                return reduceIndex(series, middle - 1 , lower, t);
+        }
+
+
+        return series.DataPoints[reduceIndex(series, series.DataPoints.length - 1, 0, t)]
+    }
   
 
 
