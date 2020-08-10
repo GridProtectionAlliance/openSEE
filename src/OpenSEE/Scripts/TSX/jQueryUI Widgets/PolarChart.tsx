@@ -23,8 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { iD3DataPoint, iActiveUnits } from '../Graphs/D3LineChartBase';
-import { iD3PointOfInterest } from './AccumulatedPoints';
+import { iActiveUnits } from '../Graphs/D3LineChartBase';
 import { Colors } from './SettingWindow';
 
 // styles
@@ -88,6 +87,8 @@ export interface Vector {
     Phase: number,
     LegendGroup: string,
     VerticalLegend: string,
+    PhaseUnit: string,
+    MagnitudeUnit: string,
 }
 
 export default class PolarChart extends React.Component<any, any>{
@@ -106,19 +107,9 @@ export default class PolarChart extends React.Component<any, any>{
 
     render() {
     
-        var vMax = 0;
-        $.each(this.props.Vdata, function (key, series) {
-            if (series.Mag > vMax)
-                vMax = series.Mag;
-        });
-        var scaleV = 0.9 * 150 / vMax;
+        
 
-        var iMax = 0;
-        $.each(this.props.Idata, function (key, series) {
-            if (series.Mag > iMax)
-                iMax = series.Mag;
-        });
-        var scaleI = 0.9 * 150 / iMax;
+       
 
 
         let tblData = {
@@ -137,49 +128,77 @@ export default class PolarChart extends React.Component<any, any>{
 
         let assetData = []
 
-        /*dataV.forEach(item => {
-            let assetIndex = assetData.findIndex(d => d == item.group);
+        let units: iActiveUnits = this.props.activeUnits("Voltage");
+
+        this.props.Vdata.forEach(item => {
+            let assetIndex = assetData.findIndex(d => d == item.LegendGroup);
             if (assetIndex < 0) {
                 assetIndex = assetData.length;
-                assetData.push(item.group)
-                tblData.VAB.push({ Mag: NaN, Ang: NaN })
-                tblData.VBC.push({ Mag: NaN, Ang: NaN })
-                tblData.VCA.push({ Mag: NaN, Ang: NaN })
+                assetData.push(item.LegendGroup)
+                tblData.VAB.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VBC.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VCA.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
 
-                tblData.VAN.push({ Mag: NaN, Ang: NaN })
-                tblData.VBN.push({ Mag: NaN, Ang: NaN })
-                tblData.VCN.push({ Mag: NaN, Ang: NaN })
-                tblData.IAN.push({ Mag: NaN, Ang: NaN })
-                tblData.IBN.push({ Mag: NaN, Ang: NaN })
-                tblData.ICN.push({ Mag: NaN, Ang: NaN })
+                tblData.VAN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VBN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VCN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.IAN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.IBN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.ICN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
 
             }
 
-            tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
-            tblShow[item.label] = true
+            tblData["V" + item.VerticalLegend][assetIndex] = {
+                Mag: item.Mag * units[item.MagnitudeUnit].current.Factor,
+                Ang: item.Phase * units[item.PhaseUnit].current.Factor,
+                UnitMag: units[item.MagnitudeUnit].current.Short,
+                UnitAng: units[item.PhaseUnit].current.Short
+            }
+            tblShow[ "V" + item.VerticalLegend] = true
         })
 
-        dataI.forEach(item => {
-            let assetIndex = assetData.findIndex(d => d == item.group);
+        var vMax = 0;
+        $.each(this.props.Vdata, function (key, series) {
+            if ((series.Mag> vMax))
+                vMax = series.Mag;
+        });
+        var scaleV = 0.9 * 150 / vMax;
+
+        units = this.props.activeUnits("Current");
+
+        this.props.Idata.forEach(item => {
+            let assetIndex = assetData.findIndex(d => d == item.LegendGroup);
             if (assetIndex < 0) {
                 assetIndex = assetData.length;
-                assetData.push(item.group)
-                tblData.VAB.push({ Mag: NaN, Ang: NaN })
-                tblData.VBC.push({ Mag: NaN, Ang: NaN })
-                tblData.VCA.push({ Mag: NaN, Ang: NaN })
+                assetData.push(item.LegendGroup)
+                tblData.VAB.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: ""})
+                tblData.VBC.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VCA.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
 
-                tblData.VAN.push({ Mag: NaN, Ang: NaN })
-                tblData.VBN.push({ Mag: NaN, Ang: NaN })
-                tblData.VCN.push({ Mag: NaN, Ang: NaN })
-                tblData.IAN.push({ Mag: NaN, Ang: NaN })
-                tblData.IBN.push({ Mag: NaN, Ang: NaN })
-                tblData.ICN.push({ Mag: NaN, Ang: NaN })
+                tblData.VAN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VBN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.VCN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.IAN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.IBN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
+                tblData.ICN.push({ Mag: NaN, Ang: NaN, UnitMag: "", UnitAng: "" })
 
             }
 
-            tblData[item.label][assetIndex] = { Mag: item.mag, Ang: item.ang }
-            tblShow[item.label] = true
-        }) */
+            tblData["I" + item.VerticalLegend][assetIndex] = {
+                Mag: item.Mag * units[item.MagnitudeUnit].current.Factor,
+                Ang: item.Phase * units[item.PhaseUnit].current.Factor,
+                UnitMag: units[item.MagnitudeUnit].current.Short,
+                UnitAng: units[item.PhaseUnit].current.Short
+            }
+            tblShow["I" + item.VerticalLegend] = true
+        }) 
+
+        var iMax = 0;
+        $.each(this.props.Idata, function (key, series) {
+            if ((series.Mag) > iMax)
+                iMax = series.Mag;
+        });
+        var scaleI = 0.9 * 150 / iMax;
 
         if (!this.props.showV) {
             tblShow.VAB = false
@@ -226,8 +245,8 @@ export default class PolarChart extends React.Component<any, any>{
                                 
                             </thead>
                             <tbody>
-                                {(tblShow.VAN ? Row("VAN", tblData.VAN) : null)}
-                                {(tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
+                                { (tblShow.VAN ? Row("VAN", tblData.VAN) : null)}
+                                { (tblShow.VBN ? Row("VBN", tblData.VBN) : null)}
                                 { (tblShow.VCN ? Row("VCN", tblData.VCN) : null) }
 
                                 { (tblShow.VAB ? Row("VAB", tblData.VAB) : null) }
@@ -284,13 +303,13 @@ const SubHeader = (collumns: number) => {
     );
 }
 
-const Row = (label: string, data: Array<{ Mag: number, Ang: number }>) => {
+const Row = (label: string, data: Array<{ Mag: number, Ang: number, UnitMag: string, UnitAng: string }>) => {
     function AddMagnitude(index) {
-        return (<td key={label + "-mag-" + index}>{data[index].Mag.toFixed(2)}</td>)
+        return (<td key={label + "-mag-" + index}>{data[index].Mag.toFixed(2)} ({data[index].UnitMag})</td>)
     }
        
     function AddPhase(index) {
-        return (<td key={label + "-phase-" + index}>{data[index].Ang.toFixed(2)}</td>)
+        return (<td key={label + "-phase-" + index}>{data[index].Ang.toFixed(2)} ({data[index].UnitAng})</td>)
         
     }
     function rows() {

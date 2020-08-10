@@ -930,7 +930,9 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
                             VerticalLegend: series.LegendVertical,
                             Color: series.Color,
                             Mag: this.GetPoint(series, ctrl.xScale.invert(hover))[1],
-                            Phase: this.GetPoint(ctrl.state.dataSet.Data[iPhase], ctrl.xScale.invert(hover))[1]
+                            Phase: this.GetPoint(ctrl.state.dataSet.Data[iPhase], ctrl.xScale.invert(hover))[1],
+                            PhaseUnit: ctrl.state.dataSet.Data[iPhase].Unit,
+                            MagnitudeUnit: series.Unit
                         })
                     }
                 }
