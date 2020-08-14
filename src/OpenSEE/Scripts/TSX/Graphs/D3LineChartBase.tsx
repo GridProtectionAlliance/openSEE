@@ -84,8 +84,7 @@ export interface iD3DataSeries {
     LegendHorizontal: string,
     LegendVertical: string,
     LegendGroup: string,
-
-    ChannelID: number,
+    LegendVGroup: string,
     ChartLabel: string,
 
     Unit: string,
@@ -96,7 +95,7 @@ export interface iD3DataSeries {
     
     LegendClass: string,
     SecondaryLegendClass: string,
-
+    ChannelID: number,
 
     BaseValue: number,
     DataPoints: Array<[number, number]>,
