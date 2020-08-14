@@ -34,6 +34,7 @@ using GSF.Security;
 using GSF.Web;
 using GSF.Web.Model;
 using MathNet.Numerics.IntegralTransforms;
+using OpenSEE.Model;
 using openXDA.Model;
 using System;
 using System.Collections.Generic;

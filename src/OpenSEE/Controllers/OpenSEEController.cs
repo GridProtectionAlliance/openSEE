@@ -33,6 +33,7 @@ using GSF.NumericalAnalysis;
 using GSF.Security;
 using GSF.Web;
 using GSF.Web.Model;
+using OpenSEE.Model;
 using openXDA.Model;
 using System;
 using System.Collections.Generic;
@@ -69,36 +70,6 @@ namespace OpenSEE
 
         }
         
-        // New D3 Ploting initially only for Voltage
-        public class D3Series
-        {
-            public D3Series()
-            {
-                this.LegendHorizontal = "";
-                this.LegendVertical = "";
-                this.LegendClass = "";
-                this.SecondaryLegendClass = "";
-                this.ChannelID = 0;
-            }
- 
-            public string ChartLabel; // -> not sure We need this one
-            public string LegendGroup;// -> Button on Top
-            public string LegendHorizontal; // => Horizontal Category
-            public string LegendVertical; // => Vertical category
-            // LegendVertGrp => Buttons on side
-            public string Unit;
-            public string Color;
-
-            public string LegendClass; //Determines which Button this will be under in the Legend
-            public string SecondaryLegendClass;
-           
-            public int ChannelID; // Probably don't need this
-            public double BaseValue;
-            public List<double[]> DataPoints = new List<double[]>();
-            public List<double[]> DataMarker = new List<double[]>();
-        }
-
-       
         // Constants
         public const string TimeCorrelatedSagsSQL =
             "SELECT " +
@@ -234,13 +205,14 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
                     Unit = "TCE",
                     Color = GetColor(ds.SeriesInfo.Channel),
-                    LegendGroup = "",
+                    LegendVGroup = "",
                     DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     DataMarker = new List<double[]>(),
                     BaseValue =  GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV)
                 } :
                  new D3Series()
                  {
+                     LegendVGroup = GetVoltageType(ds.SeriesInfo.Channel),
                      LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
                      LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase.Name),
                      ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
@@ -385,13 +357,11 @@ namespace OpenSEE
                 {
                     LegendHorizontal = "RMS",
                     LegendVertical = DisplayPhaseName(cdg.RMS.SeriesInfo.Channel.Phase.Name),
-                    ChannelID = cdg.RMS.SeriesInfo.Channel.ID,
                     DataPoints = cdg.RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.RMS.SeriesInfo.Channel, "RMS"),
                     Unit = type,
                     Color = GetColor(cdg.RMS.SeriesInfo.Channel),
-                    LegendClass = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
-                    SecondaryLegendClass = "RMS",
+                    LegendVGroup = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
                     BaseValue = Math.Sqrt(2) * (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
@@ -402,14 +372,12 @@ namespace OpenSEE
                 {
                     LegendHorizontal = "A",
                     LegendVertical = DisplayPhaseName(cdg.Peak.SeriesInfo.Channel.Phase.Name),
-                    ChannelID = cdg.Peak.SeriesInfo.Channel.ID,
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
 
                     Unit = type,
                     Color = GetColor(cdg.Peak.SeriesInfo.Channel),
-                    LegendClass = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
-                    SecondaryLegendClass = "A",
+                    LegendVGroup = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
                     BaseValue = (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
@@ -420,14 +388,11 @@ namespace OpenSEE
                 {
                     LegendHorizontal = "Ph",
                     LegendVertical = DisplayPhaseName(cdg.Phase.SeriesInfo.Channel.Phase.Name),
-                    ChannelID = cdg.Phase.SeriesInfo.Channel.ID,
                     DataPoints = cdg.Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Phase.SeriesInfo.Channel, "Phase"),
-
                     Unit = "Angle",
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
-                    LegendClass = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
-                    SecondaryLegendClass = "Ph",
+                    LegendVGroup = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
                     BaseValue = 1.0
                 };

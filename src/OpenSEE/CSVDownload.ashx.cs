@@ -27,6 +27,7 @@ using GSF.Data;
 using GSF.Data.Model;
 using GSF.Threading;
 using Newtonsoft.Json;
+using OpenSEE.Model;
 using openXDA.Model;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,6 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 using CancellationToken = System.Threading.CancellationToken;
-using D3Series = OpenSEE.OpenSEEController.D3Series;
 
 namespace OpenSEE
 {

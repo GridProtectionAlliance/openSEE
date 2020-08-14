@@ -85,6 +85,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="GlobalSettings.cs" />
+    <Compile Include="Model\D3Series.cs" />
     <Compile Include="Model\AppModel.cs" />
     <Compile Include="Model\System\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
