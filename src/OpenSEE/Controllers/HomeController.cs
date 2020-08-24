@@ -44,7 +44,8 @@ namespace OpenSEE.Controllers
         #region [ Methods ]
         public ActionResult Home()
         {
-            int eventID = 1;
+            int eventID = -1;
+
             using (DataContext dataContext = new DataContext("systemSettings"))
             {
                 ViewBag.EnableLightningQuery = dataContext.Connection.ExecuteScalar<bool?>("SELECT Value FROM Settings WHERE Name = 'EnableLightningQuery'") ?? false;
@@ -55,9 +56,13 @@ namespace OpenSEE.Controllers
                 if (Request.QueryString.Get("eventid") != null)
                     eventID = int.Parse(Request.QueryString["eventid"]);
             }
+           
 
             using (DataContext dataContext = new DataContext("dbOpenXDA"))
-            { 
+            {
+                if (eventID == -1)
+                    eventID = dataContext.Table<Event>().QueryRecord("ID > 0").ID;
+
                 Event evt = dataContext.Table<Event>().QueryRecordWhere("ID = {0}", eventID);
                 ViewBag.EventID = eventID;
                 ViewBag.EventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");

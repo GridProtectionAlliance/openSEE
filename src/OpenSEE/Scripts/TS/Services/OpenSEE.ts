@@ -218,7 +218,7 @@ export default class OpenSEEService{
 
         this.faultDistanceDataHandle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetFaultDistanceData?eventId=${eventid}`,
+            url: `${homePath}api/Analytic/GetFaultDistanceData?eventId=${eventid}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,

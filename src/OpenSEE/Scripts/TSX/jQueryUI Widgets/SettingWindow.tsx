@@ -111,6 +111,7 @@ export interface GraphUnits {
     VoltageperSecond: UnitSetting,
     CurrentperSecond: UnitSetting,
     Freq: UnitSetting,
+    Distance: UnitSetting,
 }
 
 export interface yLimits {
@@ -203,6 +204,13 @@ export const DefaultUnits = {
             { Label: "kiloHertz", Short: "kHz", Factor: 0.001 },
             { Label: "Per Unit", Short: "pu", Factor: 0 },
             { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    Distance: {
+        current: { Label: "miles", Short: "mile", Factor: 1 },
+        options: [
+            { Label: "kilometers", Short: "km", Factor: 1.60934  },
+            { Label: "miles", Short: "mile", Factor: 1 },
         ]
     },
 }
@@ -307,6 +315,12 @@ export default class SettingWindow extends React.Component<any, any>{
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
                                                 <UnitSelector label={"TCE"} unit={this.props.unitSetting.TCE} setter={this.updateTCEUnits.bind(this)} />
                                             </div> : null)}
+                                        {(this.props.showAnalytics == "FaultDistance" ?
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
+                                                <UnitSelector label={"Distance"} unit={this.props.unitSetting.Distance} setter={this.updateDistUnits.bind(this)} />
+                                            </div> : null)}
+
                                         {(this.props.showAnalytics == "FirstDerivative" ?
                                             <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits.bind(this)} />
@@ -528,6 +542,11 @@ export default class SettingWindow extends React.Component<any, any>{
     updateTCEUnits(unit: UnitSetting) {
         this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, TCE: unit } })
     }
+
+    updateDistUnits(unit: UnitSetting) {
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Distance: unit } })
+    }
+
 
 }
 
