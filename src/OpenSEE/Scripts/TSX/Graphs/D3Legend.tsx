@@ -152,11 +152,11 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
 
         const headerRow: Array<JSX.Element> = this.hHeader.map((item, index) => (
             <div key={index} style={{ width: hWidth, borderLeft: "2px solid #b2b2b2" }}>
-                <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)" }}>{item}</span>
+                <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)" }} onClick={() => this.clickGroup(item, 'horizontal')} > {item}</span>
             </div>))
 
 
-        const tblData: Array<JSX.Element> = this.vHeader.map((value, index) => <Row key={index} label={value[0]} data={this.state.grid.get(value[0])} ctrl={this} width={hWidth} />)
+        const tblData: Array<JSX.Element> = this.vHeader.map((value, index) => <Row key={index} label={value[0]} data={this.state.grid.get(value[0])} ctrl={this} width={hWidth} clickHeader={this.clickGroup.bind(this)} />)
         const catData: Array<JSX.Element> = vCategories.map((value, index) => <VCategory key={index} label={value} height={hrow * this.vHeader.filter(item => item[1] == value).length} width={hWidth} />)
        
         return (
@@ -237,6 +237,70 @@ export default class D3Legend extends React.Component<ID3LegendProps, any>{
             return { categories: tmp };
         });
     }
+
+    clickGroup(group: string, type: 'vertical' | 'horizontal') {
+        let isAny = false;
+        let updates: number[] = [];
+
+        if (type == 'vertical') {
+            isAny = this.state.grid.get(group).some(item => item.enabled);
+
+
+            if (isAny) {
+                this.state.grid.get(group).forEach(row => {
+                    if (row.enabled) {
+                        row.enabled = false;
+                        this.state.categories.forEach((cat) => {
+                            updates.push(...row.traces.get(cat.label));
+                        });
+                    }
+                });
+            }
+            else {
+
+                this.state.grid.get(group).forEach(row => {
+                    row.enabled = true;
+                    this.state.categories.forEach((cat) => {
+                        if (cat.enabled)
+                            updates.push(...row.traces.get(cat.label));
+                    });
+
+                });
+            }
+        }
+        else {
+            isAny = false;
+            this.state.grid.forEach(row => { if (row.some(item => (item.enabled && item.hLabel == group))) isAny = true; });
+
+            if (isAny) {
+                this.state.grid.forEach(row => {
+                    row.forEach(item => {
+                        if (item.enabled && item.hLabel == group) {
+                            item.enabled = false;
+                            this.state.categories.forEach((cat) => {
+                                updates.push(...item.traces.get(cat.label));
+                            });
+                        }
+                    })
+                });
+            }
+            else {
+                this.state.grid.forEach(row => {
+                    row.forEach(item => {
+                        if (item.hLabel == group) {
+                            item.enabled = true;
+                            this.state.categories.forEach((cat) => {
+                                if (cat.enabled)
+                                    updates.push(...item.traces.get(cat.label));
+                            });
+                        }
+                    })
+                });
+            }
+        }
+
+        this.props.callback(null, updates, !isAny);
+    }
 }
 
 const Category = (props: { key: number, label: string, enabled: boolean, onclick: () => void}) => {
@@ -245,7 +309,7 @@ const Category = (props: { key: number, label: string, enabled: boolean, onclick
     );
 };
 
-const Row = (props: { label: string, data: Array<ILegendGrid>, width: number, ctrl: D3Legend }) => {
+const Row = (props: { label: string, data: Array<ILegendGrid>, width: number, ctrl: D3Legend, clickHeader: Function}) => {
     let activeCategories = props.ctrl.state.categories.filter(item => item.enabled).map(item => item.label);
 
     function hasData(data: ILegendGrid) {
@@ -261,7 +325,7 @@ const Row = (props: { label: string, data: Array<ILegendGrid>, width: number, ct
     return (
         <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderTop: "2px solid #b2b2b2", height: hrow }}>
             <div style={{ width: props.width, overflow: "hidden", textAlign: "center" }} key={0}>
-                    <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }}>{props.label}</span>
+                <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }} onClick={() => props.clickHeader(props.label,'vertical')}>{props.label}</span>
             </div>
             {props.data.map((item, index) =>
                 (hasData(item) ?
@@ -275,7 +339,7 @@ const Row = (props: { label: string, data: Array<ILegendGrid>, width: number, ct
 const VCategory = (props: { key: number, label: string, height: number, width: number }) => {
     return (
         <div style={{ width: props.width, borderTop: "2px solid #b2b2b2", height: props.height }}>
-            <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)", writingMode: "vertical-lr", height: "100%" }}>{props.label}</span>
+            <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)", writingMode: "vertical-rl", height: "100%", transform: 'rotate(180deg)'}}>{props.label}</span>
         </div>)
 }
 

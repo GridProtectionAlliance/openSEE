@@ -271,11 +271,11 @@ namespace OpenSEE
                         case ("CN"):
                             return "Vc";
                         case ("AB"):
-                            return "Va";
+                            return "Vab";
                         case ("BC"):
-                            return "Vb";
+                            return "Vbc";
                         case ("CA"):
-                            return "Vc";
+                            return "Vca";
                         case ("NG"):
                             return "Ires";
                         default: // Should be random
@@ -370,7 +370,7 @@ namespace OpenSEE
 
                 D3Series flotSeriesWaveAmp = new D3Series
                 {
-                    LegendHorizontal = "A",
+                    LegendHorizontal = "Pk",
                     LegendVertical = DisplayPhaseName(cdg.Peak.SeriesInfo.Channel.Phase.Name),
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
