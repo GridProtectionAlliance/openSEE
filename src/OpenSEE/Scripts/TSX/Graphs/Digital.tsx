@@ -27,6 +27,7 @@ import { createElement } from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { cloneDeep } from "lodash";
+import { yLimits } from '../jQueryUI Widgets/SettingWindow';
 
 export interface DigitalChartProps extends D3LineChartBaseProps { }
 
@@ -43,6 +44,11 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
     }
 
     var openSEEService = new OpenSEEService();
+
+    let yLim: yLimits = props.yLimits;
+    if (props.yLimits.setter == null)
+        yLim = { ...props.yLimits, setter: setYLimits };
+
     return createElement(D3LineChartBase, {
         legendKey: "Digital",
         openSEEServiceFunction: (eventid) => openSEEService.getDigitalsData(eventid),
@@ -60,7 +66,7 @@ export default function Digital(props: DigitalChartProps): JSX.Element {
         colorSettings: props.colorSettings,
         zoomMode: props.zoomMode,
         mouseMode: props.mouseMode,
-        yLimits: { ...props.yLimits, setter: setYLimits },
+        yLimits: yLim,
         compareEvents: props.compareEvents,
         tableSetter: props.tableSetter,
         getPointSetter: props.getPointSetter,

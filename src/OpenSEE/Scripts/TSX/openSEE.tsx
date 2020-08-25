@@ -590,6 +590,58 @@ interface ViewerWindowProps extends D3LineChartBaseProps {
 }
 
 const ViewerWindow = (props: ViewerWindowProps) => {
+    // Set Y Limits. Neccesarry to avoid endless Loop if multiple Plots of one type (e.g. Voltage try to access and change the same set of Limits)
+    function setVoltageLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.yLimits);
+        if (!auto) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = false;
+
+            props.stateSetter({ voltageLimits: lim });
+        }
+    }
+    function setCurrentLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.currentLimits);
+        if (!auto) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = false;
+
+            props.stateSetter({ currentLimits: lim });
+        }
+    }
+    function setAnalogLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.analogLimits);
+        if (!auto) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = false;
+
+            props.stateSetter({ analogLimits: lim });
+        }
+    }
+    function setTCELimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.tceLimits);
+        if (!auto) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = false;
+
+            props.stateSetter({ tceLimits: lim });
+        }
+    }
+    function setDigitalsLimits(ymin: number, ymax: number, auto: boolean) {
+        let lim = cloneDeep(props.digitalLimits);
+        if (!auto) {
+            lim.min = ymin;
+            lim.max = ymax;
+            lim.auto = false;
+
+            props.stateSetter({ digitalLimits: lim });
+        }
+    }
+
     return ( props.isCompare ? 
         <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
             <div className="card-header">{props.label}</div>
@@ -597,7 +649,7 @@ const ViewerWindow = (props: ViewerWindowProps) => {
                 {(props.displayVolt ? <Voltage
                     mouseMode={props.mouseMode}
                     width={props.width}
-                    yLimits={props.yLimits}
+                    yLimits={{ ...props.yLimits, setter: setVoltageLimits.bind(this) }}
                     zoomMode={props.zoomMode}
                     colorSettings={props.colorSettings}
                     unitSettings={props.unitSettings}

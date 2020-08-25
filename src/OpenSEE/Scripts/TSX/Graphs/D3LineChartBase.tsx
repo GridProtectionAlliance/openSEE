@@ -904,18 +904,19 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             return;
         }
 
-        ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
-            return {
-                LegendHorizontal: item.LegendHorizontal,
-                LegendVertical: item.LegendVertical,
-                LegendGroup: item.LegendGroup,
-                Unit: item.Unit,
-                Color: item.Color,
-                Current: this.GetPoint(item, ctrl.xScale.invert(hover)),
-                Selected: [],
-                ChannelName: item.ChartLabel
-            }
-        }));
+        if (ctrl.props.tableSetter != null)
+            ctrl.props.tableSetter(ctrl.props.legendKey, ctrl.state.dataSet.Data.filter(item => item.Enabled).map(item => {
+                return {
+                    LegendHorizontal: item.LegendHorizontal,
+                    LegendVertical: item.LegendVertical,
+                    LegendGroup: item.LegendGroup,
+                    Unit: item.Unit,
+                    Color: item.Color,
+                    Current: this.GetPoint(item, ctrl.xScale.invert(hover)),
+                    Selected: [],
+                    ChannelName: item.ChartLabel
+                }
+            }));
 
         if (ctrl.props.setVector != null) {
             let vectors: Array<Vector> = [];
@@ -1023,6 +1024,7 @@ export default class D3LineChartBase extends React.Component<D3LineChartBaseClas
             ctrl.yMin = ctrl.props.yLimits.min
             ctrl.yMax = ctrl.props.yLimits.max
         }
+
         if (ctrl.props.yLimits.auto) 
             ctrl.props.yLimits.setter(ctrl.yMin, ctrl.yMax, ctrl.props.yLimits.auto)
         

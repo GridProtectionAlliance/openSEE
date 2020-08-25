@@ -27,6 +27,7 @@ import * as React  from 'react';
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3LineChartBase, { D3LineChartBaseProps } from './../Graphs/D3LineChartBase';
 import { cloneDeep } from "lodash";
+import { yLimits } from '../jQueryUI Widgets/SettingWindow';
 
 export interface TCEChartProps extends D3LineChartBaseProps { }
 
@@ -106,6 +107,10 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
     }
 
     render() {
+        let yLim: yLimits = this.props.yLimits;
+        if (this.props.yLimits.setter == null)
+            yLim = { ...this.props.yLimits, setter: this.setYLimits.bind(this) };
+
         return <D3LineChartBase
             legendKey="TCE"
             openSEEServiceFunction={this.openSEEService.getWaveformTCEData}
@@ -124,7 +129,7 @@ export default class TCE extends React.Component<D3LineChartBaseProps, any>{
             colorSettings={this.props.colorSettings}
             zoomMode={this.props.zoomMode}
             mouseMode={this.props.mouseMode}
-            yLimits={{ ...this.props.yLimits, setter: this.setYLimits.bind(this) }}
+            yLimits={yLim}
             compareEvents={this.props.compareEvents}
             tableSetter={this.props.tableSetter}
             activeUnitSetter={this.props.activeUnitSetter}
