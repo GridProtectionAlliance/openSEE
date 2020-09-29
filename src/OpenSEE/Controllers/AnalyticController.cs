@@ -2841,7 +2841,7 @@ namespace OpenSEE
         #endregion
 
         #region [ FFT ]
-        [Route("GetFFTData"), HttpGet]
+        //[Route("GetFFTData"), HttpGet]
         /*public Task<JsonReturn> GetFFTData(CancellationToken cancellationToken)
         {
             return Task.Run(() => {
