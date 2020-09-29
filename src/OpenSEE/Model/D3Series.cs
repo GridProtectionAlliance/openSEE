@@ -74,7 +74,7 @@ namespace OpenSEE.Model
         public string LegendHorizontal; // => Horizontal Category
 
         /// <summary>
-        /// Vertical egend Category
+        /// Vertical Legend Category
         /// </summary>
         public string LegendVertical; // => Vertical category
                                    
@@ -110,9 +110,10 @@ namespace OpenSEE.Model
 
         #endregion
 
-        public string LegendClass; //Determines which Button this will be under in the Legend
+        // ---------------------- These Are unneccesarry -------------------
+        public string LegendClass; 
         public string SecondaryLegendClass;
-        public int ChannelID; // Probably don't need this
+        public int ChannelID;
 
     }
 }

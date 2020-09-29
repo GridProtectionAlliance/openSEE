@@ -95,6 +95,38 @@ export interface Colors {
     freqVa: string,
     freqVb: string,
     freqVc: string,
+    Ra: string,
+    Xa: string,
+    Za: string,
+    Rb: string,
+    Xb: string,
+    Zb: string,
+    Rc: string,
+    Xc: string,
+    Zc: string,
+    Pa: string,
+    Qa: string,
+    Sa: string,
+    Pb: string,
+    Qb: string,
+    Sb: string,
+    Pc: string,
+    Qc: string,
+    Sc: string,
+    Pt: string,
+    Qt: string,
+    St: string,
+    Pfa: string,
+    Pfb: string,
+    Pfc: string,
+    VS0: string,
+    VS1: string,
+    VS2: string,
+    IS0: string,
+    IS1: string,
+    IS2: string,
+    Vdc: string,
+    Idc: string,
 }
 
 export type UnitSetting = {
@@ -112,6 +144,13 @@ export interface GraphUnits {
     CurrentperSecond: UnitSetting,
     Freq: UnitSetting,
     Distance: UnitSetting,
+    Impedance: UnitSetting,
+    PowerP: UnitSetting,
+    PowerQ: UnitSetting,
+    PowerS: UnitSetting,
+    PowerPf: UnitSetting,
+    Unbalance: UnitSetting,
+    THD: UnitSetting,
 }
 
 export interface yLimits {
@@ -213,6 +252,69 @@ export const DefaultUnits = {
             { Label: "miles", Short: "mile", Factor: 1 },
         ]
     },
+    Impedance: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Ohms", Short: "Ohm", Factor: 1 },
+            { Label: "kiloOhms", Short: "kOhm", Factor: 0.001 },
+            { Label: "milliOhms", Short: "mOhm", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+
+    PowerP: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Watt", Short: "W", Factor: 1000000 },
+            { Label: "Mega Watt", Short: "MW", Factor: 1 },
+            { Label: "Kilo Watt", Short: "kW", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    PowerQ: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Volt-Amps Reactive", Short: "VAR", Factor: 1000000 },
+            { Label: "Mega Volt-Amps Reactive", Short: "MVAR", Factor: 1 },
+            { Label: "Kilo Volt-Amps Reactive", Short: "kVAR", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    PowerS: {
+        current: { Label: "auto", Short: "auto", Factor: 0 },
+        options: [
+            { Label: "Volt-Amps", Short: "VA", Factor: 1000000 },
+            { Label: "Mega Volt-Amps", Short: "MVA", Factor: 1 },
+            { Label: "Kilo Volt-Amps", Short: "kVA", Factor: 1000 },
+            { Label: "Per Unit", Short: "pu", Factor: 0 },
+            { Label: "auto", Short: "auto", Factor: 0 }
+        ]
+    },
+    PowerPf: {
+        current: { Label: "", Short: "pf", Factor: 1 },
+        options: [
+            { Label: "", Short: "pf", Factor: 1 }
+        ]
+    },
+    Unbalance: {
+        current: { Label: "Ratio", Short: "Unbalance", Factor: 1 },
+        options: [
+            { Label: "Percent", Short: "%", Factor: 100 },
+            { Label: "Ratio", Short: "Unbalance", Factor: 1 }
+        ]
+    },
+    THD: {
+        current: { Label: "Ratio", Short: "THD", Factor: 1 },
+        options: [
+            { Label: "Percent", Short: "%", Factor: 100 },
+            { Label: "Ratio", Short: "THD", Factor: 1 }
+        ]
+    },
+
+
 }
 
 export const DefaultColors = 
@@ -239,7 +341,39 @@ export const DefaultColors =
     freqAll: "#edc240",
     freqVa: "#A30000",
     freqVb: "#0029A3",
-    freqVc: "#007A29",  
+    freqVc: "#007A29",
+    Ra: "#A30000",
+    Xa: "#0029A3",
+    Za: "#007A29",
+    Rb: "#A30000",
+    Xb: "#0029A3",
+    Zb: "#007A29",
+    Rc: "#A30000",
+    Xc: "#0029A3",
+    Zc: "#007A29",
+    Pa: "#A30000",
+    Qa: "#0029A3",
+    Sa: "#007A29",
+    Pb: "#A30000",
+    Qb: "#0029A3",
+    Sb: "#007A29",
+    Pc: "#A30000",
+    Qc: "#0029A3",
+    Sc: "#007A29",
+    Pt: "#A30000",
+    Qt: "#0029A3",
+    St: "#007A29",
+    Pfa: "#A30000",
+    Pfb: "#0029A3",
+    Pfc: "#007A29",
+    VS0: "#A30000",
+    VS1: "#0029A3",
+    VS2: "#007A29",
+    IS0: "#A30000",
+    IS1: "#0029A3",
+    IS2: "#007A29",
+    Vdc: "#0029A3",
+    Idc: "#007A29"
 }
 
 export interface SettingWindowProps {
@@ -349,6 +483,11 @@ export default class SettingWindow extends React.Component<any, any>{
                                                 <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
                                                 <UnitSelector label={"Voltage"} unit={this.props.unitSetting.Voltage} setter={this.updateVoltageUnits} />
                                                 <UnitSelector label={"Current"} unit={this.props.unitSetting.Current} setter={this.updateCurrentUnits} />
+                                            </div> : null)}
+                                        {(this.props.showAnalytics == "Impedance" ?
+                                            <div style={{ display: "inline-flex", border: "2px solid #ccc", width: "100%", borderRadius: 5, marginBottom: 10 }}>
+                                                <UnitSelector label={"Time"} unit={this.props.unitSetting.Time} setter={this.updateTimeUnits} />
+                                                <UnitSelector label={"Impedance"} unit={this.props.unitSetting.Impedance} setter={this.updateImpedanceUnits} />
                                             </div> : null)}
 
                                     </div>
@@ -518,6 +657,11 @@ export default class SettingWindow extends React.Component<any, any>{
     updateVoltageUnits(unit: UnitSetting) {
         this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Voltage: unit } })
     }
+
+    updateImpedanceUnits(unit: UnitSetting) {
+        this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Impedance: unit } })
+    }
+
 
     updateCurrentUnits(unit: UnitSetting) {
         this.props.stateSetter({ plotUnits: { ...this.props.unitSetting, Current: unit } })

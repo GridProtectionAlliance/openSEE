@@ -51,24 +51,9 @@ using System.Web.Http;
 namespace OpenSEE
 {
     [RoutePrefix("api/OpenSEE")]
-    public partial class OpenSEEController : ApiController
+    public class OpenSEEController : OpenSEEBaseController
     {
-        #region [ Members ]
-
-        // Fields
-        private DateTime m_epoch = new DateTime(1970, 1, 1);
-
-        private static Random  m_random = new Random();
-
-        
-        public class JsonReturn
-        {
-            public List<D3Series> Data;
-            public double EventStartTime;
-            public double EventEndTime;
-            public double FaultTime;
-
-        }
+        #region [ Members ]       
         
         // Constants
         public const string TimeCorrelatedSagsSQL =
@@ -119,8 +104,7 @@ namespace OpenSEE
         #endregion
 
         #region [ Static ]
-        private static MemoryCache s_memoryCache;
-        private static double m_cacheSlidingExpiration;
+        
 
         static OpenSEEController()
         {
@@ -190,12 +174,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup;
 
-            //Determine Sbase
-                            
-            double Sbase = 0;
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
-
+            
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
                 ds => (type == "TripCoilCurrent"? 
                 new D3Series()
@@ -214,7 +193,7 @@ namespace OpenSEE
                  {
                      LegendVGroup = GetVoltageType(ds.SeriesInfo.Channel),
                      LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
-                     LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase.Name),
+                     LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase),
                      ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
                      Unit = type,
                      Color = GetColor(ds.SeriesInfo.Channel),
@@ -230,98 +209,9 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private double GetIbase(double Sbase, double Vbase)
-        {
-            return (Sbase / (Math.Sqrt(3) * Vbase * 1000));
-        }
-        public static string GetUnits(Channel channel)
-        {
-            if (channel.MeasurementType.Name == "Voltage")
-                return "V";
-            if (channel.MeasurementType.Name == "Current")
-                return "A";
-            else
-                return " ";
-        }
+     
 
-        /// <summary>
-        /// Determines Color based on Channel Information
-        /// </summary>
-        /// <param name="channel">Channel that represents the signal</param>
-        /// <returns>a color designation</returns>
-        public static string GetColor(Channel channel)
-        {
-          
-            if (channel == null)
-            {
-                return "random";
-            }
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                 
-                if (channel.MeasurementType.Name == "Voltage")
-                {
-                    switch (channel.Phase.Name)
-                    {
-                        case ("AN"):
-                            return "Va";
-                        case ("BN"):
-                            return "Vb";
-                        case ("CN"):
-                            return "Vc";
-                        case ("AB"):
-                            return "Vab";
-                        case ("BC"):
-                            return "Vbc";
-                        case ("CA"):
-                            return "Vca";
-                        case ("NG"):
-                            return "Ires";
-                        default: // Should be random
-                            return "random";
-                    }
-                }
-                else if (channel.MeasurementType.Name == "Current")
-                {
-                    switch (channel.Phase.Name)
-                    {
-                        case ("AN"):
-                            return "Ia";
-                        case ("BN"):
-                            return "Ib";
-                        case ("CN"):
-                            return "Ic";
-                        case ("NG"):
-                            return "Ires";
-                        case ("RES"):
-                            return "Ires";
-                        default: // Should be random
-                            return "random";
-                    }
-                }
-            }
-            //Should be Random
-            return "random";
-
-        }
-
-        private string GetVoltageType(Channel channel)
-        {
-            if (channel.MeasurementType.Name == "Voltage")
-            {
-                if (channel.Phase.Name == "AB" || channel.Phase.Name == "BC" || channel.Phase.Name == "CA")
-                {
-                    return "L-L";
-                }
-                else
-                {
-                    return "L-N";
-                }
-            }
-
-            return "";
-        }
+        
 
         private string GetSignalType(Channel channel)
         {
@@ -356,7 +246,7 @@ namespace OpenSEE
                 D3Series flotSeriesRMS = new D3Series
                 {
                     LegendHorizontal = "RMS",
-                    LegendVertical = DisplayPhaseName(cdg.RMS.SeriesInfo.Channel.Phase.Name),
+                    LegendVertical = DisplayPhaseName(cdg.RMS.SeriesInfo.Channel.Phase),
                     DataPoints = cdg.RMS.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.RMS.SeriesInfo.Channel, "RMS"),
                     Unit = type,
@@ -371,7 +261,7 @@ namespace OpenSEE
                 D3Series flotSeriesWaveAmp = new D3Series
                 {
                     LegendHorizontal = "Pk",
-                    LegendVertical = DisplayPhaseName(cdg.Peak.SeriesInfo.Channel.Phase.Name),
+                    LegendVertical = DisplayPhaseName(cdg.Peak.SeriesInfo.Channel.Phase),
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
 
@@ -387,7 +277,7 @@ namespace OpenSEE
                 D3Series flotSeriesPolarAngle = new D3Series
                 {
                     LegendHorizontal = "Ph",
-                    LegendVertical = DisplayPhaseName(cdg.Phase.SeriesInfo.Channel.Phase.Name),
+                    LegendVertical = DisplayPhaseName(cdg.Phase.SeriesInfo.Channel.Phase),
                     DataPoints = cdg.Phase.Multiply(180.0D / Math.PI).DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Phase.SeriesInfo.Channel, "Phase"),
                     Unit = "Angle",
@@ -404,39 +294,9 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        public static string GetChartLabel(openXDA.Model.Channel channel, string type = null)
-        {
-            if (channel.MeasurementType.Name == "Voltage" && type == null)
-                return "V" + DisplayPhaseName(channel.Phase.Name);
-            else if (channel.MeasurementType.Name == "Current" && type == null)
-                return "I" + DisplayPhaseName(channel.Phase.Name);
-            else if (channel.MeasurementType.Name == "TripCoilCurrent" && type == null)
-                return "TCE" + DisplayPhaseName(channel.Phase.Name);
-            else if (channel.MeasurementType.Name == "TripCoilCurrent")
-                return "TCE" + DisplayPhaseName(channel.Phase.Name) + " " + type;
-            else if (channel.MeasurementType.Name == "Voltage")
-                return "V" + DisplayPhaseName(channel.Phase.Name) + " " + type;
-            else if (channel.MeasurementType.Name == "Current")
-                return "I" + DisplayPhaseName(channel.Phase.Name) + " " + type;
+        
 
-            return null;
-        }
-
-        private static string DisplayPhaseName(string phaseName)
-        {
-            Dictionary<string, string> diplayNames = new Dictionary<string, string>()
-            {
-                { "None", ""}
-            };
-
-            string DisplayName;
-
-            if (!diplayNames.TryGetValue(phaseName, out DisplayName))
-                DisplayName = phaseName;
-
-            return DisplayName;
-
-        }
+        
 
         #endregion
 
@@ -553,73 +413,6 @@ namespace OpenSEE
         #endregion
         
        
-        #region [ Shared Functions ]
-
-        public static DataGroup QueryDataGroup(int eventID, Meter meter)
-        {
-            string target = $"DataGroup-{eventID}";
-
-            Task<DataGroup> dataGroupTask = new Task<DataGroup>(() =>
-            {
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                {
-                    List<byte[]> data = ChannelData.DataFromEvent(eventID, connection);
-                    return ToDataGroup(meter, data);
-                }
-            });
-
-            if (s_memoryCache.Add(target, dataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
-                dataGroupTask.Start();
-
-            dataGroupTask = (Task<DataGroup>)s_memoryCache.Get(target);
-
-            return dataGroupTask.Result;
-        }
-
-        public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter)
-        {
-            string target = $"VICycleDataGroup-{eventID}";
-
-            Task<VICycleDataGroup> viCycleDataGroupTask = new Task<VICycleDataGroup>(() =>
-            {
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                {
-                    DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                    double freq = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0D;
-                    return Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), freq);
-                }
-            });
-
-            if (s_memoryCache.Add(target, viCycleDataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
-                viCycleDataGroupTask.Start();
-
-            viCycleDataGroupTask = (Task<VICycleDataGroup>)s_memoryCache.Get(target);
-
-            return viCycleDataGroupTask.Result;
-        }
-
-        public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
-        {
-            DataGroup dataGroup = new DataGroup();
-            dataGroup.FromData(meter, data);
-            VIDataGroup vIDataGroup = new VIDataGroup(dataGroup);
-            return vIDataGroup.ToDataGroup();
-        }
-
-       
-        private IDbDataParameter ToDateTime2(AdoDataConnection connection, DateTime dateTime)
-        {
-            using (IDbCommand command = connection.Connection.CreateCommand())
-            {
-                IDbDataParameter parameter = command.CreateParameter();
-                parameter.DbType = DbType.DateTime2;
-                parameter.Value = dateTime;
-                return parameter;
-            }
-        }
-
-        #endregion
-
         #region [ Info ]
 
         [Route("GetHeaderData"),HttpGet]
