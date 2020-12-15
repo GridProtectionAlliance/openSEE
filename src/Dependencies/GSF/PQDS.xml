@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PQDS</name>
+    </assembly>
+    <members>
+        <member name="T:PQDS.DataSeries">
+            <summary>
+            Represents a channel in a PQDS File.
+            </summary>
+        </member>
+        <member name="P:PQDS.DataSeries.Series">
+            <summary>
+            A collection of DataPoints.
+            </summary>
+        </member>
+        <member name="P:PQDS.DataSeries.Label">
+            <summary>
+            Label of the <see cref="T:PQDS.DataSeries"/>
+            </summary>
+        </member>
+        <member name="P:PQDS.DataSeries.Length">
+            <summary>
+            length <see cref="T:PQDS.DataSeries"/> in number of points
+            </summary>
+        </member>
+        <member name="M:PQDS.DataSeries.#ctor(System.String)">
+            <summary>
+            Creates a new <see cref="T:PQDS.DataSeries"/>.
+            </summary>
+            <param name="label">Label of the DataSeries</param>
+        </member>
+        <member name="T:PQDS.DataPoint">
+            <summary>
+            Represents a single Point in the <see cref="T:PQDS.DataSeries"/>.
+            </summary>
+        </member>
+        <member name="F:PQDS.DataPoint.Time">
+            <summary>
+            Timestamp of the point.
+            </summary>
+        </member>
+        <member name="F:PQDS.DataPoint.Value">
+            <summary>
+            Value of the point.
+            </summary>
+        </member>
+        <member name="T:PQDS.PQDSFile">
+            <summary>
+            Class that represents a PQDS file.
+            </summary>
+        </member>
+        <member name="M:PQDS.PQDSFile.#ctor(System.Collections.Generic.List{PQDS.MetaDataTag},System.Collections.Generic.List{PQDS.DataSeries},System.DateTime)">
+            <summary>
+            Creates a new PQDS file.
+            </summary>
+            <param name="dataSeries"> Measurment data to be included as <see cref="T:PQDS.DataSeries"/></param>
+            <param name="initialTimeStamp"> Timestamp used as the beginning of the PQDS file </param>
+            <param name="metaData"> List of MetaData to be included in the PQDS file as <see cref="T:PQDS.MetaDataTag`1"/> </param>
+        </member>
+        <member name="M:PQDS.PQDSFile.#ctor">
+            <summary>
+            Creates a new PQDS file.
+            </summary>
+        </member>
+        <member name="P:PQDS.PQDSFile.MetaData">
+            <summary>
+            List of included Metadata tags.
+            </summary>
+        </member>
+        <member name="P:PQDS.PQDSFile.Data">
+            <summary>
+            List of data included in PQDS file as <see cref="T:PQDS.DataSeries"/>.
+            </summary>
+        </member>
+        <member name="M:PQDS.PQDSFile.WriteToStream(System.IO.StreamWriter,System.IProgress{System.Double})">
+            <summary>
+            Writes the content to a .csv file.
+            </summary>
+            <param name="stream"> The <see cref="T:System.IO.StreamWriter"/> to write the data to. </param>
+            <param name="progress"> <see cref="!:IProgress"/> Progress Token</param>
+        </member>
+        <member name="M:PQDS.PQDSFile.WriteToFile(System.String,System.IProgress{System.Double})">
+            <summary>
+            Writes the content to a .csv file.
+            </summary>
+            <param name="file"> file name </param>
+            <param name="progress"> <see cref="!:IProgress"/> Progress Token</param>
+        </member>
+        <member name="M:PQDS.PQDSFile.WriteToFile(System.String)">
+            <summary>
+            Writes the content to a .csv file.
+            </summary>
+            <param name="file"> file name </param>
+        </member>
+        <member name="M:PQDS.PQDSFile.WriteToStream(System.IO.StreamWriter)">
+            <summary>
+            Writes the content to an output Stream.
+            </summary>
+            <param name="stream"> The <see cref="T:System.IO.StreamWriter"/> to write the data to. </param>
+        </member>
+        <member name="M:PQDS.PQDSFile.ReadFromFile(System.String)">
+            <summary>
+            Reads the content from a PQDS File.
+            </summary>
+            <param name="filename"> file name</param>
+        </member>
+        <member name="M:PQDS.PQDSFile.ReadFromFile(System.String,System.IProgress{System.Double})">
+            <summary>
+            Reads the content from a PQDS File.
+            </summary>
+            <param name="filename"> file name</param>
+            <param name="progress"> <see cref="!:IProgress"/> Progress Token </param>
+        </member>
+        <member name="T:PQDS.PQDSMetaDataType">
+            <summary>
+            PQDS metadata tag Datatypes according to PQDS spec.
+            </summary>
+        </member>
+        <member name="T:PQDS.MetaDataTag">
+            <summary>
+            Abstract Class of MetaData Tags for a <see cref="T:PQDS.PQDSFile"/>.
+            </summary>
+        </member>
+        <member name="P:PQDS.MetaDataTag.Key">
+            <summary>
+            the Metadata Tag key.
+            </summary>
+        </member>
+        <member name="M:PQDS.MetaDataTag.Write">
+            <summary>
+            Converst the Metadata tag into a line of a PQDS file
+            </summary>
+            <returns>The metadataTag as a String</returns>
+        </member>
+        <member name="M:PQDS.MetaDataTag.Type">
+            <summary>
+            Returns the PQDS datatype <see cref="T:PQDS.PQDSMetaDataType"/>
+            </summary>
+            <returns>The PQDS Datatype </returns>
+        </member>
+        <member name="T:PQDS.MetaDataTag`1">
+            <summary>
+            Class of MetaData Tags for a <see cref="T:PQDS.PQDSFile"/>.
+            </summary>
+        </member>
+        <member name="P:PQDS.MetaDataTag`1.Value">
+            <summary>
+            Value of the MetadataTag.
+            </summary>
+        </member>
+        <member name="M:PQDS.MetaDataTag`1.#ctor(System.String,`0)">
+            <summary>
+            Creates a <see cref="T:PQDS.MetaDataTag"/>.
+            </summary>
+            <param name="key"> key of the MetadataTag</param>
+            <param name="value"> Value of the MetadataTag</param>
+        </member>
+        <member name="M:PQDS.MetaDataTag`1.#ctor(System.String,`0,PQDS.PQDSMetaDataType,System.String,System.String)">
+            <summary>
+            Creates a custom <see cref="T:PQDS.MetaDataTag"/>.
+            </summary>
+            <param name="key"> key of the MetadataTag</param>
+            <param name="value"> Value of the MetadataTag</param>
+            <param name="valueType"> The <see cref="T:PQDS.PQDSMetaDataType"/> of the metadata tag</param>
+            <param name="unit"> The unit of the metadata tag </param>
+            <param name="description"> a describtion of the metadata tag</param>
+        </member>
+        <member name="M:PQDS.MetaDataTag`1.Write">
+            <summary>
+            Converst the Metadata tag into a line of a PQDS file
+            </summary>
+            <returns>The metadataTag as a String</returns>
+        </member>
+        <member name="M:PQDS.MetaDataTag`1.Type">
+            <summary>
+            Returns the PQDS datatype <see cref="T:PQDS.PQDSMetaDataType"/>
+            </summary>
+            <returns>The PQDS Datatype </returns>
+        </member>
+    </members>
+</doc>
