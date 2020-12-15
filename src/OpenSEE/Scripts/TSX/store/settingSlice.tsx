@@ -37,11 +37,16 @@ export const SettingsReducer = createSlice({
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
-            state.Units = defaultSettings.Units;
-            state.Colors = defaultSettings.Colors;
-            state.TimeUnit = defaultSettings.TimeUnit;
-            state.SnapToPoint = defaultSettings.snapToPoint;
-            state.SinglePlot = defaultSettings.singlePoint;
+            let preserved = GetSettings();
+            if (preserved != undefined)
+                state = preserved;
+            else {
+                state.Units = defaultSettings.Units;
+                state.Colors = defaultSettings.Colors;
+                state.TimeUnit = defaultSettings.TimeUnit;
+                state.SnapToPoint = defaultSettings.snapToPoint;
+                state.SinglePlot = defaultSettings.singlePoint;
+            }
             return state
         },
         SetColor: (state, action: PayloadAction<{ color: OpenSee.Color, value: string }>) => {
@@ -94,6 +99,23 @@ export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.
 // #endregion
 
 // #region [ Async Functions ]
-function SaveSettings(state: OpenSee.ISettingsState) { }
-
+function SaveSettings(state: OpenSee.ISettingsState) {
+    try {
+        const serializedState = JSON.stringify(state);
+        localStorage.setItem('openSee.Settings', serializedState);
+    } catch {
+        // ignore write errors
+    }
+}
+function GetSettings(): OpenSee.ISettingsState {
+    try {
+        const serializedState = localStorage.getItem('openSee.Settings');
+        if (serializedState === null) {
+            return undefined;
+        }
+        return JSON.parse(serializedState);
+    } catch (err) {
+        return undefined;
+    }
+}
 // #endregion
