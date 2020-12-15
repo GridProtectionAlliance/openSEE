@@ -98,7 +98,6 @@ const LineChart = (props: iProps) => {
 
     //Effect to update the Data 
     React.useEffect(() => {
-        console.log('issued Load for: ' + props.eventId)
         if (loading)
             return;
 
@@ -173,7 +172,6 @@ const LineChart = (props: iProps) => {
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
-        console.log('issued Delete for: ' + props.eventId + " from: " + isCreated);
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove();
 
         if (loading) {
