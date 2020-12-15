@@ -99,7 +99,7 @@ export const EventReducer = createSlice({
             state.loadingOverlappingEvents = false;
             state.EventList = action.payload.map(item => item.EventID);
             state.Group = action.payload.map(item => item.MeterName);
-            state.Label = action.payload.map(item => item.Assetname);
+            state.Label = action.payload.map(item => item.AssetName);
             state.Selected = action.payload.map(item => false);
             return state
         });
@@ -127,7 +127,21 @@ export const selectEventGroup = createSelector((state: OpenSee.IRootState) => st
                 selected: eventSlice.Selected[index],
             }
         })
-        return groupBy(result, 'group');;
+        return groupBy(result, 'group');
+    });
+
+export const selecteventList = createSelector((state: OpenSee.IRootState) => state.Event,
+    (eventSlice) => {
+        let result: OpenSee.iListObject[] =
+            eventSlice.EventList.map((item, index) => {
+                return {
+                    group: eventSlice.Group[index],
+                    label: eventSlice.Label[index],
+                    value: item,
+                    selected: eventSlice.Selected[index],
+                }
+            })
+        return result;
     });
 
 export const selectNumberCompare = createSelector((state: OpenSee.IRootState) => state.Event, (state: OpenSee.IRootState) => state.Settings.SinglePlot, (eventSlice, singlePlot) => {

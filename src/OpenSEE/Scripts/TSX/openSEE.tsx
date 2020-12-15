@@ -52,7 +52,7 @@ import OpenSeeNavBar from './Components/OpenSEENavbar';
 import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
 import { LoadSettings } from './Store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './Store/dataSlice';
-import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup } from './Store/eventSlice';
+import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup, selecteventList } from './Store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
 
 
@@ -297,20 +297,27 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         displayAnalogs={this.state.displayAnalogs}
                         displayCur={this.state.displayCur} displayDigitals={this.state.displayDigitals} displayTCE={this.state.displayTCE}
                         displayVolt={this.state.displayVolt} />
+
                     
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
+                        {plotData[this.props.eventID] != undefined ?
+                            <div className="card">
+                                <div className="card-body" style={{ padding: 0 }}>
+                                    {plotData[this.props.eventID].map(item => < LineChart
+                                        eventId={item.EventId}
+                                        width={this.state.graphWidth}
+                                        eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                        height={this.calculateHeights()}
+                                        timeLabel={"Time"}
+                                        type={item.DataType}
+                                    />)}
+                                </div>
+                            </div> : null }
 
-                        {Object.keys(plotData).length == 1 ?
-                            plotData[Object.keys(plotData)[0]].map(item => < LineChart
-                            eventId={item.EventId}
-                                width={this.state.graphWidth}
-                                eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
-                                height={this.calculateHeights()}
-                                timeLabel={"Time"}
-                                type={item.DataType}
-                            />) :
-                            Object.keys(plotData).map(key => <div className="card">
-                                <div className="card-header">{this.props.eventGroup.find(item => item.value == parseInt(key)).label}</div>
+                        {Object.keys(plotData).filter(item => parseInt(item) != this.props.eventID).map(key => <div className="card">
+                                <div className="card-header">{
+                                    (this.props.eventGroup.find(item => item.value == parseInt(key)) != undefined ? this.props.eventGroup.find(item => item.value == parseInt(key)).label : '')
+                                }</div>
                                 <div className="card-body" style={{ padding: 0 }}>
                                     {plotData[key].map(item => < LineChart
                                         eventId={item.EventId}
@@ -419,7 +426,7 @@ const mapStatesToProps = function (state: OpenSee.IRootState) {
         loadDigital: selectLoadDigitals(state),
         loadTCE: selectLoadTCE(state),
         numberCompareGraphs: selectNumberCompare(state),
-        eventGroup: selectEventGroup(state),
+        eventGroup: selecteventList(state),
     }
 }
 

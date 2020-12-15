@@ -24,6 +24,7 @@
 import { groupBy } from 'lodash';
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { OpenSee } from '../global';
 import { selectEventListLoading, selectEventGroup, EnableOverlappingEvent } from '../Store/eventSlice';
 
 interface Iprops { }
@@ -41,7 +42,7 @@ const OverlappingEventWindow = (props: Iprops) => {
                 </div> :
                 <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%' }}>
                     <ul style={{ listStyleType: 'none', padding: 0 }}>
-                        {Object.keys(eventList).map((key, index) => <Group key={index} name={key} children={(eventList[key] as Array<iListObject>)} />)}
+                        {Object.keys(eventList).map((key, index) => <Group key={index} name={key} children={(eventList[key] as Array<OpenSee.iListObject>)} />)}
                     </ul>
                 </form>
             }
@@ -51,52 +52,15 @@ const OverlappingEventWindow = (props: Iprops) => {
 
 export default OverlappingEventWindow;
 
-const Group = (props: { name: string, children: Array<iListObject>}): any => {
+const Group = (props: { name: string, children: Array<OpenSee.iListObject>}): any => {
     if (props.name == "undefined")
         return props.children.map(c => <ListItem key={"undefined" + c.label} name={c.label} value={c.value} data={c} />);
     return [<li key={props.name}>{props.name}<ul style={{ listStyleType: 'none' }}>{props.children.map(c => <ListItem key={props.name + c.label} value={c.value} name={c.label} data={c} />)}</ul></li>];
 }
 
-const ListItem = (props: { name: string, value: number, data: iListObject }) => {
+const ListItem = (props: { name: string, value: number, data: OpenSee.iListObject }) => {
     const dispatch = useDispatch();
 
     return <li key={props.data.group + props.name}><label><input type="checkbox" value={props.value} onClick={() => dispatch(EnableOverlappingEvent(props.value))} defaultChecked={props.data.selected} /> {props.name}</label></li>
 }
 
-/*
-export default class MultiselectWindow extends React.Component<{ data: Array<iListObject>, style?: object, className?: string, stateSetter: Function, comparedEvents: Array<number>}>{
-    constructor(props, context) {
-        super(props, context);
-    }
-
-    handleClicks(e) {
-        this.props.stateSetter({ comparedEvents: $(this.refs.list).find('input[type="checkbox"]:checked').toArray().filter((a: HTMLInputElement) => a.value != "on").map((a: HTMLInputElement) => parseInt(a.value)) });
-    }
-
-    render() {
-        var groups = groupBy(this.props.data, 'group'); 
-
-      
-
-        return (
-            <div style={style}> 
-                <form style={formStyle}>
-                    <ul ref="list" style={{listStyleType: 'none', padding: 0}}>
-                        {Object.keys(groups).map((key, index) => <Group key={index} name={key} children={(groups[key] as Array<iListObject>)} callback={this.handleClicks.bind(this)}/>)}
-                    </ul>
-                </form>
-            </div>
-        );
-    }
-}
-
-const Group = (props: {name: string, children: Array<iListObject>, callback: Function}, context): any => {
-    if (props.name == "undefined")
-        return props.children.map(c => <ListItem key={"undefined" + c.label} name={c.label} value={c.value} callback={props.callback} data={c} />);
-    return [<li key={props.name}>{props.name}<ul style={{ listStyleType: 'none' }}>{props.children.map(c => <ListItem key={props.name + c.label} value={c.value} name={c.label} callback={props.callback} data={c} />)}</ul></li>];
-}
-
-const ListItem = (props: { name: string, value: number, callback: Function, data: iListObject}, context)=> {
-    return <li key={props.data.group + props.name}><label><input type="checkbox" value={props.value} onClick={() => props.callback()} defaultChecked={props.data.selected}/> {props.name}</label></li>
-}
-*/

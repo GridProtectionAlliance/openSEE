@@ -133,9 +133,4 @@ declare interface OpenSEEState {
     tableData: Map<string, Array<iD3PointOfInterest>>,
 }
 
-declare interface iListObject {
-    group?: string;
-    label: string;
-    value: number;
-    selected: boolean;
-}
+
