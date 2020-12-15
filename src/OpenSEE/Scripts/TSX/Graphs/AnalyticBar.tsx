@@ -21,16 +21,17 @@
 //
 //******************************************************************************************************
 
+/*
 import * as React  from 'react';
 import * as moment from 'moment';
 
 import OpenSEEService from '../../TS/Services/OpenSEE';
 import D3BarChartBase, { D3BarChartBaseProps } from './D3BarChartBase';
-import { AnalyticParamters } from '../Components/RadioselectWindow';
+
 import { iD3DataSet } from './D3LineChartBase';
 interface AnalyticBarprops extends D3BarChartBaseProps {
     analytic: string,
-    analyticParameter: AnalyticParamters,
+    analyticParameter: any,
     
 }
 
@@ -130,4 +131,4 @@ export default class AnalyticBar extends React.Component<any, any>{
         />
     }
 
-}
+}*/

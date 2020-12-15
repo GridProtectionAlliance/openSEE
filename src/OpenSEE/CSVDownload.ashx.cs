@@ -468,7 +468,7 @@ namespace OpenSEE
 
                 DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
 
-                List<D3Series> harmonics = Analytics.GetFFTLookup(dataGroup, startTime, cycles);
+                List<D3Series> harmonics = new List<D3Series>(); // AnalyticController.GetFFTLookup(dataGroup, startTime, cycles);
 
                 List<string> headers = new List<string>() { "Harmonic" };
 
@@ -598,16 +598,16 @@ namespace OpenSEE
             VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
 
             if (analytic == "FirstDerivative")
-                return Analytics.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
+                return AnalyticController.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
             if (analytic == "ClippedWaveforms")
-                return Analytics.GetClippedWaveformsLookup(dataGroup);
-            if (analytic == "Frequency")
-                return Analytics.GetFrequencyLookup(new VIDataGroup(dataGroup));
+                return AnalyticController.GetClippedWaveformsLookup(dataGroup);
+            //if (analytic == "Frequency")
+            //    return AnalyticController.GetFrequencyLookup(new VIDataGroup(dataGroup));
             if (analytic == "Impedance")
-                return Analytics.GetImpedanceLookup(viCycleDataGroup);
+                return AnalyticController.GetImpedanceLookup(viCycleDataGroup);
             if (analytic == "Power")
-                return Analytics.GetPowerLookup(viCycleDataGroup);
-            if (analytic == "RemoveCurrent")
+                return AnalyticController.GetPowerLookup(viCycleDataGroup);
+            /*if (analytic == "RemoveCurrent")
                 return Analytics.GetRemoveCurrentLookup(dataGroup);
             if (analytic == "MissingVoltage")
                 return Analytics.GetMissingVoltageLookup(dataGroup);
@@ -629,7 +629,7 @@ namespace OpenSEE
                 return Analytics.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
             if (analytic == "OverlappingWaveform")
                 return Analytics.GetOverlappingWaveformLookup(dataGroup);
-
+            */
 
 
             return new List<D3Series>();

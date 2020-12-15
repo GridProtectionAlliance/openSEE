@@ -20,7 +20,7 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-
+/*
 import * as React  from 'react';
 import { clone, isEqual, each, findLast, range } from "lodash";
 import * as d3 from '../../D3/d3';
@@ -32,13 +32,12 @@ import FFTTable from '../jQueryUI Widgets/FFTTable';
 import { StandardAnalyticServiceFunction } from '../../TS/Services/OpenSEE';
 import * as moment from 'moment';
 import { LegendClickCallback, D3PlotOptions, iD3DataSet, iD3DataSeries  } from './D3LineChartBase'
-import { Colors } from '../jQueryUI Widgets/SettingWindow';
 
 export type GetDataFunction = (props: D3BarChartBaseProps, ctrl: D3BarChartBase) => void;
 
 export interface D3BarChartBaseProps {
     eventId: number, pixels: number, stateSetter: Function, height: number, options: D3PlotOptions, startTime: number, fftWindow: number,
-    colorSettings: Colors
+    colorSettings: any
 };
 
 interface D3BarChartBaseClassProps extends D3BarChartBaseProps{
@@ -662,4 +661,4 @@ export default class D3BarChartBase extends React.Component<D3BarChartBaseClassP
 
     
     
-}
+}*/

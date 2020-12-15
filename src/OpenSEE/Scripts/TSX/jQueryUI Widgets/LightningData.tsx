@@ -23,88 +23,49 @@
 
 import * as React from 'react';
 import { utc } from 'moment';
-import OpenSEEService from './../../TS/Services/OpenSEE';
-import { style } from "typestyle"
+import { outerDiv, handle, closeButton } from './Common';
 
+
+interface Iprops { closeCallback: () => void, eventId: number }
 declare var window: any
 
-// styles
-const outerDiv = style({
-    minWidth: '200px',
-    fontSize: '12px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    overflowY: 'auto',
-    padding: '0em',
-    zIndex: 1000,
-    boxShadow: '4px 4px 2px #888888',
-    border: '2px solid black',
-    position: 'absolute',
-    top: '0',
-    left: 0,
-    display: 'none',
-    backgroundColor: 'white'
-});
+const LightningDataWidget = (props: Iprops) => {
+    const [tblData, setTBLData] = React.useState<Array<JSX.Element>>([]);
 
-const handle = style({
-    width: '100%',
-    height: '20px',
-    backgroundColor: '#808080',
-    cursor: 'move',
-    padding: '0em'
-});
-
-const closeButton = style({
-    background: 'firebrick',
-    color: 'white',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '20px',
-    height: '20px',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    padding: 0,
-    border: 0,
-    $nest: {
-        "&:hover": {
-            background: 'orangered'
-        }
-    }
-});
-
-export default class LightningData extends React.Component<any, any>{
-    props: { eventId: number, callback: Function }
-    state: { rows: Array<Object>, header: Array<Object> }
-    openSEEService: OpenSEEService;
-
-    constructor(props) {
-        super(props);
-        this.openSEEService = new OpenSEEService();
-
-        this.state = {
-            rows: [],
-            header: []
-        };
-    }
-
-    componentDidMount() {
+    React.useEffect(() => {
         ($("#lightningquery") as any).draggable({ scroll: false, handle: '#lightninghandle', containment: '#chartpanel' });
+    }, [props])
 
+
+    React.useEffect(() => {
+        let handle = getData();
+
+        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
+    }, [props.eventId])
+
+    function getData(): JQuery.jqXHR {
         var lightningQuery = window.LightningQuery;
 
         if (lightningQuery === undefined)
             return;
 
-        var updateTable = displayData => {
-            var arr = Array.isArray(displayData) ? displayData : [displayData];
-            var header = HeaderRow(arr[0]);
-            var rows = arr.map(Row);
-            this.setState({ header: header, rows: rows });
+
+        let updateTable = displayData => {
+            let arr = Array.isArray(displayData) ? displayData : [displayData];
+            let result = [];
+            result.push(
+                <tr key='Header'>
+                    {Object.keys(arr[0]).map(key => <th key={key}>{key}</th>)}
+                </tr>)
+            result.push(...arr.map((row,index) => 
+                <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={"row" + index}>
+                    {Object.keys(row).map(key => <td key={"row" + index + key}>{row[key]}</td>)}
+                </tr>))
+            setTBLData(result);
         };
 
-        var errHandler = err => {
-            var message = "Unknown error";
+        let errHandler = err => {
+            let message = "Unknown error";
 
             if (typeof (err) === "string")
                 message = err;
@@ -115,14 +76,23 @@ export default class LightningData extends React.Component<any, any>{
         };
 
         updateTable({ State: "Loading..." });
-        this.props.callback({ enableLightningData: true });
+        //this.props.callback({ enableLightningData: true });
 
-        this.openSEEService.getLightningParameters(this.props.eventId).done(lightningParameters => {
-            var noData = { State: "No Data" };
+        let handle =  $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetLightningParameters?eventId=${props.eventId}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
 
-            var lineKey = lightningParameters.LineKey;
-            var startTime = utc(lightningParameters.StartTime).toDate();
-            var endTime = utc(lightningParameters.EndTime).toDate();
+        handle.done(lightningParameters => {
+            let noData = { State: "No Data" };
+
+            let lineKey = lightningParameters.LineKey;
+            let startTime = utc(lightningParameters.StartTime).toDate();
+            let endTime = utc(lightningParameters.EndTime).toDate();
 
             if (!lineKey) {
                 updateTable(noData);
@@ -138,46 +108,26 @@ export default class LightningData extends React.Component<any, any>{
                 }, errHandler);
             }, errHandler);
         });
-    }
 
-    render() {
-        return (
-            <div id="lightningquery" className={`${outerDiv} ui-widget-content`} style={{ position: 'absolute' }}>
-                <div id="lightninghandle" className={handle}></div>
-                <div id="lightningcontent" style={{ maxWidth: 800 }}>
-                    <table className="table" style={{fontSize: 'small', marginBottom: 0}}>
-                        <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)'}}>
-                            {this.state.header}
-                        </thead>
-                        <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block'}}>
-                            {this.state.rows}
-                        </tbody>
-                    </table>
-                </div>
-                <button className={closeButton} onClick={() => {
-                    this.props.callback({ lightningDataButtonText: "Show Lightning Data" });
-                    $('#lightningquery').hide();
-                }}>X</button>
+        return handle;
+    }
+    return (
+        <div id="lightningquery" className={`ui-widget-content`} style={outerDiv}>
+            <div id="lightninghandle" className={handle}></div>
+            <div id="lightningcontent" style={{ maxWidth: 800 }}>
+                <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
+                    <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
+                        {tblData[0]}
+                    </thead>
+                    <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                        {tblData.slice(1)}
+                    </tbody>
+                </table>
             </div>
-        );
-    }
-}
-
-const Row = (row, index) => {
-    return (
-        <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={"row" + index.toString()}>
-            {Object.keys(row).map(key => <td key={"row" + index.toString() + key}>{row[key]}</td>)}
-        </tr>
+            <button className={closeButton} onClick={() => props.closeCallback()}>X</button>
+        </div>
     );
 }
 
-const HeaderRow = (row) => {
-    return (
-        <tr key='Header'>
-            {Object.keys(row).map(key => <th key={key}>{key}</th>)}
-        </tr>
-    );
-}
-
-
+export default LightningDataWidget;
 

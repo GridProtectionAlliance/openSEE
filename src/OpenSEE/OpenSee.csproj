@@ -108,22 +108,15 @@
   <ItemGroup>
     <None Include="Scripts\TSX\OpenSee.d.ts" />
     <None Include="Scripts\TSX\openSee.tsx" />
-    <None Include="Scripts\TSX\Graphs\Analog.tsx" />
     <None Include="Scripts\TSX\Graphs\AnalyticBar.tsx" />
-    <None Include="Scripts\TSX\Graphs\AnalyticLine.tsx" />
-    <None Include="Scripts\TSX\Graphs\Current.tsx" />
+    <None Include="Scripts\TSX\Graphs\LineChartBase.tsx" />
     <None Include="Scripts\TSX\Graphs\D3BarChartBase.tsx" />
-    <None Include="Scripts\TSX\Graphs\D3Legend.tsx" />
-    <None Include="Scripts\TSX\Graphs\D3LineChartBase.tsx" />
-    <None Include="Scripts\TSX\Graphs\Digital.tsx" />
-    <None Include="Scripts\TSX\Graphs\TCE.tsx" />
-    <None Include="Scripts\TSX\Graphs\Voltage.tsx" />
     <None Include="Scripts\TSX\Components\About.tsx" />
     <None Include="Scripts\TSX\Components\Menu.tsx" />
     <None Include="Scripts\TSX\Components\MultiSelectWindow.tsx" />
     <None Include="Scripts\TSX\Components\OpenSEENavbar.tsx" />
     <None Include="Scripts\TSX\Components\OpenSEENoteModal.tsx" />
-    <None Include="Scripts\TSX\Components\RadioSelectWindow.tsx" />
+    <None Include="Scripts\TSX\Components\AnalyticOptions.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\FFTTable.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\HarmonicStats.tsx" />
@@ -423,7 +416,33 @@
   <ItemGroup>
     <Content Include="Scripts\TSX\jQueryUI Widgets\SettingWindow.tsx" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Scripts\TSX\global.d.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\defaults.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\Graphs\LegendBase.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\jQueryUI Widgets\Common.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\settingSlice.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\store.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\dataSlice.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\analyticSlice.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\eventSlice.tsx" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

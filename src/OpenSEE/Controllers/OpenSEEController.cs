@@ -456,18 +456,17 @@ namespace OpenSEE
             {
                 EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
 
-                returnDict.Add("postedSystemFrequency", connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? "60.0");
-                returnDict.Add("postedStationName", theEvent.StationName);
-                returnDict.Add("postedMeterId", theEvent.MeterID.ToString());
-                returnDict.Add("postedMeterName", theEvent.MeterName);
-                returnDict.Add("postedAssetName", theEvent.AssetName);
+                returnDict.Add("SystemFrequency", connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? "60.0");
+                returnDict.Add("StationName", theEvent.StationName);
+                returnDict.Add("MeterId", theEvent.MeterID.ToString());
+                returnDict.Add("MeterName", theEvent.MeterName);
+                returnDict.Add("AssetName", theEvent.AssetName);
 
-                returnDict.Add("postedEventName", theEvent.EventTypeName);
-                returnDict.Add("postedEventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
-                returnDict.Add("postedDate", theEvent.StartTime.ToShortDateString());
-                returnDict.Add("postedEventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString());
-
-                
+                returnDict.Add("EventName", theEvent.EventTypeName);
+                returnDict.Add("EventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
+                returnDict.Add("Date", theEvent.StartTime.ToShortDateString());
+                returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString());
+                                
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));
 
                 using (IDbCommand cmd = connection.Connection.CreateCommand())
@@ -508,7 +507,7 @@ namespace OpenSEE
 
                 returnDict.Add("nextBackLookup", nextBackLookup);
 
-                if (new List<string>() { "Fault", "RecloseIntoFault" }.Contains(returnDict["postedEventName"]))
+                if (new List<string>() { "Fault", "RecloseIntoFault" }.Contains(returnDict["EventName"]))
                 {
                     const string SagDepthQuery =
                         "SELECT TOP 1 " +
@@ -533,27 +532,27 @@ namespace OpenSEE
 
                     if ((object)thesummary != null)
                     {
-                        returnDict.Add("postedStartTime", thesummary.Inception.TimeOfDay.ToString());
-                        returnDict.Add("postedPhase", thesummary.FaultType);
-                        returnDict.Add("postedDurationPeriod", thesummary.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
-                        returnDict.Add("postedMagnitude", thesummary.CurrentMagnitude.ToString("####.#", CultureInfo.InvariantCulture) + " Amps (RMS)");
-                        returnDict.Add("postedSagDepth", sagDepth.ToString("####.#", CultureInfo.InvariantCulture) + "%");
-                        returnDict.Add("postedCalculationCycle", thesummary.CalculationCycle.ToString());
+                        returnDict.Add("StartTime", thesummary.Inception.TimeOfDay.ToString());
+                        returnDict.Add("Phase", thesummary.FaultType);
+                        returnDict.Add("DurationPeriod", thesummary.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
+                        returnDict.Add("Magnitude", thesummary.CurrentMagnitude.ToString("####.#", CultureInfo.InvariantCulture) + " Amps (RMS)");
+                        returnDict.Add("SagDepth", sagDepth.ToString("####.#", CultureInfo.InvariantCulture) + "%");
+                        returnDict.Add("CalculationCycle", thesummary.CalculationCycle.ToString());
                     }
                 }
-                else if (new List<string>() { "Sag", "Swell" }.Contains(returnDict["postedEventName"]))
+                else if (new List<string>() { "Sag", "Swell" }.Contains(returnDict["EventName"]))
                 {
                     openXDA.Model.Disturbance disturbance = new TableOperations<openXDA.Model.Disturbance>(connection).QueryRecordsWhere("EventID = {0}", theEvent.ID).Where(row => row.EventTypeID == theEvent.EventTypeID).OrderBy(row => row.StartTime).FirstOrDefault();
 
                     if ((object)disturbance != null)
                     {
-                        returnDict.Add("postedStartTime", disturbance.StartTime.TimeOfDay.ToString());
-                        returnDict.Add("postedPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", disturbance.PhaseID).Name);
-                        returnDict.Add("postedDurationPeriod", disturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
+                        returnDict.Add("StartTime", disturbance.StartTime.TimeOfDay.ToString());
+                        returnDict.Add("Phase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", disturbance.PhaseID).Name);
+                        returnDict.Add("DurationPeriod", disturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
 
                         if (disturbance.PerUnitMagnitude != -1.0e308)
                         {
-                            returnDict.Add("postedMagnitude", disturbance.PerUnitMagnitude.ToString("N3", CultureInfo.InvariantCulture) + " pu (RMS)");
+                            returnDict.Add("Magnitude", disturbance.PerUnitMagnitude.ToString("N3", CultureInfo.InvariantCulture) + " pu (RMS)");
                         }
                     }
                 }
@@ -568,11 +567,11 @@ namespace OpenSEE
 
                         if ((object)breakerRow != null)
                         {
-                            returnDict.Add("postedBreakerNumber", breakerRow.BreakerNumber);
-                            returnDict.Add("postedBreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
-                            returnDict.Add("postedBreakerTiming", breakerRow.BreakerTiming.ToString());
-                            returnDict.Add("postedBreakerSpeed", breakerRow.BreakerSpeed.ToString());
-                            returnDict.Add("postedBreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
+                            returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
+                            returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
+                            returnDict.Add("BreakerTiming", breakerRow.BreakerTiming.ToString());
+                            returnDict.Add("BreakerSpeed", breakerRow.BreakerSpeed.ToString());
+                            returnDict.Add("BreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
                         }
                     }
                 }
@@ -595,8 +594,8 @@ namespace OpenSEE
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                DateTime startTime = (query.ContainsKey("startDate") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-                DateTime endTime = (query.ContainsKey("endDate") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
+                DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
+                DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
 
 
                 DataTable dataTable = connection.RetrieveData(@"

@@ -25,149 +25,165 @@
 
 /// <reference path="openSee.d.ts" />
 
+
+// To-DO:
+// # Add Analytic Parameters and Selected Events to Query
+// # Fix Pop up windows
+// # Fix Dowload.ash to include Analytics
+//
+
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import store from './Store/Store';
 
-import OpenSEEService from '../TS/Services/OpenSEE';
+import { OpenSee } from './global';
+import { defaultSettings } from './defaults'
 import createHistory from "history/createBrowserHistory"
 import * as queryString from "query-string";
-import { clone, isEqual, cloneDeep} from "lodash";
+import { clone, isEqual, cloneDeep, uniq, groupBy } from "lodash";
+import { connect } from 'react-redux';
 
-import Current from './Graphs/Current';
-import TripCoilCurrent from './Graphs/TCE';
-import Digital from './Graphs/Digital';
-import Voltage from './Graphs/Voltage';
-
-import OpenSEENoteModal from './Components/OpenSEENoteModal';
-import MultiselectWindow from './Components/MultiselectWindow';
-import RadioselectWindow from './Components/RadioselectWindow';
-
-import AnalyticLine from './Graphs/AnalyticLine';
-import AnalyticBar from './Graphs/AnalyticBar';
-
-import OpenSEENavbar from './Components/OpenSEENavbar';
 import About from './Components/About';
+import OpenSEENoteModal from './Components/OpenSEENoteModal';
+import AnalyticOptions from './Components/AnalyticOptions';
+import LineChart from './Graphs/LineChartBase';
+import OpenSeeNavBar from './Components/OpenSEENavbar';
+import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
+import { LoadSettings } from './Store/settingSlice';
+import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './Store/dataSlice';
+import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup } from './Store/eventSlice';
+import OverlappingEventWindow from './Components/MultiselectWindow';
 
-import { D3LineChartBaseProps } from './Graphs/D3LineChartBase';
-import Analog from './Graphs/Analog';
-import { DefaultUnits, DefaultColors, yLimits } from './jQueryUI Widgets/SettingWindow';
-import { iD3PointOfInterest } from './jQueryUI Widgets/AccumulatedPoints';
-import { Vector } from './jQueryUI Widgets/PolarChart';
 
+declare var homePath: string;
+declare var userIsAdmin: boolean;
+declare var userID: boolean;
+declare var eventID: number;
+declare var eventStartTime: string;
+declare var eventEndTime: string;
 
-export class OpenSEE extends React.Component<{}, OpenSEEState>{
+declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
+
+const queryStates = [
+    'eventId',
+    'displayVolt',
+    'displayCur',
+    'displayDigitals',
+    'displayAnalogs',
+    'eventEndTime',
+    'eventStartTime',
+    'tab',
+    'startTime',
+    'endTime',
+    'zoomMode',
+    'mouseMode',
+    'navigation',
+
+]
+
+class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
     history: object;
     historyHandle: any;
-    openSEEService: OpenSEEService;
-    resizeId: any;
-    activeUnits: Map<string, Function>;
-    pointGetters: Map<string, Function>;
-    voltageVector: Array<Vector>;
-    currentVector: Array<Vector>;
+    resizeHandle: any;
+
+    overlappingEventHandle: JQuery.jqXHR;
+    eventDataHandle: JQuery.jqXHR;
+
 
     constructor(props) {
         super(props);
-        this.openSEEService = new OpenSEEService();
+        
         this.history = createHistory();
-        var query = queryString.parse(this.history['location'].search);
-        this.resizeId;
+
+        let query = queryString.parse(this.history['location'].search);
+
         this.state = {
-            eventid: (query['eventid'] != undefined ? query['eventid'] : eventID),
-            StartDate: (query['StartDate'] != undefined ? query['StartDate'] : eventStartTime),
-            startTime: (query['StartDate'] != undefined ? new Date(query['StartDate'] + "Z").getTime() : new Date(eventStartTime + "Z").getTime()),
-            endTime: (query['EndDate'] != undefined ? new Date(query['EndDate'] + "Z").getTime() : new Date(eventEndTime + "Z").getTime()),
             
-            EndDate: (query['EndDate'] != undefined ? query['EndDate'] : eventEndTime),
+            eventStartTime: (query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime),
+            eventEndTime: (query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime),
+           
             displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
             displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
             displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
-            breakerdigitals: query['breakerdigitals'] == '1' || query['breakerdigitals'] == 'true',
-            displayAnalogs: query['displayAnalogs'] == 'true' || query['displayAnalogs'] == 'true',
+            displayDigitals: query['displayDigitals'] == '1' || query['displayDigitals'] == 'true',
+            displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
+            tab: (query['tab'] != undefined ? query['tab'] : "Info"),
 
-            Width: window.innerWidth - 300,
-            Hover: null,
-            tableData: new Map<string,Array < iD3PointOfInterest >>(),
-            PostedData: {},
-            nextBackLookup:{
-                Meter: {},
-                System: {},
-                Station: {},
-                Line: {}
-            },
-            navigation: query["navigation"] != undefined ? query["navigation"] : "system",
-            tab: query["tab"] != undefined ? query["tab"] : "Info",
-            comparedEvents: (query["comparedEvents"] != undefined ? (Array.isArray(query["comparedEvents"]) ? query["comparedEvents"].map(a => parseInt(a)) : [parseInt(query["comparedEvents"])]) : []),
+
+            comparedEvents: [],
             overlappingEvents: [],
-            analytic: query["analytic"] != undefined ? query["analytic"] : "FaultDistance",
-            AnalyticSettings: {
-                harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
-                order: (query["order"] != undefined ? query['order'] : 1),
-                Trc: (query["Trc"] != undefined ? query['Trc'] : 100),
-                fftWindow: (query["fftWindow"] != undefined ? query['fftWindow'] : 1)
-            },
-            fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
-            barChartReset: null,
-            zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
-            plotUnits: DefaultUnits,
-            plotColors: DefaultColors,
-            voltageLimits: { min: 0, max: 0, auto: true },
-            currentLimits: { min: 0, max: 0, auto: true },
-            tceLimits: { min: 0, max: 0, auto: true },
-            digitalLimits: { min: 0, max: 0, auto: true },
-            analogLimits: { min: 0, max: 0, auto: true },
-            analyticLimits: { min: 0, max: 0, auto: true },
-            mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom",
-            showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
+           
+
+            graphWidth: window.innerWidth - 300,
+            eventData: null,
+            lookup: null,
+            navigation: (query['navigation'] != undefined ? query['navigation'] : "system"),
+            breakeroperation: undefined,
         }
+
 
         this.history['listen']((location, action) => {
             var query = queryString.parse(this.history['location'].search);
-            this.setState({
-                eventid: (query['eventid'] != undefined ? query['eventid'] : 0),
-                StartDate: (query['StartDate'] != undefined ? query['StartDate'] : eventStartTime),
-                EndDate: (query['EndDate'] != undefined ? query['EndDate'] : eventEndTime),
-                breakerdigitals: query['breakerdigitals'] == '1' || query['breakerdigitals'] == 'true',
-                displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
-                displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
-                displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
-                displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
-                fftStartTime: query['fftStartTime'] != undefined ? parseInt(query['fftStartTime']) : null,
-                zoomMode: query['zoomMode'] != undefined ? query['zoomMode'] : "x",
-                mouseMode: query['mouseMode'] != undefined ? query['mouseMode'] : "zoom",
-                showCompareCharts: query['showCompareCharts'] != undefined ? query['showCompareCharts'] == '1' || query['showCompareCharts'] == 'true' : false,
-                AnalyticSettings: {
-                    harmonic: (query["harmonic"] != undefined ? query['harmonic'] : 5),
-                    order: (query["order"] != undefined ? query['order'] : 1),
-                    Trc: (query["Trc"] != undefined ? query['Trc'] : 100),
-                    fftWindow: (query["fftWindow"] != undefined ? query['fftWindow'] : 1)
-                },
+            let newState = {};
+            queryStates.forEach(state => {
+                if (query.hasOwnProperty(state) && !isEqual(this.state[state],query[state]))
+                    newState[state] = query[state];
+            })
+
+            if (Object.keys(newState).length > 0)
+                this.setState(newState);
+
             });
-
-
-        });
-
-        this.activeUnits = new Map<string, Function>();
-        this.pointGetters = new Map<string, Function>();
-        this.voltageVector = [];
-        this.currentVector = [];
+       
     }
 
     componentDidMount() {
         window.addEventListener("resize", this.handleScreenSizeChange.bind(this));
 
-        this.openSEEService.getHeaderData(this.state).done(data => {
-            this.setState({
-                PostedData: data,
-                nextBackLookup: data.nextBackLookup
-            });
+        if (this.state.displayVolt)
+            store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
+        if (this.state.displayCur)
+            store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
+
+        store.dispatch(SetTimeLimit({ start: new Date(this.state.eventStartTime + "Z").getTime(), end: new Date(this.state.eventEndTime + "Z").getTime() }));
+
+        store.dispatch(LoadOverlappingEvents())
+        this.getEventData();
+    }
+
+    getEventData() {
+        if (this.eventDataHandle !== undefined)
+            this.eventDataHandle.abort();
+
+        this.eventDataHandle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` +
+                `${this.state.breakeroperation != undefined ? `&breakeroperation=${this.state.breakeroperation}` : ``}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
         });
 
-        this.openSEEService.getOverlappingEvents(this.state.eventid, this.state.StartDate, this.state.EndDate).done(data => {           
+        this.eventDataHandle.then(data => {
             this.setState({
-                overlappingEvents: data.map(d => new Object({ group: d.MeterName, label: d.AssetName, value: d.EventID, selected: this.state.comparedEvents.indexOf(d.EventID) >= 0 }))
+                eventData: data,
+                lookup: data.nextBackLookup
             });
-        });
 
+        });
+    }
+
+    componentDidUpdate(prevProps: OpenSee.IOpenSeeProps, oldstate: OpenSee.iOpenSeeState) {
+        if (prevProps.eventID != this.props.eventID)
+            this.getEventData();
+        if (oldstate.tab != this.state.tab && oldstate.tab == 'Analytic')
+            store.dispatch(SetAnalytic('none'));
+        if (oldstate.tab != this.state.tab && this.state.tab == 'Analytic')
+            store.dispatch(SetAnalytic('FirstDerivative'));
+        if (oldstate.tab != this.state.tab && oldstate.tab == 'Compare')
+            store.dispatch(ClearOverlappingEvent());
     }
 
     componentWillUnmount() {
@@ -178,20 +194,21 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
         console.log(error);
         console.log(info);
     }
-
+ 
     handleScreenSizeChange() {
-        clearTimeout(this.resizeId);
-        this.resizeId = setTimeout(() => {
+        clearTimeout(this.resizeHandle);
+        this.resizeHandle = setTimeout(() => {
             this.setState({
-                Width: window.innerWidth - 300,
-                Height: this.calculateHeights(this.state)
+                graphWidth: window.innerWidth - 300,
             });
         }, 500);
     }
 
     render() {
-        var height = this.calculateHeights(this.state);
+        var height = this.calculateHeights();
         var windowHeight = window.innerHeight;
+
+        let plotData = groupBy(this.props.graphList,"EventId");
 
         return (
             <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
@@ -200,62 +217,70 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
                     <fieldset className="border" style={{ padding: '10px' }}>
                         <legend className="w-auto" style={{ fontSize: 'large' }}>Waveform Views:</legend>
-                        <form>
-                            <label style={{ marginLeft: '10px' }}><input type="checkbox" onChange={() => this.stateSetter({ displayVolt: !this.state.displayVolt})} checked={this.state.displayVolt} />Voltage</label>
-                            <label style={{ marginLeft: '15px' }}><input type="checkbox" onChange={() => this.stateSetter({ displayCur: !this.state.displayCur })} checked={this.state.displayCur} />Current</label>
-                            <label style={{ marginLeft: '15px' }}><input type="checkbox" onChange={() => this.stateSetter({ breakerdigitals: !this.state.breakerdigitals })} checked={this.state.breakerdigitals} />Digitals</label>
-                            <label style={{ marginLeft: '10px' }}><input type="checkbox" onChange={() => this.stateSetter({ displayAnalogs: !this.state.displayAnalogs })} checked={this.state.displayAnalogs} />Analogs</label>
-                            <label style={{ marginLeft: '15px' }}><input type="checkbox" onChange={() => this.stateSetter({ displayTCE: !this.state.displayTCE })} checked={this.state.displayTCE} />TCE</label>
-                        </form>
+                        <div className="form-check form-check-inline">
+                            {this.props.loadVolt ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.state.displayVolt} />}
+                            <label className="form-check-label">Voltage</label>
+                        </div>
+                        <div className="form-check form-check-inline">
+                            {this.props.loadCurr ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.state.displayCur} />}
+                            <label className="form-check-label">Current</label>
+                        </div>
+                        <div className="form-check form-check-inline">
+                            {this.props.loadAnalog ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.state.displayAnalogs} />}
+                            <label className="form-check-label">Analogs</label>
+                        </div>
+                        <div className="form-check form-check-inline">
+                            {this.props.loadDigital ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.state.displayDigitals} />}
+                            <label className="form-check-label">Digitals</label>
+                        </div>
+                        <div className="form-check form-check-inline">
+                            {this.props.loadTCE ? <span> <i className="fa fa-spinner"></i> </span> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.state.displayTCE} />}
+                            <label className="form-check-label">Trip Coil E.</label>
+                        </div>
                     </fieldset>
 
                     <br />
 
                     <ul className="nav nav-tabs" id="myTab" role="tablist">
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Info" ?  " active" : '') } id="home-tab" data-toggle="tab" href="#info" role="tab" aria-controls="info" aria-selected="true" onClick={(obj: any) => this.stateSetter({ tab: obj.target.text })} >Info</a>
+                            <a className={"nav-link" + (this.state.tab == "Info" ?  " active" : '') } id="home-tab" data-toggle="tab" href="#info" role="tab" aria-controls="info" aria-selected="true" onClick={(obj: any) => this.stateSetter({ tab: "Info" })} >Info</a>
                         </li>
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Compare" ? " active" : '')} id="profile-tab" data-toggle="tab" href="#compare" role="tab" aria-controls="compare" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: obj.target.text })} >Compare</a>
+                            <a className={"nav-link" + (this.state.tab == "Compare" ? " active" : '')} id="profile-tab" data-toggle="tab" href="#compare" role="tab" aria-controls="compare" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: "Compare" })} >Compare</a>
                         </li>
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Analytics" ? " active" : '')} id="contact-tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: obj.target.text })} >Analytics</a>
+                            <a className={"nav-link" + (this.state.tab == "Analytic" ? " active" : '')} id="contact-tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: "Analytic" })} >Analytics</a>
                         </li>
                     </ul>
                     <div className="tab-content" id="myTabContent" style={{ maxHeight: windowHeight - 325, display: 'block', overflowY: 'auto' }}>
-                        <div className={"tab-pane fade" + (this.state.tab == "Info" ? " show active" : '') } id="info" role="tabpanel" aria-labelledby="home-tab">
-                            <table className="table">
-                                <tbody style={{ display: 'block'}}>
-                                    <tr><td>Meter:</td><td>{this.state.PostedData.postedMeterName}</td></tr>
-                                    <tr><td>Station:</td><td>{this.state.PostedData.postedStationName}</td></tr>
-                                    <tr><td>Asset:</td><td>{this.state.PostedData.postedAssetName}</td></tr>
-                                    <tr><td>Event Type:</td><td>{(this.state.PostedData.postedEventName != 'Fault' ? this.state.PostedData.postedEventName : <a href="#" title="Click for fault details" onClick={() => window.open(homePath + "FaultSpecifics.aspx?eventid=" + this.state.PostedData.postedEventId, this.state.PostedData.postedEventId + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
-                                    <tr><td>Event Date:</td><td>{this.state.PostedData.postedEventDate}</td></tr>
-                                    {(this.state.PostedData.postedStartTime != undefined ? <tr><td>Start Time:</td><td>{this.state.PostedData.postedStartTime}</td></tr> : null)}
-                                    {(this.state.PostedData.postedPhase != undefined ? <tr><td>Phase:</td><td>{this.state.PostedData.postedPhase}</td></tr> : null)}
-                                    {(this.state.PostedData.postedDurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.PostedData.postedDurationPeriod}</td></tr> : null)}
-                                    {(this.state.PostedData.postedMagnitude != undefined ? <tr><td>Magnitude:</td><td>{this.state.PostedData.postedMagnitude}</td></tr> : null)}
-                                    {(this.state.PostedData.postedSagDepth != undefined ? <tr><td>Sag Depth:</td><td>{this.state.PostedData.postedSagDepth}</td></tr> : null)}
-                                    {(this.state.PostedData.postedBreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.PostedData.postedBreakerNumber}</td></tr> : null)}
-                                    {(this.state.PostedData.postedBreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.PostedData.postedBreakerTiming}</td></tr> : null)}
-                                    {(this.state.PostedData.postedBreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.PostedData.postedBreakerSpeed}</td></tr> : null)}
-                                    {(this.state.PostedData.postedBreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.PostedData.postedBreakerOperation}</td></tr> : null)}
-                                    <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.PostedData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.state.eventid) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.state.eventid} /> : null)}</td></tr>
-                                </tbody>
-                            </table>
+                        <div className={"tab-pane fade" + (this.state.tab == "Info" ? " show active" : '')} id="info" role="tabpanel" aria-labelledby="home-tab">
+                            {this.state.eventData != undefined ?
+                                <table className="table">
+                                    <tbody style={{ display: 'block' }}>
+                                        <tr><td>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
+                                        <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
+                                        <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
+                                        <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open(homePath + "FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
+                                        <tr><td>Event Date:</td><td>{this.state.eventData.EventDate}</td></tr>
+                                        {(this.state.eventData.StartTime != undefined ? <tr><td>Start Time:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
+                                        {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
+                                        {(this.state.eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.eventData.DurationPeriod}</td></tr> : null)}
+                                        {(this.state.eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{this.state.eventData.Magnitude}</td></tr> : null)}
+                                        {(this.state.eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{this.state.eventData.SagDepth}</td></tr> : null)}
+                                        {(this.state.eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.eventData.BreakerNumber}</td></tr> : null)}
+                                        {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
+                                        {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
+                                        {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
+                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
+                                    </tbody>
+                                </table> :
+                            null}
                         </div>
                         <div className={"tab-pane fade" + (this.state.tab == "Compare" ? " show active" : '')} id="compare" role="tabpanel" aria-labelledby="profile-tab">
-
-                            <MultiselectWindow comparedEvents={this.state.comparedEvents} stateSetter={this.stateSetter.bind(this)} data={this.state.overlappingEvents} />
+                            <OverlappingEventWindow />
                         </div>
-                        <div className={"tab-pane fade" + (this.state.tab == "Analytics" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
-                            <RadioselectWindow
-                                stateSetter={this.stateSetter.bind(this)}
-                                analytic={this.state.analytic}
-                                analyticSettings={this.state.AnalyticSettings}
-                                eventID={this.state.eventid}
-                                fftStartDate={this.state.fftStartTime}
-                            />
+                        <div className={"tab-pane fade" + (this.state.tab == "Analytic" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
+                            <AnalyticOptions />
                         </div>
                     </div>
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
@@ -265,146 +290,40 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
                     </div>
                 </div> 
                 <div id="chartpanel" style={{ width: 'calc(100% - 300px)', height: 'inherit', position: 'relative', float: 'right', overflow: 'hidden' }}>
-                    <OpenSEENavbar
-                        eventid={this.state.eventid}
-                        endDate={this.state.EndDate}
-                        Hover={this.state.Hover}
-                        key="navbar"
-                        nextBackLookup={this.state.nextBackLookup}
-                        PostedData={this.state.PostedData}
-                        ref="navbar"
-                        resetZoom={this.resetZoom.bind(this)}
-                        selected={this.state.navigation}
-                        startDate={this.state.StartDate}
-                        stateSetter={this.stateSetter.bind(this)}
-                        TableData={this.state.tableData}
-                        displayVolt={this.state.displayVolt}
-                        displayCur={this.state.displayCur}
-                        displayTCE={this.state.displayTCE}
-                        breakerdigitals={this.state.breakerdigitals}
+                    <OpenSeeNavBar
+                        EventData={this.state.eventData} Lookup={this.state.lookup} 
+                        navigation={this.state.navigation}
+                        
                         displayAnalogs={this.state.displayAnalogs}
-                        displayAnalytics={this.state.tab == "Analytics" ? this.state.analytic : ""}
-                        filterOrder={this.state.AnalyticSettings.order}
-                        Trc={this.state.AnalyticSettings.Trc}
-                        harmonic={this.state.AnalyticSettings.harmonic}
-                        unitData={this.state.plotUnits}
-                        colorData={this.state.plotColors}
-                        zoomMode={this.state.zoomMode}
-                        voltageLimits={this.state.voltageLimits}
-                        currentLimits={this.state.currentLimits}
-                        tceLimits={this.state.tceLimits}
-                        digitalLimits={this.state.digitalLimits}
-                        analogLimits={this.state.analogLimits}
-                        analyticLimits={this.state.analyticLimits}
-                        activeUnits={this.GraphUnitGetter.bind(this)}
-                        mouseMode={this.state.mouseMode}
-                        displayCompare={this.state.tab == "Compare"}
-                        showCompareChart={this.state.showCompareCharts}
-                        VoltageVectors={this.voltageVector}
-                        CurrentVectors={this.currentVector}
-                    />
+                        displayCur={this.state.displayCur} displayDigitals={this.state.displayDigitals} displayTCE={this.state.displayTCE}
+                        displayVolt={this.state.displayVolt} />
+                    
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
-                        <ViewerWindow
-                            mouseMode={this.state.mouseMode}
-                            width={this.state.Width}
-                            yLimits={this.state.voltageLimits}
-                            currentLimits={this.state.currentLimits}
-                            tceLimits={this.state.tceLimits}
-                            analogLimits={this.state.analogLimits}
-                            digitalLimits={this.state.digitalLimits}
-                            zoomMode={this.state.zoomMode}
-                            colorSettings={this.state.plotColors}
-                            unitSettings={this.state.plotUnits}
-                            tableSetter={(lbl, data) => this.tableUpdater(lbl, data)}
-                            key={this.state.eventid}
-                            eventId={this.state.eventid}
-                            startTime={this.state.startTime}
-                            endTime={this.state.endTime}
-                            stateSetter={this.stateSetter.bind(this)}
-                            height={height}
-                            hover={this.state.Hover}
-                            displayVolt={this.state.displayVolt}
-                            displayCur={this.state.displayCur}
-                            displayTCE={this.state.displayTCE}
-                            displayDigitals={this.state.breakerdigitals}
-                            displayAnalogs={this.state.displayAnalogs}
-                            isCompare={(this.state.tab == "Compare" && this.state.showCompareCharts)}
-                            label={this.state.PostedData.postedAssetName}
-                            fftStartTime={this.state.fftStartTime}
-                            fftWindow={this.state.AnalyticSettings.fftWindow}
-                            compareEvents={(this.state.tab == "Compare" && !this.state.showCompareCharts) ? this.state.comparedEvents : []}
-                            activeUnitSetter={this.GraphUnitSetter.bind(this)}
-                            getPointSetter={this.GetPointSetter.bind(this)}
-                        />
-                        {(this.state.tab == "Compare" && this.state.overlappingEvents.length > 0 && this.state.showCompareCharts ?
-                            this.state.comparedEvents.map(a =>
-                                <ViewerWindow
-                                    mouseMode={this.state.mouseMode}
-                                    width={this.state.Width}
-                                    yLimits={this.state.voltageLimits}
-                                    currentLimits={this.state.currentLimits}
-                                    tceLimits={this.state.tceLimits}
-                                    analogLimits={this.state.analogLimits}
-                                    digitalLimits={this.state.digitalLimits}
-                                    zoomMode={this.state.zoomMode}
-                                    colorSettings={this.state.plotColors}
-                                    unitSettings={this.state.plotUnits}
-                                    key={a}
-                                    eventId={a}
-                                    startTime={this.state.startTime}
-                                    endTime={this.state.endTime}
-                                    stateSetter={this.stateSetter.bind(this)}
-                                    height={height} hover={this.state.Hover}
-                                    displayVolt={this.state.displayVolt}
-                                    displayCur={this.state.displayCur}
-                                    displayTCE={this.state.displayTCE}
-                                    displayAnalogs={this.state.displayAnalogs}
-                                    displayDigitals={this.state.breakerdigitals}
-                                    fftStartTime={this.state.fftStartTime}
-                                    fftWindow={this.state.AnalyticSettings.fftWindow}
-                                    isCompare={true}
-                                    label={<a target="_blank" href={homePath + 'Main/OpenSEE?eventid=' + a}>{this.state.overlappingEvents.find(x => x.value == a).label}</a>}
-                                    compareEvents={[]}
-                                />
-                            ): null)}
-                        {(this.state.tab == "Analytics" && (this.state.analytic == "FFT" || this.state.analytic == "HarmonicSpectrum") ?
-                            <AnalyticBar
-                                colorSettings={this.state.plotColors}
-                                analytic={this.state.analytic}
-                                analyticParameter={this.state.AnalyticSettings}
-                                eventId={this.state.eventid}
-                                startTime={this.state.fftStartTime}
-                                fftWindow={this.state.AnalyticSettings.fftWindow}
-                                pixels={this.state.Width}
-                                stateSetter={this.stateSetter.bind(this)}
-                                height={height}
-                                options={{ showXLabel: true }}
-                            /> : null)}
-                        {(this.state.tab == "Analytics" && (this.state.analytic != "FFT" && this.state.analytic != "HarmonicSpectrum") ?
-                            <AnalyticLine
-                                mouseMode={this.state.mouseMode}
-                                width={this.state.Width}
-                                yLimits={this.state.analyticLimits}
-                                zoomMode={this.state.zoomMode}
-                                colorSettings={this.state.plotColors}
-                                unitSettings={this.state.plotUnits}
-                                analytic={this.state.analytic}
-                                analyticParameter={this.state.AnalyticSettings}
-                                eventId={this.state.eventid}
-                                fftStartTime={this.state.fftStartTime}
-                                fftWindow={this.state.AnalyticSettings.fftWindow}
-                                startTime={this.state.startTime}
-                                endTime={this.state.endTime}
-                                stateSetter={this.stateSetter.bind(this)}
-                                compareEvents={[]}
-                                height={height}
-                                hover={this.state.Hover}
-                                options={{ showXLabel: true }}
-                                activeUnitSetter={this.GraphUnitSetter.bind(this)}
-                                getPointSetter={this.GetPointSetter.bind(this)}
-                                tableSetter={(lbl, data) => this.tableUpdater(lbl, data)}
-                            /> : null)}
 
+                        {Object.keys(plotData).length == 1 ?
+                            plotData[Object.keys(plotData)[0]].map(item => < LineChart
+                            eventId={item.EventId}
+                                width={this.state.graphWidth}
+                                eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                height={this.calculateHeights()}
+                                timeLabel={"Time"}
+                                type={item.DataType}
+                            />) :
+                            Object.keys(plotData).map(key => <div className="card">
+                                <div className="card-header">{this.props.eventGroup.find(item => item.value == parseInt(key)).label}</div>
+                                <div className="card-body" style={{ padding: 0 }}>
+                                    {plotData[key].map(item => < LineChart
+                                        eventId={item.EventId}
+                                        width={this.state.graphWidth}
+                                        eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                        height={this.calculateHeights()}
+                                        timeLabel={"Time"}
+                                        type={item.DataType}
+                                    />) }
+                                </div>
+                                </div>)
+                                    }
+                        {/* FFT Analytic */}
                     </div>
                 </div>
             </div>
@@ -412,452 +331,101 @@ export class OpenSEE extends React.Component<{}, OpenSEEState>{
     }
 
     stateSetter(obj) {
-        if (obj.vVectors != undefined)
-            this.voltageVector = obj.vVectors
-        if (obj.iVectors != undefined)
-            this.currentVector = obj.iVectors
-
-        if (!Object.keys(obj).some(item => item !== "vVectors" && item !== "iVectors"))
-            return;
-
-        if (obj.fftStartTime != undefined && obj.fftStartTime == 0) {
-            obj.fftStartTime = this.state.startTime;
-        }
-        var oldQueryString = this.toQueryString(this.state);
-        var oldQuery = queryString.parse(oldQueryString);
 
         this.setState(obj, () => {
-            var newQueryString = this.toQueryString(this.state);
-            var newQuery = queryString.parse(newQueryString);
-            if (!isEqual(oldQuery, newQuery)) {
-                clearTimeout(this.historyHandle);
-                this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + newQueryString), 500);
-            }
+            let newQuery = {};
+
+            let updateQuery = queryStates.some(state => obj.hasOwnProperty(state) && !isEqual(obj[state], this.state[state]))
+
+            if (!updateQuery)
+                return;
+
+            queryStates.forEach(state => {
+                newQuery[state] = this.state[state];
+            });
+
+            let newQueryString = queryString.stringify(newQuery, { encode: false });
+
+            clearTimeout(this.historyHandle);
+            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + newQueryString), 500);
+            
         });
     }
 
-    ResetTable() {
-        this.setState({ tableData: new Map<string, Array<iD3PointOfInterest>>() })
+    calculateHeights() {
+        // Fit up to 3 onto the page after that we will add scrollBars
+        let nPlots = Number(this.state.displayVolt) + Number(this.state.displayCur) + Number(this.state.displayDigitals) + Number(this.state.displayTCE) + Number(this.state.displayAnalogs);
+
+        if (this.state.tab == "Analytic")
+            nPlots = nPlots + 1;
+        else if (this.state.tab == "Compare")
+            nPlots = nPlots * (this.props.numberCompareGraphs + 1);
+
+        return (window.innerHeight - 100 - 30) / Math.min(nPlots, 3);
     }
 
-    tableUpdater(graphLabel: string, data: Array<iD3PointOfInterest>) {
-
-        function update(graphLabel: string, data: Array<iD3PointOfInterest>, map: Map<string, Array<iD3PointOfInterest>>) {
-            let current = new Array<iD3PointOfInterest>();
-
-            if (map.has(graphLabel))
-                map.get(graphLabel).forEach(item => {
-                    let index = data.findIndex(series => (
-                        series.LegendHorizontal === item.LegendHorizontal &&
-                        series.LegendVertical === item.LegendVertical &&
-                        series.LegendGroup === item.LegendGroup)
-                    );
-                    if (index !== -1)
-                        current.push(item);
-                });
-
-            data.forEach(item => {
-                let index = current.findIndex(series => (
-                    series.LegendHorizontal === item.LegendHorizontal &&
-                    series.LegendVertical === item.LegendVertical &&
-                    series.LegendGroup === item.LegendGroup)
-                );
-                if (index == -1)
-                    current.push(item);
-                else {
-                    current[index].Current = item.Current;
-                    current[index].Selected = current[index].Selected.concat(item.Selected);
-                }
-            })
-
-            map.set(graphLabel, current);
-            return map
-        };
-
-        if (data.length == 0)
-            return;
-
-        this.setState((prevstate) => {
-            let newTable = cloneDeep(prevstate.tableData);
-            if (data[0].Selected.length == 0)
-                newTable = update(graphLabel, data, newTable);
-            else {
-                let time = data[0].Selected[data[0].Selected.length - 1][0]
-                prevstate.tableData.forEach((item, key) => {
-                    if (key == graphLabel)
-                        newTable = update(key, data, newTable);
-                    else {
-                        if (this.pointGetters.has(key))
-                            newTable = update(key, this.pointGetters.get(key)(time), newTable);
-                    }
-
-                })
-            }
-
-            return { tableData: newTable };
-        })
-    }
-
-    GraphUnitSetter(getfx: Function, graphLabel: string) {
-        this.activeUnits.set(graphLabel,getfx)
-    }
-
-    GetPointSetter(getfx: Function, graphLabel: string) {
-        this.pointGetters.set(graphLabel, getfx)
-    }
-
-    GraphUnitGetter(graphLabel: string) {
-        if (this.activeUnits.has(graphLabel))
-            return this.activeUnits.get(graphLabel)();
+    toggleVoltage() {
+        if (this.state.displayVolt)
+            store.dispatch(RemovePlot({ DataType: "Voltage", EventId: this.props.eventID }))
         else
-            return null
+            store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
+        this.stateSetter({ displayVolt: !this.state.displayVolt });
     }
 
-    resetZoom() {
-        
-        clearTimeout(this.historyHandle);
-        this.history['push'](this.history['location'].pathname + '?' + this.toQueryString(this.state))
-
-        if (this.state.barChartReset != null)
-            this.state.barChartReset()
-
-        this.setState({
-            startTime: new Date(eventStartTime + "Z").getTime(),
-            endTime: new Date(eventEndTime + "Z").getTime(),
-            voltageLimits: { min: 0, max: 0, auto: true },
-            currentLimits: { min: 0, max: 0, auto: true },
-            tceLimits: { min: 0, max: 0, auto: true },
-            digitalLimits: { min: 0, max: 0, auto: true },
-            analogLimits: { min: 0, max: 0, auto: true },
-            analyticLimits: { min: 0, max: 0, auto: true }
-        })
-
-
+    toggleCurrent() {
+        if (this.state.displayCur)
+            store.dispatch(RemovePlot({ DataType: "Current", EventId: this.props.eventID }))
+        else
+            store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
+        this.stateSetter({ displayCur: !this.state.displayCur });
     }
 
-    calculateHeights(obj: any) {
-        if (obj.tab == "Compare" && obj.showCompareCharts) return 300;
-        return (window.innerHeight - 100 - 30) / (Number(obj.displayVolt) + Number(obj.displayCur) + Number(obj.breakerdigitals) + Number(obj.displayTCE) + Number(obj.displayAnalogs) + Number(obj.tab == "Analytics"))
+    toggleAnalogs() {
+        if (this.state.displayAnalogs)
+            store.dispatch(RemovePlot({ DataType: 'Analogs', EventId: this.props.eventID}))
+        else
+            store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
+        this.stateSetter({ displayAnalogs: !this.state.displayAnalogs });
     }
 
-    toQueryString(state) {
-        var prop = clone(state);
-        delete prop.Hover;
-        delete prop.Width;
-        delete prop.TableData;
-        delete prop.phasorButtonText;
-        delete prop.pointsButtonText;
-        delete prop.tooltipButtonText;
-        delete prop.harmonicButtonText;
-        delete prop.statButtonText;
-        delete prop.correlatedSagsButtonText;
-        delete prop.PointsTable;
-        delete prop.PostedData;
-        delete prop.nextBackLookup;
-        delete prop.overlappingEvents;
-        delete prop.TooltipWithDeltaTable;
-        delete prop.barChartReset;
-        delete prop.AnalyticSettings;
+    toggleDigitals() {
+        if (this.state.displayDigitals)
+            store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: this.props.eventID }))
+        else
+            store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
+        this.stateSetter({ displayDigitals: !this.state.displayDigitals });
+    }
 
-        //At least for now these Settings should not be URL driven
-        delete prop.plotUnits;
-        delete prop.plotColors;
+    toggleTCE() {
+        if (this.state.displayTCE)
+            store.dispatch(RemovePlot({ DataType: 'TripCoil', EventId: this.props.eventID }))
+        else
+            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
+        this.stateSetter({ displayTCE: !this.state.displayTCE });
+    }
+    
 
-        delete prop.voltageLimits;
-        delete prop.currentLimits;
-        delete prop.tceLimits;
-        delete prop.digitalLimits;
-        delete prop.analogLimits;
-        delete prop.analyticLimits;
-      
-        prop.harmonic = state.AnalyticSettings.harmonic;
-        prop.order = state.AnalyticSettings.order;
-        prop.Trc = state.AnalyticSettings.Trc;
-        prop.fftWindow = state.AnalyticSettings.fftWindow;
-
-        return queryString.stringify(prop, { encode: false });
 }
 
 
-
-
-
+const mapStatesToProps = function (state: OpenSee.IRootState) {
+    return {
+        eventID: state.Data.eventID,
+        url: "",
+        graphList: selectListGraphs(state),
+        loadVolt: selectLoadVoltages(state),
+        loadCurr: selectLoadCurrents(state),
+        loadAnalog: selectLoadAnalogs(state),
+        loadDigital: selectLoadDigitals(state),
+        loadTCE: selectLoadTCE(state),
+        numberCompareGraphs: selectNumberCompare(state),
+        eventGroup: selectEventGroup(state),
+    }
 }
 
-interface ViewerWindowProps extends D3LineChartBaseProps {
-    isCompare: boolean, displayVolt: boolean, displayCur: boolean, displayTCE: boolean, displayDigitals: boolean, displayAnalogs: boolean, label: string | JSX.Element,
-    currentLimits: yLimits, digitalLimits: yLimits, analogLimits: yLimits, tceLimits: yLimits
-}
+export const OpenSEE = connect(mapStatesToProps)(OpenSEEHome)
 
-const ViewerWindow = (props: ViewerWindowProps) => {
-    // Set Y Limits. Neccesarry to avoid endless Loop if multiple Plots of one type (e.g. Voltage try to access and change the same set of Limits)
-    function setVoltageLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(props.yLimits);
-        if (!auto) {
-            lim.min = ymin;
-            lim.max = ymax;
-            lim.auto = false;
 
-            props.stateSetter({ voltageLimits: lim });
-        }
-    }
-    function setCurrentLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(props.currentLimits);
-        if (!auto) {
-            lim.min = ymin;
-            lim.max = ymax;
-            lim.auto = false;
-
-            props.stateSetter({ currentLimits: lim });
-        }
-    }
-    function setAnalogLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(props.analogLimits);
-        if (!auto) {
-            lim.min = ymin;
-            lim.max = ymax;
-            lim.auto = false;
-
-            props.stateSetter({ analogLimits: lim });
-        }
-    }
-    function setTCELimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(props.tceLimits);
-        if (!auto) {
-            lim.min = ymin;
-            lim.max = ymax;
-            lim.auto = false;
-
-            props.stateSetter({ tceLimits: lim });
-        }
-    }
-    function setDigitalsLimits(ymin: number, ymax: number, auto: boolean) {
-        let lim = cloneDeep(props.digitalLimits);
-        if (!auto) {
-            lim.min = ymin;
-            lim.max = ymax;
-            lim.auto = false;
-
-            props.stateSetter({ digitalLimits: lim });
-        }
-    }
-
-    return ( props.isCompare ? 
-        <div className="card" style={{ height: (props.isCompare ? null : '100%') }}>
-            <div className="card-header">{props.label}</div>
-            <div className="card-body" style={{ padding: 0 }}>
-                {(props.displayVolt ? <Voltage
-                    mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={{ ...props.yLimits, setter: setVoltageLimits.bind(this) }}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    tableSetter={props.tableSetter}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    compareEvents={props.compareEvents}
-                    activeUnitSetter={props.activeUnitSetter}
-                    getPointSetter={props.getPointSetter}
-                    options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
-                /> : null)}
-                {(props.displayCur ? <Current
-                    mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={props.currentLimits}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    tableSetter={props.tableSetter}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    compareEvents={props.compareEvents}
-                    activeUnitSetter={props.activeUnitSetter}
-                    getPointSetter={props.getPointSetter}
-                    options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
-                /> : null)}
-                {(props.displayDigitals ? <Digital
-                    mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={props.digitalLimits}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
-                    compareEvents={props.compareEvents}
-                    getPointSetter={props.getPointSetter}
-                    tableSetter={props.tableSetter}
-                /> : null)}
-                {(props.displayAnalogs ? <Analog
-                    mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={props.analogLimits}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    options={{ showXLabel: !(props.displayTCE) }}
-                    compareEvents={props.compareEvents}
-                    getPointSetter={props.getPointSetter}
-                    tableSetter={props.tableSetter}
-                /> : null)}
-                {(props.displayTCE ? <TripCoilCurrent
-                    mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={props.tceLimits}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    options={{ showXLabel: true }}
-                    compareEvents={props.compareEvents}
-                    getPointSetter={props.getPointSetter}
-                    tableSetter={props.tableSetter}
-                /> : null)}
-            </div>
-        </div>
-        :
-        <div>
-            {(props.displayVolt ?
-                <Voltage mouseMode={props.mouseMode}
-                    width={props.width}
-                    yLimits={props.yLimits}
-                    zoomMode={props.zoomMode}
-                    colorSettings={props.colorSettings}
-                    unitSettings={props.unitSettings}
-                    tableSetter={props.tableSetter}
-                    fftStartTime={props.fftStartTime}
-                    fftWindow={props.fftWindow}
-                    eventId={props.eventId}
-                    startTime={props.startTime}
-                    endTime={props.endTime}
-                    stateSetter={props.stateSetter}
-                    height={props.height}
-                    hover={props.hover}
-                    options={{ showXLabel: !(props.displayCur || props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
-                    compareEvents={props.compareEvents}
-                    getPointSetter={props.getPointSetter}
-                    activeUnitSetter={props.activeUnitSetter}
-                /> : null)}
-            {(props.displayCur ? <Current
-                mouseMode={props.mouseMode}
-                width={props.width}
-                yLimits={props.currentLimits}
-                zoomMode={props.zoomMode}
-                colorSettings={props.colorSettings}
-                unitSettings={props.unitSettings}
-                tableSetter={props.tableSetter}
-                fftStartTime={props.fftStartTime}
-                fftWindow={props.fftWindow}
-                eventId={props.eventId}
-                startTime={props.startTime}
-                endTime={props.endTime}
-                stateSetter={props.stateSetter}
-                height={props.height}
-                hover={props.hover}
-                options={{ showXLabel: !(props.displayDigitals || props.displayTCE || props.displayAnalogs) }}
-                compareEvents={props.compareEvents}
-                getPointSetter={props.getPointSetter}
-                activeUnitSetter={props.activeUnitSetter}
-            /> : null)}
-            {(props.displayDigitals ? <Digital
-                mouseMode={props.mouseMode}
-                width={props.width}
-                yLimits={props.digitalLimits}
-                zoomMode={props.zoomMode}
-                colorSettings={props.colorSettings}
-                unitSettings={props.unitSettings}
-                fftStartTime={props.fftStartTime}
-                fftWindow={props.fftWindow}
-                eventId={props.eventId}
-                startTime={props.startTime}
-                endTime={props.endTime}
-                stateSetter={props.stateSetter}
-                height={props.height}
-                hover={props.hover}
-                options={{ showXLabel: !(props.displayTCE || props.displayAnalogs) }}
-                compareEvents={props.compareEvents}
-                tableSetter={props.tableSetter}
-                getPointSetter={props.getPointSetter}
-            /> : null)}
-            {(props.displayAnalogs ? <Analog
-                mouseMode={props.mouseMode}
-                width={props.width}
-                yLimits={props.analogLimits}
-                zoomMode={props.zoomMode}
-                colorSettings={props.colorSettings}
-                unitSettings={props.unitSettings}
-                fftStartTime={props.fftStartTime}
-                fftWindow={props.fftWindow}
-                eventId={props.eventId}
-                startTime={props.startTime}
-                endTime={props.endTime}
-                stateSetter={props.stateSetter}
-                height={props.height}
-                hover={props.hover}
-                options={{ showXLabel: !(props.displayTCE) }}
-                compareEvents={props.compareEvents}
-                tableSetter={props.tableSetter}
-                getPointSetter={props.getPointSetter}
-            /> : null)}
-            {(props.displayTCE ? <TripCoilCurrent
-                mouseMode={props.mouseMode}
-                width={props.width}
-                yLimits={props.tceLimits}
-                zoomMode={props.zoomMode}
-                colorSettings={props.colorSettings}
-                unitSettings={props.unitSettings}
-                fftStartTime={props.fftStartTime}
-                fftWindow={props.fftWindow}
-                eventId={props.eventId}
-                startTime={props.startTime}
-                endTime={props.endTime}
-                stateSetter={props.stateSetter}
-                height={props.height}
-                hover={props.hover}
-                options={{ showXLabel: true }}
-                compareEvents={props.compareEvents}
-                tableSetter={props.tableSetter}
-                getPointSetter={props.getPointSetter}
-            /> : null)}
-        </div>
-            
-        );
-}
-
-ReactDOM.render(<OpenSEE />, document.getElementById('DockCharts'));
+store.dispatch(LoadSettings());
+ReactDOM.render(<Provider store={store}><OpenSEE /></Provider>, document.getElementById('DockCharts'));
 

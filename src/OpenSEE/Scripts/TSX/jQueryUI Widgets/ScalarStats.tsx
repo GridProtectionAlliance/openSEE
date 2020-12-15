@@ -22,105 +22,60 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import OpenSEEService from './../../TS/Services/OpenSEE';
-import { style } from "typestyle"
+import { outerDiv, handle, closeButton } from './Common';
 
-// styles
-const outerDiv: React.CSSProperties = {
-    minWidth: '200px',
-    maxWidth: '400px',
-    fontSize: '12px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    overflowY: 'auto',
-    padding: '0em',
-    zIndex: 1000,
-    boxShadow: '4px 4px 2px #888888',
-    border: '2px solid black',
-    position: 'absolute',
-    top: '0',
-    left: 0,
-    display: 'none',
-    backgroundColor: 'white'
-};
+interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number }
 
-const handle = style({
-    width: '100 %',
-    height: '20px',
-    backgroundColor: '#808080',
-    cursor: 'move',
-    padding: '0em'
-});
+const ScalarStatsWidget = (props: Iprops) => {
+    const [stats, setStats] = React.useState<Array<JSX.Element>>([]);
 
-const closeButton = style({
-    background: 'firebrick',
-    color: 'white',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '20px',
-    height: '20px',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    padding: 0,
-    border: 0,
-    $nest: {
-        "&:hover": {
-            background: 'orangered'
-        }
-    }
-});
-
-
-export default class ScalarStats extends React.Component<any, any>{
-    props: { eventId: number, callback: Function, exportCallback: Function }
-    state: { rows: Array<Object> }
-    openSEEService: OpenSEEService;
-    constructor(props) {
-        super(props);
-        this.openSEEService = new OpenSEEService();
-        this.state = {
-            rows : []
-        };
-    }
-    componentDidMount() {
+    React.useEffect(() => {
         ($("#scalarstats") as any).draggable({ scroll: false, handle: '#statshandle', containment: '#chartpanel' });
-        this.openSEEService.getScalarStats(this.props.eventId).done(data => {
-            var rows = Object.keys(data).map(key => Row({ label: key, data: data[key] }));
-            this.setState({rows: rows});
+    }, [props])
+
+    React.useEffect(() => {
+        let handle = getData();
+
+        return () => { if (handle != undefined && handle.abort != undefined) handle.abort();}
+    }, [props.eventId])
+
+    function getData(): JQuery.jqXHR {
+            
+        let handle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetScalarStats?eventId=${props.eventId}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
         });
-    }
 
-    render() {
+        handle.done((d) => {
+            setStats(Object.keys(d).map(item =>
+                <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={item}>
+                    <td>item{}</td>
+                    <td>{d[item]}</td>
+                </tr>));
+        })
+        return handle;
+        }
 
-        return (
-            <div id="scalarstats" className="ui-widget-content" style={outerDiv}>
-                <div id="statshandle" className={handle}></div>
-                <div id="statscontent" style={{maxWidth: 500, overflowX: 'auto'}}>
-                    <table className="table" style={{fontSize: 'small', marginBottom: 0}}>
-                        <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)'}}>
-                            <tr><th>Stat</th><th>Value&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => this.props.exportCallback("stats")}>Export(csv)</button></th></tr>
-                        </thead>
-                        <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
-                            {this.state.rows}
-                        </tbody>
-                    </table>
-                </div>
-                <button className={closeButton} onClick={() => {
-                    this.props.callback({ statButtonText: "Show Stats" });
-                    $('#scalarstats').hide();
-                }}>X</button>
-            </div>
-        );
-    }
-}
-
-const Row = (row) => {
     return (
-        <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={row.label}>
-            <td>{row.label}</td>
-            <td>{row.data}</td>
-        </tr>
+        <div id="scalarstats" className="ui-widget-content" style={outerDiv}>
+            <div id="statshandle" className={handle}></div>
+            <div id="statscontent" style={{ maxWidth: 500, overflowX: 'auto' }}>
+                <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
+                    <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
+                        <tr><th>Stat</th><th>Value&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th></tr>
+                    </thead>
+                    <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                        {stats}
+                    </tbody>
+                </table>
+            </div>
+            <button className={closeButton} onClick={() => { props.closeCallback()}}>X</button>
+        </div>
     );
 }
 
+export default ScalarStatsWidget;

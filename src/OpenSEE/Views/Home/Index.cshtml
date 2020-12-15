@@ -86,6 +86,8 @@
         var eventStartTime = '@Html.Raw(ViewBag.EventStartTime)';
         var eventEndTime = '@Html.Raw(ViewBag.EventEndTime)';
         var cycles = @Html.Raw(ViewBag.Cycles ?? 0);
+        var userID = @Html.Raw(ViewBag.UserId ?? 0);
+        var analyticHandle = null;
     </script>
     @if (Request.Browser.Browser == "InternetExplorer" || Request.Browser.Browser == "IE")
     {

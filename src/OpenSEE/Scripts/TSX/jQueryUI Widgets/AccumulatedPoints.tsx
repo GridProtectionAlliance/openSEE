@@ -21,79 +21,76 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { uniq, cloneDeep } from "lodash";
-import { style } from "typestyle";
-import { iActiveUnits } from '../Graphs/D3LineChartBase';
+import { outerDiv, handle, closeButton } from './Common';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../Store/dataSlice';
 
-export interface iD3DataRow {
-    Value: Array<number>,
-    DeltaValue: Array<number>,
-    Time: number,
-    DeltaTime: number,
-    PointIndex: Array<number>,
-    SeriesIndex: Array<number>,
-    GraphLabel: Array<string>,
-    Unit: Array<string>
+interface Iprops {
+    closeCallback: () => void,
+    isOpen: boolean,
 }
 
-export interface iD3PointOfInterest {
-    LegendHorizontal: string,
-    LegendVertical: string,
-    LegendGroup: string,
-    Unit: string,
-    Color: string,
-    Current: [number, number],
-    Selected: Array<[number, number]>,
-    ChannelName: string,
+const PointWidget = (props: Iprops) => {
+    const points = useSelector(selectSelectedPoints);
+    const startTime = useSelector(selectStartTime);
+    const dispatch = useDispatch();
+
+    const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
+
+    React.useEffect(() => {
+        ($("#accumulatedpoints") as any).draggable({ scroll: false, handle: '#accumulatedpointshandle', containment: '#chartpanel' });
+    }, [props])
+
+    let data: Array<JSX.Element> = (points.length > 0 ? points[0].Value.map((p, i) => <tr onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
+        <td key={"timeCycles-" + i}><span>{(p[0]- startTime).toFixed(7)} sec<br />{((p[0] - startTime) * 60.0).toFixed(2)} cycles</span> </td>
+        <td key={"timeS-" + i} ><span>{i == 0 ? 'N/A' : <> {(points[0].Value[i - 1][0] - p[0]).toFixed(4)} sec<br /> {((points[0].Value[i - 1][0] - p[0]) * 60.0).toFixed(2)} cycles) </>}</span> </td>
+        {points.map(pt => <> <td><span>{(pt.Value[i][1] * pt.Unit.factor).toFixed(2)} ({p.Unit.short})</span> </td> <td><span>{i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * pt.Unit.factor).toFixed(4)} ({p.Unit.short})</span> </td> </>)}        
+    </tr> ): [])
+
+    return (
+        <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
+            <div style={{ border: 'black solid 2px' }}>
+                <div id="accumulatedpointshandle" className={handle}></div>
+                <div style={{ overflowY: 'scroll', maxHeight: 950 }}>
+                    {props.isOpen ?
+                        <table className="table table-bordered table-hover">
+                            <thead>
+                                <tr key="row-1">
+                                    {props.isOpen ?
+                                        <>
+                                            <td colSpan={2} key={"header-Time"}> </td>
+                                            {points.map(p => <td colSpan={2} key={"header-" + p.Name + "-" + p.Group}><span>{p.Group}<br />{p.Name}</span> </td>)}
+                                        </>: null}
+                                </tr>
+                                <tr key="row-2">
+                                    {props.isOpen ? points.map((p, i) => <> <td key={"headerValue-" + i}><span>Value</span> </td> <td key={"headerDelta-" + i} ><span>Delta</span> </td> </>) : null}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {props.isOpen ? data : null}
+                            </tbody>
+                        </table> : null}
+                </div>
+                <div style={{ margin: '5px', textAlign: 'right' }}>
+                    <input className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex != -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
+                    <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points.lenth - 1))} />
+                    <input className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
+                </div>
+                <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
+                    props.closeCallback();
+                }}>X</button>
+            </div>
+
+        </div>
+
+    );
+
 }
 
-// styles
-const outerDiv: React.CSSProperties = {
-    minWidth: '200px',
-    fontSize: '12px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    padding: '0em',
-    zIndex: 1000,
-    boxShadow: '4px 4px 2px #888888',
-    border: '2px solid black',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    display: 'none',
-    backgroundColor: 'white',
-    width: '520px',
-    maxHeight: '1040px'
-};
+export default PointWidget;
 
-const handle = style({
-    width: '100 %',
-    height: '20px',
-    backgroundColor: '#808080',
-    cursor: 'move',
-    padding: '0em'
-});
-
-const closeButton = style({
-    background: 'firebrick',
-    color: 'white',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '20px',
-    height: '20px',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    padding: 0,
-    border: 0,
-    $nest: {
-        "&:hover": {
-            background: 'orangered'
-        }
-    }
-});
-
-export default class Points extends React.Component<any, any>{
+/*
+export class Points extends React.Component<any, any>{
     Data: Array<iD3DataRow>
     props: {
         data: Map<string, Array<iD3PointOfInterest>>,
@@ -336,3 +333,4 @@ const SubHeader = (collumns: number) => {
 }
 
 
+*/

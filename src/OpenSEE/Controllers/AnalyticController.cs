@@ -501,7 +501,7 @@ namespace OpenSEE
                     int eventId = int.Parse(query["eventId"]);
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                    meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                    meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
                     DataTable table;
 
@@ -573,7 +573,7 @@ namespace OpenSEE
                 ChartLabel = dataSeries.SeriesInfo.Channel.Phase.Name + type +  " First Derivative",
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
-                LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
+                LegendVGroup = legenclass,
                 DataMarker = new List<double[]>(),
                 BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 DataPoints = dataSeries.DataPoints.Select((point, index) => {
@@ -2947,6 +2947,7 @@ namespace OpenSEE
 
         */
         #endregion
+
         #endregion
 
     }

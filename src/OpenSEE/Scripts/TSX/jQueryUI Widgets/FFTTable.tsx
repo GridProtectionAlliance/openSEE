@@ -24,7 +24,6 @@
 import * as React from 'react';
 import OpenSEEService from './../../TS/Services/OpenSEE';
 import { style } from "typestyle"
-import { iD3DataSet, iD3DataSeries } from '../Graphs/D3LineChartBase';
 
 const outerDiv: React.CSSProperties = {
     minWidth: '200px',
@@ -71,7 +70,7 @@ const closeButton = style({
     }
 });
 
-
+/*
 export default class FFTTable extends React.Component<any, any>{
     props: { dataSet: iD3DataSet }
     constructor(props) {
@@ -143,4 +142,4 @@ const Row = (row: number, data: Array<iD3DataSeries>) => {
             {createCells()}
         </tr>
     );
-}
+}*/

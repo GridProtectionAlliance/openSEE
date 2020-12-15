@@ -22,84 +22,58 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import OpenSEEService from './../../TS/Services/OpenSEE';
-import { style } from "typestyle"
+import { outerDiv, handle, closeButton } from './Common';
 
-const outerDiv: React.CSSProperties = {
-    minWidth: '200px',
-    fontSize: '12px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    overflowY: 'auto',
-    padding: '0em',
-    zIndex: 1000,
-    boxShadow: '4px 4px 2px #888888',
-    border: '2px solid black',
-    position: 'absolute',
-    top: '0',
-    left: 0,
-    display: 'none',
-    backgroundColor: 'white'
-};
+interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number }
 
-const handle = style({
-    width: '100 %',
-    height: '20px',
-    backgroundColor: '#808080',
-    cursor: 'move',
-    padding: '0em'
-});
+const HarmonicStatsWidget = (props: Iprops) => {
 
-const closeButton = style({
-    background: 'firebrick',
-    color: 'white',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '20px',
-    height: '20px',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    padding: 0,
-    border: 0,
-    $nest: {
-        "&:hover": {
-            background: 'orangered'
-        }
-    }
-});
+    const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
 
-
-export default class HarmonicStats extends React.Component<any, any>{
-    props: { eventId: number, callback: Function, exportCallback: Function }
-    state: { rows: Array<Object>, header: Array<Object>, secondaryHeader: Array<Object>, exportData: any}
-    openSEEService: OpenSEEService;
-    constructor(props) {
-        super(props);
-        this.openSEEService = new OpenSEEService();
-        this.state = {
-            rows: [],
-            header: [],
-            secondaryHeader: [],
-            exportData: null
-        };
-    }
-    componentDidMount() {
+    React.useEffect(() => {
         ($("#harmonicstats") as any).draggable({ scroll: false, handle: '#harmonichandle', containment: '#chartpanel' });
-        this.openSEEService.getHarmonicStats(this.props.eventId).done(data => {
-            var headers = HeaderRow(data.map(x => x.Channel), this.props.exportCallback);
-            var secondaryHeader = SecondaryHeaderRow(data.map(x => x.Channel));
-            var jsons = data.map(x => JSON.parse(x.SpectralData));
-            var numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
-            var numChannels = data.length;
+    }, [props])
 
-            var rows = [];
+    React.useEffect(() => {
+        let handle = getData();
 
+        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
+    }, [props.eventId])
+
+    function getData(): JQuery.jqXHR {
+        let handle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${props.eventId}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
+
+        handle.done((data) => {
+            let rows = [];
+            rows.push(
+                <tr key='Header'>
+                    <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.exportCallback()}>Export</button></th>
+                    {data.map(key => <th colSpan={2} scope='colgroup' key={key.Channel}>{key.Channel}</th>)}
+                </tr>)
+
+            rows.push(
+                <tr key='SecondaryHeader'>
+                    <th>Harmonic</th>
+                    {data.map((item, index) => <><th key={index + 'Mag'}>Mag</th> <th key={index + 'Ang'}>Ang</th> </>)}
+                </tr>)
+
+
+            let numChannels = data.length;
+            let jsons = data.map(x => JSON.parse(x.SpectralData));
+            let numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
+                        
             for (var index = 1; index <= numHarmonics; ++index) {
-                var tds = [];
-                var label = 'H' + index
-                for (var j = 0; j < numChannels; ++j) {
-                    var key = data[j].Channel + label
+                let tds = [];
+                let label = 'H' + index
+                for (let j = 0; j < numChannels; ++j) {
+                    let key = data[j].Channel + label
                     if (jsons[j][label] != undefined) {
                         tds.push(<td key={key + 'Mag'}>{jsons[j][label].Magnitude.toFixed(2)}</td>);
                         tds.push(<td key={key + 'Ang'}>{jsons[j][label].Angle.toFixed(2)}</td>);
@@ -109,64 +83,38 @@ export default class HarmonicStats extends React.Component<any, any>{
                         tds.push(<td key={key + 'Ang'}></td>);
                     }
                 }
-                rows.push(Row({label: label, tds: tds}))
+                rows.push(
+                    <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={label}>
+                        <td>{label}</td>
+                        {tds}
+                    </tr>);
             }
-            this.setState({header: headers, secondaryHeader: secondaryHeader, rows: rows});
+            setTblData(rows);
         });
+
+        return handle;
     }
 
-    render() {
-
-        return (
-            <div id="harmonicstats" className="ui-widget-content" style={outerDiv}>
-                <div id="harmonichandle" className={handle}></div>
-                <div id="harmoniccontent" style={{ maxWidth: 1700 }}>
-                    <table className="table" style={{fontSize: 'large', marginBottom: 0}}>
-                        <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)'}}>
-                            {this.state.header}
-                            {this.state.secondaryHeader}
-                        </thead>
-                        <tbody style={{ fontSize: 'medium', height: 500, maxHeight: 500, overflowY: 'auto', display: 'block'}}>
-                            {this.state.rows}
-                        </tbody>
-                    </table>
-                </div>
-                <button className={closeButton} onClick={() => {
-                    this.props.callback({ statButtonText: "Show Stats" });
-                    $('#harmonicstats').hide();
-                }}>X</button>
+    return (
+        <div id="harmonicstats" className="ui-widget-content" style={outerDiv}>
+            <div id="harmonichandle" className={handle}></div>
+            <div id="harmoniccontent" style={{ maxWidth: 1700 }}>
+                <table className="table" style={{ fontSize: 'large', marginBottom: 0 }}>
+                    <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
+                        {tblData[0]}
+                        {tblData[1]}
+                    </thead>
+                    <tbody style={{ fontSize: 'medium', height: 500, maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                        {tblData.slice(2)}
+                    </tbody>
+                </table>
             </div>
-        );
-    }
-}
-
-const Row = (row) => {
-    return (
-        <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={row.label}>
-            <td>{row.label}</td>
-            {row.tds}
-        </tr>
+            <button className={closeButton} onClick={() => props.closeCallback()}>X</button>
+        </div>
     );
+
 }
 
-const HeaderRow = (row, callback) => {
-    return (
-        <tr key='Header'><th colSpan={1}><button className='btn btn-primary' style={{width: 75}}onClick={() => callback('harmonics')}>Export</button></th>
-            {row.map(key => <th colSpan={2} scope='colgroup' key={key}>{key}</th>)}
-        </tr>
-    );
-}
-const SecondaryHeaderRow = (row) => {
-    var tds = [];
-    $.each(row, (i, r) => {
-        tds.push(<th key={r.toString() + 'Mag'}>Mag</th>);
-        tds.push(<th key={r.toString() + 'Ang'}>Ang</th>);
-    });
-
-    return (
-        <tr key='SecondaryHeader'><th>Harmonic</th>{tds}</tr>
-    );
-}
-
+export default HarmonicStatsWidget;
 
 

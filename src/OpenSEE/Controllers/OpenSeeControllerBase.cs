@@ -322,11 +322,10 @@ namespace OpenSEE
 
             Task<DataGroup> dataGroupTask = new Task<DataGroup>(() =>
             {
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                {
-                    List<byte[]> data = ChannelData.DataFromEvent(eventID, connection);
+               
+                    List<byte[]> data = ChannelData.DataFromEvent(eventID, "dbOpenXDA");
                     return ToDataGroup(meter, data);
-                }
+                
             });
 
             if (s_memoryCache.Add(target, dataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
