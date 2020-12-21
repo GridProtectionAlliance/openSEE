@@ -238,14 +238,14 @@ const LineChart = (props: iProps) => {
 
         xScaleRef.current = d3.scaleLinear()
             .domain([startTime, endTime])
-            .range([20, props.width - 100]);
+            .range([20, props.width - 320]);
 
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
         svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 100) / 2) + " ," + (props.height - 20) + ")")
+            .attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel);
 
@@ -546,9 +546,9 @@ const LineChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 60) + ")");
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 100) / 2) + " ," + (props.height - 20) + ")")
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
-        xScaleRef.current.range([20, props.width - 100]);
+        xScaleRef.current.range([20, props.width - 320]);
         yScaleRef.current.range([props.height - 60, 0]);
 
         container.select(".clip").attr("height", props.height - 60)
