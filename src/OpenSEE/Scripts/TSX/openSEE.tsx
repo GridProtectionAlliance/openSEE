@@ -310,7 +310,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                             width={this.state.graphWidth}
                                             eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
                                             height={this.calculateHeights()}
-                                            timeLabel={"Time"}
+                                            timeLabel={"Harmonic"}
                                             type={item.DataType}
                                         />:<LineChart
                                         eventId={item.EventId}

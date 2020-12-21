@@ -167,8 +167,12 @@ const BarChart = (props: iProps) => {
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g").attr("fill", (d) => colors[d.Color])
-            .selectAll('rect').data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color } })).enter().append('rect')
+        container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g")
+            .classed("Bar", true)
+            .attr("fill", (d) => colors[d.Color])
+            .selectAll('rect')
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color } }))
+            .enter().append('rect')
             .attr("x", d => xScaleRef.current(d.data[0]))
             .attr("y", d => yScaleRef.current(d.data[1]))
             .attr("width", xScaleRef.current.bandwidth() - 1)
@@ -296,7 +300,7 @@ const BarChart = (props: iProps) => {
 
         container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
             .attr("x", d => xScaleRef.current(d.data[0]))
-            .attr("y", d => barGen(d.unit))
+            .attr("y", d => barGen(d.unit)(d))
             .attr("width", xScaleRef.current.bandwidth() - 1)
             .attr("height", d => { return ((props.height - 60) - barGen(d.unit)(d))})
       
@@ -407,12 +411,12 @@ const BarChart = (props: iProps) => {
 
     // This determines the active Units if "auto" is used
    
-    //This Function needs to be called whenever a item is selecetd or deselected in the Legend
+    //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
         //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
-        container.selectAll(".bar").data(barData).classed("active", (d, index) => enabledBar[index])
+        container.select(".DataContainer").selectAll(".Bar").data(barData).classed("active", (d, index) => enabledBar[index])
 
         container.select(".DataContainer").selectAll(".Bar.active").attr("opacity", 1.0);
 
