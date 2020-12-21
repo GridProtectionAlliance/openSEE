@@ -51,6 +51,7 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 //Thunk to Add Data
 const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[] }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+
     return Promise.resolve();
 })
 
@@ -172,7 +173,8 @@ export const DataReducer = createSlice({
         activeUnits: [] as OpenSee.IActiveUnits[],
         yLimits: [] as [number, number][],
         autoLimits: [] as boolean[],
-        selectedIndixes: [] as Array<number>[]
+        selectedIndixes: [] as Array<number>[],
+        fftLimits: [0,0]
     } as OpenSee.IDataState,
     reducers: {
         RemovePlot: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
@@ -230,9 +232,15 @@ export const DataReducer = createSlice({
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
-            if (state.autoLimits[index])
-                state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            if (state.plotKeys[index].DataType == 'FFT')
+                state.fftLimits = [Math.min(...state.data[index].map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...state.data[index].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
 
+            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
+                state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
+                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+
+           
             return state
         },
         UpdateTimeLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }> ) => {
@@ -246,7 +254,7 @@ export const DataReducer = createSlice({
             state.plotKeys 
                 .forEach((graph, index) => {
                     state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
-                    if (state.autoLimits[index])
+                    if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
                         state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                 });
             return state;
@@ -257,8 +265,11 @@ export const DataReducer = createSlice({
 
             action.payload.trace.forEach(i => state.enabled[index][i] = action.payload.enabled);
 
-            if (state.autoLimits[index])
+            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
                 state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
+                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+
             return state
         },
         SetHover: (state, action: PayloadAction<{ t: number, y: number, snap: boolean }>) => {
@@ -305,8 +316,10 @@ export const DataReducer = createSlice({
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
-            if (state.autoLimits[index])
+            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
                 state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
+                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
         },
         ClearSelectPoints: (state) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
@@ -329,7 +342,8 @@ export const DataReducer = createSlice({
         });
         builder.addCase(SetAnalytic.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg as OpenSee.graphType))
-            state.loading[index] = false
+            state.loading[index] = false;
+
             return state
         });
     }
@@ -347,6 +361,7 @@ export const selectData = (key: OpenSee.IGraphProps) => { return (state: OpenSee
 export const selectLoading = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.loading.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
 export const selectEnabled = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.enabled.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
 export const selectYLimits = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.yLimits.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
+export const selectFFTLimits = (state: OpenSee.IRootState) => state.Data.fftLimits;
 
 
 export const selectStartTime = (state: OpenSee.IRootState) => state.Data.startTime;
@@ -870,6 +885,18 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
             breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
             result.push(breakerRestrikeDataHandle);
             break
+        case ('FFT'):
+            let fftAnalyticDataHandle = $.ajax({
+                type: "GET",
+                url: `${homePath}api/Analytic/GetFFTData?eventId=${key.EventId}`,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
+            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            result.push(fftAnalyticDataHandle);
+            break
         default:
             return []
             break;
@@ -900,6 +927,7 @@ function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3Dat
     return [yMin, yMax];
     
 }
+
 
 //function that finds the index of a corrsponding t
 function getIndex(t: number, data: Array<[number, number]>): number {

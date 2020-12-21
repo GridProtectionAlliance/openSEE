@@ -86,7 +86,7 @@ const AnalyticOptions = (props: IProps) => {
                 <option value={'Unbalance'}> Unbalance </option>
                 <option value={'FaultDistance'}> Fault Distance </option>
                 <option value={'Restrike'}> Breaker Restrike </option>
-
+                <option value={'FFT'}> FFT </option>
             </select>
         </form>
         {analytic == "Harmonic" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
@@ -115,7 +115,7 @@ const AnalyticOptions = (props: IProps) => {
             </ul>
         </form> : null}
         {analytic == "LowPassFilter" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
                 <li>
                     <label> Order: <select value={lpf.toString()} onChange={(ev) => ChangeLPF(ev)}>
                         <option value='1'>1</option>
@@ -126,7 +126,7 @@ const AnalyticOptions = (props: IProps) => {
             </ul>
         </form> : null}
         {analytic == "Rectifier" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
                 <li>
                     <label> RC Time Const. (ms): <select value={trc.toString()} onChange={(ev) => ChangeTRC(ev)}>
                         <option value='0'>0</option>

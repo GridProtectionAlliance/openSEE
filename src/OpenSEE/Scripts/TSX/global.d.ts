@@ -146,9 +146,9 @@ export namespace OpenSee {
         selected: boolean;
     }
 
-    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike')
+    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT')
 
-    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike')
+    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT')
 
     type Tab = ("Info" | "Compare" | "Analytic")
 
@@ -326,7 +326,9 @@ export namespace OpenSee {
         activeUnits: IActiveUnits[],
         yLimits: [number, number][],
         autoLimits: boolean[],
-        selectedIndixes: Array<number>[]
+        selectedIndixes: Array<number>[],
+
+        fftLimits: [number, number],
     }
 
     interface IAnalyticStore {

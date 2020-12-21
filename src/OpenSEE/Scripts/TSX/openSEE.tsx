@@ -54,6 +54,7 @@ import { LoadSettings } from './Store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './Store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup, selecteventList } from './Store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
+import BarChart from './Graphs/BarChartBase';
 
 
 declare var homePath: string;
@@ -303,14 +304,22 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         {plotData[this.props.eventID] != undefined ?
                             <div className="card">
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {plotData[this.props.eventID].map(item => < LineChart
+                                    {plotData[this.props.eventID].map(item => (item.DataType == 'FFT' ?
+                                        <BarChart
+                                            eventId={item.EventId}
+                                            width={this.state.graphWidth}
+                                            eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                            height={this.calculateHeights()}
+                                            timeLabel={"Time"}
+                                            type={item.DataType}
+                                        />:<LineChart
                                         eventId={item.EventId}
                                         width={this.state.graphWidth}
                                         eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
                                         height={this.calculateHeights()}
                                         timeLabel={"Time"}
                                         type={item.DataType}
-                                    />)}
+                                    />))}
                                 </div>
                             </div> : null }
 
