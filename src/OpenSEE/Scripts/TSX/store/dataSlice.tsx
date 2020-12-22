@@ -78,9 +78,19 @@ export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: Ope
 export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, end: number }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }));
 
-    (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys
+    // FFT Limits get updated base on values not eventTime
+    let state = (thunkAPI.getState() as OpenSee.IRootState);
+    let fftIndex = state.Data.plotKeys.findIndex(item => item.DataType == 'FFT');
+    if (fftIndex > -1) {
+        let start = Math.min(...state.Data.data[fftIndex].map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
+        let end = Math.max(...state.Data.data[fftIndex].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
+
+        thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end, baseUnits: state.Settings.Units }));
+    }
+
+    state.Data.plotKeys
         .forEach((graph) => {
-            thunkAPI.dispatch(DataReducer.actions.UpdateYLimit({key: { DataType: graph.DataType, EventId: graph.EventId }, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }));
+            thunkAPI.dispatch(DataReducer.actions.UpdateYLimit({ key: { DataType: graph.DataType, EventId: graph.EventId }, baseUnits: state.Settings.Units }));
         });
     return Promise.resolve();
 })
@@ -181,7 +191,7 @@ export const DataReducer = createSlice({
         yLimits: [] as [number, number][],
         autoLimits: [] as boolean[],
         selectedIndixes: [] as Array<number>[],
-        fftLimits: [0,0]
+        fftLimits: [0, 0],
     } as OpenSee.IDataState,
     reducers: {
         RemovePlot: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
@@ -370,6 +380,14 @@ export const DataReducer = createSlice({
 
             return state
         });
+        builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
+            let index = state.plotKeys.findIndex(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
+
+            state.loading[index] = false;
+
+            return state
+        });
+
     }
 
 });
@@ -912,7 +930,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('FFT'):
             let fftAnalyticDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetFFTData?eventId=${key.EventId}`,
+                url: `${homePath}api/Analytic/GetFFTData?eventId=${key.EventId}&cycles=${options.FFTCycles}&startDate=${options.FFTStartTime}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,

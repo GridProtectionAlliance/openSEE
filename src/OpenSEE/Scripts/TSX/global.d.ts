@@ -336,6 +336,8 @@ export namespace OpenSee {
         LPFOrder: number,
         HPFOrder: number,
         Trc: number,
+        FFTCycles: number,
+        FFTStartTime: number,
     }
 
     interface IEventStore {

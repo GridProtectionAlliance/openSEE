@@ -55,6 +55,7 @@ import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup, selecteventList } from './Store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
+import { SetFFTWindow } from './Store/analyticSlice';
 
 
 declare var homePath: string;
@@ -172,6 +173,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                 eventData: data,
                 lookup: data.nextBackLookup
             });
+            store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
 
         });
     }

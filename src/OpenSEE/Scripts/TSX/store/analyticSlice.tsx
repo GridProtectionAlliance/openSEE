@@ -49,6 +49,13 @@ export const SetTrc = createAsyncThunk('Analytic/SetTrc', (arg: number, thunkAPI
     thunkAPI.dispatch(UpdateAnalyticPlot());
     return Promise.resolve();
 })
+
+export const SetFFTWindow = createAsyncThunk('Analytic/SetFFTWindow', (arg: { startTime: number, cycle: number }, thunkAPI) => {
+    thunkAPI.dispatch(AnalyticReducer.actions.updateFFTWindow(arg));
+    thunkAPI.dispatch(UpdateAnalyticPlot());
+    return Promise.resolve();
+})
+
 // #endregion
 
 export const AnalyticReducer = createSlice({
@@ -58,6 +65,8 @@ export const AnalyticReducer = createSlice({
         LPFOrder: 2,
         HPFOrder: 2,
         Trc: 500,
+        FFTCycles: 1,
+        FFTStartTime: 0,
     } as OpenSee.IAnalyticStore,
     reducers: {
         updateHarmonic: (state, action: PayloadAction<number>) => {
@@ -74,6 +83,11 @@ export const AnalyticReducer = createSlice({
         },
         updateTrc: (state, action: PayloadAction<number>) => {
             state.Trc = action.payload;
+            return state;
+        },
+        updateFFTWindow: (state, action: PayloadAction<{ startTime: number, cycle: number }>) => {
+            state.FFTStartTime = action.payload.startTime;
+            state.FFTCycles = action.payload.cycle;
             return state;
         },
     },
@@ -94,6 +108,37 @@ export const selectHarmonic = (state: OpenSee.IRootState) => state.Analytic.Harm
 export const selectTRC = (state: OpenSee.IRootState) => state.Analytic.Trc;
 export const selectLPF = (state: OpenSee.IRootState) => state.Analytic.LPFOrder;
 export const selectHPF = (state: OpenSee.IRootState) => state.Analytic.HPFOrder;
+export const selectCycles = (state: OpenSee.IRootState) => state.Analytic.FFTCycles;
+export const selectFFTWindow = createSelector((state: OpenSee.IRootState) => state.Analytic.FFTCycles, (state: OpenSee.IRootState) => state.Analytic.FFTStartTime,
+    (cycle, startTime) => {
+        return [startTime, startTime + (cycle * 1 / 60.0 * 1000.0)]
+    });
+
+export const selectShowFFTWindow = createSelector((state: OpenSee.IRootState) => state.Data.Analytic, (analytic) => analytic == "FFT");
+
+export const selectAnalyticOptions = (key: OpenSee.graphType) => {
+    return createSelector(
+        (state: OpenSee.IRootState) => state.Analytic.Harmonic,
+        (state: OpenSee.IRootState) => state.Analytic.LPFOrder,
+        (state: OpenSee.IRootState) => state.Analytic.HPFOrder,
+        (state: OpenSee.IRootState) => state.Analytic.Trc,
+        (state: OpenSee.IRootState) => state.Analytic.FFTStartTime,
+        (state: OpenSee.IRootState) => state.Analytic.FFTCycles,
+        (harmonic, lpf, hpf, Trc, fftStart, fftCycle) => {
+            if (key == 'LowPassFilter')
+                return [lpf];
+            if (key == 'HighPassFilter')
+                return [hpf];
+            if (key == 'Harmonic')
+                return [harmonic];
+            if (key == 'Rectifier')
+                return [Trc];
+            if (key == 'FFT')
+                return [fftCycle, fftStart];
+            return [];
+        });
+}
+
 // #endregion
 
 // #region [ Async Functions ]

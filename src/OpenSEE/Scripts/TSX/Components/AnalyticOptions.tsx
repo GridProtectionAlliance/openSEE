@@ -28,7 +28,7 @@ import { clone } from 'lodash';
 import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
 import { selectAnalytic, SetAnalytic } from '../Store/dataSlice';
-import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc } from '../Store/analyticSlice';
+import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc, selectCycles, selectFFTWindow, SetFFTWindow } from '../Store/analyticSlice';
 
 declare var cycles: number;
 declare var samplesPerCycle: number;
@@ -43,6 +43,8 @@ const AnalyticOptions = (props: IProps) => {
     const hpf = useSelector(selectHPF)
     const lpf = useSelector(selectLPF)
     const trc = useSelector(selectTRC)
+    const cycles = useSelector(selectCycles);
+    const FFTWindow = useSelector(selectFFTWindow);
 
     function ChangeAnalytic(event) {
         let val = event.target.value as OpenSee.Analytic;
@@ -63,6 +65,10 @@ const AnalyticOptions = (props: IProps) => {
     function ChangeTRC(event) {
         let val = event.target.value as OpenSee.Analytic;
         dispatch(SetTrc(parseInt(val)));
+    }
+    function ChangeCycles(event) {
+        let val = event.target.value as OpenSee.Analytic;
+        dispatch(SetFFTWindow({ cycle: parseInt(val), startTime: FFTWindow[0] }));
     }
 
     return <div style={{ marginTop: '10px', width: '100%', height: '100%' }}>
@@ -92,7 +98,7 @@ const AnalyticOptions = (props: IProps) => {
         {analytic == "Harmonic" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
             <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
                 <li>
-                    <label> Cycles: <select value={harmonic.toString()} onChange={(ev) => ChangeHarmonic(ev)}>
+                    <label> Harmonic: <select value={harmonic.toString()} onChange={(ev) => ChangeHarmonic(ev)}>
                         <option value='1'>1</option>
                         <option value='2'>2</option>
                         <option value='3'>3</option>
@@ -104,7 +110,7 @@ const AnalyticOptions = (props: IProps) => {
         </form> : null}
 
         {analytic == "HighPassFilter" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
                 <li>
                     <label> Order: <select value={hpf.toString()} onChange={(ev) => ChangeHPF(ev)}>
                         <option value='1'>1</option>
@@ -133,6 +139,19 @@ const AnalyticOptions = (props: IProps) => {
                         <option value='100'>100</option>
                         <option value='200'>200</option>
                         <option value='500'>500</option>
+                    </select></label>
+                </li>
+            </ul>
+        </form> : null}
+        {analytic == "FFT" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
+                <li>
+                    <label> Cycles: <select value={cycles.toString()} onChange={(ev) => ChangeCycles(ev)}>
+                        <option value='1'>1</option>
+                        <option value='2'>2</option>
+                        <option value='3'>3</option>
+                        <option value='4'>4</option>
+                        <option value='5'>5</option>
                     </select></label>
                 </li>
             </ul>

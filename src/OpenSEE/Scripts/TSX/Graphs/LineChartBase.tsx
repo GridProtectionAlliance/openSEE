@@ -33,6 +33,7 @@ import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../Store/dataSlice';
+import { selectAnalyticOptions, selectFFTWindow, selectShowFFTWindow } from '../Store/analyticSlice';
 
 
 
@@ -62,7 +63,8 @@ interface iProps {
 const LineChart = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId };
     const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
-
+    const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
+    
     const xScaleRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
 
@@ -91,9 +93,11 @@ const LineChart = (props: iProps) => {
     const mouseMode = useSelector(selectMouseMode);
     const zoomMode = useSelector(selectZoomMode);
 
+    const fftWindow = useSelector(selectFFTWindow);
+    const showFFT = useSelector(selectShowFFTWindow);
 
     const hover = useSelector(selectHover);
-
+    const options = useSelector(selectAnalyticOptionInstance);
     const dispatch = useDispatch();
 
     //Effect to update the Data 
@@ -170,6 +174,10 @@ const LineChart = (props: iProps) => {
         updateColors();
     }, [colors])
 
+    React.useEffect(() => {
+        updateFFTWindow()
+    }, [fftWindow, showFFT])
+
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove();
@@ -185,7 +193,7 @@ const LineChart = (props: iProps) => {
 
         return () => {}
       
-    }, [props.type, props.eventId]);
+    }, [props.type, props.eventId, options]);
 
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
@@ -285,6 +293,14 @@ const LineChart = (props: iProps) => {
             .attr("fill", "black")
             .style("opacity", 0);
 
+        // Window Indicating fft 
+        if (props.type == 'Voltage' || props.type == 'Current')
+            svg.append("rect").classed("fftWindow", true)
+                .attr("stroke", "#000")
+                .attr("x", 10).attr("width", 0)
+                .attr("y", 0).attr("height", props.height - 60)
+                .attr("fill", "black")
+                .style("opacity", 0.5);
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
@@ -404,6 +420,7 @@ const LineChart = (props: iProps) => {
             })
 
         updateLabels();
+        updateFFTWindow();
     }
 
     function MouseMove() {
@@ -474,6 +491,19 @@ const LineChart = (props: iProps) => {
 
         if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
+    }
+
+    function updateFFTWindow() {
+        if (props.type != 'Voltage' && props.type != 'Current')
+            return;
+
+        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        if (xScaleRef.current == undefined || yScaleRef.current == undefined)
+            return;
+
+        container.select(".fftWindow")
+            .attr("x", xScaleRef.current(fftWindow[0])).attr("width", xScaleRef.current(fftWindow[1]) - xScaleRef.current(fftWindow[0]))
+            .style("opacity", (showFFT? 0.5: 0))
     }
 
     function MouseOut() {
@@ -553,7 +583,7 @@ const LineChart = (props: iProps) => {
 
         container.select(".clip").attr("height", props.height - 60)
         container.select(".toolTip").attr("y2", props.height - 60)
-
+        container.select(".fftwindow").attr("y", 0).attr("height", props.height - 60)
     }
     
     return (

@@ -31,6 +31,7 @@ import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../Store/dataSlice';
+import { selectAnalyticOptions } from '../Store/analyticSlice';
 
 
 
@@ -60,6 +61,7 @@ interface iProps {
 const BarChart = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId };
     const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
+    const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
 
     const xScaleRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
@@ -85,6 +87,7 @@ const BarChart = (props: iProps) => {
 
     const dispatch = useDispatch();
     const yLimits = useSelector(selectYLimits(dataKey));
+    const options = useSelector(selectAnalyticOptionInstance)
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
 
@@ -174,7 +177,7 @@ const BarChart = (props: iProps) => {
 
         return () => {}
       
-    }, [props.type, props.eventId]);
+    }, [props.type, props.eventId, options]);
 
 
 
@@ -219,7 +222,7 @@ const BarChart = (props: iProps) => {
             .padding(0.1);
 
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).ticks(15));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
