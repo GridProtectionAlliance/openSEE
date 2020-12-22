@@ -30,7 +30,7 @@ import { OpenSee } from '../global';
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectFFTLimits } from '../Store/dataSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../Store/dataSlice';
 
 
 
@@ -141,6 +141,19 @@ const BarChart = (props: iProps) => {
         }
     }, [xLimits])
 
+    React.useEffect(() => { updateHover(); }, [hover]);
+
+    React.useEffect(() => {
+        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x")
+            dispatch(SetFFTLimits({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
+            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy") {
+            dispatch(SetFFTLimits({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
+        }
+    }, [mouseDown])
+
 
     React.useEffect(() => {
         updateColors();
@@ -162,6 +175,8 @@ const BarChart = (props: iProps) => {
         return () => {}
       
     }, [props.type, props.eventId]);
+
+
 
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
@@ -222,11 +237,11 @@ const BarChart = (props: iProps) => {
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
 
         //Add ToolTip
-        svg.append("line").classed("toolTip", true)
-            .attr("stroke", "#000")
-            .attr("x1", 10).attr("x2", 10)
-            .attr("y1", 0).attr("y2", props.height - 60)
-            .style("opacity", 0.5);
+        //svg.append("line").classed("toolTip", true)
+        //    .attr("stroke", "#000")
+        //    .attr("x1", 10).attr("x2", 10)
+        //    .attr("y1", 0).attr("y2", props.height - 60)
+        //    .style("opacity", 0.5);
 
 
         //Add Clip Path
@@ -312,7 +327,7 @@ const BarChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         let x0 = d3.mouse(container.select(".Overlay").node())[0];
         let y0 = d3.mouse(container.select(".Overlay").node())[1];
-        let t0 = 0//(xScaleRef.current as any).invert(x0);
+        let t0 = getXbucket(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
         setHover([t0,d0])
     }
@@ -322,7 +337,7 @@ const BarChart = (props: iProps) => {
         let x0 = d3.mouse(container.select(".Overlay").node())[0];
         let y0 = d3.mouse(container.select(".Overlay").node())[1];
 
-        let t0 = 0//(xScaleRef.current as any).invert(x0);
+        let t0 = getXbucket(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
 
         setMouseDown(true);
@@ -333,18 +348,23 @@ const BarChart = (props: iProps) => {
     function MouseUp() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         setMouseDown(false);
-        container.select(".zoomWindow").style("opacity", 0)
+        container.select(".zoomWindow").style("opacity", 0);
+
+    }
+
+    function getXbucket(pixel: number) {
+        let eachBand = xScaleRef.current.step();
+
+        let index = Math.floor((pixel / eachBand));
+        if (index == xScaleRef.current.domain().length)
+            index = index - 1
+        return xScaleRef.current.domain()[index];
     }
 
     // This function needs to be called if hover is updated
-    /*function updateHover() {
+    function updateHover() {
         
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        if (xScaleRef.current == undefined || yScaleRef.current == undefined)
-            return;
-
-        container.select(".toolTip").attr("x1", xScaleRef.current(hover[0]))
-            .attr("x2", xScaleRef.current(hover[0]));
 
         if (mouseMode == 'zoom' && mouseDown) {
             if (zoomMode == "x")
@@ -355,8 +375,8 @@ const BarChart = (props: iProps) => {
                     .attr("y", 0)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(startTime))
-                    .attr("width", (xScaleRef.current as any)(endTime) - (xScaleRef.current as any)(startTime))
+                    .attr("x", (xScaleRef.current as any)(xLimits[0]))
+                    .attr("width", (xScaleRef.current as any)(xLimits[1]) - (xScaleRef.current as any)(xLimits[0]))
                     .attr("height", Math.abs((yScaleRef.current as any)(pointMouse[1]) - (yScaleRef.current as any)(hover[1])))
                     .attr("y", Math.min((yScaleRef.current as any)(pointMouse[1]), (yScaleRef.current as any)(hover[1])))
             else if (zoomMode == "xy")
@@ -370,11 +390,11 @@ const BarChart = (props: iProps) => {
         let deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy")
-            dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
+            dispatch(SetFFTLimits({ start: (xLimits[0] - deltaT), end: (xLimits[1] - deltaT) }));
 
         if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
-    }*/
+    }
 
     function MouseOut() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);

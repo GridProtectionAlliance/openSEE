@@ -61,6 +61,13 @@ export const SetTimeLimit = createAsyncThunk('Data/setTimeLimit', (arg: { start:
     return Promise.resolve();
 })
 
+//Thunk to update FFT Limits
+export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start: number, end: number }, thunkAPI) => {
+    thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    return Promise.resolve();
+})
+
+
 //Thunk to Enable or Disable Trace
 export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
@@ -256,6 +263,23 @@ export const DataReducer = createSlice({
                     state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
                     if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
                         state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                });
+            return state;
+
+        },
+        UpdateFFTLimits: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }>) => {
+            if (Math.abs(action.payload.start - action.payload.end) < 5)
+                return state;
+
+            state.fftLimits = [action.payload.start, action.payload.end];
+
+            //Update All Units and limits
+            state.plotKeys
+                .forEach((graph, index) => {
+                    if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT') {
+                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
+                        state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                    }
                 });
             return state;
 
