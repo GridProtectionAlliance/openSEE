@@ -222,7 +222,8 @@ const BarChart = (props: iProps) => {
             .padding(0.1);
 
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).ticks(15));
+    
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).tickValues(GetTicks()));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
@@ -295,17 +296,28 @@ const BarChart = (props: iProps) => {
 
         if (h > 10)
             return d.toFixed(1)
-        else
+        if (h > 1)
             return d.toFixed(2)
+        else
+            return d.toFixed(3)
 
     }
 
+    function GetTicks(): number[] {
+        let ticks = xScaleRef.current.domain();
+        if (ticks.length < 15)
+            return ticks;
+        let n = Math.floor(ticks.length/15)
+        ticks = ticks.filter((d, i) => i % n == 0);
+        return ticks;
+
+    }
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
         container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        container.select(".xAxis").call(d3.axisBottom(xScaleRef.current));
+        container.select(".xAxis").call(d3.axisBottom(xScaleRef.current).tickValues(GetTicks()));
 
         let barGen = (unit: OpenSee.Unit) => {
             //Determine Factors
@@ -320,7 +332,7 @@ const BarChart = (props: iProps) => {
             .attr("x", d => xScaleRef.current(d.data[0]))
             .attr("y", d => barGen(d.unit)(d))
             .attr("width", xScaleRef.current.bandwidth() - 1)
-            .attr("height", d => { return ((props.height - 60) - barGen(d.unit)(d))})
+            .attr("height", d => { return Math.max(((props.height - 60) - barGen(d.unit)(d)),0)})
       
         updateLabels();
     }
@@ -395,6 +407,7 @@ const BarChart = (props: iProps) => {
         if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy")
             dispatch(SetFFTLimits({ start: (xLimits[0] - deltaT), end: (xLimits[1] - deltaT) }));
 
+        
         if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
     }
@@ -441,9 +454,9 @@ const BarChart = (props: iProps) => {
         //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
         container.select(".DataContainer").selectAll(".Bar").data(barData).classed("active", (d, index) => enabledBar[index])
 
-        container.select(".DataContainer").selectAll(".Bar.active").attr("opacity", 1.0);
+        container.select(".DataContainer").selectAll(".Bar.active").style("opacity", 1.0);
 
-        container.select(".DataContainer").selectAll(".Bar:not(.active)").attr("opacity", 0);
+        container.select(".DataContainer").selectAll(".Bar:not(.active)").style("opacity", 0);
 
     }
 

@@ -296,7 +296,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <OpenSeeNavBar
                         EventData={this.state.eventData} Lookup={this.state.lookup} 
                         navigation={this.state.navigation}
-                        
+                        stateSetter={this.setState}
                         displayAnalogs={this.state.displayAnalogs}
                         displayCur={this.state.displayCur} displayDigitals={this.state.displayDigitals} displayTCE={this.state.displayTCE}
                         displayVolt={this.state.displayVolt} />

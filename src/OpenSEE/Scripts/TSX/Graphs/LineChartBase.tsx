@@ -32,8 +32,8 @@ import duration from "moment"
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../Store/dataSlice';
-import { selectAnalyticOptions, selectFFTWindow, selectShowFFTWindow } from '../Store/analyticSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, SetFFTLimits } from '../Store/dataSlice';
+import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../Store/analyticSlice';
 
 
 
@@ -98,6 +98,8 @@ const LineChart = (props: iProps) => {
 
     const hover = useSelector(selectHover);
     const options = useSelector(selectAnalyticOptionInstance);
+    const fftCycles = useSelector(selectCycles);
+    const [oldFFTWindow, setOldFFTWindow] = React.useState<[number,number]>([0, 0]);
     const dispatch = useDispatch();
 
     //Effect to update the Data 
@@ -444,6 +446,7 @@ const LineChart = (props: iProps) => {
         setMouseDown(true);
         setPointMouse([t0, d0]);
         dispatch(SelectPoint([t0, d0]));
+        setOldFFTWindow(() => { return fftWindow });
 
     }
 
@@ -491,6 +494,17 @@ const LineChart = (props: iProps) => {
 
         if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
+
+        deltaT = pointMouse[0] - oldFFTWindow[0];
+        deltaData = oldFFTWindow[1] - oldFFTWindow[0];
+
+        if (mouseMode == 'fftMove' && mouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
+            let Tstart = (hover[0] - deltaT);
+            Tstart = (Tstart < xScaleRef.current.domain()[0]? xScaleRef.current.domain()[0] : Tstart)
+            Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
+
+            dispatch(SetFFTWindow({ startTime: Tstart, cycle: fftCycles }));
+        }
     }
 
     function updateFFTWindow() {

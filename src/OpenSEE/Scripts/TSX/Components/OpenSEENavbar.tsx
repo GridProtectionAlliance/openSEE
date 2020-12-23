@@ -36,7 +36,7 @@ import { OpenSee } from '../global';
 import { clone } from 'lodash';
 import SettingsWidget from '../jQueryUI Widgets/SettingWindow';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID } from '../Store/dataSlice';
+import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../Store/dataSlice';
 
 
 declare var homePath: string;
@@ -52,13 +52,14 @@ interface IProps {
     displayTCE: boolean,
     displayDigitals: boolean,
     displayAnalogs: boolean,
-
+    stateSetter: (ob: any) => void
 }
 const OpenSeeNavBar = (props: IProps) => {
     const dispatch = useDispatch()
     const mouseMode = useSelector(selectMouseMode);
     const zoomMode = useSelector(selectZoomMode);
     const eventId = useSelector(selectEventID);
+    const analytic = useSelector(selectAnalytic);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
     const [showToolTip, setShowToolTip] = React.useState<boolean>(false);
@@ -168,7 +169,10 @@ const OpenSeeNavBar = (props: IProps) => {
 
     }, [showSettings])
 
-    
+    React.useEffect(() => {
+        if (mouseMode == 'fftMove' && analytic != 'FFT')
+            dispatch(SetMouseMode('zoom'));
+    },[analytic])
 
     function exportData(type) {
         window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
@@ -213,10 +217,10 @@ const OpenSeeNavBar = (props: IProps) => {
 
                         </div>
                     </li>
-                    <li className="nav-item" style={{ width: 'calc(100% - 741px)', textAlign: 'center' }}>
+                    <li className="nav-item" style={{ width:  (analytic == 'FFT' ? 'calc(100% - 786)': 'calc(100% - 741px)'), textAlign: 'center' }}>
 
                     </li>
-                    <li className="nav-item" style={{ width: '123px' }}>
+                    <li className="nav-item" style={{ width: (analytic == 'FFT' ? '168px' : '123px') }}>
                         <div className="btn-group" role="group">
                             <button type="button" className={"btn btn-primary " + (mouseMode == "zoom" ? "active" : "")} onClick={() => dispatch(SetMouseMode("zoom"))}
                                 data-toggle="tooltip" data-placement="bottom" title="Zoom">
@@ -226,6 +230,10 @@ const OpenSeeNavBar = (props: IProps) => {
                                 data-toggle="tooltip" data-placement="bottom" title="Pan">
                                 <i className="fa fa-arrows" ></i>
                             </button>
+                            {analytic == 'FFT'? <button type="button" className={"btn btn-primary " + (mouseMode == "fftMove" ? "active" : "")} onClick={() => dispatch(SetMouseMode("fftMove"))}
+                                data-toggle="tooltip" data-placement="bottom" title="FFT">
+                                <i className="fa fa-bar-chart" ></i>
+                            </button> : null}
                         </div>
                     </li>
 
@@ -266,7 +274,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                     {(props.navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item1 != null ? "?eventid=" + props.Lookup.Meter.m_Item1.ID + "&navigation=meter" : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (props.Lookup.Meter.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.Meter.m_Item1 != null ? props.Lookup.Meter.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
                                     {(props.navigation == "asset" ? <a href={(props.Lookup.Line.m_Item1 != null ? "?eventid=" + props.Lookup.Line.m_Item1.ID + "&navigation=asset" : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (props.Lookup.Line.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
                                 </div>
-                                <select id="next-back-selection" value={props.navigation} onChange={(e) => this.props.stateSetter({ navigation: e.target.value })}>
+                                <select id="next-back-selection" value={props.navigation} onChange={(e) => props.stateSetter({ navigation: e.target.value })}>
                                     <option value="system">System</option>
                                     <option value="station">Station</option>
                                     <option value="meter">Meter</option>

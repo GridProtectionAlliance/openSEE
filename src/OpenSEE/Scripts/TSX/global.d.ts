@@ -155,7 +155,7 @@ export namespace OpenSee {
     interface iAnalyticParamters { harmonic: number, order: number, tRC: number, fftWindow: number }
 
 
-    type MouseMode = ("zoom" | "select" | 'pan'| 'none')
+    type MouseMode = ("zoom" | "select" | 'pan'| 'none' | 'fftMove')
     type ZoomMode = ("x" | "y" | 'xy')
 
    

@@ -20,10 +20,10 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, createAsyncThunk, ThunkDispatch, createSelector, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _, { cloneDeep, uniq, findIndex } from 'lodash';
-import { selectColor, selectUnit } from './settingSlice';
+import _, {  uniq } from 'lodash';
+import {  selectUnit } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 
 declare var eventID: number;
