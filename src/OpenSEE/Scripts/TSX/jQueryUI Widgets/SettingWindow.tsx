@@ -217,7 +217,7 @@ const PlotCard = (props: OpenSee.IGraphProps) => {
                     <div className="collumn" style={{ width: '50%' }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Units:</legend>
-                            <UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} />
+                            {props.DataType != 'FFT'?  < UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} /> : null}
                             {unitSettings}
                         </fieldset>
                     </div>
