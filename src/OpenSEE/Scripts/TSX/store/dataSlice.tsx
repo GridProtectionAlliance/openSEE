@@ -29,12 +29,13 @@ import { LoadOverlappingEvents } from './eventSlice';
 declare var eventID: number;
 declare var analyticHandle;
 
+interface IExtendedKey extends OpenSee.IGraphProps { key?: string }
 // #region [ Thunks ]
 
 //Thunk to Create Plot
 export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
 
-    thunkAPI.dispatch(DataReducer.actions.AddKey(arg));
+    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...arg, key: thunkAPI.requestId }));
 
     let index = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.findIndex(item => item.DataType == arg.DataType && item.EventId == arg.EventId)
 
@@ -43,14 +44,15 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 
     thunkAPI.dispatch(DataReducer.actions.SetLoading(arg));
 
-    let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic);
+    let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
 
     return await Promise.all(handles);
 })
 
 //Thunk to Add Data
-const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[] }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string }, thunkAPI) => {
+
+    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID:arg. requestID }))
 
     return Promise.resolve();
 })
@@ -135,10 +137,10 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
         return Promise.resolve();
 
     //Add current Analytic
-    thunkAPI.dispatch(DataReducer.actions.AddKey({ DataType: arg as OpenSee.graphType, EventId: eventId }));
+    thunkAPI.dispatch(DataReducer.actions.AddKey({ DataType: arg as OpenSee.graphType, EventId: eventId, key: thunkAPI.requestId }));
     thunkAPI.dispatch(DataReducer.actions.SetLoading({ DataType: arg as OpenSee.graphType, EventId: eventId }));
 
-    let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic);
+    let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
     analyticHandle = handles[0];
 
     return await Promise.all(handles);
@@ -154,7 +156,7 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, 
     let key = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys[index];
 
     //Remove existing Data
-    thunkAPI.dispatch(DataReducer.actions.AddKey(key));
+    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...key, key: thunkAPI.requestId }));
 
     // Cancel any current Analytic in progress
     if (analyticHandle != undefined && analyticHandle.Abort != undefined)
@@ -162,7 +164,7 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, 
 
     thunkAPI.dispatch(DataReducer.actions.SetLoading(key));
 
-    let handles = getData(key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic);
+    let handles = getData(key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId );
     analyticHandle = handles[0];
 
     return await Promise.all(handles);
@@ -177,14 +179,15 @@ export const DataReducer = createSlice({
     initialState: {
         startTime: 0 as number,
         endTime: 0 as number,
-        hover: [0,0] as number[],
+        hover: [0, 0] as number[],
         mouseMode: 'none' as OpenSee.MouseMode,
         zoomMode: 'x' as OpenSee.ZoomMode,
         eventID: eventID as number,
         Analytic: 'none' as OpenSee.Analytic,
 
-        plotKeys:[] as  OpenSee.IGraphProps[],
+        plotKeys: [] as OpenSee.IGraphProps[],
         data: [] as Array<OpenSee.iD3DataSeries>[],
+        activeRequest: [] as string[],
         enabled: [] as Array<boolean>[],
         loading: [] as boolean[],
         activeUnits: [] as OpenSee.IActiveUnits[],
@@ -205,6 +208,7 @@ export const DataReducer = createSlice({
                 state.yLimits.splice(index, 1);
                 state.autoLimits.splice(index, 1);
                 state.selectedIndixes.splice(index, 1);
+                state.activeRequest.splice(index, 1);
             }
         },
         UpdateEventId: (state, action: PayloadAction<number>) => {
@@ -219,12 +223,13 @@ export const DataReducer = createSlice({
             state.Analytic = action.payload;
             return state;
         },
-        AddKey: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
+        AddKey: (state, action: PayloadAction<IExtendedKey>) => {
 
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId)
             if (index > -1) {
                 state.data[index] = [];
                 state.selectedIndixes[index] = [];
+                state.activeRequest[index] = (action.payload.key == null ? '' : action.payload.key)
                 return state;
             }
 
@@ -238,11 +243,14 @@ export const DataReducer = createSlice({
             state.yLimits.push([0, 1]);
             state.autoLimits.push(true);
             state.selectedIndixes.push([]);
-            
+            state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection }>) => {
+        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
+
+            if (state.activeRequest[index] != action.payload.requestID)
+                return state;
 
             state.data[index] = [...state.data[index], ...action.payload.data]
             state.enabled[index] = [...state.enabled[index], ...action.payload.data.map(item => true)]
@@ -363,6 +371,7 @@ export const DataReducer = createSlice({
         }
     },
     extraReducers: (builder) => {
+
         builder.addCase(AddPlot.pending, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.meta.arg.DataType && item.EventId == action.meta.arg.EventId)
             if (index > -1)
@@ -380,6 +389,7 @@ export const DataReducer = createSlice({
 
             return state
         });
+
         builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
 
@@ -630,7 +640,7 @@ export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state
 // #region [ Async Functions ]
 
 //This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
-function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore): Array<JQuery.jqXHR<any>> {
+function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore, requestID: string): Array<JQuery.jqXHR<any>> {
     let result = [];
     switch (key.DataType) {
 
@@ -657,8 +667,8 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            handleFreq.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
-            handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            handleFreq.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
 
             result.push(handleFreq);
             result.push(handlePOW);
@@ -673,7 +683,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            breakerAnalogsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            breakerAnalogsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(breakerAnalogsDataHandle);
             break;
         case ('Digitals'):
@@ -686,7 +696,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            breakerDigitalsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            breakerDigitalsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(breakerDigitalsDataHandle);
             break;
         case ('TripCoil'):
@@ -701,7 +711,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            waveformTCEDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            waveformTCEDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(waveformTCEDataHandle);
             break;
         case ('FirstDerivative'):
@@ -713,7 +723,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            derivativeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            derivativeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(derivativeDataHandle);
             break
         case ('ClippedWaveforms'):
@@ -725,7 +735,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            clippedWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            clippedWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(clippedWaveformDataHandle);
             break
         case ('Frequency'):
@@ -737,7 +747,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            freqencyAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            freqencyAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(freqencyAnalyticDataHandle);
             break
         case ('HighPassFilter'):
@@ -750,7 +760,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            highPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            highPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(highPassFilterDataHandle);
             break
         case ('LowPassFilter'):
@@ -763,7 +773,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            lowPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            lowPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(lowPassFilterDataHandle);
             break
 
@@ -777,7 +787,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            impedanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            impedanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(impedanceDataHandle);
             break
         case ('Power'):
@@ -789,7 +799,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            powerDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            powerDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(powerDataHandle);
             break
         case ('MissingVoltage'):
@@ -801,7 +811,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            missingVoltageDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            missingVoltageDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(missingVoltageDataHandle);
             break
         case ('OverlappingWave'):
@@ -814,7 +824,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            overlappingWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            overlappingWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(overlappingWaveformDataHandle);
             break
         case ('Rectifier'):
@@ -827,7 +837,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            rectifierDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            rectifierDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(rectifierDataHandle);
             break
         case ('RapidVoltage'):
@@ -839,7 +849,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            rapidVoltageChangeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            rapidVoltageChangeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(rapidVoltageChangeDataHandle);
             break
         case ('RemoveCurrent'):
@@ -851,7 +861,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            removeCurrentDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            removeCurrentDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(removeCurrentDataHandle);
             break
         case ('Harmonic'):
@@ -864,7 +874,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            specifiedHarmonicDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            specifiedHarmonicDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(specifiedHarmonicDataHandle);
             break
         case ('SymetricComp'):
@@ -876,7 +886,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            symmetricalComponentsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            symmetricalComponentsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(symmetricalComponentsDataHandle);
             break
         case ('THD'):
@@ -888,7 +898,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            thdDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            thdDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(thdDataHandle);
             break
         case ('Unbalance'):
@@ -900,7 +910,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            unbalanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            unbalanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(unbalanceDataHandle);
             break
         case ('FaultDistance'):
@@ -912,7 +922,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            faultDistanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            faultDistanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(faultDistanceDataHandle);
             break
         case ('Restrike'):
@@ -924,7 +934,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(breakerRestrikeDataHandle);
             break
         case ('FFT'):
@@ -936,7 +946,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data })) })
+            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
             result.push(fftAnalyticDataHandle);
             break
         default:

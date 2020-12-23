@@ -323,6 +323,7 @@ export namespace OpenSee {
         data: Array<OpenSee.iD3DataSeries>[],
         enabled: Array<boolean>[],
         loading: boolean[],
+        activeRequest: string[]
         activeUnits: IActiveUnits[],
         yLimits: [number, number][],
         autoLimits: boolean[],
