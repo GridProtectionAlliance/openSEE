@@ -86,13 +86,24 @@ export default SettingsReducer.reducer;
 export const selectColor = (state: OpenSee.IRootState) => state.Settings.Colors;
 export const selectUnit = (state: OpenSee.IRootState) => state.Settings.Units;
 
-export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(selectUnit, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.activeUnits, (baseUnits, data, activeUnits) => {
-    let result = {};
+export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
+    selectUnit,
+    (state: OpenSee.IRootState) => state.Data.plotKeys,
+    (state: OpenSee.IRootState) => state.Data.activeUnits,
+    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (baseUnits, data, activeUnits, singlePlot) => {
+        let result = {};
         let index = data.findIndex(item => item.DataType == key.DataType && item.EventId == key.EventId);
-        Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[activeUnits[index][u]]);
+        if (!singlePlot)
+            Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[activeUnits[index][u]]);
+        else {
+            let actives = activeUnits.filter((v, i) => data[i].DataType == key.DataType);
+            Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[CombineUnits(actives.map(i => i[u]), baseUnits[u])]);
+        }
+           
         return result
     }
-);
+    );
 export const selectTimeUnit = (state: OpenSee.IRootState) => state.Settings.TimeUnit;
 export const selectSnap = (state: OpenSee.IRootState) => state.Settings.SnapToPoint
 export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.SinglePlot
@@ -118,4 +129,16 @@ function GetSettings(): OpenSee.ISettingsState {
         return undefined;
     }
 }
+// #endregion
+
+// #region [Helper Functions ]
+function CombineUnits(units: number[], baseUnit: OpenSee.IUnitSetting): number {
+    if (baseUnit.options[baseUnit.current] == undefined || baseUnit.options[baseUnit.current].short != 'auto')
+        return units[0];
+    // In that case we pick that with the smalles Factor
+    let f = Math.min(...units.map(b => baseUnit.options[b].factor));
+
+    return units.find(b => baseUnit.options[b].factor == f);
+}
+
 // #endregion

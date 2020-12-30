@@ -22,8 +22,8 @@
 //******************************************************************************************************
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _, {  uniq } from 'lodash';
-import {  selectUnit } from './settingSlice';
+import _, {  forEach, uniq } from 'lodash';
+import {  selectUnit, SetSinglePlot } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 
 declare var eventID: number;
@@ -72,7 +72,7 @@ export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start:
 
 //Thunk to Enable or Disable Trace
 export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, singlePlot: (thunkAPI.getState() as OpenSee.IRootState).Settings.SinglePlot }))
     return Promise.resolve();
 });
 
@@ -302,10 +302,30 @@ export const DataReducer = createSlice({
             return state;
 
         },
-        UpdateTrace: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection }>) => {
+        UpdateTrace: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection, singlePlot: boolean }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
-            action.payload.trace.forEach(i => state.enabled[index][i] = action.payload.enabled);
+            let dat = state.enabled[index];
+
+            if (action.payload.singlePlot) {
+                dat = dat.concat(...state.enabled.filter((item, i) => state.plotKeys[i].DataType == action.payload.key.DataType && action.payload.key.EventId != state.plotKeys[i].EventId))
+            }
+
+            
+            action.payload.trace.forEach(i => dat[i] = action.payload.enabled);
+
+            if (action.payload.singlePlot) {
+                // Split the enabled array back up into seperate arrays
+                //First set is the active Plot (main eventID)
+                state.enabled[index] = dat.slice(0, state.enabled[index].length);
+                let ns = state.enabled[index].length;
+                state.enabled.map((d, i) => i).filter(i => state.plotKeys[i].DataType == action.payload.key.DataType && action.payload.key.EventId != state.plotKeys[i].EventId).forEach(i => {
+                    state.enabled[i] = dat.slice(ns, ns + state.enabled[i].length);
+                    ns = ns + state.enabled[i].length;
+                });
+            }
+            else
+                state.enabled[index] = dat;
 
             if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
                 state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
@@ -409,10 +429,57 @@ export default DataReducer.reducer;
 // #endregion
 
 // #region [ Individual Selectors ]
-export const selectData = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.data.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
+export const selectData = (key: OpenSee.IGraphProps) => {
+    return createSelector(
+        (state: OpenSee.IRootState) => state.Data.data,
+        (state: OpenSee.IRootState) => state.Data.plotKeys,
+        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+        (data, plotKeys, single) => {
+            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
+
+            if (single) {
+                let d = data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId);
+                d = d.map(lst => lst.map(item => { return { ...item, LineType: ':' } }));
+                return data[index].concat(...d);
+            }
+              
+            return data[index];
+        });
+
+}
+
+export const selectEnabled = (key: OpenSee.IGraphProps) => {
+    return createSelector(
+        (state: OpenSee.IRootState) => state.Data.enabled,
+        (state: OpenSee.IRootState) => state.Data.plotKeys,
+        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+        (data, plotKeys, single) => {
+            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
+            if (single)
+                return data[index].concat(...data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId))
+            return data[index];
+        });
+
+}
+
+export const selectYLimits = (key: OpenSee.IGraphProps) => {
+    return createSelector(
+        (state: OpenSee.IRootState) => state.Data.yLimits,
+        (state: OpenSee.IRootState) => state.Data.plotKeys,
+        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+        (state: OpenSee.IRootState) => state.Data.autoLimits,
+        (data, plotKeys, single, autoLimits) => {
+            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
+            if (single && autoLimits[index])
+                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType))
+            
+            return data[index];
+        });
+
+}
+
 export const selectLoading = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.loading.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
-export const selectEnabled = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.enabled.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
-export const selectYLimits = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.yLimits.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
+
 export const selectFFTLimits = (state: OpenSee.IRootState) => state.Data.fftLimits;
 
 
@@ -1060,4 +1127,15 @@ function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
 
 }
 
-// #endregion
+// Function to Combine and resolve issues with Limits if single Plot is selected
+function CombineLimits(limits: [number, number][]): [number,number] {
+    let ymin = limits[0][0];
+    let ymax = limits[0][1];
+
+    ymin = Math.min(...limits.map(item => item[0]).filter(pt => isFinite(pt) && !isNaN(pt)));
+    ymax = Math.max(...limits.map(item => item[1]).filter(pt => isFinite(pt) && !isNaN(pt)));
+    
+
+    return [ymin, ymax];
+}
+// #endregion`  

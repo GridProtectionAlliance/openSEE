@@ -144,7 +144,7 @@ export const defaultSettings = {
             ]
         },
         Impedance: {
-            current: 5,
+            current: 4,
             options: [
                 { label: "Ohms", short: "Ohm", factor: 1 },
                 { label: "kiloOhms", short: "kOhm", factor: 0.001 },
@@ -154,7 +154,7 @@ export const defaultSettings = {
             ]
         },
         PowerP: {
-            current: 5,
+            current: 4,
             options: [
                 { label: "Watt", short: "W", factor: 1000000 },
                 { label: "Mega Watt", short: "MW", factor: 1 },
@@ -164,7 +164,7 @@ export const defaultSettings = {
             ]
         },
         PowerQ: {
-            current: 5,
+            current: 4,
             options: [
                 { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
                 { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 },
@@ -174,7 +174,7 @@ export const defaultSettings = {
             ]
         },
         PowerS: {
-            current: 5,
+            current: 4,
             options: [
                 { label: "Volt-Amps", short: "VA", factor: 1000000 },
                 { label: "Mega Volt-Amps", short: "MVA", factor: 1 },

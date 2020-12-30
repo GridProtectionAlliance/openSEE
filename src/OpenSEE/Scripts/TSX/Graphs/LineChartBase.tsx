@@ -64,7 +64,11 @@ const LineChart = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId };
     const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
     const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
-    
+
+    const SelectData = React.useMemo(() => selectData(dataKey), [props.eventId, props.type]);
+    const SelectEnabled = React.useMemo(() => selectEnabled(dataKey), [props.eventId, props.type]);
+    const SelectYLimits = React.useMemo(() => selectYLimits(dataKey), [props.eventId, props.type]);
+
     const xScaleRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
 
@@ -77,12 +81,12 @@ const LineChart = (props: iProps) => {
 
     
 
-    const lineData = useSelector(selectData(dataKey));
-    const enabledLine = useSelector(selectEnabled(dataKey));
+    const lineData = useSelector(SelectData);
+    const enabledLine = useSelector(SelectEnabled);
 
     const startTime = useSelector(selectStartTime);
     const endTime = useSelector(selectEndTime);
-    const yLimits = useSelector(selectYLimits(dataKey));
+    const yLimits = useSelector(SelectYLimits);
 
     const loading = useSelector(selectLoading(dataKey));
 
@@ -302,7 +306,7 @@ const LineChart = (props: iProps) => {
                 .attr("x", 10).attr("width", 0)
                 .attr("y", 0).attr("height", props.height - 60)
                 .attr("fill", "black")
-                .style("opacity", 0.5);
+                .style("opacity", 0);
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
