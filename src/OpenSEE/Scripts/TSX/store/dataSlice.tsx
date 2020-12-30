@@ -1038,6 +1038,9 @@ function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3Dat
 
         let factor = baseUnit[item.Unit].options[activeUnits[item.Unit]].factor;
 
+        factor = (baseUnit[item.Unit].options[activeUnits[item.Unit]].short == 'pu' ? 1.0/item.BaseValue : factor);
+
+
         return item.DataPoints.slice(indexStart, indexEnd).map(p => [p[0], p[1] * factor]).filter(p => !isNaN(p[1]) && isFinite(p[1]));
     });
 

@@ -26,13 +26,11 @@ import { uniq } from "lodash";
 import * as d3 from '../../D3/d3';
 import { OpenSee } from '../global';
 
-import { utc } from "moment";
 import moment from "moment"
-import duration from "moment"
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, SetFFTLimits } from '../Store/dataSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../Store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../Store/analyticSlice';
 
 
@@ -403,12 +401,10 @@ const LineChart = (props: iProps) => {
         container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
         container.select(".xAxis").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
 
-        let lineGen = (unit: OpenSee.Unit) => {
-            //Determine Factors
-            let index = 0;
-
+        let lineGen = (unit: OpenSee.Unit, base: number) => {
+          
             let factor = activeUnit[unit as string].factor
-
+            factor = (activeUnit[unit as string].short == 'pu' ? 1.0/base : factor);
             return d3.line()
                 .x(function (d) { return xScaleRef.current(d[0]) })
                 .y(function (d) { return yScaleRef.current(d[1] * factor) })
@@ -422,7 +418,7 @@ const LineChart = (props: iProps) => {
         }
 
         container.select(".DataContainer").selectAll(".Line").attr("d", function (d) {
-                return lineGen(d.Unit)(d.DataPoints)
+                return lineGen(d.Unit, d.BaseValue)(d.DataPoints)
             })
 
         updateLabels();
