@@ -271,14 +271,14 @@ const Legend = (props: iProps) => {
                 <div className="btn-group" style={{ width: '100%' }}>
 
                     {(categories.length > 1 ?
-                        <button onClick={() => setShowCategories(!showCategories)} type="button" style={{ borderRadius: 0 }} className="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
+                        <button onClick={() => setShowCategories(!showCategories)} type="button" style={{ width: '25px', borderRadius: 0 }} className="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
                             <span className="sr-only">Toggle Dropdown</span>
                         </button> : null)}
-                    <button style={{ width: '100%', borderRadius: 0, textOverflow: 'ellipsis', maxWidth: (categories.length > 1? '151px':'200px') }} className="btn btn-secondary btn-sm active" type="button">
+                    <button style={{ width: '100%', borderRadius: 0, textOverflow: 'ellipsis', maxWidth: (categories.length > 1 ? '175px' : '200px'), overflow: 'hidden', whiteSpace: 'nowrap' }} className="btn btn-secondary btn-sm active" type="button">
                         {categories.filter(item => item.enabled).map(item => item.label).join(", ")}
                     </button>
 
-                    <div className={"dropdown-menu " + (showCategories ? "show" : "")} style={{ marginTop: 0 }} onMouseLeave={() => { setShowCategories(false) }}>
+                    <div className={"dropdown-menu " + (showCategories ? "show" : "")} style={{ marginTop: 0, maxWidth: '196px' }} onMouseLeave={() => { setShowCategories(false) }}>
                         {(categories.filter(item => item.label.trim() !== "").length === 0 ? props.type
                             : categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => changeCategory(index, item)} />)
                         )}
@@ -304,7 +304,7 @@ const Legend = (props: iProps) => {
 
 const Category = (props: { key: number, label: string, enabled: boolean, onclick: () => void }) => {
     return (
-        <a className={"dropdown-item " + (props.enabled ? "active" : "")} onClick={() => props.onclick()}>{props.label}</a>
+        <a className={"dropdown-item " + (props.enabled ? "active" : "")} style={{ overflow: 'hidden', whiteSpace: 'normal', maxWidth: '196px' }} onClick={() => props.onclick()}>{props.label}</a>
     );
 };
 
