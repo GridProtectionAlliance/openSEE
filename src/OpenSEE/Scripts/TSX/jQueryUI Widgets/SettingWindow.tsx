@@ -27,8 +27,8 @@ import { BlockPicker } from 'react-color';
 import { outerDiv, handle, closeButton } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectData, selectGraphTypes } from '../Store/dataSlice';
-import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetTimeUnit, SetUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot } from '../Store/settingSlice';
+import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../Store/dataSlice';
+import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot } from '../Store/settingSlice';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 
@@ -217,7 +217,7 @@ const PlotCard = (props: OpenSee.IGraphProps) => {
                     <div className="collumn" style={{ width: '50%' }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Units:</legend>
-                            {props.DataType != 'FFT'?  < UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} /> : null}
+                            {props.DataType != 'FFT' ? < UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} /> : null}
                             {unitSettings}
                         </fieldset>
                     </div>

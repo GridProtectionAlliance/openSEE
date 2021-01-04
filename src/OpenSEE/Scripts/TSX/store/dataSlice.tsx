@@ -25,7 +25,7 @@ import { OpenSee } from '../global';
 import _, {  forEach, uniq } from 'lodash';
 import {  selectUnit, SetSinglePlot } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
-
+import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
 declare var eventID: number;
 declare var analyticHandle;
 
@@ -116,6 +116,21 @@ export const SetEventID = createAsyncThunk('Data/setEventID', (arg: number, thun
     thunkAPI.dispatch(LoadOverlappingEvents())
 
     return Promise.resolve();
+})
+
+// Thunk to Update time Units
+export const SetTimeUnit = createAsyncThunk('Data/SetTimeUnit', (arg: number, thunkAPI) => {
+
+    thunkAPI.dispatch(SetTimeUnitSetting(arg));
+    let unit = (thunkAPI.getState() as OpenSee.IRootState).Settings.Units;
+    thunkAPI.dispatch(UpdateActiveUnits(unit));
+})
+
+export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Unit, value: number }, thunkAPI) => {
+
+    thunkAPI.dispatch(SetUnitSetting(arg));
+    let unit = (thunkAPI.getState() as OpenSee.IRootState).Settings.Units;
+    thunkAPI.dispatch(UpdateActiveUnits(unit));
 })
 
 // Thunk to set Analytic
@@ -388,7 +403,19 @@ export const DataReducer = createSlice({
         },
         RemoveSelectPoints: (state, action: PayloadAction<number>) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].slice(action.payload,1));
-        }
+        },
+        UpdateActiveUnits: (state, action: PayloadAction<OpenSee.IUnitCollection>) => {
+            //Update All Units and limits
+            state.plotKeys
+                .forEach((graph, index) => {
+                    state.activeUnits[index] = updateUnits(action.payload, state.data[index], state.startTime, state.endTime);
+                    if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
+                        state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
+                    else if (state.autoLimits[index])
+                        state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
+                });
+            return state;
+        },
     },
     extraReducers: (builder) => {
 
@@ -423,7 +450,7 @@ export const DataReducer = createSlice({
 });
 
 
-export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot } = DataReducer.actions;
+export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion

@@ -597,7 +597,8 @@ const LineChart = (props: iProps) => {
 
         container.select(".clip").attr("height", props.height - 60)
         container.select(".toolTip").attr("y2", props.height - 60)
-        container.select(".fftwindow").attr("y", 0).attr("height", props.height - 60)
+        container.select(".fftwindow").attr("y", 0).attr("height", props.height - 60);
+        updateLimits();
     }
     
     return (
