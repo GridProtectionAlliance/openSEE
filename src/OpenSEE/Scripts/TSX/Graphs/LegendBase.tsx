@@ -26,8 +26,8 @@ import * as React from "react";
 import { OpenSee } from '../global';
 import { cloneDeep, uniq } from "lodash";
 import { useSelector, useDispatch } from 'react-redux';
-import { selectData, selectEnabled, EnableTrace } from "../Store/dataSlice";
-import { selectColor } from "../Store/settingSlice";
+import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
+import { selectColor } from "../store/settingSlice";
 
 const hrow = 26;
 

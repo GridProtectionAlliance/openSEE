@@ -35,13 +35,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import store from './Store/Store';
+import store from './store/store';
 
 import { OpenSee } from './global';
-import { defaultSettings } from './defaults'
 import createHistory from "history/createBrowserHistory"
 import * as queryString from "query-string";
-import { clone, isEqual, cloneDeep, uniq, groupBy } from "lodash";
+import { isEqual, groupBy } from "lodash";
 import { connect } from 'react-redux';
 
 import About from './Components/About';
@@ -49,13 +48,12 @@ import OpenSEENoteModal from './Components/OpenSEENoteModal';
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
-import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
-import { LoadSettings } from './Store/settingSlice';
-import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './Store/dataSlice';
-import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selectEventGroup, selecteventList } from './Store/eventSlice';
+import { LoadSettings } from './store/settingSlice';
+import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './store/dataSlice';
+import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
-import { SetFFTWindow } from './Store/analyticSlice';
+import { SetFFTWindow } from './store/analyticSlice';
 
 
 declare var homePath: string;

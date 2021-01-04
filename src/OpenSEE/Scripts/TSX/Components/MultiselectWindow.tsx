@@ -25,7 +25,7 @@ import { groupBy } from 'lodash';
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
-import { selectEventListLoading, selectEventGroup, EnableOverlappingEvent } from '../Store/eventSlice';
+import { selectEventListLoading, selectEventGroup, EnableOverlappingEvent } from '../store/eventSlice';
 
 interface Iprops { }
 

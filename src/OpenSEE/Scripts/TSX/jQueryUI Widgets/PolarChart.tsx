@@ -25,8 +25,8 @@ import * as React from 'react';
 
 import { outerDiv, handle, closeButton } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectVPhases, selectIPhases } from '../Store/dataSlice';
-import { selectColor } from '../Store/settingSlice';
+import { selectVPhases, selectIPhases } from '../store/dataSlice';
+import { selectColor } from '../store/settingSlice';
 import { uniq } from 'lodash';
 
 interface Iprops {

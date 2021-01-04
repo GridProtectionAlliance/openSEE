@@ -30,8 +30,8 @@ import { OpenSee } from '../global';
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../Store/dataSlice';
-import { selectAnalyticOptions } from '../Store/analyticSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../store/dataSlice';
+import { selectAnalyticOptions } from '../store/analyticSlice';
 
 
 

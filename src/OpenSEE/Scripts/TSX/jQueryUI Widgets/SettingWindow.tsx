@@ -27,8 +27,8 @@ import { BlockPicker } from 'react-color';
 import { outerDiv, handle, closeButton } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../Store/dataSlice';
-import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot } from '../Store/settingSlice';
+import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
+import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot } from '../store/settingSlice';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 

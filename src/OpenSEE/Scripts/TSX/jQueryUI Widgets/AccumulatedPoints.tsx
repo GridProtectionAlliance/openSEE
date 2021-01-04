@@ -23,7 +23,7 @@
 import * as React from 'react';
 import { outerDiv, handle, closeButton } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../Store/dataSlice';
+import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
 
 interface Iprops {
     closeCallback: () => void,

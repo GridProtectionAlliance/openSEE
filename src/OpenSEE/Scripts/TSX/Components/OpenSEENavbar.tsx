@@ -36,7 +36,7 @@ import { OpenSee } from '../global';
 import { clone } from 'lodash';
 import SettingsWidget from '../jQueryUI Widgets/SettingWindow';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../Store/dataSlice';
+import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../store/dataSlice';
 
 
 declare var homePath: string;

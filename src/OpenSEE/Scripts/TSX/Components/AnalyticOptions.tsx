@@ -27,8 +27,8 @@ import * as React from 'react';
 import { clone } from 'lodash';
 import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
-import { selectAnalytic, SetAnalytic } from '../Store/dataSlice';
-import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc, selectCycles, selectFFTWindow, SetFFTWindow } from '../Store/analyticSlice';
+import { selectAnalytic, SetAnalytic } from '../store/dataSlice';
+import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc, selectCycles, selectFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 
 declare var cycles: number;
 declare var samplesPerCycle: number;

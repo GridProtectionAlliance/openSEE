@@ -30,8 +30,8 @@ import moment from "moment"
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../Store/dataSlice';
-import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../Store/analyticSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../store/dataSlice';
+import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 
 
 

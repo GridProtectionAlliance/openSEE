@@ -25,8 +25,8 @@ import * as React from 'react';
 import moment = require('moment');
 import { outerDiv, handle, closeButton } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectHover, selectHoverPoints, selectDeltaHoverPoints } from '../Store/dataSlice';
-import { selectColor } from '../Store/settingSlice';
+import { selectHover, selectHoverPoints, selectDeltaHoverPoints } from '../store/dataSlice';
+import { selectColor } from '../store/settingSlice';
 
 
 interface Iprops {
