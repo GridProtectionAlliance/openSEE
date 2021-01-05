@@ -74,6 +74,8 @@ export namespace OpenSee {
         displayTCE: boolean,
         displayDigitals: boolean,
         displayAnalogs: boolean,
+
+        querystring: string,
     }
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')

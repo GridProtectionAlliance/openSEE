@@ -24,7 +24,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
 import _ from 'lodash';
 import { defaultSettings } from '../defaults';
-import { createSelector } from 'reselect'
+import { createSelector } from 'reselect';
+import * as queryString from "query-string";
 
 export const SettingsReducer = createSlice({
     name: 'Settings',
@@ -44,7 +45,13 @@ export const SettingsReducer = createSlice({
         LoadSettings: (state) => {
             let preserved = GetSettings();
             if (preserved != undefined)
-                state = preserved;
+            {
+                state.Units = preserved.Units;
+                state.Colors = preserved.Colors;
+                state.TimeUnit = preserved.TimeUnit;
+                state.SnapToPoint = preserved.SnapToPoint;
+                state.SinglePlot = preserved.SinglePlot;
+            }
             else {
                 state.Units = defaultSettings.Units;
                 state.Colors = defaultSettings.Colors;
@@ -125,7 +132,9 @@ export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
            
         return result
     }
-    );
+);
+
+
 export const selectTimeUnit = (state: OpenSee.IRootState) => state.Settings.TimeUnit;
 export const selectSnap = (state: OpenSee.IRootState) => state.Settings.SnapToPoint
 export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.SinglePlot
@@ -135,12 +144,30 @@ export const SelectdisplayTCE = (state: OpenSee.IRootState) => state.Settings.di
 export const SelectdisplayDigitals = (state: OpenSee.IRootState) => state.Settings.displayDigitals
 export const SelectdisplayAnalogs = (state: OpenSee.IRootState) => state.Settings.displayAnalogs
 
+
+const SelectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
+    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs) => {
+        let obj = { displayVolt: displayVolt, displayCur: displayCur, displayTCE: displayTCE, displayDigitals: displayDigitals, displayAnalogs: displayAnalogs };
+        return queryString.stringify(obj, { encode: false });
+    });
+
+export const SelectQueryString = createSelector(SelectSettingQuery, (settingsQuery) => {
+    return settingsQuery;
+})
+
 // #endregion
 
 // #region [ Async Functions ]
 function SaveSettings(state: OpenSee.ISettingsState) {
     try {
-        const serializedState = JSON.stringify(state);
+        let saveState = {
+            Units: state.Units,
+            Colors: state.Colors,
+            TimeUnit: state.TimeUnit,
+            SnapToPoint: state.SnapToPoint,
+            SinglePlot: state.SinglePlot,
+        }
+        const serializedState = JSON.stringify(saveState);
         localStorage.setItem('openSee.Settings', serializedState);
     } catch {
         // ignore write errors

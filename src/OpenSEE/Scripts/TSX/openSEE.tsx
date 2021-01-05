@@ -48,7 +48,10 @@ import OpenSEENoteModal from './Components/OpenSEENoteModal';
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
-import { LoadSettings, SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt } from './store/settingSlice';
+import {
+    LoadSettings, SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
+    SelectQueryString, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt
+} from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
@@ -193,6 +196,10 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             store.dispatch(SetAnalytic('FirstDerivative'));
         if (oldstate.tab != this.state.tab && oldstate.tab == 'Compare')
             store.dispatch(ClearOverlappingEvent());
+        if (prevProps.querystring != this.props.querystring) {
+            clearTimeout(this.historyHandle);
+            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + this.props.querystring), 500);
+        }
     }
 
     componentWillUnmount() {
@@ -449,6 +456,7 @@ const mapStatesToProps = function (state: OpenSee.IRootState) {
         displayTCE: SelectdisplayTCE(state),
         displayDigitals: SelectdisplayDigitals(state),
         displayAnalogs: SelectdisplayAnalogs(state),
+        querystring: SelectQueryString(state)
     }
 }
 
