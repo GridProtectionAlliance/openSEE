@@ -319,7 +319,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         {plotData[this.props.eventID] != undefined ?
                             <div className="card">
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {plotData[this.props.eventID].map(item => (item.DataType == 'FFT' ?
+                                    {plotData[this.props.eventID].map((item,idx) => (item.DataType == 'FFT' ?
                                         <BarChart
                                             eventId={item.EventId}
                                             width={this.state.graphWidth}
@@ -327,7 +327,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                             height={this.calculateHeights()}
                                             timeLabel={"Harmonic"}
                                             type={item.DataType}
-                                        />:<LineChart
+                                        /> : <LineChart
+                                            key={idx}
                                         eventId={item.EventId}
                                         width={this.state.graphWidth}
                                         eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
