@@ -33,7 +33,12 @@ export const SettingsReducer = createSlice({
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
         SnapToPoint: false as boolean,
-        SinglePlot: true as boolean
+        SinglePlot: true as boolean,
+        displayVolt: true as boolean,
+        displayCur: true as boolean,
+        displayTCE: false as boolean,
+        displayDigitals: false as boolean,
+        displayAnalogs: false as boolean,
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
@@ -62,12 +67,27 @@ export const SettingsReducer = createSlice({
             SaveSettings(state);
         },
         SetSnapToPoint: (state, action: PayloadAction<boolean>) => {
-            state.SnapToPoint = action.payload;
+            state.SnapToPoint = action.payload,
             SaveSettings(state);
         },
         SetSinglePlot: (state, action: PayloadAction<boolean>) => {
             state.SinglePlot = action.payload;
             SaveSettings(state);
+        },
+        SetdisplayVolt: (state, action: PayloadAction<boolean>) => {
+            state.displayVolt = action.payload;
+        },
+        SetdisplayCur: (state, action: PayloadAction<boolean>) => {
+            state.displayCur = action.payload;
+        }, 
+        SetdisplayTCE: (state, action: PayloadAction<boolean>) => {
+            state.displayTCE = action.payload;
+        }, 
+        SetdisplayDigitals: (state, action: PayloadAction<boolean>) => {
+            state.displayDigitals = action.payload;
+        },
+        SetdisplayAnalogs: (state, action: PayloadAction<boolean>) => {
+            state.displayAnalogs = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -77,7 +97,9 @@ export const SettingsReducer = createSlice({
 
 });
 
-export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSnapToPoint, SetSinglePlot } = SettingsReducer.actions;
+export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSnapToPoint, SetSinglePlot,
+    SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt
+} = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
 // #endregion
@@ -107,6 +129,12 @@ export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
 export const selectTimeUnit = (state: OpenSee.IRootState) => state.Settings.TimeUnit;
 export const selectSnap = (state: OpenSee.IRootState) => state.Settings.SnapToPoint
 export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.SinglePlot
+export const SelectdisplayVolt = (state: OpenSee.IRootState) => state.Settings.displayVolt
+export const SelectdisplayCur = (state: OpenSee.IRootState) => state.Settings.displayCur
+export const SelectdisplayTCE = (state: OpenSee.IRootState) => state.Settings.displayTCE
+export const SelectdisplayDigitals = (state: OpenSee.IRootState) => state.Settings.displayDigitals
+export const SelectdisplayAnalogs = (state: OpenSee.IRootState) => state.Settings.displayAnalogs
+
 // #endregion
 
 // #region [ Async Functions ]

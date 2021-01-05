@@ -35,11 +35,6 @@ export namespace OpenSee {
 
     interface iOpenSeeState {
         //For Plots
-        displayVolt: boolean,
-        displayCur: boolean,
-        displayTCE: boolean,
-        displayDigitals: boolean,
-        displayAnalogs: boolean,
         graphWidth: number,
         tab: Tab,
 
@@ -73,6 +68,12 @@ export namespace OpenSee {
 
         numberCompareGraphs: number,
         eventGroup: iListObject[],
+
+        displayVolt: boolean,
+        displayCur: boolean,
+        displayTCE: boolean,
+        displayDigitals: boolean,
+        displayAnalogs: boolean,
     }
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')
@@ -291,6 +292,11 @@ export namespace OpenSee {
         TimeUnit: IUnitSetting,
         SnapToPoint: boolean,
         SinglePlot: boolean,
+        displayVolt: boolean,
+        displayCur: boolean,
+        displayTCE: boolean,
+        displayDigitals: boolean,
+        displayAnalogs: boolean,
     }
 
     interface IUnitSetting {

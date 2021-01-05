@@ -48,7 +48,7 @@ import OpenSEENoteModal from './Components/OpenSEENoteModal';
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
-import { LoadSettings } from './store/settingSlice';
+import { LoadSettings, SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt } from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
@@ -97,17 +97,19 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         this.history = createHistory();
 
         let query = queryString.parse(this.history['location'].search);
-
+        /* 
+         *  //displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
+            //displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
+            //displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
+            //displayDigitals: query['displayDigitals'] == '1' || query['displayDigitals'] == 'true',
+            //displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
+            */
         this.state = {
             
             eventStartTime: (query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime),
             eventEndTime: (query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime),
            
-            displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
-            displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
-            displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
-            displayDigitals: query['displayDigitals'] == '1' || query['displayDigitals'] == 'true',
-            displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
+           
             tab: (query['tab'] != undefined ? query['tab'] : "Info"),
 
 
@@ -141,11 +143,17 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
     componentDidMount() {
         window.addEventListener("resize", this.handleScreenSizeChange.bind(this));
 
-        if (this.state.displayVolt)
+        if (this.props.displayVolt)
             store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        if (this.state.displayCur)
+        if (this.props.displayCur)
             store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
-
+        if (this.props.displayAnalogs)
+            store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
+        if (this.props.displayDigitals)
+            store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
+        if (this.props.displayTCE)
+            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
+        
         store.dispatch(SetTimeLimit({ start: new Date(this.state.eventStartTime + "Z").getTime(), end: new Date(this.state.eventEndTime + "Z").getTime() }));
 
         store.dispatch(LoadOverlappingEvents())
@@ -219,23 +227,23 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <fieldset className="border" style={{ padding: '10px' }}>
                         <legend className="w-auto" style={{ fontSize: 'large' }}>Waveform Views:</legend>
                         <div className="form-check form-check-inline">
-                            {this.props.loadVolt ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.state.displayVolt} />}
+                            {this.props.loadVolt ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.props.displayVolt} />}
                             <label className="form-check-label">Voltage</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadCurr ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.state.displayCur} />}
+                            {this.props.loadCurr ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.props.displayCur} />}
                             <label className="form-check-label">Current</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadAnalog ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.state.displayAnalogs} />}
+                            {this.props.loadAnalog ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.props.displayAnalogs} />}
                             <label className="form-check-label">Analogs</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadDigital ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.state.displayDigitals} />}
+                            {this.props.loadDigital ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.props.displayDigitals} />}
                             <label className="form-check-label">Digitals</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadTCE ? <span> <i className="fa fa-spinner"></i> </span> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.state.displayTCE} />}
+                            {this.props.loadTCE ? <span> <i className="fa fa-spinner"></i> </span> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.props.displayTCE} />}
                             <label className="form-check-label">Trip Coil E.</label>
                         </div>
                     </fieldset>
@@ -295,9 +303,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         EventData={this.state.eventData} Lookup={this.state.lookup} 
                         navigation={this.state.navigation}
                         stateSetter={this.setState}
-                        displayAnalogs={this.state.displayAnalogs}
-                        displayCur={this.state.displayCur} displayDigitals={this.state.displayDigitals} displayTCE={this.state.displayTCE}
-                        displayVolt={this.state.displayVolt} />
+                        displayAnalogs={this.props.displayAnalogs}
+                        displayCur={this.props.displayCur} displayDigitals={this.props.displayDigitals} displayTCE={this.props.displayTCE}
+                        displayVolt={this.props.displayVolt} />
 
                     
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
@@ -370,7 +378,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
     calculateHeights() {
         // Fit up to 3 onto the page after that we will add scrollBars
-        let nPlots = Number(this.state.displayVolt) + Number(this.state.displayCur) + Number(this.state.displayDigitals) + Number(this.state.displayTCE) + Number(this.state.displayAnalogs);
+        let nPlots = Number(this.props.displayVolt) + Number(this.props.displayCur) + Number(this.props.displayDigitals) + Number(this.props.displayTCE) + Number(this.props.displayAnalogs);
 
         if (this.state.tab == "Analytic")
             nPlots = nPlots + 1;
@@ -381,43 +389,43 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
     }
 
     toggleVoltage() {
-        if (this.state.displayVolt)
+        if (this.props.displayVolt)
             store.dispatch(RemovePlot({ DataType: "Voltage", EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        this.stateSetter({ displayVolt: !this.state.displayVolt });
+        store.dispatch(SetdisplayVolt( !this.props.displayVolt));
     }
 
     toggleCurrent() {
-        if (this.state.displayCur)
+        if (this.props.displayCur)
             store.dispatch(RemovePlot({ DataType: "Current", EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
-        this.stateSetter({ displayCur: !this.state.displayCur });
+        store.dispatch(SetdisplayCur( !this.props.displayCur ));
     }
 
     toggleAnalogs() {
-        if (this.state.displayAnalogs)
+        if (this.props.displayAnalogs)
             store.dispatch(RemovePlot({ DataType: 'Analogs', EventId: this.props.eventID}))
         else
             store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
-        this.stateSetter({ displayAnalogs: !this.state.displayAnalogs });
+        store.dispatch(SetdisplayAnalogs( !this.props.displayAnalogs ));
     }
 
     toggleDigitals() {
-        if (this.state.displayDigitals)
+        if (this.props.displayDigitals)
             store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        this.stateSetter({ displayDigitals: !this.state.displayDigitals });
+        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals))
     }
 
     toggleTCE() {
-        if (this.state.displayTCE)
+        if (this.props.displayTCE)
             store.dispatch(RemovePlot({ DataType: 'TripCoil', EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
-        this.stateSetter({ displayTCE: !this.state.displayTCE });
+        store.dispatch(SetdisplayTCE( !this.props.displayTCE ));
     }
     
 
@@ -436,6 +444,11 @@ const mapStatesToProps = function (state: OpenSee.IRootState) {
         loadTCE: selectLoadTCE(state),
         numberCompareGraphs: selectNumberCompare(state),
         eventGroup: selecteventList(state),
+        displayVolt: SelectdisplayVolt(state),
+        displayCur: SelectdisplayCur(state),
+        displayTCE: SelectdisplayTCE(state),
+        displayDigitals: SelectdisplayDigitals(state),
+        displayAnalogs: SelectdisplayAnalogs(state),
     }
 }
 
