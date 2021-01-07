@@ -53,7 +53,7 @@ const ScalarStatsWidget = (props: Iprops) => {
         handle.done((d) => {
             setStats(Object.keys(d).map(item =>
                 <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={item}>
-                    <td>item{}</td>
+                    <td>{item}</td>
                     <td>{d[item]}</td>
                 </tr>));
         })
