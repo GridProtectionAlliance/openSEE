@@ -157,8 +157,12 @@ export const SelectTab = (state: OpenSee.IRootState) => state.Settings.Tab;
 export const SelectNavigation = (state: OpenSee.IRootState) => state.Settings.Navigation;
 
 const SelectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
-    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs) => {
-        let obj = { displayVolt: displayVolt, displayCur: displayCur, displayTCE: displayTCE, displayDigitals: displayDigitals, displayAnalogs: displayAnalogs };
+    SelectTab, SelectNavigation,
+    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs, tab, navigation) => {
+        let obj = {
+            displayVolt: displayVolt, displayCur: displayCur, displayTCE: displayTCE, displayDigitals: displayDigitals, displayAnalogs: displayAnalogs,
+            Tab: tab, Navigation: navigation
+        };
         return queryString.stringify(obj, { encode: false });
     });
 
