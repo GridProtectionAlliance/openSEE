@@ -36,12 +36,12 @@ export namespace OpenSee {
     interface iOpenSeeState {
         //For Plots
         graphWidth: number,
-        tab: Tab,
+        
 
         //For Event Navigation
         eventData: iPostedData,
         lookup: iNextBackLookup,
-        navigation: EventNavigation,
+        
 
         eventStartTime: string,
         eventEndTime: string,
@@ -74,7 +74,8 @@ export namespace OpenSee {
         displayTCE: boolean,
         displayDigitals: boolean,
         displayAnalogs: boolean,
-
+        Tab: Tab,
+        Navigation: EventNavigation,
         querystring: string,
     }
     // For navigation
@@ -299,6 +300,8 @@ export namespace OpenSee {
         displayTCE: boolean,
         displayDigitals: boolean,
         displayAnalogs: boolean,
+        Tab: Tab,
+        Navigation: EventNavigation,
     }
 
     interface IUnitSetting {

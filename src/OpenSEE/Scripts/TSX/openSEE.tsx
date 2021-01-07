@@ -50,7 +50,8 @@ import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
 import {
     LoadSettings, SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
-    SelectQueryString, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt
+    SelectNavigation,
+    SelectQueryString, SelectTab, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt, SetTab
 } from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
@@ -70,10 +71,7 @@ declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
 const queryStates = [
     'eventId',
-    'displayVolt',
-    'displayCur',
-    'displayDigitals',
-    'displayAnalogs',
+   
     'eventEndTime',
     'eventStartTime',
     'tab',
@@ -111,11 +109,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             
             eventStartTime: (query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime),
             eventEndTime: (query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime),
-           
-           
-            tab: (query['tab'] != undefined ? query['tab'] : "Info"),
-
-
             comparedEvents: [],
             overlappingEvents: [],
            
@@ -123,7 +116,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             graphWidth: window.innerWidth - 300,
             eventData: null,
             lookup: null,
-            navigation: (query['navigation'] != undefined ? query['navigation'] : "system"),
             breakeroperation: undefined,
         }
 
@@ -190,11 +182,11 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
     componentDidUpdate(prevProps: OpenSee.IOpenSeeProps, oldstate: OpenSee.iOpenSeeState) {
         if (prevProps.eventID != this.props.eventID)
             this.getEventData();
-        if (oldstate.tab != this.state.tab && oldstate.tab == 'Analytic')
+        if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Analytic')
             store.dispatch(SetAnalytic('none'));
-        if (oldstate.tab != this.state.tab && this.state.tab == 'Analytic')
+        if (prevProps.Tab != this.props.Tab && this.props.Tab == 'Analytic')
             store.dispatch(SetAnalytic('FirstDerivative'));
-        if (oldstate.tab != this.state.tab && oldstate.tab == 'Compare')
+        if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Compare')
             store.dispatch(ClearOverlappingEvent());
         if (prevProps.querystring != this.props.querystring) {
             clearTimeout(this.historyHandle);
@@ -259,17 +251,17 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
                     <ul className="nav nav-tabs" id="myTab" role="tablist">
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Info" ?  " active" : '') } id="home-tab" data-toggle="tab" href="#info" role="tab" aria-controls="info" aria-selected="true" onClick={(obj: any) => this.stateSetter({ tab: "Info" })} >Info</a>
+                            <a className={"nav-link" + (this.props.Tab == "Info" ? " active" : '')} id="home-tab" data-toggle="tab" href="#info" role="tab" aria-controls="info" aria-selected="true" onClick={(obj: any) => store.dispatch(SetTab("Info"))} >Info</a>
                         </li>
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Compare" ? " active" : '')} id="profile-tab" data-toggle="tab" href="#compare" role="tab" aria-controls="compare" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: "Compare" })} >Compare</a>
+                            <a className={"nav-link" + (this.props.Tab == "Compare" ? " active" : '')} id="profile-tab" data-toggle="tab" href="#compare" role="tab" aria-controls="compare" aria-selected="false" onClick={(obj: any) => store.dispatch(SetTab("Compare"))} >Compare</a>
                         </li>
                         <li className="nav-item">
-                            <a className={"nav-link" + (this.state.tab == "Analytic" ? " active" : '')} id="contact-tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="false" onClick={(obj: any) => this.stateSetter({ tab: "Analytic" })} >Analytics</a>
+                            <a className={"nav-link" + (this.props.Tab == "Analytic" ? " active" : '')} id="contact-tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="false" onClick={(obj: any) => store.dispatch(SetTab("Analytic"))} >Analytics</a>
                         </li>
                     </ul>
                     <div className="tab-content" id="myTabContent" style={{ maxHeight: windowHeight - 325, display: 'block', overflowY: 'auto' }}>
-                        <div className={"tab-pane fade" + (this.state.tab == "Info" ? " show active" : '')} id="info" role="tabpanel" aria-labelledby="home-tab">
+                        <div className={"tab-pane fade" + (this.props.Tab == "Info" ? " show active" : '')} id="info" role="tabpanel" aria-labelledby="home-tab">
                             {this.state.eventData != undefined ?
                                 <table className="table">
                                     <tbody style={{ display: 'block' }}>
@@ -292,10 +284,10 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </table> :
                             null}
                         </div>
-                        <div className={"tab-pane fade" + (this.state.tab == "Compare" ? " show active" : '')} id="compare" role="tabpanel" aria-labelledby="profile-tab">
+                        <div className={"tab-pane fade" + (this.props.Tab == "Compare" ? " show active" : '')} id="compare" role="tabpanel" aria-labelledby="profile-tab">
                             <OverlappingEventWindow />
                         </div>
-                        <div className={"tab-pane fade" + (this.state.tab == "Analytic" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
+                        <div className={"tab-pane fade" + (this.props.Tab == "Analytic" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
                             <AnalyticOptions />
                         </div>
                     </div>
@@ -308,11 +300,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                 <div id="chartpanel" style={{ width: 'calc(100% - 300px)', height: 'inherit', position: 'relative', float: 'right', overflow: 'hidden' }}>
                     <OpenSeeNavBar
                         EventData={this.state.eventData} Lookup={this.state.lookup} 
-                        navigation={this.state.navigation}
                         stateSetter={this.setState}
-                        displayAnalogs={this.props.displayAnalogs}
-                        displayCur={this.props.displayCur} displayDigitals={this.props.displayDigitals} displayTCE={this.props.displayTCE}
-                        displayVolt={this.props.displayVolt} />
+                         />
 
                     
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
@@ -388,9 +377,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         // Fit up to 3 onto the page after that we will add scrollBars
         let nPlots = Number(this.props.displayVolt) + Number(this.props.displayCur) + Number(this.props.displayDigitals) + Number(this.props.displayTCE) + Number(this.props.displayAnalogs);
 
-        if (this.state.tab == "Analytic")
+        if (this.props.Tab == "Analytic")
             nPlots = nPlots + 1;
-        else if (this.state.tab == "Compare")
+        else if (this.props.Tab == "Compare")
             nPlots = nPlots * (this.props.numberCompareGraphs + 1);
 
         return (window.innerHeight - 100 - 30) / Math.min(nPlots, 3);
@@ -457,7 +446,9 @@ const mapStatesToProps = function (state: OpenSee.IRootState) {
         displayTCE: SelectdisplayTCE(state),
         displayDigitals: SelectdisplayDigitals(state),
         displayAnalogs: SelectdisplayAnalogs(state),
-        querystring: SelectQueryString(state)
+        querystring: SelectQueryString(state),
+        Tab: SelectTab(state),
+        Navigation: SelectNavigation(state)
     }
 }
 

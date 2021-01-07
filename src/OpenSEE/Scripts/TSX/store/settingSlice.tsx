@@ -40,6 +40,8 @@ export const SettingsReducer = createSlice({
         displayTCE: false as boolean,
         displayDigitals: false as boolean,
         displayAnalogs: false as boolean,
+        Tab: 'Info' as OpenSee.Tab,
+        Navigation: 'system' as OpenSee.EventNavigation
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
@@ -95,6 +97,12 @@ export const SettingsReducer = createSlice({
         },
         SetdisplayAnalogs: (state, action: PayloadAction<boolean>) => {
             state.displayAnalogs = action.payload;
+        },
+        SetTab: (state, action: PayloadAction<OpenSee.Tab>) => {
+            state.Tab = action.payload;
+        },
+        SetNavigation: (state, action: PayloadAction<OpenSee.EventNavigation>) => {
+            state.Navigation = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -105,7 +113,8 @@ export const SettingsReducer = createSlice({
 });
 
 export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSnapToPoint, SetSinglePlot,
-    SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt
+    SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt,
+    SetNavigation, SetTab
 } = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
@@ -144,6 +153,8 @@ export const SelectdisplayTCE = (state: OpenSee.IRootState) => state.Settings.di
 export const SelectdisplayDigitals = (state: OpenSee.IRootState) => state.Settings.displayDigitals
 export const SelectdisplayAnalogs = (state: OpenSee.IRootState) => state.Settings.displayAnalogs
 
+export const SelectTab = (state: OpenSee.IRootState) => state.Settings.Tab;
+export const SelectNavigation = (state: OpenSee.IRootState) => state.Settings.Navigation;
 
 const SelectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
     (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs) => {
