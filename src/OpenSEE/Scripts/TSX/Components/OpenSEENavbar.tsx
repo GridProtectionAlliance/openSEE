@@ -250,7 +250,7 @@ const OpenSeeNavBar = (props: IProps) => {
 
                     <li className="nav-item" style={{ width: '84px' }}>
                         <div className="btn-group dropright">
-                            <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }}>
+                            <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
                                 {zoomMode == "x" ? < i className="fa fa-arrows-h" ></i> : null}
                                 {zoomMode == "y" ? < i className="fa fa-arrows-v" ></i> : null}
                                 {zoomMode == "xy" ? < i className="fa fa-arrows" ></i> : null}
