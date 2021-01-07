@@ -58,6 +58,7 @@ import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, sele
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
+import { updatedURL } from './store/queryThunk';
 
 
 declare var homePath: string;
@@ -68,20 +69,6 @@ declare var eventStartTime: string;
 declare var eventEndTime: string;
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
-
-const queryStates = [
-    'eventId',
-   
-    'eventEndTime',
-    'eventStartTime',
-    'tab',
-    'startTime',
-    'endTime',
-    'zoomMode',
-    'mouseMode',
-    'navigation',
-
-]
 
 class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
     history: object;
@@ -118,19 +105,12 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             lookup: null,
             breakeroperation: undefined,
         }
-
+        store.dispatch(updatedURL({ query: this.history['location'].search, initial: true }));
 
         this.history['listen']((location, action) => {
-            var query = queryString.parse(this.history['location'].search);
-            let newState = {};
-            queryStates.forEach(state => {
-                if (query.hasOwnProperty(state) && !isEqual(this.state[state],query[state]))
-                    newState[state] = query[state];
-            })
-
-            if (Object.keys(newState).length > 0)
-                this.setState(newState);
-
+            // If Query changed then we update states....
+            // Note that enabled and selected states that depend on loading state are not dealt with in here
+            store.dispatch(updatedURL({ query: location.search, initial: false }));
             });
        
     }
@@ -138,17 +118,17 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
     componentDidMount() {
         window.addEventListener("resize", this.handleScreenSizeChange.bind(this));
 
-        if (this.props.displayVolt)
-            store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        if (this.props.displayCur)
-            store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
-        if (this.props.displayAnalogs)
-            store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
-        if (this.props.displayDigitals)
-            store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        if (this.props.displayTCE)
-            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
-        
+        //if (this.props.displayVolt)
+        //    store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
+        //if (this.props.displayCur)
+        //    store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
+        //if (this.props.displayAnalogs)
+        //    store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
+        //if (this.props.displayDigitals)
+        //    store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
+        //if (this.props.displayTCE)
+        //    store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
+       // 
         store.dispatch(SetTimeLimit({ start: new Date(this.state.eventStartTime + "Z").getTime(), end: new Date(this.state.eventEndTime + "Z").getTime() }));
 
         store.dispatch(LoadOverlappingEvents())
@@ -349,28 +329,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                 </div>
             </div>
         );
-    }
-
-    stateSetter(obj) {
-
-        this.setState(obj, () => {
-            let newQuery = {};
-
-            let updateQuery = queryStates.some(state => obj.hasOwnProperty(state) && !isEqual(obj[state], this.state[state]))
-
-            if (!updateQuery)
-                return;
-
-            queryStates.forEach(state => {
-                newQuery[state] = this.state[state];
-            });
-
-            let newQueryString = queryString.stringify(newQuery, { encode: false });
-
-            clearTimeout(this.historyHandle);
-            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + newQueryString), 500);
-            
-        });
     }
 
     calculateHeights() {
