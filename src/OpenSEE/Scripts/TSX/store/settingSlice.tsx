@@ -166,8 +166,26 @@ const SelectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, S
         return queryString.stringify(obj, { encode: false });
     });
 
-export const SelectQueryString = createSelector(SelectSettingQuery, (settingsQuery) => {
-    return settingsQuery;
+const SelectDataQuery = createSelector(
+    (state: OpenSee.IRootState) => state.Data.startTime,
+    (state: OpenSee.IRootState) => state.Data.endTime,
+    (state: OpenSee.IRootState) => state.Data.eventID,
+    (state: OpenSee.IRootState) => state.Data.mouseMode,
+    (state: OpenSee.IRootState) => state.Data.zoomMode,
+    (state: OpenSee.IRootState) => state.Data.Analytic,
+    SelectTab,
+    (startTime, endTime, eventID, mouseMode, zoomMode, Analytic, tab) => {
+        let obj = {
+            startTime: startTime, endTime: endTime, eventID: eventID, mouseMode: mouseMode, zoomMode: zoomMode
+        };
+        if (tab == 'Analytic')
+            obj['Analytic'] = Analytic;
+
+        return queryString.stringify(obj, { encode: false });
+    });
+
+export const SelectQueryString = createSelector(SelectSettingQuery, SelectDataQuery, (settingsQuery, dataQuery) => {
+    return settingsQuery + '&' + dataQuery;
 })
 
 // #endregion
