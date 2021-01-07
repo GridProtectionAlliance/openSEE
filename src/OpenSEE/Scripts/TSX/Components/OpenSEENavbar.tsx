@@ -37,6 +37,8 @@ import { clone } from 'lodash';
 import SettingsWidget from '../jQueryUI Widgets/SettingWindow';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../store/dataSlice';
+import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
+import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 
 
 declare var homePath: string;
@@ -46,20 +48,28 @@ declare var eventEndTime: string;
 interface IProps {
     EventData: OpenSee.iPostedData,
     Lookup: iNextBackLookup,
-    navigation: OpenSee.EventNavigation,
-    displayVolt: boolean,
-    displayCur: boolean,
-    displayTCE: boolean,
-    displayDigitals: boolean,
-    displayAnalogs: boolean,
     stateSetter: (ob: any) => void
 }
+
 const OpenSeeNavBar = (props: IProps) => {
     const dispatch = useDispatch()
     const mouseMode = useSelector(selectMouseMode);
     const zoomMode = useSelector(selectZoomMode);
     const eventId = useSelector(selectEventID);
     const analytic = useSelector(selectAnalytic);
+    const navigation = useSelector(SelectNavigation);
+
+    const showVolts = useSelector(SelectdisplayVolt);
+    const showCurr = useSelector(SelectdisplayCur);
+    const showDigitals = useSelector(SelectdisplayDigitals);
+    const showAnalog = useSelector(SelectdisplayAnalogs);
+    const showTCE = useSelector(SelectdisplayTCE);
+    const tab = useSelector(SelectTab);
+
+    const harmonic = useSelector(selectHarmonic);
+    const trc = useSelector(selectTRC);
+    const lpf = useSelector(selectLPF);
+    const hpf = useSelector(selectHPF);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
     const [showToolTip, setShowToolTip] = React.useState<boolean>(false);
@@ -176,15 +186,16 @@ const OpenSeeNavBar = (props: IProps) => {
 
     function exportData(type) {
         window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
-            `${props.displayVolt != undefined ? `&displayVolt=${props.displayVolt}` : ``}` +
-            `${props.displayCur != undefined ? `&displayCur=${props.displayCur}` : ``}` +
-            `${props.displayTCE != undefined ? `&displayTCE=${props.displayTCE}` : ``}` +
-            `${props.displayDigitals != undefined ? `&breakerdigitals=${props.displayDigitals}` : ``}` +
-            `${props.displayAnalogs != undefined ? `&displayAnalogs=${this.props.displayAnalogs}` : ``}` +
-            //`${props.displayAnalytics != undefined ? `&displayAnalytics=${this.props.displayAnalytics}` : ``}` +
-            //`${this.props.filterOrder != undefined ? `&filterOrder=${this.props.filterOrder}` : ``}` +
-            //`${this.props.Trc != undefined ? `&Trc=${this.props.Trc}` : ``}` +
-            //`${this.props.harmonic != undefined ? `&harmonic=${this.props.harmonic}` : ``}` +
+            `${showVolts != undefined ? `&displayVolt=${showVolts}` : ``}` +
+            `${showCurr != undefined ? `&displayCur=${showCurr}` : ``}` +
+            `${showTCE != undefined ? `&displayTCE=${showTCE}` : ``}` +
+            `${showDigitals != undefined ? `&breakerdigitals=${showDigitals}` : ``}` +
+            `${showAnalog != undefined ? `&displayAnalogs=${showAnalog}` : ``}` +
+            `${tab == 'Analytic' && analytic != 'FFT' ? `&displayAnalytics=${analytic}` : ``}` +
+            `${tab == 'Analytic' && analytic == 'LowPassFilter' ? `&filterOrder=${lpf}` : ``}` +
+            `${tab == 'Analytic' && analytic == 'HighPassFilter' ? `&filterOrder=${hpf}` : ``}` +
+            `${tab == 'Analytic' && analytic == 'Rectifier' ? `&Trc=${trc}` : ``}` +
+            `${tab == 'Analytic' && analytic == 'Harmonic' ? `&harmonic=${harmonic}` : ``}` +
             `&Meter=${props.EventData.MeterName}` +
             `&EventType=${props.EventData.EventName}`
         );
@@ -269,12 +280,12 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '193px' }}>
                             <div className="input-group mb-3">
                                 <div className="input-group-prepend">
-                                    {(props.navigation == "system" ? <a href={(props.Lookup.System.m_Item1 != null ? "?eventid=" + props.Lookup.System.m_Item1.ID + "&navigation=system" : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (props.Lookup.System.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
-                                    {(props.navigation == "station" ? <a href={(props.Lookup.Station.m_Item1 != null ? "?eventid=" + props.Lookup.Station.m_Item1.ID + "&navigation=station" : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (props.Lookup.Station.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.Station.m_Item1 != null ? props.Lookup.Station.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
-                                    {(props.navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item1 != null ? "?eventid=" + props.Lookup.Meter.m_Item1.ID + "&navigation=meter" : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (props.Lookup.Meter.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.Meter.m_Item1 != null ? props.Lookup.Meter.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
-                                    {(props.navigation == "asset" ? <a href={(props.Lookup.Line.m_Item1 != null ? "?eventid=" + props.Lookup.Line.m_Item1.ID + "&navigation=asset" : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (props.Lookup.Line.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
+                                    {(navigation == "system" ? <a href={(props.Lookup.System.m_Item1 != null ? "?eventid=" + props.Lookup.System.m_Item1.ID + "&navigation=system" : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (props.Lookup.System.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
+                                    {(navigation == "station" ? <a href={(props.Lookup.Station.m_Item1 != null ? "?eventid=" + props.Lookup.Station.m_Item1.ID + "&navigation=station" : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (props.Lookup.Station.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.Station.m_Item1 != null ? props.Lookup.Station.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
+                                    {(navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item1 != null ? "?eventid=" + props.Lookup.Meter.m_Item1.ID + "&navigation=meter" : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (props.Lookup.Meter.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.Meter.m_Item1 != null ? props.Lookup.Meter.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
+                                    {(navigation == "asset" ? <a href={(props.Lookup.Line.m_Item1 != null ? "?eventid=" + props.Lookup.Line.m_Item1.ID + "&navigation=asset" : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (props.Lookup.Line.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
                                 </div>
-                                <select id="next-back-selection" value={props.navigation} onChange={(e) => props.stateSetter({ navigation: e.target.value })}>
+                                <select id="next-back-selection" value={navigation} onChange={(e) => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
                                     <option value="system">System</option>
                                     <option value="station">Station</option>
                                     <option value="meter">Meter</option>
@@ -282,10 +293,10 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </select>
                                 <div className="input-group-append">
 
-                                    {(props.navigation == "system" ? <a href={(props.Lookup.System.m_Item2 != null ? "?eventid=" + props.Lookup.System.m_Item2.ID + "&navigation=system" : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (props.Lookup.System.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item2 != null ? props.Lookup.System.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
-                                    {(props.navigation == "station" ? <a href={(props.Lookup.Station.m_Item2 != null ? "?eventid=" + props.Lookup.Station.m_Item2.ID + "&navigation=station" : '#')} id="station-next" key="station-next" className={'btn btn-primary' + (props.Lookup.Station.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Station.m_Item2 != null ? props.Lookup.Station.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
-                                    {(props.navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item2 != null ? "?eventid=" + props.Lookup.Meter.m_Item2.ID + "&navigation=meter" : '#')} id="meter-next" key="meter-next" className={'btn btn-primary' + (props.Lookup.Meter.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Meter.m_Item2 != null ? props.Lookup.Meter.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
-                                    {(props.navigation == "asset" ? <a href={(props.Lookup.Line.m_Item2 != null ? "?eventid=" + props.Lookup.Line.m_Item2.ID + "&navigation=asset" : '#')} id="line-next" key="line-next" className={'btn btn-primary' + (props.Lookup.Line.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Line.m_Item2 != null ? props.Lookup.Line.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
+                                    {(navigation == "system" ? <a href={(props.Lookup.System.m_Item2 != null ? "?eventid=" + props.Lookup.System.m_Item2.ID + "&navigation=system" : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (props.Lookup.System.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item2 != null ? props.Lookup.System.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
+                                    {(navigation == "station" ? <a href={(props.Lookup.Station.m_Item2 != null ? "?eventid=" + props.Lookup.Station.m_Item2.ID + "&navigation=station" : '#')} id="station-next" key="station-next" className={'btn btn-primary' + (props.Lookup.Station.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Station.m_Item2 != null ? props.Lookup.Station.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
+                                    {(navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item2 != null ? "?eventid=" + props.Lookup.Meter.m_Item2.ID + "&navigation=meter" : '#')} id="meter-next" key="meter-next" className={'btn btn-primary' + (props.Lookup.Meter.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Meter.m_Item2 != null ? props.Lookup.Meter.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
+                                    {(navigation == "asset" ? <a href={(props.Lookup.Line.m_Item2 != null ? "?eventid=" + props.Lookup.Line.m_Item2.ID + "&navigation=asset" : '#')} id="line-next" key="line-next" className={'btn btn-primary' + (props.Lookup.Line.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.Line.m_Item2 != null ? props.Lookup.Line.m_Item2.StartTime : '')} style={{ padding: '4px 20px' }}>&gt;</a> : null)}
                                 </div>
                             </div>
                         </li> : null}
