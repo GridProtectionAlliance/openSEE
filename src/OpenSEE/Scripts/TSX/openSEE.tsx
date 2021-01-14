@@ -105,6 +105,12 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             lookup: null,
             breakeroperation: undefined,
         }
+
+        let startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(this.state.eventStartTime + "Z").getTime());
+        let endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(this.state.eventEndTime + "Z").getTime());
+
+        store.dispatch(SetTimeLimit({ start: startTime, end: endTime}));
+       
         store.dispatch(updatedURL({ query: this.history['location'].search, initial: true }));
 
         this.history['listen']((location, action) => {
@@ -129,7 +135,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         //if (this.props.displayTCE)
         //    store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
        // 
-        store.dispatch(SetTimeLimit({ start: new Date(this.state.eventStartTime + "Z").getTime(), end: new Date(this.state.eventEndTime + "Z").getTime() }));
+       
 
         store.dispatch(LoadOverlappingEvents())
         this.getEventData();

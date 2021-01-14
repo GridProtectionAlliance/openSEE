@@ -75,6 +75,7 @@ const LineChart = (props: iProps) => {
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
+    const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
     
@@ -164,6 +165,10 @@ const LineChart = (props: iProps) => {
     }, [startTime, endTime])
 
     React.useEffect(() => {
+        if (!mouseDownInit) {
+            setMouseDownInit(true);
+            return;
+        }
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x")
             dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
@@ -489,8 +494,10 @@ const LineChart = (props: iProps) => {
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
 
-        if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy")
+        
+        if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy") 
             dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
+        
 
         if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
