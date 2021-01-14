@@ -37,15 +37,27 @@ const SettingsWidget = (props: Iprops) => {
     const snapToPoint = useSelector(selectSnap);
     const eventOverlay = useSelector(selectEventOverlay);
     const dispatch = useDispatch();
+    const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
     React.useEffect(() => {
         ($("#settings") as any).draggable({ scroll: false, handle: '#settingshandle', containment: '#chartpanel' });
     }, [props])
 
+    React.useEffect(() => {
+
+        const handleScroll = () => {
+            let offset = document.getElementById("settingScrollContainer").scrollTop;
+             setScrollOffset(offset);
+        }
+        document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
+        return () => { document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
+    }, [props])
+  
+
     return (
         <div id="settings" className="ui-widget-content" style={outerDiv}>
             <div id="settingshandle" className={handle}></div>
-            <div style={{ width: '510px', height: '300px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
+            <div id="settingScrollContainer" style={{ width: '510px', height: '300px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
                 <div className="accordion" id="panelSettings">
                     <div className="card">
                         <div className="card-header" id="header-general">
@@ -79,7 +91,7 @@ const SettingsWidget = (props: Iprops) => {
                     </div>
 
                     {props.isOpen ?
-                        list.map(item => <PlotCard {...item}/>) : null
+                        list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />) : null
                     }
                    
                 </div>
@@ -92,7 +104,7 @@ const SettingsWidget = (props: Iprops) => {
 
 export default SettingsWidget;
 
-export const ColorButton = (props: { label: string, statesetter: (col: string) => void, color: string }) => {
+export const ColorButton = (props: { label: string, statesetter: (col: string) => void, color: string, scrollOffset: number }) => {
     const [displayColorPicker, setDisplayColorPicker] = React.useState<boolean>(false);
 
     const popover: React.CSSProperties =
@@ -112,14 +124,14 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
 
     function updateColor (color, event)  {
         props.statesetter(color.hex);
+        setDisplayColorPicker(false)
     };
 
-    
         return (
             <div style={{ margin: ' 5px 10px 5px 10px' }}>
                 <button className="btn btn-primary" onClick={() => setDisplayColorPicker(!displayColorPicker)} style={{ backgroundColor: props.color }}>{props.label}</button>
                 {displayColorPicker ? <div style={popover}>
-                    <div style={{ position: 'fixed' }}>
+                    <div style={{ position: 'fixed', transform: `translate(0px,-${props.scrollOffset}px)` }}>
                         <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} />
                     </div>
                     {/*<div style={cover} onClick={() => setDisplayColorPicker(false)} />*/}
@@ -150,7 +162,9 @@ export const UnitSelector = (props: { label: string, setter: (result: OpenSee.IU
         );    
 }
 
-const PlotCard = (props: OpenSee.IGraphProps) => {
+interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
+
+const PlotCard = (props: ICardProps) => {
     const lineData = useSelector(selectData(props));
     const colors = useSelector(selectColor);
     const units = useSelector(selectUnit);
@@ -158,8 +172,8 @@ const PlotCard = (props: OpenSee.IGraphProps) => {
 
     const dispatch = useDispatch();
 
-    let colorSettings = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color)).map((c: OpenSee.Color) => <ColorButton label={GetColorName(c)} color={colors[c]} statesetter={(col) => dispatch(SetColor({ color: c, value: col }))} />);
-    let unitSettings = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit)).map((u: OpenSee.Unit) => <UnitSelector label={GetUnitName(u)} unit={units[u]} setter={(unit) => dispatch(SetUnit({ unit: u, value: unit.current }))} />);
+    let colorSettings = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color));
+    let unitSettings: OpenSee.Unit[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
 
     function GetDisplayName() {
         switch (props.DataType) {
@@ -202,6 +216,9 @@ const PlotCard = (props: OpenSee.IGraphProps) => {
         return c as string;
     }
 
+    let unitCol1: OpenSee.Unit[] = unitSettings.filter((item, index) => index % 2 == 0);
+    let unitCol2: OpenSee.Unit[] = unitSettings.filter((item, index) => index % 2 == 1);
+
     return (<div className="card">
         <div className="card-header" id={"header-" + props.DataType}>
             <h2 className="mb-0">
@@ -214,22 +231,36 @@ const PlotCard = (props: OpenSee.IGraphProps) => {
         <div id={"collaps-" + props.DataType} className="collapse" aria-labelledby={"header-" + props.DataType} data-parent="#panelSettings">
             <div className="card-body">
                 <div className="row">
-                    <div className="collumn" style={{ width: '50%' }}>
+                    <div className="collumn" style={{ width: '100%' }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Units:</legend>
-                            {props.DataType != 'FFT' ? < UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} /> : null}
-                            {unitSettings}
+                            <div className="row">
+                                <div className="col">
+                                    {props.DataType != 'FFT' ? < UnitSelector label={"Time"} unit={timeUnit} setter={(unit) => dispatch(SetTimeUnit(unit.current))} /> : null}
+                                    {unitCol1.map((item, index) => <UnitSelector key={index} label={GetUnitName(item)} unit={units[item]} setter={(unit) => dispatch(SetUnit({ unit: item, value: unit.current }))} />)}
+                                </div>
+                                <div className="col">
+                                    {unitCol2.map((item, index) => <UnitSelector key={index} label={GetUnitName(item)} unit={units[item]} setter={(unit) => dispatch(SetUnit({ unit: item, value: unit.current }))} />)}
+                                </div>
+                            </div>
                         </fieldset>
                     </div>
                 </div>
-                <div className="row">
+                {colorSettings.length < 0 ? < div className="row">
                     <div className="collumn" style={{ width: '100%', display: "inline-flex" }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%', display: "inline-flex" }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
-                            {colorSettings}
+                            {colorSettings.map((c: OpenSee.Color, i: number) =>
+                                <ColorButton
+                                    key={i}
+                                    label={GetColorName(c)}
+                                    color={colors[c]}
+                                    statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                    scrollOffset={props.scrollOffset}
+                                />)}
                         </fieldset>
-                    </div>
-                </div>
+                    </div> 
+                </div> : null}
             </div>
         </div>
     </div>);
