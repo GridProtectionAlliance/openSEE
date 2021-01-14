@@ -22,9 +22,8 @@
 //******************************************************************************************************
 import { createAsyncThunk} from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _ from 'lodash';
 import * as queryString from "query-string";
-import { AddPlot, RemovePlot } from './dataSlice';
+import { AddPlot, RemovePlot, SetAnalytic, SetMouseMode, SetTimeLimit, SetZoomMode } from './dataSlice';
 import { SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt, SetNavigation, SetTab } from './settingSlice';
 
 
@@ -89,8 +88,31 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
         dispatch(SetTab(query.Tab as OpenSee.Tab))
    
     // Data Query
+    oldState = getState() as OpenSee.IRootState;
+            //(state: OpenSee.IRootState) => state.Data.startTime,
+            //(state: OpenSee.IRootState) => state.Data.endTime,
 
-    // Compare Query - special case sicne the selected events depend on loading everything
+    query.mouseMode = (query.mouseMode == undefined ? 'zoom' : query.mouseMode);
+    query.zoomMode = (query.zoomMode == undefined ? 'x' : query.zoomMode);
+
+    if (query.mouseMode != oldState.Data.mouseMode)
+        dispatch(SetMouseMode(query.mouseMode as OpenSee.MouseMode))
+
+    if (query.zoomMode != oldState.Data.zoomMode)
+        dispatch(SetZoomMode(query.zoomMode as OpenSee.ZoomMode))
+
+    if (oldState.Settings.Tab == 'Analytic' &&
+        query.Analytic != undefined &&
+        query.Analytic != oldState.Data.Analytic)
+        dispatch(SetAnalytic(query.Analytic as OpenSee.Analytic));
+
+    if (!arg.initial) {
+        if (ToInt(query.startTime) != undefined && ToInt(query.endTime) != undefined &&
+            (oldState.Data.startTime != ToInt(query.startTime) || (oldState.Data.endTime != ToInt(query.endTime))))
+            dispatch(SetTimeLimit({ start: ToInt(query.startTime), end: ToInt(query.endTime) }))
+    }
+       
+    // Compare Query - special case since the selected events depend on loading everything
    
 })
 
@@ -102,4 +124,13 @@ function ToBool(arg) {
     if (arg == "False" || arg == "false" || arg == "0")
         return false;
     return undefined;
+}
+
+function ToInt(arg) {
+    if (arg == undefined)
+        return undefined;
+    let val = parseInt(arg);
+    if (isNaN(val))
+        return undefined;
+    return val;
 }
