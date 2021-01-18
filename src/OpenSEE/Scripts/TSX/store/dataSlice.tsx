@@ -706,7 +706,7 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
             result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
                 return {
                     Group: d.LegendGroup,
-                    Name: (keys[index].DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical + d.LegendHorizontal,
+                    Name: (keys[index].DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical +' ' + d.LegendHorizontal,
                     Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
                     Value: selectedData[index].map(j => d.DataPoints[j])
                 }

@@ -41,10 +41,10 @@ const PointWidget = (props: Iprops) => {
         ($("#accumulatedpoints") as any).draggable({ scroll: false, handle: '#accumulatedpointshandle', containment: '#chartpanel' });
     }, [props])
 
-    let data: Array<JSX.Element> = (points.length > 0 ? points[0].Value.map((p, i) => <tr onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
+    let data: Array<JSX.Element> = (points.length > 0 && props.isOpen ? points[0].Value.map((p, i) => <tr onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
         <td key={"timeCycles-" + i}><span>{(p[0]- startTime).toFixed(7)} sec<br />{((p[0] - startTime) * 60.0).toFixed(2)} cycles</span> </td>
         <td key={"timeS-" + i} ><span>{i == 0 ? 'N/A' : <> {(points[0].Value[i - 1][0] - p[0]).toFixed(4)} sec<br /> {((points[0].Value[i - 1][0] - p[0]) * 60.0).toFixed(2)} cycles) </>}</span> </td>
-        {points.map(pt => <> <td><span>{(pt.Value[i][1] * pt.Unit.factor).toFixed(2)} ({p.Unit.short})</span> </td> <td><span>{i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * pt.Unit.factor).toFixed(4)} ({p.Unit.short})</span> </td> </>)}        
+        {points.map(pt => <> <td><span>{(pt.Value[i][1] * pt.Unit.factor).toFixed(2)} ({pt.Unit.short})</span> </td> <td><span>{i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * pt.Unit.factor).toFixed(4)} ({pt.Unit.short})</span> </td> </>)}        
     </tr> ): [])
 
     return (
@@ -63,6 +63,7 @@ const PointWidget = (props: Iprops) => {
                                         </>: null}
                                 </tr>
                                 <tr key="row-2">
+                                    {props.isOpen ? <> <td key={"headerValue-Time"}><span>Value</span> </td> <td key={"headerDelta-Time"} ><span>Delta</span> </td> </> : null}
                                     {props.isOpen ? points.map((p, i) => <> <td key={"headerValue-" + i}><span>Value</span> </td> <td key={"headerDelta-" + i} ><span>Delta</span> </td> </>) : null}
                                 </tr>
                             </thead>
