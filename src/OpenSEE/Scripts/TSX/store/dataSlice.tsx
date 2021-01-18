@@ -369,6 +369,8 @@ export const DataReducer = createSlice({
                 state.selectedIndixes.forEach((item, index) => {
                     if (state.plotKeys[index].EventId != state.eventID)
                         return;
+                    if (state.data[index].length == 0)
+                        return;
                     let dataIndex = getIndex(action.payload[0], state.data[index][0].DataPoints)
                     state.selectedIndixes[index].push(dataIndex);
                 })

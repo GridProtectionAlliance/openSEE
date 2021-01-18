@@ -43,13 +43,13 @@ const ToolTipDeltaWidget = (props: Iprops) => {
         ($("#tooltipwithdelta") as any).draggable({ scroll: false, handle: '#tooltipwithdeltahandle', containment: '#chartpanel' });
     }, [props])
 
-    let data: Array<JSX.Element> = points.map(p => <tr>
+    let data: Array<JSX.Element> = (props.isOpen? points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.PrevValue * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.Value * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
         <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
-    </tr>)
+    </tr>) : [])
 
 
     let firstDate = hover[0];
@@ -59,8 +59,8 @@ const ToolTipDeltaWidget = (props: Iprops) => {
         <div id="tooltipwithdelta" className="ui-widget-content" style={outerDiv}>
             <div id="tooltipwithdeltahandle" className={handle}></div>
             <div>
-                <div style={{ textAlign: 'center' }} >
-                    <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: 'calc(90%)' }}>
+                <div style={{ textAlign: 'center', maxHeight: '580px' }} >
+                    <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: '580px' }}>
                         <thead>
                             <tr><td style={{ width: 34 }}></td>
                                 <td></td>
