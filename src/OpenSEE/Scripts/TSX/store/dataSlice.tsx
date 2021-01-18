@@ -1153,7 +1153,16 @@ function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
     if (type == 'Voltage' || type == 'Current')
         return d.LegendGroup + (type == 'Voltage' ? ' V ' : ' I ') + d.LegendVertical + ' ' + d.LegendHorizontal;
     if (type == 'FirstDerivative')
-        return d.LegendGroup + ' ' + d.LegendVGroup + ' derrivative ' + d.LegendHorizontal + d.LegendVertical;
+        return d.LegendGroup + ' ' + d.LegendVGroup + ' derrivative ' + d.LegendHorizontal + ' ' + d.LegendVertical;
+    if (type == 'ClippedWaveforms')
+        return d.LegendGroup + ' ' + ' clipped WaveForm ' + d.LegendVertical;
+    if (type == 'Frequency')
+        return d.LegendGroup + ' Frequency ' + d.LegendVertical;
+    if (type == 'HighPassFilter')
+        return d.LegendGroup + ' ' + d.LegendHorizontal + ' HPF ' + d.LegendVertical;
+    if (type == 'LowPassFilter')
+        return d.LegendGroup + ' ' + d.LegendHorizontal + ' LPF ' + d.LegendVertical;
+
     else
         return type;
 
