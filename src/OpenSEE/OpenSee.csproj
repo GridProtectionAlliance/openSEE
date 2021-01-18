@@ -108,9 +108,7 @@
   <ItemGroup>
     <None Include="Scripts\TSX\OpenSee.d.ts" />
     <None Include="Scripts\TSX\openSee.tsx" />
-    <None Include="Scripts\TSX\Graphs\AnalyticBar.tsx" />
     <None Include="Scripts\TSX\Graphs\LineChartBase.tsx" />
-    <None Include="Scripts\TSX\Graphs\D3BarChartBase.tsx" />
     <None Include="Scripts\TSX\Components\About.tsx" />
     <None Include="Scripts\TSX\Components\Menu.tsx" />
     <None Include="Scripts\TSX\Components\MultiSelectWindow.tsx" />
