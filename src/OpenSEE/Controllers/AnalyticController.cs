@@ -526,7 +526,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetFirstDerivativeLookup(DataGroup dataGroup, VICycleDataGroup viCycleDataGroup)
+        public List<D3Series> GetFirstDerivativeLookup(DataGroup dataGroup, VICycleDataGroup viCycleDataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -631,7 +631,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetImpedanceLookup(VICycleDataGroup vICycleDataGroup)
+        public List<D3Series> GetImpedanceLookup(VICycleDataGroup vICycleDataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -783,7 +783,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private static IEnumerable<Complex> CalculateImpedance(CycleDataGroup Voltage, CycleDataGroup Current)
+        private IEnumerable<Complex> CalculateImpedance(CycleDataGroup Voltage, CycleDataGroup Current)
         {
             List<DataPoint> voltagePointsMag = Voltage.RMS.DataPoints;
             List<DataPoint> voltagePointsAng = Voltage.Phase.DataPoints;
@@ -828,7 +828,7 @@ namespace OpenSEE
 
         }
 
-        public static List<D3Series> GetRemoveCurrentLookup(DataGroup dataGroup)
+        public List<D3Series> GetRemoveCurrentLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
            
@@ -986,7 +986,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetPowerLookup(VICycleDataGroup vICycleDataGroup)
+        public List<D3Series> GetPowerLookup(VICycleDataGroup vICycleDataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1288,7 +1288,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetMissingVoltageLookup(DataGroup dataGroup)
+        public List<D3Series> GetMissingVoltageLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1373,7 +1373,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetClippedWaveformsLookup(DataGroup dataGroup)
+        public List<D3Series> GetClippedWaveformsLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1762,7 +1762,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetOverlappingWaveformLookup(DataGroup dataGroup)
+        public List<D3Series> GetOverlappingWaveformLookup(DataGroup dataGroup)
         {
             
 
@@ -1787,7 +1787,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private static D3Series GenerateOverlappingWaveform(DataSeries dataSeries)
+        private D3Series GenerateOverlappingWaveform(DataSeries dataSeries)
         {
 
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
@@ -1845,7 +1845,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetRapidVoltageChangeLookup(VICycleDataGroup vICycleDataGroup)
+        public List<D3Series> GetRapidVoltageChangeLookup(VICycleDataGroup vICycleDataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1860,7 +1860,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private static D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries)
+        private D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries)
         {
             
                 double nominalVoltage = dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0D;
@@ -2282,7 +2282,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetRectifierLookup(VIDataGroup dataGroup, double RC)
+        public List<D3Series> GetRectifierLookup(VIDataGroup dataGroup, double RC)
         {
            
             List<D3Series> dataLookup = new List<D3Series>();

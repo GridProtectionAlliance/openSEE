@@ -594,42 +594,44 @@ namespace OpenSEE
 
         private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc, int harmonic)
         {
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
-            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+            DataGroup dataGroup = OpenSEEBaseController.QueryDataGroup(evt.ID, meter);
+            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController.QueryVICycleDataGroup(evt.ID, meter);
+
+            AnalyticController controller = new AnalyticController();
 
             if (analytic == "FirstDerivative")
-                return AnalyticController.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
+                return controller.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
             if (analytic == "ClippedWaveforms")
-                return AnalyticController.GetClippedWaveformsLookup(dataGroup);
-            //if (analytic == "Frequency")
-            //    return AnalyticController.GetFrequencyLookup(new VIDataGroup(dataGroup));
+                return controller.GetClippedWaveformsLookup(dataGroup);
+            if (analytic == "Frequency")
+                return controller.GetFrequencyLookup(new VIDataGroup(dataGroup));
             if (analytic == "Impedance")
-                return AnalyticController.GetImpedanceLookup(viCycleDataGroup);
+                return controller.GetImpedanceLookup(viCycleDataGroup);
             if (analytic == "Power")
-                return AnalyticController.GetPowerLookup(viCycleDataGroup);
-            /*if (analytic == "RemoveCurrent")
-                return Analytics.GetRemoveCurrentLookup(dataGroup);
+                return controller.GetPowerLookup(viCycleDataGroup);
+            if (analytic == "RemoveCurrent")
+                return controller.GetRemoveCurrentLookup(dataGroup);
             if (analytic == "MissingVoltage")
-                return Analytics.GetMissingVoltageLookup(dataGroup);
+                return controller.GetMissingVoltageLookup(dataGroup);
             if (analytic == "LowPassFilter")
-                return Analytics.GetLowPassFilterLookup(dataGroup, order);
+                return controller.GetLowPassFilterLookup(dataGroup, order);
             if (analytic == "HighPassFilter")
-                return Analytics.GetHighPassFilterLookup(dataGroup, order);
+                return controller.GetHighPassFilterLookup(dataGroup, order);
             if (analytic == "SymmetricalComponents")
-                return Analytics.GetSymmetricalComponentsLookup(viCycleDataGroup);
+                return controller.GetSymmetricalComponentsLookup(viCycleDataGroup);
             if (analytic == "Unbalance")
-                return Analytics.GetUnbalanceLookup(viCycleDataGroup);
+                return controller.GetUnbalanceLookup(viCycleDataGroup);
             if (analytic == "Rectifier")
-                return Analytics.GetRectifierLookup(new VIDataGroup(dataGroup),Trc);
+                return controller.GetRectifierLookup(new VIDataGroup(dataGroup),Trc);
             if (analytic == "RapidVoltageChange")
-                return Analytics.GetRapidVoltageChangeLookup(viCycleDataGroup);
+                return controller.GetRapidVoltageChangeLookup(viCycleDataGroup);
             if (analytic == "THD")
-                return Analytics.GetTHDLookup(dataGroup);
+                return controller.GetTHDLookup(dataGroup);
             if (analytic == "SpecifiedHarmonic")
-                return Analytics.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
+                return controller.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
             if (analytic == "OverlappingWaveform")
-                return Analytics.GetOverlappingWaveformLookup(dataGroup);
-            */
+                return controller.GetOverlappingWaveformLookup(dataGroup);
+            
 
 
             return new List<D3Series>();

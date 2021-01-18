@@ -223,8 +223,8 @@ const OpenSeeNavBar = (props: IProps) => {
                             }
 
                             <div className="dropdown-divider"></div>
-                            <a className="dropdown-item" onClick={() => { }}>Export CSV</a>
-                            <a className="dropdown-item" onClick={() => { }}>Export PQDS</a>
+                            <a className="dropdown-item" onClick={() => { exportData('csv') }}>Export CSV</a>
+                            <a className="dropdown-item" onClick={() => { exportData('pqds') }}>Export PQDS</a>
 
                         </div>
                     </li>
