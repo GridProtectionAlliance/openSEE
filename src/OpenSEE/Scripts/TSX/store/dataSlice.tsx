@@ -461,10 +461,11 @@ export const selectData = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Data.data,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (data, plotKeys, single) => {
+        (state: OpenSee.IRootState) => state.Settings.Tab,
+        (data, plotKeys, single, tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
 
-            if (single) {
+            if (single && tab == 'Compare') {
                 let d = data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId);
                 d = d.map(lst => lst.map(item => { return { ...item, LineType: ':' } }));
                 return data[index].concat(...d);
@@ -480,9 +481,10 @@ export const selectEnabled = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Data.enabled,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (data, plotKeys, single) => {
+        (state: OpenSee.IRootState) => state.Settings.Tab,
+        (data, plotKeys, single, tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single)
+            if (single && tab == 'Compare')
                 return data[index].concat(...data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId))
             return data[index];
         });
@@ -495,9 +497,10 @@ export const selectYLimits = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
         (state: OpenSee.IRootState) => state.Data.autoLimits,
-        (data, plotKeys, single, autoLimits) => {
+        (state: OpenSee.IRootState) => state.Settings.Tab,
+        (data, plotKeys, single, autoLimits, tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single && autoLimits[index])
+            if (single && autoLimits[index] && tab == 'Compare')
                 return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType))
             
             return data[index];
@@ -520,8 +523,13 @@ export const selectEventID = (state: OpenSee.IRootState) => state.Data.eventID
 export const selectAnalytic = (state: OpenSee.IRootState) => state.Data.Analytic;
 
 
-export const selectListGraphs = createSelector((state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.eventID, (state: OpenSee.IRootState) => state.Settings.SinglePlot, (keys, eventId, singlePlot) => {
-    if (singlePlot)
+export const selectListGraphs = createSelector(
+    (state: OpenSee.IRootState) => state.Data.plotKeys,
+    (state: OpenSee.IRootState) => state.Data.eventID,
+    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (state: OpenSee.IRootState) => state.Settings.Tab,
+    (keys, eventId, singlePlot, tab) => {
+        if (singlePlot || tab != 'Compare')
         return keys.filter(item => item.EventId == eventId);
     return keys;
 })
