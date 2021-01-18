@@ -31,7 +31,7 @@ export const outerDiv: React.CSSProperties = {
     fontSize: '12px',
     marginLeft: 'auto',
     marginRight: 'auto',
-    overflowY: 'auto',
+    overflowY: 'hidden',
     padding: '0em',
     zIndex: 1000,
     boxShadow: '4px 4px 2px #888888',
@@ -41,7 +41,7 @@ export const outerDiv: React.CSSProperties = {
     left: 0,
     display: 'none',
     backgroundColor: 'white',
-    maxHeight: '1040px'
+    maxHeight: '600px'
 };
 
 export const handle = style({

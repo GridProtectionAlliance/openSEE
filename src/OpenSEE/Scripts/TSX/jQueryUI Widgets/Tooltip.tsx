@@ -43,7 +43,7 @@ const ToolTipWidget = (props: Iprops) => {
         ($("#unifiedtooltip") as any).draggable({ scroll: false, handle: '#unifiedtooltiphandle', containment: '#chartpanel' });
     }, [props])
 
-    let data: Array<JSX.Element> = points.map(p => <tr>
+    let data: Array<JSX.Element> = points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.Value * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
@@ -52,12 +52,12 @@ const ToolTipWidget = (props: Iprops) => {
     return (
         <div id="unifiedtooltip" className="ui-widget-content" style={outerDiv}>
             <div id="unifiedtooltiphandle" className={handle}></div>
-            <div id="unifiedtooltipcontent" >
-                <div style={{ textAlign: 'center' }} >
+            <div id="unifiedtooltipcontent" style={{ maxHeight: '580px' }}>
+                <div style={{ textAlign: 'center', maxHeight: '580px' }} >
                     <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
                     <br />
                     <table className="table">
-                        <tbody style={{ display: 'block', overflowY: 'scroll', maxHeight: 'calc(90%)'}}>
+                        <tbody style={{ display: 'block', overflowY: 'scroll', maxHeight: '570px'}}>
                             {props.isOpen? data : null}
                         </tbody>
                     </table>

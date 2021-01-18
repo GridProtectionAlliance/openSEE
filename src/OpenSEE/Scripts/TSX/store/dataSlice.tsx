@@ -1152,8 +1152,10 @@ function mapUnits(units: OpenSee.IUnitCollection): OpenSee.IActiveUnits {
 function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
     if (type == 'Voltage' || type == 'Current')
         return d.LegendGroup + (type == 'Voltage' ? ' V ' : ' I ') + d.LegendVertical + ' ' + d.LegendHorizontal;
+    if (type == 'FirstDerivative')
+        return d.LegendGroup + ' ' + d.LegendVGroup + ' derrivative ' + d.LegendHorizontal + d.LegendVertical;
     else
-        return type + ' Needs to change'
+        return type;
 
 }
 
