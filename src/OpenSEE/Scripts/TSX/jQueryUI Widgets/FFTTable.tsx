@@ -49,21 +49,22 @@ const FFTTable = (props: Iprops) => {
             <div style={{ border: 'black solid 2px' }}>
                 <div id="ffttablehandle" className={handle}></div>
                 <div style={{ overflowY: 'scroll', overflowX: 'scroll', maxHeight: 575 }}>
-                    <table className="table table-bordered table-hover">
-                        <thead>
-                            <tr>
-                                <th key="header-harmonic"></th>
-                                {fftPoints.map((item, index) => <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span> </th>)}
-                            </tr>
-                            <tr>
-                                <th key="header-harmonic">Harmonic</th>
-                                {fftPoints.map((item, index) => <> <th key={index + '-mag'}><span>Mag</span> </th><th key={index + '-ang'}><span>Ang</span> </th> </>)}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(fftPoints.length > 0 ? fftPoints[0].Angle.map((a, i) => Row(i, fftPoints)) : null)}
-                        </tbody>
-                    </table>
+                    {props.isOpen ?
+                        <table className="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th key="header-harmonic"></th>
+                                    {fftPoints.map((item, index) => <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span> </th>)}
+                                </tr>
+                                <tr>
+                                    <th key="header-harmonic">Harmonic</th>
+                                    {fftPoints.map((item, index) => <><th key={index + '-mag'}><span>Mag</span> </th><th key={index + '-ang'}><span>Ang</span> </th> </>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(fftPoints.length > 0 ? fftPoints[0].Angle.map((a, i) => Row(i, fftPoints)) : null)}
+                            </tbody>
+                        </table> : null}
                 </div>
 
                 <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
@@ -78,16 +79,18 @@ const FFTTable = (props: Iprops) => {
 const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
     
     function showAng(index) {
-        let val = data[index].Angle[row] * data[index].PhaseUnit.factor;
+        let f = (data[index].PhaseUnit != undefined ? data[index].PhaseUnit.factor : 1.0);
+        let val = data[index].Angle[row] * f;
         if (isNaN(val))
             return (<td key={"ang-" + index}>N/A</td>)
-        return <td key={"ang-" + index}>{val.toFixed(2)} ({data[index].PhaseUnit.short})</td>;
+        return <td key={"ang-" + index}>{val.toFixed(2)} ({(data[index].PhaseUnit != undefined ? data[index].PhaseUnit.short : '')})</td>;
     }
     function showMag(index) {
-        let val = data[index].Magnitude[row] * data[index].Unit.factor;;
+        let f = (data[index].Unit != undefined ? data[index].Unit.factor : 1.0);
+        let val = data[index].Magnitude[row] * f;
         if (isNaN(val))
             return (<td key={"mag-" + index}>N/A</td>)
-        return <td key={"mag-" + index}>{val.toFixed(2)} ({data[index].Unit.short})</td>;
+        return <td key={"mag-" + index}>{val.toFixed(2)} ({(data[index].Unit != undefined ? data[index].Unit.short : '')})</td>;
     }
     
     function createCells() {
