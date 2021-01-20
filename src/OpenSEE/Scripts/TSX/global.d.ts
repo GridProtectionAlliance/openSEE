@@ -77,6 +77,7 @@ export namespace OpenSee {
         Tab: Tab,
         Navigation: EventNavigation,
         querystring: string,
+        analytic: Analytic,
     }
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')

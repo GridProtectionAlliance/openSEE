@@ -53,7 +53,7 @@ import {
     SelectNavigation,
     SelectQueryString, SelectTab, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt, SetTab
 } from './store/settingSlice';
-import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic } from './store/dataSlice';
+import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic, selectAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
@@ -170,7 +170,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             this.getEventData();
         if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Analytic')
             store.dispatch(SetAnalytic('none'));
-        if (prevProps.Tab != this.props.Tab && this.props.Tab == 'Analytic')
+        if (prevProps.Tab != this.props.Tab && this.props.Tab == 'Analytic' && this.props.analytic == 'none')
             store.dispatch(SetAnalytic('FirstDerivative'));
         if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Compare')
             store.dispatch(ClearOverlappingEvent());
@@ -412,7 +412,8 @@ const mapStatesToProps = function (state: OpenSee.IRootState) {
         displayAnalogs: SelectdisplayAnalogs(state),
         querystring: SelectQueryString(state),
         Tab: SelectTab(state),
-        Navigation: SelectNavigation(state)
+        Navigation: SelectNavigation(state),
+        analytic: selectAnalytic(state)
     }
 }
 
