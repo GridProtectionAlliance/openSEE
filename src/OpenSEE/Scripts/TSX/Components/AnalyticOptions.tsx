@@ -91,7 +91,7 @@ const AnalyticOptions = (props: IProps) => {
                 <option value={'THD'}> THD</option>
                 <option value={'Unbalance'}> Unbalance </option>
                 <option value={'FaultDistance'}> Fault Distance </option>
-                <option value={'Restrike'}> Breaker Restrike </option>
+                {/*<option value={'Restrike'}> Breaker Restrike </option>*/}
                 <option value={'FFT'}> FFT </option>
             </select>
         </form>
