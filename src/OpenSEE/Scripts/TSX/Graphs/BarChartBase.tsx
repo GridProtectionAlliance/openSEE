@@ -329,7 +329,8 @@ const BarChart = (props: iProps) => {
         }
 
         container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
-            .attr("x", d => xScaleRef.current(d.data[0]))
+            .attr("x", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : v) })
+            .style("opacity", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
             .attr("y", d => barGen(d.unit)(d))
             .attr("width", xScaleRef.current.bandwidth() - 1)
             .attr("height", d => { return Math.max(((props.height - 60) - barGen(d.unit)(d)),0)})
