@@ -132,6 +132,9 @@ export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
     (baseUnits, data, activeUnits, singlePlot) => {
         let result = {};
         let index = data.findIndex(item => item.DataType == key.DataType && item.EventId == key.EventId);
+        if (index == -1)
+            return null;
+
         if (!singlePlot)
             Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[activeUnits[index][u]]);
         else {
