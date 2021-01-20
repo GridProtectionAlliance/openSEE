@@ -39,6 +39,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../store/dataSlice';
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
+import FFTTable from '../jQueryUI Widgets/FFTTable';
 
 
 declare var homePath: string;
@@ -79,6 +80,7 @@ const OpenSeeNavBar = (props: IProps) => {
     const [showHarmonicStats, setShowHarmonicStats] = React.useState<boolean>(false);
     const [showCorrelatedSags, setShowCorrelatedSags] = React.useState<boolean>(false);
     const [showLightning, setShowLightning] = React.useState<boolean>(false);
+    const [showFFTTable, setShowFFTTable] = React.useState<boolean>(false);
 
     const [showSettings, setShowSettings] = React.useState<boolean>(false);
 
@@ -180,6 +182,19 @@ const OpenSeeNavBar = (props: IProps) => {
     }, [showSettings])
 
     React.useEffect(() => {
+        if (showFFTTable) {
+            $('#ffttable').show();
+
+            return () => {
+                $('#ffttable').hide();
+            }
+        }
+        return () => { }
+
+    }, [showFFTTable])
+
+
+    React.useEffect(() => {
         if (mouseMode == 'fftMove' && analytic != 'FFT')
             dispatch(SetMouseMode('zoom'));
     },[analytic])
@@ -221,8 +236,9 @@ const OpenSeeNavBar = (props: IProps) => {
                                     {(props.EventData.EventName == "Snapshot" ? <a className="dropdown-item" onClick={() => setShowHarmonicStats(!showHarmonicStats) }>{(showHarmonicStats ? 'Hide Harmonics' : 'Show Harmonics')}</a> : null)}
                             </> : null
                             }
-
+                            {analytic == 'FFT' && tab == 'Analytic' ? <a className="dropdown-item" onClick={() => setShowFFTTable(!showFFTTable)}>{(showFFTTable ? 'Close FFT Table' : 'Show FFT Table')}</a> : null}
                             <div className="dropdown-divider"></div>
+                            {analytic == 'FFT' && tab == 'Analytic' ? <a className="dropdown-item" onClick={() => { exportData('fft') }}>Export FFT</a> : null}
                             <a className="dropdown-item" onClick={() => { exportData('csv') }}>Export CSV</a>
                             <a className="dropdown-item" onClick={() => { exportData('pqds') }}>Export PQDS</a>
 
@@ -312,6 +328,7 @@ const OpenSeeNavBar = (props: IProps) => {
             <TimeCorrelatedSagsWidget eventId={eventId} closeCallback={() => setShowCorrelatedSags(false)} exportCallback={() => exportData('correlatedsags')} />
             <LightningDataWidget eventId={eventId} closeCallback={() => setShowLightning(false)} />
             <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} />
+            <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} eventID={eventId} />
         </nav>
     );
 

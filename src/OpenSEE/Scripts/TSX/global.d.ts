@@ -200,6 +200,16 @@ export namespace OpenSee {
         PhaseUnit: iUnitOptions
     }
 
+    interface IFFTSeries {
+        Color: Color,
+        Unit: iUnitOptions,
+        Phase: string,
+        Magnitude: number[],
+        Angle: number[],
+        Asset: string,
+        PhaseUnit: iUnitOptions
+    }
+
     interface IPointCollection {
         Group: string,
         Name: string,

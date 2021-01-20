@@ -23,7 +23,7 @@
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
 import _, {  forEach, uniq } from 'lodash';
-import {  selectUnit, SetSinglePlot } from './settingSlice';
+import {  selectActiveUnit, selectUnit, SetSinglePlot } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
 declare var eventID: number;
@@ -466,6 +466,8 @@ export const selectData = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Settings.Tab,
         (data, plotKeys, single, tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
+            if (index == -1)
+                return null;
 
             if (single && tab == 'Compare') {
                 let d = data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId);
@@ -716,6 +718,52 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
         })
         return result;
 })
+
+// For FFT Table
+export const selectFFTData = createSelector(selectUnit, (state: OpenSee.IRootState) => selectData({ DataType: 'FFT', EventId: state.Data.eventID })(state),
+    (state: OpenSee.IRootState) => selectActiveUnit({ DataType: 'FFT', EventId: state.Data.eventID })(state),
+    (baseUnit, data, activeUnits) => {
+        
+        if (data == null)
+            return [];
+
+        let asset = uniq(data.map(item => item.LegendGroup));
+        let phase = uniq(data.map(item => item.LegendVertical));
+
+        if (data.length == 0)
+            return []
+
+
+        let result: OpenSee.IFFTSeries[] = [];
+
+        asset.forEach(a => {
+            phase.forEach(p => {
+                if (!data.some((item, i) => (item.LegendGroup == a && item.LegendVertical == p)))
+                    return
+
+                let d = data.filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
+                let phaseChannel = d.find(item => item.LegendHorizontal == 'Ang');
+                let magnitudeChannel = d.find(item => item.LegendHorizontal == 'Mag');
+
+                if (phaseChannel == undefined || magnitudeChannel == undefined)
+                    return;
+
+                result.push({
+                    Color: phaseChannel.Color,
+                    Unit: baseUnit.Current.options[activeUnits['Voltage']],
+                    PhaseUnit: baseUnit.Angle.options[activeUnits['Angle']],
+                    Phase: p,
+                    Asset: a,
+                    Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
+                    Angle: phaseChannel.DataPoints.map(item => item[1]),
+                });
+
+            })
+        })
+
+        return result;
+
+    })
 
 
 //Export Loading States:
