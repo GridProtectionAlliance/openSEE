@@ -48,7 +48,7 @@ const FFTTable = (props: Iprops) => {
         <div id="ffttable" className="ui-widget-content" style={outerDiv}>
             <div style={{ border: 'black solid 2px' }}>
                 <div id="ffttablehandle" className={handle}></div>
-                <div style={{ overflowY: 'scroll', overflowX: 'scroll', maxHeight: 580 }}>
+                <div style={{ overflowY: 'scroll', overflowX: 'scroll', maxHeight: 575 }}>
                     <table className="table table-bordered table-hover">
                         <thead>
                             <tr>
@@ -78,16 +78,16 @@ const FFTTable = (props: Iprops) => {
 const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
     
     function showAng(index) {
-        let val = data[index].Angle[row];
+        let val = data[index].Angle[row] * data[index].PhaseUnit.factor;
         if (isNaN(val))
-            return (<td key={"data-" + index}>N/A</td>)
-        return <td key={"data-" + index}>{val.toFixed(2)}</td> ;
+            return (<td key={"ang-" + index}>N/A</td>)
+        return <td key={"ang-" + index}>{val.toFixed(2)} ({data[index].PhaseUnit.short})</td>;
     }
     function showMag(index) {
-        let val = data[index].Magnitude[row];
+        let val = data[index].Magnitude[row] * data[index].Unit.factor;;
         if (isNaN(val))
-            return (<td key={"data-" + index}>N/A</td>)
-        return <td key={"data-" + index}>{val.toFixed(2)}</td>;
+            return (<td key={"mag-" + index}>N/A</td>)
+        return <td key={"mag-" + index}>{val.toFixed(2)} ({data[index].Unit.short})</td>;
     }
     
     function createCells() {
