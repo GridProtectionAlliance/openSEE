@@ -36,7 +36,7 @@ import { OpenSee } from '../global';
 import { clone } from 'lodash';
 import SettingsWidget from '../jQueryUI Widgets/SettingWindow';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic } from '../store/dataSlice';
+import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic, selectFFTLimits } from '../store/dataSlice';
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import FFTTable from '../jQueryUI Widgets/FFTTable';
@@ -71,6 +71,8 @@ const OpenSeeNavBar = (props: IProps) => {
     const trc = useSelector(selectTRC);
     const lpf = useSelector(selectLPF);
     const hpf = useSelector(selectHPF);
+    const cycles = useSelector(selectCycles);
+    const fftTime = useSelector(selectFFTLimits);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
     const [showToolTip, setShowToolTip] = React.useState<boolean>(false);
@@ -211,6 +213,8 @@ const OpenSeeNavBar = (props: IProps) => {
             `${tab == 'Analytic' && analytic == 'HighPassFilter' ? `&filterOrder=${hpf}` : ``}` +
             `${tab == 'Analytic' && analytic == 'Rectifier' ? `&Trc=${trc}` : ``}` +
             `${tab == 'Analytic' && analytic == 'Harmonic' ? `&harmonic=${harmonic}` : ``}` +
+            `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
+            `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
             `&Meter=${props.EventData.MeterName}` +
             `&EventType=${props.EventData.EventName}`
         );

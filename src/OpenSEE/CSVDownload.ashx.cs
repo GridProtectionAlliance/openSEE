@@ -170,7 +170,7 @@ namespace OpenSEE
                 ExportHarmonicsToCSV(responseStream, requestParameters);
             else if (requestParameters["type"] == "correlatedsags")
                 ExportCorrelatedSagsToCSV(responseStream, requestParameters);
-            else if (requestParameters["type"] == "FFT")
+            else if (requestParameters["type"] == "fft")
                 ExportFFTToCSV(responseStream, requestParameters);
             
         }
@@ -455,7 +455,7 @@ namespace OpenSEE
 
         public void ExportFFTToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
-            int eventId = int.Parse(requestParameters["eventId"]);
+            int eventId = int.Parse(requestParameters["eventID"]);
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
@@ -466,13 +466,14 @@ namespace OpenSEE
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
+                AnalyticController ctrl = new AnalyticController();
                 DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
 
-                List<D3Series> harmonics = new List<D3Series>(); // AnalyticController.GetFFTLookup(dataGroup, startTime, cycles);
+                List<D3Series> harmonics = ctrl.GetFFTLookup(dataGroup, startTime, cycles); // AnalyticController.GetFFTLookup(dataGroup, startTime, cycles);
 
                 List<string> headers = new List<string>() { "Harmonic" };
 
-                headers = headers.Concat(harmonics.Select(item => item.ChartLabel)).ToList();
+                headers = headers.Concat(harmonics.Select(item => item.LegendGroup + " " + item.LegendVertical + " " + item.LegendHorizontal)).ToList();
 
                 if (headers.Count == 1)
                     return;

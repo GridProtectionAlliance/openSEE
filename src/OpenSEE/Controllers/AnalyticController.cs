@@ -2872,7 +2872,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public static List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
+        public List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
