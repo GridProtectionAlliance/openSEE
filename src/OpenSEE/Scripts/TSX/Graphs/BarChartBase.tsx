@@ -194,8 +194,8 @@ const BarChart = (props: iProps) => {
             .attr("x", d => xScaleRef.current(d.data[0]))
             .attr("y", d => yScaleRef.current(d.data[1]))
             .attr("width", xScaleRef.current.bandwidth() - 1)
-            .attr("height", d => { return ((props.height - 60) - yScaleRef.current(d.data[1])) })
-            
+            .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current(d.data[1])), 0) })
+
 
         container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
         updateLimits();
@@ -369,11 +369,16 @@ const BarChart = (props: iProps) => {
     }
 
     function getXbucket(pixel: number) {
+
+        let scaleSize = xScaleRef.current.range();
+        let p = pixel - scaleSize[0];
+
         let eachBand = xScaleRef.current.step();
 
-        let index = Math.floor((pixel / eachBand));
+        let index = Math.floor((p / eachBand));
         if (index == xScaleRef.current.domain().length)
             index = index - 1
+       
         return xScaleRef.current.domain()[index];
     }
 
@@ -385,7 +390,7 @@ const BarChart = (props: iProps) => {
         if (mouseMode == 'zoom' && mouseDown) {
             if (zoomMode == "x")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])))
+                    .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])) + 0.5 * (xScaleRef.current.bandwidth()))
                     .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
                     .attr("height", props.height - 60)
                     .attr("y", 0)
