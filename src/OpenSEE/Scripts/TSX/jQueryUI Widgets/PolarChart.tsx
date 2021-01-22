@@ -64,8 +64,10 @@ const PolarChartWidget = (props: Iprops) => {
     function createTable(vec, index) {
         if (vec == undefined)
             return <><td key={"mag-" + index}>N/A</td><td key={"mag-" + index}>N/A</td> </>
+
+        const factor = (vec.Unit.short == 'pu' ? (1.0/vec.BaseValue) : vec.Unit.factor);
         return (<>
-            <td key={"mag-" + index}>{(vec.Magnitude * vec.Unit.factor).toFixed(2)} ({vec.Unit.short})</td>
+            <td key={"mag-" + index}>{(vec.Magnitude * factor).toFixed(2)} ({vec.Unit.short})</td>
             <td key={"phase-" + index}>{(vec.Angle * vec.PhaseUnit.factor).toFixed(2)} ({vec.PhaseUnit.short})</td>
         </>)
     }

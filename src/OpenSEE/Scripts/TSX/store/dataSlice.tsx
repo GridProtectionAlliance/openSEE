@@ -633,7 +633,8 @@ export const selectVPhases = createSelector(selectUnit, selectEventID, selectHov
                     Phase: p,
                     Asset: a,
                     Magnitude: mag,
-                    Angle: phase
+                    Angle: phase,
+                    BaseValue: magnitudeChannel.BaseValue
                 });
 
             })
@@ -682,7 +683,8 @@ export const selectIPhases = createSelector(selectUnit, selectEventID, selectHov
                     Phase: p,
                     Asset: a,
                     Magnitude: mag,
-                    Angle: phase
+                    Angle: phase,
+                    BaseValue: magnitudeChannel.BaseValue
                 });
 
             })
