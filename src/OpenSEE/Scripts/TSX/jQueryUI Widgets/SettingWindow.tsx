@@ -246,7 +246,7 @@ const PlotCard = (props: ICardProps) => {
                         </fieldset>
                     </div>
                 </div>
-                {colorSettings.length < 0 ? < div className="row">
+                {colorSettings.length > 0 ? < div className="row">
                     <div className="collumn" style={{ width: '100%', display: "inline-flex" }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%', display: "inline-flex" }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
