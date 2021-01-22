@@ -140,15 +140,21 @@ const LineChart = (props: iProps) => {
         return () => { };
     }, [hover])
 
+    // For performance Combine a bunch of Hooks that call updateLimits() since that is what re-renders the Lines
     //Effect to adjust Axes when Units change
     React.useEffect(() => {
-        if (yScaleRef.current != undefined && xScaleRef.current != undefined)
-                updateLimits();
+        if (yScaleRef.current == undefined || xScaleRef.current == undefined)
+            return;
+
+        yScaleRef.current.domain(yLimits);
+        xScaleRef.current.domain([startTime, endTime]);
+        
+        updateLimits();
 
 
-    }, [activeUnit])
+    }, [activeUnit, yLimits, startTime, endTime])
 
-    //Effect if y Limits change
+    /*//Effect if y Limits change
     React.useEffect(() => {
         if (yScaleRef.current != undefined) {
             yScaleRef.current.domain(yLimits);
@@ -162,7 +168,7 @@ const LineChart = (props: iProps) => {
             xScaleRef.current.domain([startTime, endTime]);
             updateLimits();
         }
-    }, [startTime, endTime])
+    }, [startTime, endTime])*/
 
     React.useEffect(() => {
         if (!mouseDownInit) {
