@@ -51,6 +51,10 @@ interface ILegendGrid {
     category?: string,
 }
 
+const horizontalSort = ['W', 'Pk', 'RMS', 'Ph'];
+const verticalGroupSort = ['L-N', 'L-L', 'V', 'I'];
+const verticalSort = [ 'AN', 'BN','CN', 'NG', 'RES', 'AB', 'BC', 'CA'];
+
 const Legend = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId }
     const data = useSelector(selectData(dataKey));
@@ -107,8 +111,8 @@ const Legend = (props: iProps) => {
 
         setGrid(groupBy(grid, item => (item.vLabel + item.category)));
         setCategories(categories);
-        setVerticalHeader(uniq(grid.map(item => [item.vLabel, item.category]), (item) => { return (item[0] + item[1]) }))
-        setHorizontalHeader(uniq(grid.map(item => item.hLabel), (d) => d));
+        setVerticalHeader(uniq(grid.map(item => [item.vLabel, item.category]), (item) => { return (item[0] + item[1]) }).sort(sortVertical))
+        setHorizontalHeader(uniq(grid.map(item => item.hLabel), (d) => d).sort(sortHorizontal));
     }
 
     function update() {
@@ -143,6 +147,59 @@ const Legend = (props: iProps) => {
 
         setGrid(updateGrid);
         
+    }
+
+    function sortHorizontal(item1: string, item2: string): number {
+        if (item1 == item2)
+            return 0
+
+        let index1 = horizontalSort.findIndex((v) => v == item1);
+        let index2 = horizontalSort.findIndex((v) => v == item2);
+
+        if (index1 != -1 && index2 != -1)
+            return (index1 > index2 ? 1 : -1);
+        if (index1 != -1)
+            return 1;
+        if (index2 != -1)
+            return -1;
+
+        return (item1 > item2 ? 1 : -1);
+    }
+
+    function sortVertical(item1: [string, string], item2: [string, string]): number {
+        if (item1[1] != item2[1])
+            return sortGroup(item1, item2);
+        if (item1[0] == item2[0])
+            return 0;
+
+        let index1 = verticalSort.findIndex((v) => v == item1[0]);
+        let index2 = verticalSort.findIndex((v) => v == item2[0]);
+
+        if (index1 != -1 && index2 != -1)
+            return (index1 > index2 ? 1 : -1);
+        if (index1 != -1)
+            return 1;
+        if (index2 != -1)
+            return -1;
+
+        return (item1[0] > item2[0] ? 1 : -1);
+    }
+
+    function sortGroup(item1: [string, string], item2: [string, string]): number {
+        if (item1[1] == item2[1])
+            return 0
+
+        let index1 = verticalGroupSort.findIndex((v) => v == item1[1]);
+        let index2 = verticalGroupSort.findIndex((v) => v == item2[1]);
+
+        if (index1 != -1 && index2 != -1)
+            return (index1 > index2 ? 1 : -1);
+        if (index1 != -1)
+            return 1;
+        if (index2 != -1)
+            return -1;
+
+        return (item1[1] > item2[1] ? 1 : -1);
     }
 
     function changeCategory(index: number, item: ICategory) {
@@ -262,7 +319,6 @@ const Legend = (props: iProps) => {
             }
         }
 
-        
     }
 
     return ( 
@@ -290,11 +346,11 @@ const Legend = (props: iProps) => {
                     {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}/>)}
                 </div>
                 {(verticalHeader.length > 1 ?
-                    <div style={{ width: ((200 - 4) / (horizontalHeader.length + 2 )), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                        {uniq(verticalHeader, v=> v[1]).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
+                    <div style={{ width: ((200 - 4) / (horizontalHeader.length + 2)), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                        {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
                     </div> : null)}
                 <div style={{ width: (verticalHeader.length > 1 ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                    {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.enabled).map(item => item.label)} key={index} label={value[0]} data={grid.get(value[0]+value[1])} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
+                    {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.enabled).map(item => item.label)} key={index} label={value[0]} data={grid.get(value[0] + value[1]).sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
                 </div>
         </div>
         </div>
