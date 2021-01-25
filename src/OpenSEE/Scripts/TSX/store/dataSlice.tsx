@@ -22,8 +22,8 @@
 //******************************************************************************************************
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _, {  forEach, uniq } from 'lodash';
-import {  selectActiveUnit, selectUnit, SetSinglePlot } from './settingSlice';
+import _, { uniq } from 'lodash';
+import {  selectActiveUnit, selectUnit } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
 declare var eventID: number;
@@ -199,7 +199,7 @@ export const DataReducer = createSlice({
         zoomMode: 'x' as OpenSee.ZoomMode,
         eventID: eventID as number,
         Analytic: 'none' as OpenSee.Analytic,
-
+        selectedIndixes: [] as number[][],
         plotKeys: [] as OpenSee.IGraphProps[],
         data: [] as Array<OpenSee.iD3DataSeries>[],
         activeRequest: [] as string[],
@@ -208,7 +208,6 @@ export const DataReducer = createSlice({
         activeUnits: [] as OpenSee.IActiveUnits[],
         yLimits: [] as [number, number][],
         autoLimits: [] as boolean[],
-        selectedIndixes: [] as Array<number>[],
         fftLimits: [0, 0],
     } as OpenSee.IDataState,
     reducers: {
@@ -244,7 +243,7 @@ export const DataReducer = createSlice({
             if (index > -1) {
                 state.data[index] = [];
                 state.selectedIndixes[index] = [];
-                state.activeRequest[index] = (action.payload.key == null ? '' : action.payload.key)
+                state.activeRequest[index] = (action.payload.key == null ? '' : action.payload.key);
                 return state;
             }
 
@@ -326,7 +325,7 @@ export const DataReducer = createSlice({
                 dat = dat.concat(...state.enabled.filter((item, i) => state.plotKeys[i].DataType == action.payload.key.DataType && action.payload.key.EventId != state.plotKeys[i].EventId))
             }
 
-            
+
             action.payload.trace.forEach(i => dat[i] = action.payload.enabled);
 
             if (action.payload.singlePlot) {
@@ -342,11 +341,36 @@ export const DataReducer = createSlice({
             else
                 state.enabled[index] = dat;
 
-            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
-                state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
-                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            let yLimits: [number, number] = [0, 0];
+            let adjustLimits = true;
 
+            // If we enabled some trace we only need to update if it's actually exceeding current Limits....
+            if (state.autoLimits[index] && action.payload.enabled && state.plotKeys[index].DataType != 'FFT') {
+                adjustLimits = false;
+                let dLim = recomputeYLimits(state.startTime, state.endTime, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+
+                if (dLim[0] < state.yLimits[index][0])
+                    state.yLimits[index][0] = dLim[0];
+                if (dLim[1] > state.yLimits[index][1])
+                    state.yLimits[index][1] = dLim[1];
+            }
+            // If wew disabled some traces and they are just inside the limits we don't have to recompute limits
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT') {
+                let dLim = recomputeYLimits(state.startTime, state.endTime, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                if (dLim[0] > state.yLimits[index][0] && dLim[1] < state.yLimits[index][1])
+                    adjustLimits = false;
+            }
+
+            if (state.autoLimits[index] && adjustLimits) {
+
+                if (state.plotKeys[index].DataType != 'FFT')
+                    yLimits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                else
+                    yLimits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+
+                if (yLimits[0] != state.yLimits[index][0] || yLimits[1] != state.yLimits[index][1])
+                    state.yLimits[index] = yLimits;
+            }
             return state
         },
         SetHover: (state, action: PayloadAction<{ t: number, y: number, snap: boolean }>) => {
@@ -355,6 +379,7 @@ export const DataReducer = createSlice({
             else {
                 let d = state.data.find((item,i) => !state.loading[i] && item.length > 0)[0];
                 state.hover[1] = d.DataPoints[getIndex(action.payload.t, d.DataPoints)][0];
+                state.hover[0] = action.payload.t;
             }
             return state;
         },
@@ -1125,14 +1150,14 @@ function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3Dat
 
         let factor = baseUnit[item.Unit].options[activeUnits[item.Unit]].factor;
 
-        factor = (baseUnit[item.Unit].options[activeUnits[item.Unit]].short == 'pu' ? 1.0/item.BaseValue : factor);
-
-
-        return item.DataPoints.slice(indexStart, indexEnd).map(p => [p[0], p[1] * factor]).filter(p => !isNaN(p[1]) && isFinite(p[1]));
+        factor = (baseUnit[item.Unit].options[activeUnits[item.Unit]].short == 'pu' ? 1.0 / item.BaseValue : factor);
+        let dt = item.DataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
+        return [Math.min(...dt) * factor, Math.max(...dt) * factor];
+        
     });
 
-    let yMin = Math.min(...limitedData.map(item => Math.min(...item.map(p => p[1]))))
-    let yMax = Math.max(...limitedData.map(item => Math.max(...item.map(p => p[1]))))
+    let yMin = Math.min(...limitedData.map(item => item[0]));
+    let yMax = Math.max(...limitedData.map(item => item[1]));
     return [yMin, yMax];
     
 }
