@@ -267,7 +267,15 @@ export const DataReducer = createSlice({
                 return state;
 
             state.data[index] = [...state.data[index], ...action.payload.data]
-            state.enabled[index] = [...state.enabled[index], ...action.payload.data.map(item => true)]
+
+            let extendEnabled = action.payload.data.map(item => true)
+            if (action.payload.key.DataType == 'Voltage') {
+                extendEnabled = action.payload.data.map(item => item.LegendVGroup == 'L-L' && item.LegendHorizontal != 'Ph')
+            }
+            else if (action.payload.key.DataType == 'Current') {
+                extendEnabled = action.payload.data.map(item => item.LegendHorizontal == 'W' && item.LegendVertical != 'NG')
+            }
+            state.enabled[index] = [...state.enabled[index], ...extendEnabled]
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
