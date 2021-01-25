@@ -703,7 +703,7 @@ export const selectIPhases = createSelector(selectUnit, selectEventID, selectHov
                 let mag = (pointIndex > (magnitudeChannel.DataPoints.length - 1) ? NaN : magnitudeChannel.DataPoints[pointIndex][1]);
                 result.push({
                     Color: phaseChannel.Color,
-                    Unit: baseUnit.Current.options[activeUnits[index].Voltage],
+                    Unit: baseUnit.Current.options[activeUnits[index].Current],
                     PhaseUnit: baseUnit.Angle.options[activeUnits[index].Angle],
                     Phase: p,
                     Asset: a,

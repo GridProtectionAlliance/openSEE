@@ -74,7 +74,7 @@ const PolarChartWidget = (props: Iprops) => {
 
     let Va = VVector.filter(item => item.Phase == 'AN');
     let Vb = VVector.filter(item => item.Phase == 'BN');
-    let Vc = VVector.filter(item => item.Phase == 'XN');
+    let Vc = VVector.filter(item => item.Phase == 'CN');
 
     let Vab = VVector.filter(item => item.Phase == 'AB');
     let Vbc = VVector.filter(item => item.Phase == 'BC');
