@@ -584,7 +584,13 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
             if (isNaN(dataIndex))
                 return;
             result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
-                return { Color: d.Color, Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]], Value: (dataIndex > (d.DataPoints.length -1) ? NaN : d.DataPoints[dataIndex][1]), Name: GetDisplayName(d, keys[index].DataType) }
+                return {
+                    Color: d.Color,
+                    Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
+                    Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
+                    Name: GetDisplayName(d, keys[index].DataType),
+                    BaseValue: d.BaseValue,
+                }
             }))
     })
     return result;
@@ -609,7 +615,8 @@ export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, 
                     Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
                     Value: (dataIndex > (d.DataPoints.length -1 ) ? NaN : d.DataPoints[dataIndex][1]),
                     Name: GetDisplayName(d, keys[index].DataType),
-                    PrevValue: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][1]) : NaN)
+                    PrevValue: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][1]) : NaN),
+                    BaseValue: d.BaseValue,
                 }
 
             }))

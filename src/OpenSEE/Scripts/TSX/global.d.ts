@@ -188,7 +188,8 @@ export namespace OpenSee {
         Name: string,
         Value: number,
         Unit: iUnitOptions,
-        PrevValue?: number
+        PrevValue?: number,
+        BaseValue: number,
     }
 
     interface IVector {
