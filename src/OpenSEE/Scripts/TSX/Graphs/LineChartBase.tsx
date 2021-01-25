@@ -623,7 +623,7 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
     return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
         {props.loading ? <p> Loading...</p> : null}
         <svg className="root" style={{ width: '100%', height: '100%' }}>
-            <ToolTip height={props.height} left={props.hover} />
+            {props.loading ? null : <ToolTip height={props.height} left={props.hover} />}
         </svg>
     </div>)
 })
