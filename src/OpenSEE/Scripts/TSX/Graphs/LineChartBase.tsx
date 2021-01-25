@@ -78,6 +78,7 @@ const LineChart = (props: iProps) => {
     const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
+    const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
     
 
     const lineData = useSelector(SelectData);
@@ -136,6 +137,8 @@ const LineChart = (props: iProps) => {
 
     //Effect to change location of tool tip
     React.useEffect(() => {
+        if (xScaleRef.current != undefined)
+            setTooltipLocation(xScaleRef.current(hover[0]))
         updateHover();
         return () => { };
     }, [hover])
@@ -195,7 +198,7 @@ const LineChart = (props: iProps) => {
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove();
+        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
         if (loading) {
             setCreated(false);
@@ -246,12 +249,10 @@ const LineChart = (props: iProps) => {
     }
 
     function createPlot() {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove()
+        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
-        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).append("svg").classed("root",true)
-            .attr("width", '100%')
-            .attr("height", '100%')
-            .append("g")
+        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
+            .append("g").classed("root", true)
                 .attr("transform", "translate(40,10)");
 
         // Now Create Axis
@@ -281,13 +282,7 @@ const LineChart = (props: iProps) => {
             .text("Units Go here");
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
 
-        //Add ToolTip
-        svg.append("line").classed("toolTip", true)
-            .attr("stroke", "#000")
-            .attr("x1", 10).attr("x2", 10)
-            .attr("y1", 0).attr("y2", props.height - 60)
-            .style("opacity", 0.5);
-
+        setTooltipLocation(10);
 
         //Add Clip Path
         svg.append("defs").append("svg:clipPath")
@@ -474,8 +469,8 @@ const LineChart = (props: iProps) => {
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
-        container.select(".toolTip").attr("x1", xScaleRef.current(hover[0]))
-            .attr("x2", xScaleRef.current(hover[0]));
+        //container.select(".toolTip").attr("x1", xScaleRef.current(hover[0]))
+        //    .attr("x2", xScaleRef.current(hover[0]));
 
         if (mouseMode == 'zoom' && mouseDown) {
             if (zoomMode == "x")
@@ -609,21 +604,36 @@ const LineChart = (props: iProps) => {
         yScaleRef.current.range([props.height - 60, 0]);
 
         container.select(".clip").attr("height", props.height - 60)
-        container.select(".toolTip").attr("y2", props.height - 60)
+        //container.select(".toolTip").attr("y2", props.height - 60)
         container.select(".fftwindow").attr("y", 0).attr("height", props.height - 60);
         updateLimits();
     }
     
     return (
         <div>
-            <div id={"graphWindow-" + props.type + "-" + props.eventId} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
-                {loading? <p> Loading...</p>: null}
-            </div>
+            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} />
             {loading ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
 
+
+const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: boolean, hover:number }) => {
+
+    return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
+        {props.loading ? <p> Loading...</p> : null}
+        <svg className="root" style={{ width: '100%', height: '100%' }}>
+            <ToolTip height={props.height} left={props.hover} />
+        </svg>
+    </div>)
+})
+
+const ToolTip = (props: { height: number, left: number }) => {
+
+    return <g>
+        <polyline points={`${props.left},0 ${props.left},${props.height - 60}`} style={{ stroke: "#000", opacity: 0.5 }} transform={'translate(40,10)'}/>
+        </g>
+}
 
 export default LineChart;
 
