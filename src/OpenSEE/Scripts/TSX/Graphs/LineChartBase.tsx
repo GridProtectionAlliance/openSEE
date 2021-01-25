@@ -496,11 +496,11 @@ const LineChart = (props: iProps) => {
         let deltaData = hover[1] - pointMouse[1];
 
         
-        if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy") 
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy"))
             dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
         
 
-        if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
 
         deltaT = pointMouse[0] - oldFFTWindow[0];
