@@ -248,8 +248,18 @@ const OpenSeeNavBar = (props: IProps) => {
 
                         </div>
                     </li>
-                    <li className="nav-item" style={{ width:  (analytic == 'FFT' ? 'calc(100% - 786)': 'calc(100% - 741px)'), textAlign: 'center' }}>
+                    <li className="nav-item" style={{ width:  (analytic == 'FFT' ? 'calc(100% - 954px)': 'calc(100% - 909px)'), textAlign: 'center' }}>
 
+                    </li>
+                    <li className="nav-item" style={{ width: '84px' }}>
+                        <button type="button" className="btn btn-primary" title="ToolTip" style={{ borderRadius: "0.25rem" }} onClick={() =>setShowToolTip(!showToolTip)}>
+                              < i className="fa fa-mouse-pointer" ></i> 
+                            </button>
+                    </li>
+                    <li className="nav-item" style={{ width: '84px' }}>
+                        <button type="button" className="btn btn-primary" title="Polar Chart" style={{ borderRadius: "0.25rem" }} onClick={() => setShowPolar(!showPolar)}>
+                            < i className="fa fa-arrows-alt" ></i>
+                        </button>
                     </li>
                     <li className="nav-item" style={{ width: (analytic == 'FFT' ? '168px' : '123px') }}>
                         <div className="btn-group" role="group">
