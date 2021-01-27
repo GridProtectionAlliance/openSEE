@@ -104,6 +104,9 @@ const LineChart = (props: iProps) => {
     const options = useSelector(selectAnalyticOptionInstance);
     const fftCycles = useSelector(selectCycles);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number,number]>([0, 0]);
+
+    const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
+
     const dispatch = useDispatch();
 
     //Effect to update the Data 
@@ -150,28 +153,23 @@ const LineChart = (props: iProps) => {
             return;
 
         yScaleRef.current.domain(yLimits);
-        xScaleRef.current.domain([startTime, endTime]);
+        xScaleRef.current.domain([startTime, endTime])
         
         updateLimits();
 
 
     }, [activeUnit, yLimits, startTime, endTime])
 
-    /*//Effect if y Limits change
     React.useEffect(() => {
-        if (yScaleRef.current != undefined) {
-            yScaleRef.current.domain(yLimits);
-            updateLimits();
-        }
-    }, [yLimits])
-
-    //Effect if x Limits change
-    React.useEffect(() => {
-        if (xScaleRef.current != undefined) {
-            xScaleRef.current.domain([startTime, endTime]);
-            updateLimits();
-        }
-    }, [startTime, endTime])*/
+        console.log("here")
+        if (leftSelectCounter == 0)
+            return;
+        if (leftSelectCounter == 1)
+            return;
+        let handle = setTimeout(() => { MouseLeft(); }, 500);
+        return () => { clearTimeout(handle) };
+    }, [leftSelectCounter])
+    
 
     React.useEffect(() => {
         if (!mouseDownInit) {
@@ -262,14 +260,14 @@ const LineChart = (props: iProps) => {
 
         xScaleRef.current = d3.scaleLinear()
             .domain([startTime, endTime])
-            .range([20, props.width - 320]);
+            .range([20, props.width - 280]);
 
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
         svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
+            .attr("transform", "translate(" + ((props.width - 280) / 2) + " ," + (props.height - 20) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel);
 
@@ -327,7 +325,8 @@ const LineChart = (props: iProps) => {
             .on('mousemove', MouseMove )
             .on('mouseout',  MouseOut )
             .on('mousedown', MouseDown )
-            .on('mouseup', MouseUp )
+            .on('mouseup', MouseUp)
+            .on('mouseenter', () => { setLeftSelectCounter(1) })
     }
 
     function formatTimeTick(d: number) {
@@ -529,11 +528,15 @@ const LineChart = (props: iProps) => {
     }
 
     function MouseOut() {
+        setLeftSelectCounter((n) => -1);
+    }
+
+    // Mouse Left only get's called if we left for a minimum of time
+    function MouseLeft() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
-
     //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limitw change (due to auto Units)
     function updateLabels() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -600,7 +603,7 @@ const LineChart = (props: iProps) => {
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
-        xScaleRef.current.range([20, props.width - 320]);
+        xScaleRef.current.range([20, props.width - 280]);
         yScaleRef.current.range([props.height - 60, 0]);
 
         container.select(".clip").attr("height", props.height - 60)

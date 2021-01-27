@@ -278,7 +278,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         </div>
                     </div>
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
-                        <span>Version 3.0</span>
+                        <span>Version 3.0.1</span>
                         <br/>
                         <span><About/></span>
                     </div>
@@ -292,7 +292,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         {plotData[this.props.eventID] != undefined ?
-                            <div className="card">
+                            <div className="card" style={{borderLeft: 0, borderRight: 0}}>
                                 <div className="card-body" style={{ padding: 0 }}>
                                     {plotData[this.props.eventID].map((item,idx) => (item.DataType == 'FFT' ?
                                         <BarChart
@@ -314,7 +314,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </div>
                             </div> : null }
 
-                        {Object.keys(plotData).filter(item => parseInt(item) != this.props.eventID).map(key => <div className="card">
+                        {Object.keys(plotData).filter(item => parseInt(item) != this.props.eventID).map(key => <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
                                 <div className="card-header">{
                                     (this.props.eventGroup.find(item => item.value == parseInt(key)) != undefined ? this.props.eventGroup.find(item => item.value == parseInt(key)).label : '')
                                 }</div>
