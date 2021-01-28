@@ -190,6 +190,7 @@ export namespace OpenSee {
         Unit: iUnitOptions,
         PrevValue?: number,
         BaseValue: number,
+        Time: number,
     }
 
     interface IVector {

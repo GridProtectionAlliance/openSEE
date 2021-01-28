@@ -606,6 +606,7 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
                     Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
                     Name: GetDisplayName(d, keys[index].DataType),
                     BaseValue: d.BaseValue,
+                    Time: 0,
                 }
             }))
     })
@@ -633,6 +634,7 @@ export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, 
                     Name: GetDisplayName(d, keys[index].DataType),
                     PrevValue: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][1]) : NaN),
                     BaseValue: d.BaseValue,
+                    Time: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][0]) : NaN),
                 }
 
             }))

@@ -46,14 +46,14 @@ const ToolTipDeltaWidget = (props: Iprops) => {
     let data: Array<JSX.Element> = (props.isOpen? points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.Value * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * p.Unit.factor).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+       <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
     </tr>) : [])
 
 
     let firstDate = hover[0];
-    let secondDate = NaN;
+    let secondDate = props.isOpen && points.length > 0? points[0].Time : NaN;
 
     return (
         <div id="tooltipwithdelta" className="ui-widget-content" style={outerDiv}>
@@ -65,8 +65,10 @@ const ToolTipDeltaWidget = (props: Iprops) => {
                             <tr><td style={{ width: 34 }}></td>
                                 <td></td>
                                 <td><b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b></td>
-                                <td><b>{(!isNaN(secondDate) ? moment(secondDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b></td>
-                                <td><b>{(!isNaN(firstDate) && !isNaN(secondDate) ? (secondDate - firstDate) / 1000 + ' (s)' : '')}</b></td>
+                                {!isNaN(secondDate) ? <>
+                                    <td><b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b></td>
+                                    <td><b>{(!isNaN(firstDate) ? (secondDate - firstDate) / 1000 + ' (s)' : '')}</b></td> 
+                                    </>: <td colSpan={2}><b>Select a Point</b></td>}
                             </tr>
                         </thead>
                         <tbody>
