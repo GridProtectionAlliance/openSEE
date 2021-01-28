@@ -86,8 +86,8 @@ const AnalyticOptions = (props: IProps) => {
                 <option value={'Rectifier'}>Rectifier Output </option>
                 <option value={'RapidVoltage'}> Rapid Voltage Change</option>
                 <option value={'RemoveCurrent'}> Remove Current </option>
-                <option value={'Harmonic'}> Sprecified Harmonic </option>
-                <option value={'SymetricComp'}> Symetrical Components </option>
+                <option value={'Harmonic'}> Specified Harmonic </option>
+                <option value={'SymetricComp'}> Symmetrical Components </option>
                 <option value={'THD'}> THD</option>
                 <option value={'Unbalance'}> Unbalance </option>
                 <option value={'FaultDistance'}> Fault Distance </option>
