@@ -218,7 +218,7 @@ const BarChart = (props: iProps) => {
 
         xScaleRef.current = d3.scaleBand()
             .domain(range(xLimits[0], xLimits[1]+ 1))
-            .range([20, props.width - 320])
+            .range([20, props.width - 280])
             .padding(0.1);
 
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
@@ -227,7 +227,7 @@ const BarChart = (props: iProps) => {
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
+            .attr("transform", "translate(" + ((props.width - 280) / 2) + " ," + (props.height - 20) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel);
 
@@ -474,7 +474,7 @@ const BarChart = (props: iProps) => {
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
-        xScaleRef.current.range([20, props.width - 320]);
+        xScaleRef.current.range([20, props.width - 280]);
         yScaleRef.current.range([props.height - 60, 0]);
 
         container.select(".clip").attr("height", props.height - 60)
