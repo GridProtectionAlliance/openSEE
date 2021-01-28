@@ -319,6 +319,8 @@ const Legend = (props: iProps) => {
             }
         }
 
+        dispatch(EnableTrace({ key: { EventId: props.eventId, DataType: props.type }, trace: updates, enabled: !isAny }))
+
     }
 
     return ( 
