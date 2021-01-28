@@ -82,7 +82,7 @@ const SettingsWidget = (props: Iprops) => {
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={eventOverlay}
                                                 onChange={() => dispatch(SetSinglePlot(!eventOverlay))} />
-                                            <label className="form-check-label">Overlay All Events on one Graph</label>
+                                            <label className="form-check-label">Display all Events on single Graph for Compare Overlapping Events</label>
                                         </div>
                                     </div>
                                 </div>
