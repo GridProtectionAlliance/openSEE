@@ -111,7 +111,7 @@ const LineChart = (props: iProps) => {
 
     //Effect to update the Data 
     React.useEffect(() => {
-        if (loading)
+        if (loading == 'Loading')
             return;
 
         if (isCreated) {
@@ -198,7 +198,7 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
-        if (loading) {
+        if (loading == 'Loading') {
             setCreated(false);
             return;
         }
@@ -615,18 +615,18 @@ const LineChart = (props: iProps) => {
     return (
         <div>
             <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} />
-            {loading ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
+            {loading == 'Loading' ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
 
 
-const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: boolean, hover:number }) => {
+const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number }) => {
 
     return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
-        {props.loading ? <p> Loading...</p> : null}
+        {props.loading == 'Loading' ? <p> Loading...</p> : null}
         <svg className="root" style={{ width: '100%', height: '100%' }}>
-            {props.loading ? null : <ToolTip height={props.height} left={props.hover} />}
+            {props.loading == 'Loading' ? null : <ToolTip height={props.height} left={props.hover} />}
         </svg>
     </div>)
 })

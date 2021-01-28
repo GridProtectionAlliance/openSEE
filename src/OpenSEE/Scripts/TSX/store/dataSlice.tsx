@@ -39,10 +39,10 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 
     let index = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.findIndex(item => item.DataType == arg.DataType && item.EventId == arg.EventId)
 
-    if ((thunkAPI.getState() as OpenSee.IRootState).Data.loading[index])
+    if ((thunkAPI.getState() as OpenSee.IRootState).Data.loading[index] != 'Idle')
         return;
 
-    thunkAPI.dispatch(DataReducer.actions.SetLoading(arg));
+    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: arg, state: 'Loading' }));
 
     let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
 
@@ -50,7 +50,7 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 })
 
 //Thunk to Add Data
-const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string }, thunkAPI) => {
+const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string, secondary: boolean }, thunkAPI) => {
 
     thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID:arg. requestID }))
 
@@ -153,7 +153,7 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
 
     //Add current Analytic
     thunkAPI.dispatch(DataReducer.actions.AddKey({ DataType: arg as OpenSee.graphType, EventId: eventId, key: thunkAPI.requestId }));
-    thunkAPI.dispatch(DataReducer.actions.SetLoading({ DataType: arg as OpenSee.graphType, EventId: eventId }));
+    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: { DataType: arg as OpenSee.graphType, EventId: eventId }, state: 'Loading' }));
 
     let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
     analyticHandle = handles[0];
@@ -177,7 +177,7 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, 
     if (analyticHandle != undefined && analyticHandle.Abort != undefined)
         analyticHandle.Abort();
 
-    thunkAPI.dispatch(DataReducer.actions.SetLoading(key));
+    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: key, state: 'Loading' }));
 
     let handles = getData(key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId );
     analyticHandle = handles[0];
@@ -204,7 +204,7 @@ export const DataReducer = createSlice({
         data: [] as Array<OpenSee.iD3DataSeries>[],
         activeRequest: [] as string[],
         enabled: [] as Array<boolean>[],
-        loading: [] as boolean[],
+        loading: [] as OpenSee.LoadingState[],
         activeUnits: [] as OpenSee.IActiveUnits[],
         yLimits: [] as [number, number][],
         autoLimits: [] as boolean[],
@@ -228,9 +228,10 @@ export const DataReducer = createSlice({
         UpdateEventId: (state, action: PayloadAction<number>) => {
             state.eventID = action.payload;
         },
-        SetLoading: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId);
-            state.loading[index] = true;
+        SetLoading: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, state: OpenSee.LoadingState }>) => {
+            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId);
+
+            state.loading[index] = action.payload.state;
             return state;
         },
         UpdateAnalytic: (state, action: PayloadAction<OpenSee.Analytic>) => {
@@ -250,7 +251,7 @@ export const DataReducer = createSlice({
             state.plotKeys.push(action.payload);
             state.data.push([]);
             state.enabled.push([]);
-            state.loading.push(false);
+            state.loading.push('Idle');
             state.activeUnits.push({
                 Voltage: 0, Current: 0, Angle: 0, VoltageperSecond: 0, CurrentperSecond: 0, Freq: 0, Impedance: 0,
                 PowerP: 0, PowerQ: 0, PowerS: 0, PowerPf: 0, TCE: 0, Distance: 0, Unbalance: 0, THD: 0, });
@@ -457,17 +458,24 @@ export const DataReducer = createSlice({
         builder.addCase(AddPlot.pending, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.meta.arg.DataType && item.EventId == action.meta.arg.EventId)
             if (index > -1)
-                state.loading[index] = true
+                state.loading[index] = 'Loading'
             return state
         });
         builder.addCase(AddPlot.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.meta.arg.DataType && item.EventId == action.meta.arg.EventId)
-            state.loading[index] = false
+            state.loading[index] = 'Idle'
             return state
         });
         builder.addCase(SetAnalytic.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg as OpenSee.graphType))
-            state.loading[index] = false;
+            state.loading[index] = 'Idle';
+
+            return state
+        });
+
+        builder.addCase(AddData.fulfilled, (state, action) => {
+            let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg.key.DataType as OpenSee.graphType) && item.EventId == action.meta.arg.key.EventId)
+            state.loading[index] = 'Partial';
 
             return state
         });
@@ -475,7 +483,7 @@ export const DataReducer = createSlice({
         builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
 
-            state.loading[index] = false;
+            state.loading[index] = 'Idle';
 
             return state
         });
@@ -810,23 +818,23 @@ export const selectFFTData = createSelector(selectUnit, (state: OpenSee.IRootSta
 
 //Export Loading States:
 export const selectLoadVoltages = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Voltage' && item).length > 0)
+    return (loading.filter((item, index) => plotKeys[index].DataType == 'Voltage' && item != 'Idle').length > 0)
 })
 
 export const selectLoadCurrents = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Current' && item).length > 0)
+    return (loading.filter((item, index) => plotKeys[index].DataType == 'Current' && item != 'Idle').length > 0)
 })
 
 export const selectLoadAnalogs = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Analogs' && item).length > 0)
+    return (loading.filter((item, index) => plotKeys[index].DataType == 'Analogs' && item != 'Idle').length > 0)
 })
 
 export const selectLoadDigitals = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Digitals' && item).length > 0)
+    return (loading.filter((item, index) => plotKeys[index].DataType == 'Digitals' && item != 'Idle').length > 0)
 })
 
 export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'TripCoil' && item).length > 0)
+    return (loading.filter((item, index) => plotKeys[index].DataType == 'TripCoil' && item != 'Idle').length > 0)
 })
 
 // #endregion
@@ -861,8 +869,8 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            handleFreq.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
-            handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            handleFreq.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true })) })
+            handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
 
             result.push(handleFreq);
             result.push(handlePOW);
@@ -877,7 +885,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            breakerAnalogsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            breakerAnalogsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(breakerAnalogsDataHandle);
             break;
         case ('Digitals'):
@@ -890,7 +898,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            breakerDigitalsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            breakerDigitalsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(breakerDigitalsDataHandle);
             break;
         case ('TripCoil'):
@@ -905,7 +913,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            waveformTCEDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            waveformTCEDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false})) })
             result.push(waveformTCEDataHandle);
             break;
         case ('FirstDerivative'):
@@ -917,7 +925,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            derivativeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            derivativeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(derivativeDataHandle);
             break
         case ('ClippedWaveforms'):
@@ -929,7 +937,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            clippedWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            clippedWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(clippedWaveformDataHandle);
             break
         case ('Frequency'):
@@ -941,7 +949,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            freqencyAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            freqencyAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(freqencyAnalyticDataHandle);
             break
         case ('HighPassFilter'):
@@ -954,7 +962,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            highPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            highPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(highPassFilterDataHandle);
             break
         case ('LowPassFilter'):
@@ -967,7 +975,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            lowPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            lowPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(lowPassFilterDataHandle);
             break
 
@@ -981,7 +989,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            impedanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            impedanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(impedanceDataHandle);
             break
         case ('Power'):
@@ -993,7 +1001,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            powerDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            powerDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(powerDataHandle);
             break
         case ('MissingVoltage'):
@@ -1005,7 +1013,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            missingVoltageDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            missingVoltageDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(missingVoltageDataHandle);
             break
         case ('OverlappingWave'):
@@ -1018,7 +1026,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            overlappingWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            overlappingWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(overlappingWaveformDataHandle);
             break
         case ('Rectifier'):
@@ -1031,7 +1039,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            rectifierDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            rectifierDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(rectifierDataHandle);
             break
         case ('RapidVoltage'):
@@ -1043,7 +1051,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            rapidVoltageChangeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            rapidVoltageChangeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(rapidVoltageChangeDataHandle);
             break
         case ('RemoveCurrent'):
@@ -1055,7 +1063,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            removeCurrentDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            removeCurrentDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(removeCurrentDataHandle);
             break
         case ('Harmonic'):
@@ -1068,7 +1076,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            specifiedHarmonicDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            specifiedHarmonicDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(specifiedHarmonicDataHandle);
             break
         case ('SymetricComp'):
@@ -1080,7 +1088,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            symmetricalComponentsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            symmetricalComponentsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(symmetricalComponentsDataHandle);
             break
         case ('THD'):
@@ -1092,7 +1100,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            thdDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            thdDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(thdDataHandle);
             break
         case ('Unbalance'):
@@ -1104,7 +1112,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            unbalanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            unbalanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(unbalanceDataHandle);
             break
         case ('FaultDistance'):
@@ -1116,7 +1124,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            faultDistanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            faultDistanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(faultDistanceDataHandle);
             break
         case ('Restrike'):
@@ -1128,7 +1136,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(breakerRestrikeDataHandle);
             break
         case ('FFT'):
@@ -1140,7 +1148,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID })) })
+            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
             result.push(fftAnalyticDataHandle);
             break
         default:

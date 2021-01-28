@@ -346,7 +346,7 @@ export namespace OpenSee {
         plotKeys: OpenSee.IGraphProps[],
         data: Array<OpenSee.iD3DataSeries>[],
         enabled: Array<boolean>[],
-        loading: boolean[],
+        loading: LoadingState[],
         activeRequest: string[]
         activeUnits: IActiveUnits[],
         yLimits: [number, number][],
@@ -355,6 +355,8 @@ export namespace OpenSee {
 
         fftLimits: [number, number],
     }
+
+    type LoadingState = ('Idle' | 'Loading' | 'Partial');
 
     interface IAnalyticStore {
         Harmonic: number,

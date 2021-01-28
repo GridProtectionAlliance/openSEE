@@ -93,7 +93,7 @@ const BarChart = (props: iProps) => {
 
     //Effect to update the Data 
     React.useEffect(() => {
-        if (loading)
+        if (loading == 'Loading')
             return;
 
         if (isCreated) {
@@ -166,7 +166,7 @@ const BarChart = (props: iProps) => {
     React.useEffect(() => {
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove();
 
-        if (loading) {
+        if (loading == 'Loading') {
             setCreated(false);
             return;
         }
@@ -485,9 +485,9 @@ const BarChart = (props: iProps) => {
     return (
         <div>
             <div id={"graphWindow-" + props.type + "-" + props.eventId} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
-                {loading? <p> Loading...</p>: null}
+                {loading == 'Loading'? <p> Loading...</p>: null}
             </div>
-            {loading ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
+            {loading == 'Loading' ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
