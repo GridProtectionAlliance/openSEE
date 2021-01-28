@@ -161,7 +161,7 @@ const LineChart = (props: iProps) => {
     }, [activeUnit, yLimits, startTime, endTime])
 
     React.useEffect(() => {
-        console.log("here")
+
         if (leftSelectCounter == 0)
             return;
         if (leftSelectCounter == 1)

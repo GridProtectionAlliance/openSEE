@@ -64,7 +64,7 @@ declare interface iEventTuple {
 }
 
 declare interface iNextBackLookup {
-    Line: iEventTuple;
+    Asset: iEventTuple;
     Meter: iEventTuple;
     Station: iEventTuple;
     System: iEventTuple;
