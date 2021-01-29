@@ -24,7 +24,6 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { clone } from 'lodash';
 import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
 import { selectAnalytic, SetAnalytic } from '../store/dataSlice';

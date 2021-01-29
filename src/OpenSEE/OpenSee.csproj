@@ -100,9 +100,6 @@
     <None Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\D3\D3.js" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Scripts\TS\Services\OpenSee.ts" />
   </ItemGroup>
   <ItemGroup>

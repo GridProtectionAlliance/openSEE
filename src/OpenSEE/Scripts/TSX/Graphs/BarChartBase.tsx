@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import { range, uniq } from "lodash";
-import * as d3 from '../../D3/d3';
+import d3 from 'd3'
 import { OpenSee } from '../global';
 
 

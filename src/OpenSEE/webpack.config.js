@@ -12,7 +12,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, 'Scripts'),
-        filename: "[name].js"
+        filename: "[name].js",
     },
     // Enable sourcemaps for debugging webpack's output.
     devtool: "inline-source-map",
@@ -42,7 +42,6 @@ module.exports = {
         react: 'React',
         'react-dom': 'ReactDOM',
         moment: 'moment',
-        d3: 'd3',
         'react-router-dom': 'ReactRouterDOM',
     },
     plugins: [
