@@ -322,10 +322,10 @@ const LineChart = (props: iProps) => {
             .attr("x", 20)
             .attr("y", 0)
             .style("opacity", 0)
-            .on('mousemove', MouseMove )
-            .on('mouseout',  MouseOut )
-            .on('mousedown', MouseDown )
-            .on('mouseup', MouseUp)
+            .on('mousemove', (evt) => MouseMove(evt) )
+            .on('mouseout', (evt) => MouseOut(evt) )
+            .on('mousedown', (evt) => MouseDown(evt) )
+            .on('mouseup', (evt) => MouseUp(evt))
             .on('mouseenter', () => { setLeftSelectCounter(1) })
     }
 
@@ -430,20 +430,20 @@ const LineChart = (props: iProps) => {
         updateFFTWindow();
     }
 
-    function MouseMove() {
+    function MouseMove(evt) {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.mouse(container.select(".Overlay").node())[0];
-        let y0 = d3.mouse(container.select(".Overlay").node())[1];
+        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
         let t0 = (xScaleRef.current as any).invert(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
         dispatch(SetHover({ t: t0, snap: snapToPoint, y: d0 }));
     }
 
-    function MouseDown() {
+    function MouseDown(evt) {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.mouse(container.select(".Overlay").node())[0];
-        let y0 = d3.mouse(container.select(".Overlay").node())[1];
+        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
 
         let t0 = (xScaleRef.current as any).invert(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
@@ -455,7 +455,7 @@ const LineChart = (props: iProps) => {
 
     }
 
-    function MouseUp() {
+    function MouseUp(evt) {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
@@ -527,7 +527,7 @@ const LineChart = (props: iProps) => {
             .style("opacity", (showFFT? 0.5: 0))
     }
 
-    function MouseOut() {
+    function MouseOut(evt) {
         setLeftSelectCounter((n) => -1);
     }
 

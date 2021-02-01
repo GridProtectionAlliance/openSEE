@@ -338,20 +338,20 @@ const BarChart = (props: iProps) => {
         updateLabels();
     }
 
-    function MouseMove() {
+    function MouseMove(evt) {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.mouse(container.select(".Overlay").node())[0];
-        let y0 = d3.mouse(container.select(".Overlay").node())[1];
+        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
         let t0 = getXbucket(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
         setHover([t0,d0])
     }
 
-    function MouseDown() {
+    function MouseDown(evt) {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.mouse(container.select(".Overlay").node())[0];
-        let y0 = d3.mouse(container.select(".Overlay").node())[1];
+        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
 
         let t0 = getXbucket(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
