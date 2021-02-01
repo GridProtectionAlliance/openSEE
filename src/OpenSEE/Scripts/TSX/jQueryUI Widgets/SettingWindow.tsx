@@ -172,7 +172,7 @@ const PlotCard = (props: ICardProps) => {
 
     const dispatch = useDispatch();
 
-    let colorSettings = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color));
+    let colorSettings: OpenSee.Color[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
 
     function GetDisplayName() {
@@ -219,6 +219,11 @@ const PlotCard = (props: ICardProps) => {
     let unitCol1: OpenSee.Unit[] = unitSettings.filter((item, index) => index % 2 == 0);
     let unitCol2: OpenSee.Unit[] = unitSettings.filter((item, index) => index % 2 == 1);
 
+    let colCol1: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 0);
+    let colCol2: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 1);
+    let colCol3: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 2);
+    let colCol4: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 3);
+
     return (<div className="card">
         <div className="card-header" id={"header-" + props.DataType}>
             <h2 className="mb-0">
@@ -250,14 +255,49 @@ const PlotCard = (props: ICardProps) => {
                     <div className="collumn" style={{ width: '100%', display: "inline-flex" }}>
                         <fieldset className="border" style={{ padding: '10px', height: '100%', display: "inline-flex" }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
-                            {colorSettings.map((c: OpenSee.Color, i: number) =>
-                                <ColorButton
-                                    key={i}
-                                    label={GetColorName(c)}
-                                    color={colors[c]}
-                                    statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                    scrollOffset={props.scrollOffset}
-                                />)}
+                            <div className="row">
+                                <div className="col">
+                                    {colCol1.map((c: OpenSee.Color, i: number) =>
+                                        <ColorButton
+                                            key={i}
+                                            label={GetColorName(c)}
+                                            color={colors[c]}
+                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                            scrollOffset={props.scrollOffset}
+                                            />)}
+                                </div>
+                                <div className="col">
+                                    {colCol2.map((c: OpenSee.Color, i: number) =>
+                                        <ColorButton
+                                            key={i}
+                                            label={GetColorName(c)}
+                                            color={colors[c]}
+                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                            scrollOffset={props.scrollOffset}
+                                        />)}
+                                </div>
+                                <div className="col">
+                                    {colCol3.map((c: OpenSee.Color, i: number) =>
+                                        <ColorButton
+                                            key={i}
+                                            label={GetColorName(c)}
+                                            color={colors[c]}
+                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                            scrollOffset={props.scrollOffset}
+                                        />)}
+                                </div>
+                                <div className="col">
+                                    {colCol4.map((c: OpenSee.Color, i: number) =>
+                                        <ColorButton
+                                            key={i}
+                                            label={GetColorName(c)}
+                                            color={colors[c]}
+                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                            scrollOffset={props.scrollOffset}
+                                        />)}
+                                </div>
+
+                            </div>
                         </fieldset>
                     </div> 
                 </div> : null}
