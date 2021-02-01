@@ -131,7 +131,8 @@ export const defaultSettings = {
                 { label: "kiloAmps per sec", short: "kA/s", factor: 0.001 },
                 { label: "milliAmps per sec", short: "mA/s", factor: 1000 },
                 { label: "Per Unit", short: "pu/s", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 },
             ]
         },
         Freq: {
