@@ -32,6 +32,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
+import { LoadingIcon, NoDataIcon } from './ChartIcons';
 
 
 
@@ -113,7 +114,8 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (loading == 'Loading')
             return;
-
+        if (lineData.length == 0)
+            return;
         if (isCreated) {
             UpdateData();
             return () => { };
@@ -199,6 +201,10 @@ const LineChart = (props: iProps) => {
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
         if (loading == 'Loading') {
+            setCreated(false);
+            return;
+        }
+        if (lineData.length == 0) {
             setCreated(false);
             return;
         }
@@ -614,19 +620,21 @@ const LineChart = (props: iProps) => {
     
     return (
         <div>
-            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} />
-            {loading == 'Loading' ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
+            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} />
+            {loading == 'Loading' || lineData.length == 0 ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
 
 
-const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number }) => {
+const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number, hasData: boolean }) => {
+    const showSVG = props.loading != 'Loading' && props.hasData;
 
     return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
-        {props.loading == 'Loading' ? <p> Loading...</p> : null}
-        <svg className="root" style={{ width: '100%', height: '100%' }}>
-            {props.loading == 'Loading' ? null : <ToolTip height={props.height} left={props.hover} />}
+        {props.loading == 'Loading' ? <LoadingIcon /> : null}
+        {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
+        <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
+            {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height} left={props.hover} />}
         </svg>
     </div>)
 })
