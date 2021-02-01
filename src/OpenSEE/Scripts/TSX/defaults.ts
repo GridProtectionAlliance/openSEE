@@ -114,10 +114,11 @@ export const defaultSettings = {
             ]
         },
         VoltageperSecond: {
-            current: 4,
+            current: 5,
             options: [
                 { label: "Volt per sec", short: "V/s", factor: 1 },
                 { label: "kiloVolts per sec", short: "kV/s", factor: 0.001 },
+                { label: "megaVolts per sec", short: "MV/s", factor: 0.000001 },
                 { label: "milliVolts per sec", short: "mV/s", factor: 1000 },
                 { label: "Per Unit", short: "pu/s", factor: 0 },
                 { label: "auto", short: "auto", factor: 0 }
