@@ -226,8 +226,8 @@ function GetSettings(): OpenSee.ISettingsState {
 function CombineUnits(units: number[], baseUnit: OpenSee.IUnitSetting): number {
     if (baseUnit.options[baseUnit.current] == undefined || baseUnit.options[baseUnit.current].short != 'auto')
         return units[0];
-    // In that case we pick that with the smalles Factor
-    let f = Math.min(...units.map(b => baseUnit.options[b]).filter(u => u.short != 'auto' && u.short != 'pu').map(u => u.factor));
+    // In that case we pick that with the smallest Factor
+    let f = Math.min(...units.map(b => baseUnit.options[b]).filter(u => u.short != 'auto' && u.short != 'pu' && u.short != 'pu/s').map(u => u.factor));
 
     return units.find(b => baseUnit.options[b].factor == f);
 }

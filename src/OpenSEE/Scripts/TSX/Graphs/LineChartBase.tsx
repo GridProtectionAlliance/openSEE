@@ -409,7 +409,7 @@ const LineChart = (props: iProps) => {
         let lineGen = (unit: OpenSee.Unit, base: number) => {
           
             let factor = activeUnit[unit as string].factor
-            factor = (activeUnit[unit as string].short == 'pu' ? 1.0/base : factor);
+            factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0/base : factor);
             return d3.line()
                 .x(function (d) { return xScaleRef.current(d[0]) })
                 .y(function (d) { return yScaleRef.current(d[1] * factor) })
@@ -582,7 +582,7 @@ const LineChart = (props: iProps) => {
 
     // This determines the active Units if "auto" is used
    
-    //This Function needs to be called whenever a item is selecetd or deselected in the Legend
+    //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 

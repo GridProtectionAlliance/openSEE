@@ -46,9 +46,9 @@ const ToolTipDeltaWidget = (props: Iprops) => {
     let data: Array<JSX.Element> = (props.isOpen? points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-       <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.short == 'pu' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
     </tr>) : [])
 
 
