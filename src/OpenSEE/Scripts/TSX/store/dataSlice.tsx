@@ -276,6 +276,39 @@ export const DataReducer = createSlice({
             else if (action.payload.key.DataType == 'Current') {
                 extendEnabled = action.payload.data.map(item => item.LegendHorizontal == 'W' && item.LegendVertical != 'NG')
             }
+            else if (action.payload.key.DataType == 'FirstDerivative') {
+                extendEnabled = action.payload.data.map(item => item.LegendHorizontal == 'W' && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
+            }
+            else if (action.payload.key.DataType == 'ClippedWaveforms') {
+                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+            }
+            else if (action.payload.key.DataType == 'Frequency') {
+                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+            }
+            else if (action.payload.key.DataType == 'HighPassFilter' || action.payload.key.DataType == 'LowPassFilter') {
+                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+            }
+            else if (action.payload.key.DataType == 'MissingVoltage' || action.payload.key.DataType == 'OverlappingWave') {
+                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+            }
+            else if (action.payload.key.DataType == 'Power') {
+                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'P')
+            }
+            else if (action.payload.key.DataType == 'Impedance') {
+                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'R')
+            }
+            else if (action.payload.key.DataType == 'RapidVoltage') {
+                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
+            }
+            else if (action.payload.key.DataType == 'SymetricComp') {
+                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'Pos'))
+            }
+            else if (action.payload.key.DataType == 'Unbalance') {
+                extendEnabled = action.payload.data.map(item => (item.LegendHorizontal == 'S0/S1'))
+            }
+            else if (action.payload.key.DataType == 'FFT') {
+                extendEnabled = action.payload.data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
+            }
             state.enabled[index] = [...state.enabled[index], ...extendEnabled]
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
@@ -1084,7 +1117,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('SymetricComp'):
             let symmetricalComponentsDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetSymmetricalComponentsData?eventId=${key.EventId}}`,
+                url: `${homePath}api/Analytic/GetSymmetricalComponentsData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,
@@ -1096,7 +1129,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('THD'):
             let thdDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}}`,
+                url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,
@@ -1108,7 +1141,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('Unbalance'):
             let unbalanceDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetUnbalanceData?eventId=${key.EventId}}`,
+                url: `${homePath}api/Analytic/GetUnbalanceData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,
@@ -1120,7 +1153,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('FaultDistance'):
             let faultDistanceDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetFaultDistanceData?eventId=${key.EventId}}`,
+                url: `${homePath}api/Analytic/GetFaultDistanceData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,
@@ -1132,7 +1165,7 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
         case ('Restrike'):
             let breakerRestrikeDataHandle = $.ajax({
                 type: "GET",
-                url: `${homePath}api/Analytic/GetBreakerRestrikeData?eventId=${key.EventId}}`,
+                url: `${homePath}api/Analytic/GetBreakerRestrikeData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,

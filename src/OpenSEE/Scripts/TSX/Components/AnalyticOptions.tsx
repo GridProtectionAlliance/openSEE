@@ -95,7 +95,7 @@ const AnalyticOptions = (props: IProps) => {
             </select>
         </form>
         {analytic == "Harmonic" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul ref="list" style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
                 <li>
                     <label> Harmonic: <select value={harmonic.toString()} onChange={(ev) => ChangeHarmonic(ev)}>
                         <option value='1'>1</option>

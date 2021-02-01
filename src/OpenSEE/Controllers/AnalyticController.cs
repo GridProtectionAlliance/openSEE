@@ -312,7 +312,8 @@ namespace OpenSEE
                 int n = signal.Count();
                 double[] output = new double[n];
 
-                signal = signal.Reverse().ToArray();
+                signal.Reverse();
+                
 
                 double[] a = this.PolesToPolynomial(this.DiscretePoles.ToArray());
                 double[] b = this.PolesToPolynomial(this.DiscreteZeros.ToArray());
@@ -335,7 +336,9 @@ namespace OpenSEE
                     }
                     output[i] = output[i] / a[0];
                 }
-                return output.Reverse().ToArray();
+
+                output.Reverse();
+                return output;
             }
 
             public double[] filtfilt(double[] signal, double fs)
@@ -539,7 +542,7 @@ namespace OpenSEE
                     && (ds.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous") && (phases.Contains(ds.SeriesInfo.Channel.Phase.Name)))
                 {
                     string name = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + ds.SeriesInfo.Channel.Phase.Name;
-                    string category = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I");
+                    string category = ((ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "Volt." : "Curr.");
 
                     dataLookup.Add(GetFirstDerivativeSeries(ds, name, category, "W"));
                 }
@@ -551,7 +554,15 @@ namespace OpenSEE
                     && (phases.Contains(dg.RMS.SeriesInfo.Channel.Phase.Name)))
                 {
                     string name = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dg.RMS.SeriesInfo.Channel.Phase.Name + " RMS";
-                    string category = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I");
+                    string category = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "Volt." : "Curr.");
+
+                    dataLookup.Add(GetFirstDerivativeSeries(dg.RMS, name, category, "RMS"));
+                }
+                if ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Current") && (dg.RMS.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous")
+                    && (phases.Contains(dg.RMS.SeriesInfo.Channel.Phase.Name)))
+                {
+                    string name = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "V" : "I") + dg.RMS.SeriesInfo.Channel.Phase.Name + " RMS";
+                    string category = ((dg.RMS.SeriesInfo.Channel.MeasurementType.Name == "Voltage") ? "Volt." : "Curr.");
 
                     dataLookup.Add(GetFirstDerivativeSeries(dg.RMS, name, category, "RMS"));
                 }
@@ -575,7 +586,7 @@ namespace OpenSEE
                 LegendHorizontal = type,
                 LegendVGroup = legenclass,
                 DataMarker = new List<double[]>(),
-                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
+                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)* 1000.0),
                 DataPoints = dataSeries.DataPoints.Select((point, index) => {
                     double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
                     double y = point.Value;
@@ -642,13 +653,12 @@ namespace OpenSEE
                 IEnumerable<Complex> impedancePoints = CalculateImpedance(vICycleDataGroup.VA, vICycleDataGroup.IA);
                 dataLookup.Add(new D3Series()
                 {
-                    ChartLabel = "Reactance AN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.Asset.AssetName,
                     LegendHorizontal = "X",
                     LegendVertical = "AN",
                     Unit = "Impedance",
                     Color = "Xa",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),           
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
@@ -657,12 +667,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Resistance AN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.Asset.AssetName,
                     LegendHorizontal = "R",
                     LegendVertical = "AN",
                     Unit = "Impedance",
                     Color = "Ra",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
@@ -671,12 +681,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Impedance AN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.Asset.AssetName,
                     LegendHorizontal = "Z",
                     LegendVertical = "AN",
                     Unit = "Impedance",
                     Color = "Za",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
@@ -692,12 +702,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Reactance BN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IB.Asset.AssetName,
                     LegendHorizontal = "X",
                     LegendVertical = "BN",
                     Unit = "Impedance",
                     Color = "Xb",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VB.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
@@ -706,12 +716,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Resistance BN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IB.Asset.AssetName,
                     LegendHorizontal = "R",
                     LegendVertical = "BN",
                     Unit = "Impedance",
                     Color = "Rb",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VB.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
@@ -720,12 +730,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Impedance BN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IB.Asset.AssetName,
                     LegendHorizontal = "Z",
                     LegendVertical = "BN",
                     Unit = "Impedance",
                     Color = "Zb",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VB.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
@@ -740,12 +750,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Reactance CN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IC.Asset.AssetName,
                     LegendHorizontal = "X",
                     LegendVertical = "CN",
                     Unit = "Impedance",
                     Color = "Xc",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VC.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
@@ -754,12 +764,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Resistance CN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IC.Asset.AssetName,
                     LegendHorizontal = "R",
                     LegendVertical = "CN",
                     Unit = "Impedance",
                     Color = "Rc",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VC.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
@@ -768,12 +778,12 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     ChartLabel = "Impedance CN",
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IC.Asset.AssetName,
                     LegendHorizontal = "Z",
                     LegendVertical = "CN",
                     Unit = "Impedance",
                     Color = "Zc",
-                    LegendVGroup = "L-N",
+                    LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VC.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
@@ -1877,7 +1887,7 @@ namespace OpenSEE
                     DataMarker = new List<double[]>(),
                     LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                     LegendHorizontal = "",
-                    LegendVGroup = "",
+                    LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
                     DataPoints = dataSeries.DataPoints.Select((point, index) => {
                         double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
                         double y = point.Value;
@@ -1970,9 +1980,9 @@ namespace OpenSEE
                     Unit = "Voltage",
                     Color = "VS0",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "0",
+                    LegendVertical = "Zero",
                     LegendHorizontal = "V",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude }).ToList()
@@ -1983,9 +1993,9 @@ namespace OpenSEE
                     Unit = "Voltage",
                     Color = "VS1",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "+",
+                    LegendVertical = "Pos",
                     LegendHorizontal = "V",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S1.Magnitude }).ToList()
@@ -1995,9 +2005,9 @@ namespace OpenSEE
                     Unit = "Voltage",
                     Color = "VS2",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "-",
+                    LegendVertical = "Neg",
                     LegendHorizontal = "V",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude }).ToList()
@@ -2039,9 +2049,9 @@ namespace OpenSEE
                     Unit = "Current",
                     Color = "IS0",
                     BaseValue = GetIbase(Sbase,vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "0",
+                    LegendVertical = "Zero",
                     LegendHorizontal = "I",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude }).ToList()
@@ -2052,9 +2062,9 @@ namespace OpenSEE
                     Unit = "Current",
                     Color = "IS1",
                     BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "+",
+                    LegendVertical = "Pos",
                     LegendHorizontal = "I",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S1.Magnitude }).ToList()
@@ -2064,9 +2074,9 @@ namespace OpenSEE
                     Unit = "Current",
                     Color = "IS2",
                     BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "-",
+                    LegendVertical = "Neg",
                     LegendHorizontal = "I",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude }).ToList()
@@ -2160,7 +2170,7 @@ namespace OpenSEE
                     Unit = "Unbalance",
                     Color = "VS0",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "S0/S1",
                     LegendHorizontal = "V",
@@ -2174,7 +2184,7 @@ namespace OpenSEE
                     Unit = "Unbalance",
                     Color = "VS2",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "S2/S1",
                     LegendHorizontal = "V",
@@ -2219,8 +2229,8 @@ namespace OpenSEE
                 {
                     Unit = "Unbalance",
                     Color = "IS0",
-                    BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    BaseValue = 1.0,
+                    LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "S0/S1",
                     LegendHorizontal = "I",
@@ -2233,8 +2243,8 @@ namespace OpenSEE
                 {
                     Unit = "Unbalance",
                     Color = "IS2",
-                    BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = "",
+                    BaseValue = 1.0,
+                    LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "S2/S1",
                     LegendHorizontal = "I",
@@ -2321,7 +2331,7 @@ namespace OpenSEE
                     DataMarker = new List<double[]>(),
                     LegendVertical = "",
                     LegendHorizontal = "V",
-                    LegendVGroup = "",
+                    LegendVGroup = dataGroup.VA.SeriesInfo.Channel.Asset.AssetName,
                     DataPoints = phaseMaxes.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
                 });
 
@@ -2338,7 +2348,7 @@ namespace OpenSEE
                     Unit = "Current",
                     Color = "Idc",
                     BaseValue = 1.0,
-                    LegendGroup = "",
+                    LegendGroup = dataGroup.VA.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "",
                     LegendHorizontal = "I",
@@ -2906,9 +2916,9 @@ namespace OpenSEE
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
-                LegendVertical = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V " : "I ") + DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
+                LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Mag",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V " : "I "),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
@@ -2919,9 +2929,9 @@ namespace OpenSEE
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
-                LegendVertical = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V " : "I ") + DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
+                LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Ang",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V " : "I "),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
