@@ -215,7 +215,23 @@ function GetSettings(): OpenSee.ISettingsState {
         if (serializedState === null) {
             return undefined;
         }
-        return JSON.parse(serializedState);
+        // overwrite options if new options are available
+        let state: OpenSee.ISettingsState = JSON.parse(serializedState);
+
+        Object.keys(defaultSettings.Units).forEach((key) => {
+            if (defaultSettings.Units[key].options.length != state.Units[key].options.length)
+                state.Units[key].options = defaultSettings.Units[key].options;
+        });
+
+        if (defaultSettings.TimeUnit.options.length != state.TimeUnit.options.length)
+            state.TimeUnit.options = defaultSettings.TimeUnit.options;
+
+        Object.keys(defaultSettings.Colors).forEach((key) => {
+            if (state.Colors[key] == undefined)
+                state.Colors[key] = defaultSettings.Colors[key];
+        });
+        
+        return state;
     } catch (err) {
         return undefined;
     }
