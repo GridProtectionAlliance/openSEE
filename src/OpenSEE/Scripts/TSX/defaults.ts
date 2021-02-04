@@ -238,6 +238,12 @@ export const defaultSettings = {
             { label: "auto", short: "auto", factor: 0 }
         ]
     },
+    DefaultTrace: {
+        Pk: false,
+        Ph: false,
+        RMS: true,
+        W: false
+    } as OpenSee.IDefaultTrace
 
 
 }

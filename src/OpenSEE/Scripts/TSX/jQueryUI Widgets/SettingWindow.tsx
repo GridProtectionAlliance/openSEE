@@ -28,7 +28,7 @@ import { outerDiv, handle, closeButton } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
-import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot } from '../store/settingSlice';
+import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace } from '../store/settingSlice';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 
@@ -36,6 +36,7 @@ const SettingsWidget = (props: Iprops) => {
     const list = useSelector(selectGraphTypes);
     const snapToPoint = useSelector(selectSnap);
     const eventOverlay = useSelector(selectEventOverlay);
+    const defaultTraces = useSelector(selectdefaultTraces);
     const dispatch = useDispatch();
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
@@ -71,19 +72,56 @@ const SettingsWidget = (props: Iprops) => {
                         <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings">
                             <div className="card-body">
                                 <div className="row">
-                                    <div className="collumn" style={{ width: '50%' }}>
+                                    <div className="col" style={{ width: '50%' }}>
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={snapToPoint}
                                                 onChange={() => dispatch(SetSnapToPoint(!snapToPoint)) } />
                                             <label className="form-check-label">Snap ToolTip to Data Point</label>
                                         </div>
                                     </div>
-                                    <div className="collumn" style={{ width: '50%' }}>
+                                    <div className="col" style={{ width: '50%' }}>
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={eventOverlay}
                                                 onChange={() => dispatch(SetSinglePlot(!eventOverlay))} />
                                             <label className="form-check-label">Display all Events on single Graph for Compare Overlapping Events</label>
                                         </div>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                    <fieldset className="border" style={{ padding: '10px', height: '100%', display: "inline-flex", width: '100%' }}>
+                                            <legend className="w-auto" style={{ fontSize: 'large' }}>Default Traces (on Loading):</legend>
+                                        <div className="row">
+                                            <div className="col" style={{ width: '25%' }}>
+                                                <div className="form-check">
+                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.W}
+                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, W: !defaultTraces.W }))} />
+                                                    <label className="form-check-label">WaveForm</label>
+                                                </div>
+                                            </div>
+                                            <div className="col" style={{ width: '25%' }}>
+                                                <div className="form-check">
+                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.Pk}
+                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, Pk: !defaultTraces.Pk }))} />
+                                                    <label className="form-check-label">Peak</label>
+                                                </div>
+                                            </div>
+                                            <div className="col" style={{ width: '25%' }}>
+                                                <div className="form-check">
+                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.RMS}
+                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, RMS: ! defaultTraces.RMS }))} />
+                                                    <label className="form-check-label">RMS</label>
+                                                </div>
+                                            </div>
+                                            <div className="col" style={{ width: '25%' }}>
+                                                <div className="form-check">
+                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.Ph}
+                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, Ph: !defaultTraces.Ph }))} />
+                                                    <label className="form-check-label">Phase</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
                                     </div>
                                 </div>
                             </div>

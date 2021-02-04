@@ -316,6 +316,7 @@ export namespace OpenSee {
         displayAnalogs: boolean,
         Tab: Tab,
         Navigation: EventNavigation,
+        DefaultTrace: IDefaultTrace,
     }
 
     interface IUnitSetting {
@@ -323,6 +324,12 @@ export namespace OpenSee {
         options: Array<iUnitOptions>
     }
 
+    interface IDefaultTrace {
+        RMS: boolean,
+        W: boolean,
+        Pk: boolean,
+        Ph: boolean
+    }
     interface iUnitOptions {
         label: string,
         short: string,

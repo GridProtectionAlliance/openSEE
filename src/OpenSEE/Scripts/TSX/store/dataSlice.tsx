@@ -52,7 +52,7 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 //Thunk to Add Data
 const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string, secondary: boolean }, thunkAPI) => {
 
-    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID:arg. requestID }))
+    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, defaultTraces: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultTrace, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID: arg.requestID }))
 
     return Promise.resolve();
 })
@@ -261,7 +261,7 @@ export const DataReducer = createSlice({
             state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string }>) => {
+        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string, defaultTraces: OpenSee.IDefaultTrace }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (state.activeRequest[index] != action.payload.requestID)
@@ -271,13 +271,24 @@ export const DataReducer = createSlice({
 
             let extendEnabled = action.payload.data.map(item => true)
             if (action.payload.key.DataType == 'Voltage') {
-                extendEnabled = action.payload.data.map(item => item.LegendVGroup == 'L-L' && item.LegendHorizontal != 'Ph')
+                extendEnabled = action.payload.data.map(item => item.LegendVGroup == 'L-L' &&
+                    ((item.LegendHorizontal == 'Ph' && action.payload.defaultTraces.Ph) ||
+                    (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS)  ||
+                    (item.LegendHorizontal == 'Pk' && action.payload.defaultTraces.Pk) ||
+                    (item.LegendHorizontal == 'W' && action.payload.defaultTraces.W)
+                ))
             }
             else if (action.payload.key.DataType == 'Current') {
-                extendEnabled = action.payload.data.map(item => item.LegendHorizontal == 'W' && item.LegendVertical != 'NG')
+                extendEnabled = action.payload.data.map(item => ((item.LegendHorizontal == 'Ph' && action.payload.defaultTraces.Ph) ||
+                        (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS) ||
+                        (item.LegendHorizontal == 'Pk' && action.payload.defaultTraces.Pk) ||
+                        (item.LegendHorizontal == 'W' && action.payload.defaultTraces.W)
+                    ))
             }
             else if (action.payload.key.DataType == 'FirstDerivative') {
-                extendEnabled = action.payload.data.map(item => item.LegendHorizontal == 'W' && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
+                extendEnabled = action.payload.data.map(item => ((item.LegendHorizontal == 'W' && action.payload.defaultTraces.W) ||
+                    (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS))
+                    && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
             }
             else if (action.payload.key.DataType == 'ClippedWaveforms') {
                 extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
