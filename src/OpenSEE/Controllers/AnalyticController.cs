@@ -289,10 +289,10 @@ namespace OpenSEE
 
                 int order = a.Count() - 1;
                 //setup first few points for computation
-                for (int i = 0; i < order; i++)
-                {
-                    output[i] = signal[i];
-                }
+                //for (int i = 0; i < order; i++)
+                //{
+                //    output[i] = signal[i];
+                //}
 
                 //Forward Filtering
                 for (int i = order; i < n; i++)
@@ -321,10 +321,10 @@ namespace OpenSEE
 
                 int order = a.Count() - 1;
                 //setup first few points for computation
-                for (int i = 0; i < order; i++)
-                {
-                    output[i] = signal[i];
-                }
+                //for (int i = 0; i < order; i++)
+                //{
+                //    output[i] = signal[i];
+                //}
 
                 //Forward Filtering
                 for (int i = order; i < n; i++)
@@ -1802,7 +1802,8 @@ namespace OpenSEE
 
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
             var cycles = dataSeries.DataPoints.Select((Point, Index) => new { Point, SampleIndex = Index % samplesPerCycle, GroupIndex = Index / samplesPerCycle }).GroupBy(point => point.GroupIndex);
-            
+
+            double factor = 1000.0D / dataSeries.SampleRate;
             D3Series series = new D3Series()
             {
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
@@ -1818,7 +1819,7 @@ namespace OpenSEE
 
             foreach (var cycle in cycles)
             {
-                series.DataPoints = series.DataPoints.Concat(cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex, dataPoint.Point.Value }).ToList()).ToList();
+                series.DataPoints = series.DataPoints.Concat(cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex* factor, dataPoint.Point.Value }).ToList()).ToList();
                 series.DataPoints = series.DataPoints.Concat(new List<double[]> { new double[] { double.NaN, double.NaN } }).ToList();
 
             }

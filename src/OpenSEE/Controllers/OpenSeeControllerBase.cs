@@ -339,23 +339,21 @@ namespace OpenSEE
         public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter)
         {
             string target = $"VICycleDataGroup-{eventID}";
+            if (s_memoryCache.Contains(target))
+                return (VICycleDataGroup)s_memoryCache.Get(target);
 
-            Task<VICycleDataGroup> viCycleDataGroupTask = new Task<VICycleDataGroup>(() =>
+            DataGroup dataGroup = QueryDataGroup(eventID, meter);
+            Task<bool> viCycleDataGroupTask = new Task<bool>(() =>
             {
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                {
-                    DataGroup dataGroup = QueryDataGroup(eventID, meter);
-                    double freq = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0D;
-                    return Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), freq);
-                }
+                    return 
+                s_memoryCache.Add(target,Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), Fbase, false), new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) });
+                
             });
+            
+            viCycleDataGroupTask.Start();
 
-            if (s_memoryCache.Add(target, viCycleDataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
-                viCycleDataGroupTask.Start();
-
-            viCycleDataGroupTask = (Task<VICycleDataGroup>)s_memoryCache.Get(target);
-
-            return viCycleDataGroupTask.Result;
+            return Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), Fbase, true);
+            
         }
 
         public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
@@ -379,7 +377,8 @@ namespace OpenSEE
         }
 
         #endregion
+
     }
 
-     
+
 }
