@@ -63,6 +63,13 @@ export const SetTimeLimit = createAsyncThunk('Data/setTimeLimit', (arg: { start:
     return Promise.resolve();
 })
 
+//Thunk to update Cycle Limits
+export const SetCycleLimit = createAsyncThunk('Data/SetCycleLimit', (arg: { start: number, end: number }, thunkAPI) => {
+    thunkAPI.dispatch(DataReducer.actions.updatecycleLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    return Promise.resolve();
+})
+
+
 //Thunk to update FFT Limits
 export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start: number, end: number }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
@@ -209,6 +216,7 @@ export const DataReducer = createSlice({
         yLimits: [] as [number, number][],
         autoLimits: [] as boolean[],
         fftLimits: [0, 0],
+        cycleLimit: [0, 1000.0/60.0]
     } as OpenSee.IDataState,
     reducers: {
         RemovePlot: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
@@ -327,10 +335,12 @@ export const DataReducer = createSlice({
             if (state.plotKeys[index].DataType == 'FFT')
                 state.fftLimits = [Math.min(...state.data[index].map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...state.data[index].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
 
-            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
+            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
                 state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
             else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
                 state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave')
+                state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
            
             return state
@@ -362,8 +372,25 @@ export const DataReducer = createSlice({
             state.plotKeys
                 .forEach((graph, index) => {
                     if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT') {
-                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
+                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.fftLimits[0], state.fftLimits[1]);
                         state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                    }
+                });
+            return state;
+
+        },
+        updatecycleLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }>) => {
+            if (Math.abs(action.payload.start - action.payload.end) < 5)
+                return state;
+
+            state.cycleLimit = [action.payload.start, action.payload.end];
+
+            //Update All Units and limits
+            state.plotKeys
+                .forEach((graph, index) => {
+                    if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave') {
+                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.cycleLimit[0], state.cycleLimit[1]);
+                        state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                     }
                 });
             return state;
@@ -400,24 +427,39 @@ export const DataReducer = createSlice({
             // If we enabled some trace we only need to update if it's actually exceeding current Limits....
             if (state.autoLimits[index] && action.payload.enabled && state.plotKeys[index].DataType != 'FFT') {
                 adjustLimits = false;
-                let dLim = recomputeYLimits(state.startTime, state.endTime, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                let start = state.startTime;
+                let end = state.endTime;
+                if (state.plotKeys[index].DataType == 'OverlappingWave') {
+                    start = state.cycleLimit[0];
+                    end = state.cycleLimit[1];
+                }
+                let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
                 if (dLim[0] < state.yLimits[index][0])
                     state.yLimits[index][0] = dLim[0];
                 if (dLim[1] > state.yLimits[index][1])
                     state.yLimits[index][1] = dLim[1];
             }
-            // If wew disabled some traces and they are just inside the limits we don't have to recompute limits
+            // If we disabled some traces and they are just inside the limits we don't have to recompute limits
             else if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT') {
-                let dLim = recomputeYLimits(state.startTime, state.endTime, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                let start = state.startTime;
+                let end = state.endTime;
+                if (state.plotKeys[index].DataType == 'OverlappingWave') {
+                    start = state.cycleLimit[0];
+                    end = state.cycleLimit[1];
+                }
+
+                let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                 if (dLim[0] > state.yLimits[index][0] && dLim[1] < state.yLimits[index][1])
                     adjustLimits = false;
             }
 
             if (state.autoLimits[index] && adjustLimits) {
 
-                if (state.plotKeys[index].DataType != 'FFT')
+                if (state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
                     yLimits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                else if (state.plotKeys[index].DataType == 'OverlappingWave')
+                    yLimits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                 else
                     yLimits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
@@ -473,10 +515,12 @@ export const DataReducer = createSlice({
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
-            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
+            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
                 state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
             else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
                 state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave')
+                state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
         },
         ClearSelectPoints: (state) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
@@ -607,6 +651,8 @@ export const selectEndTime = (state: OpenSee.IRootState) => state.Data.endTime;
 export const selectHover = (state: OpenSee.IRootState) => state.Data.hover
 export const selectMouseMode = (state: OpenSee.IRootState) => state.Data.mouseMode
 export const selectZoomMode = (state: OpenSee.IRootState) => state.Data.zoomMode
+export const selectCycleStart = (state: OpenSee.IRootState) => state.Data.cycleLimit[0]
+export const selectCycleEnd = (state: OpenSee.IRootState) => state.Data.cycleLimit[1]
 
 export const selectEventID = (state: OpenSee.IRootState) => state.Data.eventID
 export const selectAnalytic = (state: OpenSee.IRootState) => state.Data.Analytic;
@@ -882,6 +928,7 @@ export const selectLoadDigitals = createSelector((state: OpenSee.IRootState) => 
 export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
     return (loading.filter((item, index) => plotKeys[index].DataType == 'TripCoil' && item != 'Idle').length > 0)
 })
+
 
 // #endregion
 

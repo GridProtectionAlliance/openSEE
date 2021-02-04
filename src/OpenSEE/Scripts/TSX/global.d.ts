@@ -360,7 +360,7 @@ export namespace OpenSee {
         yLimits: [number, number][],
         autoLimits: boolean[],
         selectedIndixes: Array<number>[],
-
+        cycleLimit: [number,number],
         fftLimits: [number, number],
     }
 

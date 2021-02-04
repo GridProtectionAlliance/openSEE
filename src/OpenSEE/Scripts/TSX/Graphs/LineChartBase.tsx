@@ -30,7 +30,7 @@ import moment from "moment"
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits } from '../store/dataSlice';
+import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 
@@ -64,6 +64,10 @@ const LineChart = (props: iProps) => {
     const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
     const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
 
+    const selectStartTimeInstance = React.useMemo(() => (props.type == 'OverlappingWave' ? selectCycleStart : selectStartTime), [props.type])
+
+    const selectEndTimeInstance = React.useMemo(() => (props.type == 'OverlappingWave' ? selectCycleEnd : selectEndTime), [props.type])
+
     const SelectData = React.useMemo(() => selectData(dataKey), [props.eventId, props.type]);
     const SelectEnabled = React.useMemo(() => selectEnabled(dataKey), [props.eventId, props.type]);
     const SelectYLimits = React.useMemo(() => selectYLimits(dataKey), [props.eventId, props.type]);
@@ -85,8 +89,8 @@ const LineChart = (props: iProps) => {
     const lineData = useSelector(SelectData);
     const enabledLine = useSelector(SelectEnabled);
 
-    const startTime = useSelector(selectStartTime);
-    const endTime = useSelector(selectEndTime);
+    const startTime = useSelector(selectStartTimeInstance);
+    const endTime = useSelector(selectEndTimeInstance);
     const yLimits = useSelector(SelectYLimits);
 
     const loading = useSelector(selectLoading(dataKey));
@@ -178,12 +182,18 @@ const LineChart = (props: iProps) => {
             setMouseDownInit(true);
             return;
         }
-        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x")
+        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && props.type != 'OverlappingWave')
             dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && props.type == 'OverlappingWave')
+            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
             dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
-        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy") {
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && props.type != 'OverlappingWave') {
             dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
+        }
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && props.type == 'OverlappingWave') {
+            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
             dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
         }
     }, [mouseDown])
@@ -369,6 +379,8 @@ const LineChart = (props: iProps) => {
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since event') {
             let ms = d - props.eventStartTime;
+            if (props.type == 'OverlappingWave')
+                ms = d;
             if (h < 2)
                 return ms.toFixed(3)
             if (h < 5)
@@ -379,6 +391,9 @@ const LineChart = (props: iProps) => {
 
         else if (timeUnit.options[timeUnit.current].short == 'cycles') {
             let cyc = (d - props.eventStartTime) * 60.0 / 1000.0;
+            if (props.type == 'OverlappingWave')
+                cyc = (d) * 60.0 / 1000.0;
+
             h = h * 60.0 / 1000.0;
             if (h < 2)
                 return cyc.toFixed(3)
@@ -456,6 +471,10 @@ const LineChart = (props: iProps) => {
 
         setMouseDown(true);
         setPointMouse([t0, d0]);
+
+        if (props.type == 'OverlappingWave')
+            return;
+
         dispatch(SelectPoint([t0, d0]));
         setOldFFTWindow(() => { return fftWindow });
 
@@ -500,10 +519,11 @@ const LineChart = (props: iProps) => {
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
 
-        
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy"))
+
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && props.type != 'OverlappingWave')
             dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
-        
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && props.type == 'OverlappingWave')
+            dispatch(SetCycleLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
@@ -553,13 +573,24 @@ const LineChart = (props: iProps) => {
                 h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
 
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto')
+            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && props.type != 'OverlappingWave')
                 return (timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short;
 
+            if (props.type != 'OverlappingWave') {
                 if (h < 100)
                     return "ms"
                 else
                     return "s"
+            }
+
+            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short == 'ms since event')
+                return "ms";
+            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short == 'cycles')
+                return "cycle"
+            if (h < 100)
+                return "ms"
+            else
+                return "s"
         }
 
         function GetYLabel() {
