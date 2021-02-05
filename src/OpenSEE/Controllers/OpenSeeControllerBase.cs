@@ -150,6 +150,22 @@ namespace OpenSEE
         }
 
         /// <summary>
+        /// Determines Base voltage Value.
+        /// </summary>
+        /// <param name="channel">The Channel</param>
+        /// <param name="rms"> true if Voltage is RMS false if it is pk-pk.</param>
+        /// <returns>A Voltage Base Value</returns>
+        protected double GetBaseV(Channel channel,bool rms)
+        {
+            double kV = channel.Asset.VoltageKV;
+            if (channel.Phase.Name == "AN" || channel.Phase.Name == "BN" || channel.Phase.Name == "CN")
+                kV = kV / Math.Sqrt(3);
+
+            if (!rms)
+                kV = kV * Math.Sqrt(2);
+            return kV;
+        }
+        /// <summary>
         /// Determines Color for a FaultDistance Calculation based on the Algorithm.
         /// </summary>
         /// <param name="algorithm">Fault Distance ALgorithm</param>

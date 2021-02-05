@@ -202,7 +202,7 @@ namespace OpenSEE
                      LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                      DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                      DataMarker = new List<double[]>(),
-                     BaseValue = (type == "Voltage" ? ds.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
+                     BaseValue = (type == "Voltage" ? GetBaseV(ds.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
                  })).ToList();
 
             if (type == "TripCoilCurrent")
@@ -255,7 +255,7 @@ namespace OpenSEE
                     Color = GetColor(cdg.RMS.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = Math.Sqrt(2) * (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
+                    BaseValue = Math.Sqrt(2) * (type == "Voltage" ? GetBaseV(cdg.RMS.SeriesInfo.Channel, true) * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
                 dataLookup.Add(flotSeriesRMS);
@@ -271,7 +271,7 @@ namespace OpenSEE
                     Color = GetColor(cdg.Peak.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = (type == "Voltage" ? cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
+                    BaseValue = (type == "Voltage" ? GetBaseV(cdg.RMS.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
                 dataLookup.Add(flotSeriesWaveAmp);
