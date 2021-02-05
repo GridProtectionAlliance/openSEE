@@ -2608,8 +2608,16 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
-            double[][] dataArr = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
-            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i++)
+            //Limit to 100 pts per cycle
+            int step = (int)Math.Floor(samplesPerCycle / 100.0D);
+            if (step == 0)
+                step = 1;
+
+            int size = (dataSeries.DataPoints.Count - samplesPerCycle) / step;
+
+            double[][] dataArr = new double[(size + 1)][];
+            int j = 0;
+            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
             {
 
                 double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
@@ -2620,7 +2628,8 @@ namespace OpenSEE
                 double rmsHarm = fft.Magnitude[1];
                 double thdValue = 100 * Math.Sqrt(rmsHarmSum) / rmsHarm;
 
-                dataArr[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, thdValue };
+                dataArr[j] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, thdValue };
+                j++;
             }
 
             thd.DataPoints = dataArr.ToList();
@@ -2685,7 +2694,7 @@ namespace OpenSEE
 
             D3Series SpecifiedHarmonicMag = new D3Series()
             {
-                Unit = GetUnits(dataSeries.SeriesInfo.Channel),
+                Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
@@ -2709,22 +2718,34 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
-            double[][] dataArrHarm = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
-            double[][] dataArrAngle = new double[(dataSeries.DataPoints.Count - samplesPerCycle)][];
+            //Limit to 100 pts per cycle
+            int step = (int)Math.Floor(samplesPerCycle / 100.0D);
+            if (step == 0)
+                step = 1;
 
-            Parallel.For(0, dataSeries.DataPoints.Count - samplesPerCycle, i =>
+            int size = (dataSeries.DataPoints.Count - samplesPerCycle)/ step;
+            double[][] dataArrHarm = new double[size+1][];
+            double[][] dataArrAngle = new double[size+1][];
+
+            double specifiedFrequency = Fbase * specifiedHarmonic;
+            double freq = Fbase;
+
+           
+
+            int j = 0;
+            for (int i=0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
             {
                 double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
-                double specifiedFrequency = Fbase * specifiedHarmonic;
+               
 
-                FFT fft = new FFT(Fbase * samplesPerCycle, points);
+                FFT fft = new FFT(freq * samplesPerCycle, points);
 
                 int index = Array.FindIndex(fft.Frequency, value => Math.Round(value) == specifiedFrequency);
 
-                dataArrHarm[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Magnitude[index] / Math.Sqrt(2) };
-                dataArrAngle[i] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Angle[index] * 180 / Math.PI };
-
-            });
+                dataArrHarm[j] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Magnitude[index] / Math.Sqrt(2) };
+                dataArrAngle[j] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, fft.Angle[index] * 180 / Math.PI };
+                j++;
+            }
 
             SpecifiedHarmonicMag.DataPoints = dataArrHarm.ToList();
             SpecifiedHarmonicAng.DataPoints = dataArrAngle.ToList();
@@ -2790,7 +2811,7 @@ namespace OpenSEE
                     restrikeTbl.QueryRecordCountWhere("EventID = {0} AND PhaseID = {1}", eventID, ds.SeriesInfo.Channel.PhaseID) > 0).Select(
                         ds => new D3Series()
                         {
-                            Unit = GetUnits(ds.SeriesInfo.Channel),
+                            Unit = "Current",
                             Color = GetColor(ds.SeriesInfo.Channel),
                             BaseValue = GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV),
                             LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
@@ -2805,7 +2826,7 @@ namespace OpenSEE
                     restrikeTbl.QueryRecordCountWhere("EventID = {0} AND PhaseID = {1}", eventID, ds.SeriesInfo.Channel.PhaseID) > 0).Select(
                         ds => new D3Series()
                         {
-                            Unit = GetUnits(ds.SeriesInfo.Channel),
+                            Unit = "Voltage",
                             Color = GetColor(ds.SeriesInfo.Channel),
                             BaseValue = ds.SeriesInfo.Channel.Asset.VoltageKV,
                             LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,

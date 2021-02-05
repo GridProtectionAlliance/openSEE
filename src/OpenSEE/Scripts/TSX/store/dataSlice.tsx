@@ -323,7 +323,7 @@ export const DataReducer = createSlice({
                 extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'Pos'))
             }
             else if (action.payload.key.DataType == 'Unbalance') {
-                extendEnabled = action.payload.data.map(item => (item.LegendHorizontal == 'S0/S1'))
+                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'S0/S1'))
             }
             else if (action.payload.key.DataType == 'FFT') {
                 extendEnabled = action.payload.data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))

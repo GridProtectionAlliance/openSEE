@@ -221,8 +221,8 @@ export const defaultSettings = {
         THD: {
             current: 1,
             options: [
-                { label: "Percent", short: "%", factor: 100 },
-                { label: "Ratio", short: "THD", factor: 1 }
+                { label: "Percent", short: "%", factor: 1 },
+                { label: "Ratio", short: "THD", factor: 0.01 }
             ]
         },
 

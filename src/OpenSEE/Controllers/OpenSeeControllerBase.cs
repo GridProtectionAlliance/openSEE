@@ -21,26 +21,13 @@
 //
 //******************************************************************************************************
 using FaultData.DataAnalysis;
-using GSF;
 using GSF.Data;
-using GSF.Data.Model;
-using GSF.Identity;
-using GSF.NumericalAnalysis;
-using GSF.Security;
-using GSF.Web;
-using GSF.Web.Model;
 using OpenSEE.Model;
 using openXDA.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Numerics;
 using System.Runtime.Caching;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -79,6 +66,8 @@ namespace OpenSEE
         {
             get
             {
+                if (m_Fbase != null)
+                    return (double)m_Fbase;
                 double fbase = 0;
                 using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                     fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
@@ -86,6 +75,7 @@ namespace OpenSEE
             }
         }
 
+        private static double? m_Fbase = null;
         #endregion
 
         #region [ Static ]
@@ -94,20 +84,7 @@ namespace OpenSEE
 
         #region [ Methods ]
 
-        /// <summary>
-        /// Determines Units based on Channel Information for Full Data Channels
-        /// </summary>
-        /// <param name="channel">Channel that represents the signal</param>
-        /// <returns>A Unit designation</returns>
-        public static string GetUnits(Channel channel)
-        {
-            if (channel.MeasurementType.Name == "Voltage")
-                return "V";
-            if (channel.MeasurementType.Name == "Current")
-                return "A";
-            else
-                return " ";
-        }
+        
 
         /// <summary>
         /// Determines Color based on Channel Information for Full Data Channels
