@@ -428,9 +428,12 @@ const LineChart = (props: iProps) => {
         container.select(".xAxis").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
 
         let lineGen = (unit: OpenSee.Unit, base: number) => {
-          
-            let factor = activeUnit[unit as string].factor
-            factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0/base : factor);
+
+            let factor = 1.0;
+            if (activeUnit[unit as string] != undefined) {
+                factor = activeUnit[unit as string].factor
+                factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0 / base : factor);
+            }
             return d3.line()
                 .x(function (d) { return xScaleRef.current(d[0]) })
                 .y(function (d) { return yScaleRef.current(d[1] * factor) })

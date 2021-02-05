@@ -150,8 +150,8 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
     oldData.forEach(item => thunkAPI.dispatch(DataReducer.actions.RemovePlot(item)));
 
     // Cancel any current Analytic in progress
-    if (analyticHandle != undefined && analyticHandle.Abort != undefined)
-        analyticHandle.Abort();
+    if (analyticHandle != undefined && analyticHandle.abort != undefined)
+        analyticHandle.abort();
 
     thunkAPI.dispatch(DataReducer.actions.UpdateAnalytic(arg));
 
@@ -181,8 +181,8 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, 
     thunkAPI.dispatch(DataReducer.actions.AddKey({ ...key, key: thunkAPI.requestId }));
 
     // Cancel any current Analytic in progress
-    if (analyticHandle != undefined && analyticHandle.Abort != undefined)
-        analyticHandle.Abort();
+    if (analyticHandle != undefined && analyticHandle.abort != undefined)
+        analyticHandle.abort();
 
     thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: key, state: 'Loading' }));
 
