@@ -133,6 +133,8 @@ namespace OpenSEE
                 string type = query["type"];
                 string dataType = query["dataType"];
 
+                int forceFullRes = int.Parse(query.ContainsKey("fullRes")? query["fullRes"] : "0");
+
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
@@ -151,7 +153,7 @@ namespace OpenSEE
                 {
                     VICycleDataGroup viCycleDataGroup;
 
-                    viCycleDataGroup = QueryVICycleDataGroup(eventId, meter);
+                    viCycleDataGroup = QueryVICycleDataGroup(eventId, meter, forceFullRes == 1);
                     returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type);
 
 

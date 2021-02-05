@@ -627,9 +627,9 @@ namespace OpenSEE
             if (analytic == "RapidVoltageChange")
                 return controller.GetRapidVoltageChangeLookup(viCycleDataGroup);
             if (analytic == "THD")
-                return controller.GetTHDLookup(dataGroup);
+                return controller.GetTHDLookup(dataGroup,true);
             if (analytic == "SpecifiedHarmonic")
-                return controller.GetSpecifiedHarmonicLookup(dataGroup,harmonic);
+                return controller.GetSpecifiedHarmonicLookup(dataGroup,harmonic,true);
             if (analytic == "OverlappingWaveform")
                 return controller.GetOverlappingWaveformLookup(dataGroup);
             

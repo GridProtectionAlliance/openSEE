@@ -313,7 +313,7 @@ namespace OpenSEE
             return dataGroupTask.Result;
         }
 
-        public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter)
+        public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter, bool fullres=false)
         {
             string target = $"VICycleDataGroup-{eventID}";
             if (s_memoryCache.Contains(target))
@@ -329,6 +329,12 @@ namespace OpenSEE
             
             viCycleDataGroupTask.Start();
 
+            if (fullres)
+            {
+                viCycleDataGroupTask.Wait();
+                if (s_memoryCache.Contains(target))
+                    return (VICycleDataGroup)s_memoryCache.Get(target);
+            }
             return Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), Fbase, true);
             
         }

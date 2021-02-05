@@ -59,4 +59,12 @@ function CancelEvent(eventId: number) {
     }
 }
 
-export { CancelAnalytics, AddRequest, CancelEvent, CancelCompare }
+function AppendRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
+    let target = key.DataType.toString() + '-' + key.EventId.toString();
+    let r = requests;
+    if (HandleStore.has(target))
+        r = [...r, ...HandleStore.get(target)];
+    HandleStore.set(target, r)
+}
+
+export { CancelAnalytics, AddRequest, CancelEvent, CancelCompare, AppendRequest }

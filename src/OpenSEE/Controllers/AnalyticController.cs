@@ -2550,11 +2550,14 @@ namespace OpenSEE
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
+                    int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
+
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                     meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
                     DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
-                    List<D3Series> returnList = GetTHDLookup(dataGroup);
+                    List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes==1);
+
 
 
                     JsonReturn returnDict = new JsonReturn();
@@ -2566,7 +2569,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public List<D3Series> GetTHDLookup(DataGroup dataGroup)
+        public List<D3Series> GetTHDLookup(DataGroup dataGroup, bool fullRes)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -2579,19 +2582,19 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD( item))).ToList();
-            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD( item))).ToList();
-            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD( item))).ToList();
+            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD( item, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD( item))).ToList();
-            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD( item))).ToList();
-            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD( item))).ToList();
+            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD( item, fullRes))).ToList();
 
 
             return dataLookup;
         }
 
-        private D3Series GenerateTHD( DataSeries dataSeries)
+        private D3Series GenerateTHD( DataSeries dataSeries, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2610,7 +2613,7 @@ namespace OpenSEE
 
             //Limit to 100 pts per cycle
             int step = (int)Math.Floor(samplesPerCycle / 100.0D);
-            if (step == 0)
+            if (step == 0 || fullRes)
                 step = 1;
 
             int size = (dataSeries.DataPoints.Count - samplesPerCycle) / step;
@@ -2648,12 +2651,13 @@ namespace OpenSEE
                 {
                     Dictionary<string, string> query = Request.QueryParameters();
                     int eventId = int.Parse(query["eventId"]);
+                    int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
                     Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                     Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                     int specifiedHarmonic = int.Parse(query["specifiedHarmonic"]);
                     meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
                     DataGroup dataGroup = QueryDataGroup(evt.ID, meter);
-                    List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic);
+                    List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes==1);
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
@@ -2665,7 +2669,7 @@ namespace OpenSEE
             }, cancellationToken);
         }
 
-        public List<D3Series> GetSpecifiedHarmonicLookup(DataGroup dataGroup, int specifiedHarmonic)
+        public List<D3Series> GetSpecifiedHarmonicLookup(DataGroup dataGroup, int specifiedHarmonic, bool fullRes)
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -2677,18 +2681,18 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
 
             return dataLookup;
         }
 
-        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic( DataSeries dataSeries, int specifiedHarmonic)
+        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic( DataSeries dataSeries, int specifiedHarmonic, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2720,7 +2724,7 @@ namespace OpenSEE
 
             //Limit to 100 pts per cycle
             int step = (int)Math.Floor(samplesPerCycle / 100.0D);
-            if (step == 0)
+            if (step == 0 || fullRes)
                 step = 1;
 
             int size = (dataSeries.DataPoints.Count - samplesPerCycle)/ step;

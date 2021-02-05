@@ -26,7 +26,7 @@ import _, { add, uniq } from 'lodash';
 import {  selectActiveUnit, selectUnit } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
-import { AddRequest, CancelAnalytics } from './RequestHandler';
+import { AddRequest, AppendRequest, CancelAnalytics } from './RequestHandler';
 declare var eventID: number;
 
 
@@ -34,6 +34,11 @@ interface IExtendedKey extends OpenSee.IGraphProps { key?: string }
 // #region [ Thunks ]
 
 //Thunk to Create Plot
+export const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    AppendRequest(arg, getDetailedData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic))
+    return Promise.resolve();
+});
+
 export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
 
     thunkAPI.dispatch(DataReducer.actions.AddKey({ ...arg, key: thunkAPI.requestId }));
@@ -290,6 +295,18 @@ export const DataReducer = createSlice({
 
            
             return state
+        },
+        ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
+            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
+            if (index == -1)
+                return state;
+            action.payload.data.forEach(d => {
+                let dIndex = state.data[index].findIndex(od => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup);
+                if (dIndex == -1)
+                    return
+                state.data[index][dIndex] = d;
+            });
+            return state;
         },
         UpdateTimeLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }> ) => {
             if (Math.abs(action.payload.start - action.payload.end) < 10)
@@ -908,7 +925,10 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            handleFreq.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true })) })
+            handleFreq.then((data) => {
+                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true }));
+                dispatch(InitiateDetailed(key));
+            })
             handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
 
             result.push(handleFreq);
@@ -1115,7 +1135,10 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            specifiedHarmonicDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
+            specifiedHarmonicDataHandle.then((data) => {
+                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
+                dispatch(InitiateDetailed(key));
+            })
             result.push(specifiedHarmonicDataHandle);
             break
         case ('SymetricComp'):
@@ -1139,7 +1162,10 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            thdDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
+            thdDataHandle.then((data) => {
+                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
+                dispatch(InitiateDetailed(key));
+            })
             result.push(thdDataHandle);
             break
         case ('Unbalance'):
@@ -1175,7 +1201,10 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            breakerRestrikeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
+            breakerRestrikeDataHandle.then((data) => {
+                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
+                dispatch(InitiateDetailed(key));
+            })
             result.push(breakerRestrikeDataHandle);
             break
         case ('FFT'):
@@ -1187,7 +1216,10 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            fftAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
+            fftAnalyticDataHandle.then((data) => {
+                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
+                dispatch(InitiateDetailed(key))
+            })
             result.push(fftAnalyticDataHandle);
             break
         default:
@@ -1199,6 +1231,64 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
     return result;
 }
 
+function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore): Array<JQuery.jqXHR<any>> {
+    let result = [];
+    switch (key.DataType) {
+
+        case ('Current'):
+        case ('Voltage'):
+           
+            let handleFreq = $.ajax({
+                type: "GET",
+                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
+                    `&type=${key.DataType}` +
+                    `&dataType=Freq`,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
+
+            handleFreq.then((data) => {
+                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data}));
+            })
+
+            result.push(handleFreq);
+            break;
+        case ('THD'):
+            let thdDataHandle = $.ajax({
+                type: "GET",
+                url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}&fullRes=1`,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
+            thdDataHandle.then((data) => {
+                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
+            })
+            result.push(thdDataHandle);
+            break
+        case ('Harmonic'):
+            let specifiedHarmonicDataHandle = $.ajax({
+                type: "GET",
+                url: `${homePath}api/Analytic/GetSpecifiedHarmonicData?eventId=${key.EventId}&fullRes=1` +
+                    `&specifiedHarmonic=${options.Harmonic}`,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
+            specifiedHarmonicDataHandle.then((data) => {
+                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
+            })
+            result.push(specifiedHarmonicDataHandle);
+            break
+        default:
+            return [];
+    }
+    return result;
+}
 // #endregion
 
 // #region [ Helper Functions ]
