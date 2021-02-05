@@ -69,6 +69,7 @@ declare var eventStartTime: string;
 declare var eventEndTime: string;
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
+const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
 
 class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
     history: object;
@@ -85,13 +86,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         this.history = createHistory();
 
         let query = queryString.parse(this.history['location'].search);
-        /* 
-         *  //displayVolt: (query['displayVolt'] != undefined ? query['displayVolt'] == '1' || query['displayVolt'] == 'true' : true),
-            //displayCur: (query['displayCur'] != undefined ? query['displayCur'] == '1' || query['displayCur'] == 'true' : true),
-            //displayTCE: query['displayTCE'] == '1' || query['displayTCE'] == 'true',
-            //displayDigitals: query['displayDigitals'] == '1' || query['displayDigitals'] == 'true',
-            //displayAnalogs: query['displayAnalogs'] == '1' || query['displayAnalogs'] == 'true',
-            */
+       
         this.state = {
             
             eventStartTime: (query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime),
@@ -123,19 +118,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
     componentDidMount() {
         window.addEventListener("resize", this.handleScreenSizeChange.bind(this));
-
-        //if (this.props.displayVolt)
-        //    store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        //if (this.props.displayCur)
-        //    store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
-        //if (this.props.displayAnalogs)
-        //    store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
-        //if (this.props.displayDigitals)
-        //    store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        //if (this.props.displayTCE)
-        //    store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
-       // 
-       
 
         store.dispatch(LoadOverlappingEvents())
         this.getEventData();
@@ -197,6 +179,23 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             });
         }, 500);
     }
+
+    sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
+        if (item1.DataType == item2.DataType)
+            return 0
+
+        let index1 = Plotorder.findIndex((v) => v == item1.DataType);
+        let index2 = Plotorder.findIndex((v) => v == item2.DataType);
+
+        if (index1 != -1 && index2 != -1)
+            return (index1 > index2 ? 1 : -1);
+        if (index1 != -1)
+            return -1;
+        if (index2 != -1)
+            return 1;
+
+        return (item1 > item2 ? 1 : -1);
+    }   
 
     render() {
         var height = this.calculateHeights();
@@ -294,7 +293,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         {plotData[this.props.eventID] != undefined ?
                             <div className="card" style={{borderLeft: 0, borderRight: 0}}>
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {plotData[this.props.eventID].map((item,idx) => (item.DataType == 'FFT' ?
+                                    {plotData[this.props.eventID].sort(this.sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
                                         <BarChart
                                             eventId={item.EventId}
                                             width={this.state.graphWidth}
@@ -319,7 +318,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                     (this.props.eventGroup.find(item => item.value == parseInt(key)) != undefined ? this.props.eventGroup.find(item => item.value == parseInt(key)).label : '')
                                 }</div>
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {plotData[key].map(item => < LineChart
+                                {plotData[key].sort(this.sortGraph).map(item => < LineChart
                                         eventId={item.EventId}
                                         width={this.state.graphWidth}
                                         eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
