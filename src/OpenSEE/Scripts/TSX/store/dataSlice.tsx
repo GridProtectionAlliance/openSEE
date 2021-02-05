@@ -277,57 +277,8 @@ export const DataReducer = createSlice({
 
             state.data[index] = [...state.data[index], ...action.payload.data]
 
-            let extendEnabled = action.payload.data.map(item => true)
-            if (action.payload.key.DataType == 'Voltage') {
-                extendEnabled = action.payload.data.map(item => item.LegendVGroup == 'L-L' &&
-                    ((item.LegendHorizontal == 'Ph' && action.payload.defaultTraces.Ph) ||
-                    (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS)  ||
-                    (item.LegendHorizontal == 'Pk' && action.payload.defaultTraces.Pk) ||
-                    (item.LegendHorizontal == 'W' && action.payload.defaultTraces.W)
-                ))
-            }
-            else if (action.payload.key.DataType == 'Current') {
-                extendEnabled = action.payload.data.map(item => ((item.LegendHorizontal == 'Ph' && action.payload.defaultTraces.Ph) ||
-                        (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS) ||
-                        (item.LegendHorizontal == 'Pk' && action.payload.defaultTraces.Pk) ||
-                        (item.LegendHorizontal == 'W' && action.payload.defaultTraces.W)
-                    ))
-            }
-            else if (action.payload.key.DataType == 'FirstDerivative') {
-                extendEnabled = action.payload.data.map(item => ((item.LegendHorizontal == 'W' && action.payload.defaultTraces.W) ||
-                    (item.LegendHorizontal == 'RMS' && action.payload.defaultTraces.RMS))
-                    && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
-            }
-            else if (action.payload.key.DataType == 'ClippedWaveforms') {
-                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-            }
-            else if (action.payload.key.DataType == 'Frequency') {
-                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-            }
-            else if (action.payload.key.DataType == 'HighPassFilter' || action.payload.key.DataType == 'LowPassFilter') {
-                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-            }
-            else if (action.payload.key.DataType == 'MissingVoltage' || action.payload.key.DataType == 'OverlappingWave') {
-                extendEnabled = action.payload.data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-            }
-            else if (action.payload.key.DataType == 'Power') {
-                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'P')
-            }
-            else if (action.payload.key.DataType == 'Impedance') {
-                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'R')
-            }
-            else if (action.payload.key.DataType == 'RapidVoltage') {
-                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
-            }
-            else if (action.payload.key.DataType == 'SymetricComp') {
-                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'Pos'))
-            }
-            else if (action.payload.key.DataType == 'Unbalance') {
-                extendEnabled = action.payload.data.map(item => (item.LegendVertical == 'S0/S1'))
-            }
-            else if (action.payload.key.DataType == 'FFT') {
-                extendEnabled = action.payload.data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
-            }
+            let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.data);
+            
             state.enabled[index] = [...state.enabled[index], ...extendEnabled]
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
@@ -1379,5 +1330,61 @@ function CombineLimits(limits: [number, number][]): [number,number] {
     
 
     return [ymin, ymax];
+}
+
+// Function to get Default Enabled Traces
+function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, data: OpenSee.iD3DataSeries[]): boolean[] {
+
+    if (type == 'Voltage') 
+        return data.map(item => item.LegendVGroup == 'L-L' &&
+            ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
+                (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
+                (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||
+                (item.LegendHorizontal == 'W' && defaultTraces.W)
+            ))
+    
+    if ( type == 'Current') 
+        return data.map(item => ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
+            (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
+            (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||
+            (item.LegendHorizontal == 'W' && defaultTraces.W)
+        ))
+    
+    if (type == 'FirstDerivative') 
+        return data.map(item => ((item.LegendHorizontal == 'W' && defaultTraces.W) ||
+            (item.LegendHorizontal == 'RMS' && defaultTraces.RMS))
+            && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
+    
+    if (type == 'ClippedWaveforms') 
+        return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+    
+    if (type == 'Frequency') 
+        return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+    
+    if (type == 'HighPassFilter' || type == 'LowPassFilter') 
+        return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+    
+    if (type == 'MissingVoltage' || type == 'OverlappingWave') 
+        return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
+    
+    if (type == 'Power') 
+        return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'P')
+    
+    if (type == 'Impedance') 
+        return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'R')
+    
+    if (type == 'RapidVoltage') 
+        return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
+    
+    if (type == 'SymetricComp') 
+        return data.map(item => (item.LegendVertical == 'Pos'))
+    
+    if (type == 'Unbalance') 
+        return data.map(item => (item.LegendVertical == 'S0/S1'))
+    
+    if (type == 'FFT') 
+        return data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
+
+    return data.map(item => false);
 }
 // #endregion`  
