@@ -22,12 +22,13 @@
 //******************************************************************************************************
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _, { uniq } from 'lodash';
+import _, { add, uniq } from 'lodash';
 import {  selectActiveUnit, selectUnit } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
+import { AddRequest, CancelAnalytics } from './RequestHandler';
 declare var eventID: number;
-declare var analyticHandle;
+
 
 interface IExtendedKey extends OpenSee.IGraphProps { key?: string }
 // #region [ Thunks ]
@@ -45,7 +46,7 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
     thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: arg, state: 'Loading' }));
 
     let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-
+    AddRequest(arg, handles);
     return await Promise.all(handles);
 })
 
@@ -149,12 +150,8 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
     let oldData = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.filter(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
     oldData.forEach(item => thunkAPI.dispatch(DataReducer.actions.RemovePlot(item)));
 
-    // Cancel any current Analytic in progress
-    if (analyticHandle != undefined && analyticHandle.abort != undefined)
-        analyticHandle.abort();
-
     thunkAPI.dispatch(DataReducer.actions.UpdateAnalytic(arg));
-
+    CancelAnalytics();
     if (arg == 'none')
         return Promise.resolve();
 
@@ -162,8 +159,9 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
     thunkAPI.dispatch(DataReducer.actions.AddKey({ DataType: arg as OpenSee.graphType, EventId: eventId, key: thunkAPI.requestId }));
     thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: { DataType: arg as OpenSee.graphType, EventId: eventId }, state: 'Loading' }));
 
+    
     let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-    analyticHandle = handles[0];
+    AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId },handles)
 
     return await Promise.all(handles);
 })
@@ -180,14 +178,11 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, 
     //Remove existing Data
     thunkAPI.dispatch(DataReducer.actions.AddKey({ ...key, key: thunkAPI.requestId }));
 
-    // Cancel any current Analytic in progress
-    if (analyticHandle != undefined && analyticHandle.abort != undefined)
-        analyticHandle.abort();
-
     thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: key, state: 'Loading' }));
 
+    CancelAnalytics();
     let handles = getData(key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId );
-    analyticHandle = handles[0];
+    AddRequest(key, handles)
 
     return await Promise.all(handles);
 })
@@ -1387,4 +1382,5 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
 
     return data.map(item => false);
 }
-// #endregion`  
+
+// #endregion`

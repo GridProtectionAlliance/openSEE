@@ -25,6 +25,7 @@ import { OpenSee } from '../global';
 import _, { groupBy, uniq } from 'lodash';
 import { createSelector } from 'reselect'
 import { AddPlot, RemovePlot } from './dataSlice';
+import { CancelCompare, CancelEvent } from './RequestHandler';
 
 // #region [ Thunks ]
 export const LoadOverlappingEvents = createAsyncThunk('Event/LoadOverlappingEvents', async (_, thunkAPI) => {
@@ -43,6 +44,7 @@ export const EnableOverlappingEvent = createAsyncThunk('Event/EnableOverlappingE
     if (index == -1)
         return;
 
+    CancelEvent(arg);
     let plots = uniq(state.Data.plotKeys.map(item => item.DataType));
 
     if (state.Event.Selected[index])
@@ -57,8 +59,9 @@ export const EnableOverlappingEvent = createAsyncThunk('Event/EnableOverlappingE
 
 export const ClearOverlappingEvent = createAsyncThunk('Event/ClearOverlappingEvent', (_, thunkAPI) => {
 
+    
     let state = (thunkAPI.getState() as OpenSee.IRootState)
-
+    CancelCompare(state.Data.eventID);
     let plots = uniq(state.Data.plotKeys.map(item => item.DataType));
 
     if (state.Event.Selected.some(i => i)) {
