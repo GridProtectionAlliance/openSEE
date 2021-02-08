@@ -173,7 +173,7 @@ namespace OpenSEE
                     ws = fp / Math.Tan(fp / fs / 2.0D);
                 }
 
-                //pole and zero Transormation
+                //pole and zero Transformation
                 Complex poleProd = 1.0D;
                 Complex zeroProd = 1.0D;
 
@@ -366,30 +366,16 @@ namespace OpenSEE
                 List<Complex> poles = new List<Complex>();
 
                 //Generate poles
-                for (int i = 1; i < order; i++)
+                for (int i = 1; i < (order+1); i++)
                 {
-                    double theta = Math.PI * (2 * i - 1.0D) / (2.0D * i) + Math.PI / 2.0D;
+                    double theta = Math.PI * (2 * i - 1.0D) / (2.0D * (double)order) + Math.PI / 2.0D;
                     double re = Math.Cos(theta);
                     double im = Math.Sin(theta);
-                    if (i % 2 == 0)
-                    {
-                        poles.Add(new Complex(re, im));
-                    }
-                    else
-                    {
-                        poles.Add(new Complex(re, -im));
-                    }
+
+                    poles.Add(new Complex(re, im));
                 }
 
-                if (order % 2 == 1)
-                {
-                    poles.Add(new Complex(-1.0D, 0.0D));
-                }
-                else
-                {
-                    poles.Add(new Complex(1.0D, 0.0D));
-                }
-
+              
                 Complex Gain = -poles[0];
                 for (int i = 1; i < order; i++)
                 {
