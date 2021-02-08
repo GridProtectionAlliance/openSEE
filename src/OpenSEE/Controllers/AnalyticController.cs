@@ -297,8 +297,8 @@ namespace OpenSEE
                 //Forward Filtering
                 for (int i = order; i < n; i++)
                 {
-                    output[i] = 0;
-                    for (int j = 0; j < (order + 1); j++)
+                    output[i] = signal[i] * b[0];
+                    for (int j = 1; j < (order + 1); j++)
                     {
                         output[i] += signal[i - j] * b[j] - output[i - j] * a[j];
                     }
@@ -329,8 +329,8 @@ namespace OpenSEE
                 //Forward Filtering
                 for (int i = order; i < n; i++)
                 {
-                    output[i] = 0;
-                    for (int j = 0; j < (order + 1); j++)
+                    output[i] = signal[i] * b[0];
+                    for (int j = 1; j < (order + 1); j++)
                     {
                         output[i] += signal[i - j] * b[j] - output[i - j] * a[j];
                     }
