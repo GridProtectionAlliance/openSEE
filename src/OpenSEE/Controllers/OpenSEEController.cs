@@ -255,7 +255,7 @@ namespace OpenSEE
                     Color = GetColor(cdg.RMS.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.RMS.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = Math.Sqrt(2) * (type == "Voltage" ? GetBaseV(cdg.RMS.SeriesInfo.Channel, true) * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
+                    BaseValue = (type == "Voltage" ? GetBaseV(cdg.RMS.SeriesInfo.Channel, true) * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
                 dataLookup.Add(flotSeriesRMS);
