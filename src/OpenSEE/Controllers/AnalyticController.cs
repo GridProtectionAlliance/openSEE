@@ -2690,8 +2690,8 @@ namespace OpenSEE
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V Mag" : "I Mag"),
-                LegendVGroup = "",               
+                LegendHorizontal = "Mag",
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
                 DataPoints = new List<double[]>()
             };
 
@@ -2703,8 +2703,8 @@ namespace OpenSEE
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V Ang" : "I Ang"),
-                LegendVGroup = "",
+                LegendHorizontal = "Ang",
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
                 DataPoints = new List<double[]>()
             };
 
@@ -2713,7 +2713,7 @@ namespace OpenSEE
             if (step == 0 || fullRes)
                 step = 1;
 
-            int size = (dataSeries.DataPoints.Count - samplesPerCycle)/ step;
+            int size = (dataSeries.DataPoints.Count - samplesPerCycle -1)/ step;
             double[][] dataArrHarm = new double[size+1][];
             double[][] dataArrAngle = new double[size+1][];
 
