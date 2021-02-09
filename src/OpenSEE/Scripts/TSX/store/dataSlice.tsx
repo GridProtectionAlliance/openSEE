@@ -58,7 +58,7 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGra
 //Thunk to Add Data
 const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string, secondary: boolean }, thunkAPI) => {
 
-    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, defaultTraces: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultTrace, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID: arg.requestID }))
+    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, defaultTraces: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultTrace, defaultV: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultVType, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID: arg.requestID }))
 
     return Promise.resolve();
 })
@@ -269,7 +269,7 @@ export const DataReducer = createSlice({
             state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string, defaultTraces: OpenSee.IDefaultTrace }>) => {
+        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (state.activeRequest[index] != action.payload.requestID)
@@ -277,7 +277,7 @@ export const DataReducer = createSlice({
 
             state.data[index] = [...state.data[index], ...action.payload.data]
 
-            let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.data);
+            let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV,action.payload.data);
             
             state.enabled[index] = [...state.enabled[index], ...extendEnabled]
 
@@ -1418,10 +1418,10 @@ function CombineLimits(limits: [number, number][]): [number,number] {
 }
 
 // Function to get Default Enabled Traces
-function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, data: OpenSee.iD3DataSeries[]): boolean[] {
+function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, defaultVoltage: 'L-L'|'L-N', data: OpenSee.iD3DataSeries[]): boolean[] {
 
     if (type == 'Voltage') 
-        return data.map(item => item.LegendVGroup == 'L-L' &&
+        return data.map(item => item.LegendVGroup == defaultVoltage &&
             ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
                 (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
                 (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||

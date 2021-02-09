@@ -28,7 +28,7 @@ import { outerDiv, handle, closeButton } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
-import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace } from '../store/settingSlice';
+import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 
@@ -37,6 +37,8 @@ const SettingsWidget = (props: Iprops) => {
     const snapToPoint = useSelector(selectSnap);
     const eventOverlay = useSelector(selectEventOverlay);
     const defaultTraces = useSelector(selectdefaultTraces);
+    const defaultVtype = useSelector(selectVTypeDefault);
+
     const dispatch = useDispatch();
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
@@ -89,7 +91,7 @@ const SettingsWidget = (props: Iprops) => {
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                    <fieldset className="border" style={{ padding: '10px', height: '100%', display: "inline-flex", width: '100%' }}>
+                                    <fieldset className="border" style={{ padding: '10px', height: '100%', display: "block", width: '100%' }}>
                                             <legend className="w-auto" style={{ fontSize: 'large' }}>Default Traces (on Loading):</legend>
                                         <div className="row">
                                             <div className="col" style={{ width: '25%' }}>
@@ -119,8 +121,27 @@ const SettingsWidget = (props: Iprops) => {
                                                             onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, Ph: !defaultTraces.Ph }))} />
                                                     <label className="form-check-label">Phase</label>
                                                 </div>
+                                                </div>
+                                                
                                             </div>
-                                        </div>
+                                            <div className="row">
+                                                <div className="col" style={{ width: '100%', paddingTop: 10 }}>
+                                                    <div className="form-check form-check-inline">
+                                                        <input className="form-check-input" type="radio" checked={defaultVtype == 'L-L'} onChange={() => {
+                                                            if (defaultVtype == 'L-N')
+                                                                dispatch(SetDefaultVType('L-L'))
+                                                        }} />
+                                                            <label className="form-check-label" >Line to Line</label>
+                                                    </div>
+                                                    <div className="form-check form-check-inline">
+                                                        <input className="form-check-input" type="radio" checked={defaultVtype == 'L-N'} onChange={() => {
+                                                            if (defaultVtype == 'L-L')
+                                                                dispatch(SetDefaultVType('L-N'))
+                                                        }}/>
+                                                        <label className="form-check-label" >Line to Neutral</label>
+                                                    </div>
+                                                 </div>      
+                                            </div>
                                     </fieldset>
                                     </div>
                                 </div>

@@ -42,7 +42,8 @@ export const SettingsReducer = createSlice({
         displayAnalogs: false as boolean,
         Tab: 'Info' as OpenSee.Tab,
         Navigation: 'system' as OpenSee.EventNavigation,
-        DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false }
+        DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
+        DefaultVType: "L-L",
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
@@ -55,6 +56,7 @@ export const SettingsReducer = createSlice({
                 state.SnapToPoint = preserved.SnapToPoint;
                 state.SinglePlot = preserved.SinglePlot;
                 state.DefaultTrace = preserved.DefaultTrace;
+                state.DefaultVType = preserved.DefaultVType;
             }
             else {
                 state.Units = defaultSettings.Units;
@@ -63,6 +65,7 @@ export const SettingsReducer = createSlice({
                 state.SnapToPoint = defaultSettings.snapToPoint;
                 state.SinglePlot = defaultSettings.singlePoint;
                 state.DefaultTrace = defaultSettings.DefaultTrace;
+                state.DefaultVType = defaultSettings.DefaultVType;
             }
             return state
         },
@@ -111,6 +114,10 @@ export const SettingsReducer = createSlice({
             state.DefaultTrace = action.payload;
             SaveSettings(state);
         },
+        SetDefaultVType: (state, action: PayloadAction<'L-L' | 'L-N'>) => {
+            state.DefaultVType = action.payload;
+            SaveSettings(state);
+        }
     },
     extraReducers: (builder) => {
 
@@ -121,7 +128,7 @@ export const SettingsReducer = createSlice({
 
 export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSnapToPoint, SetSinglePlot,
     SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt,
-    SetNavigation, SetTab, SetDefaultTrace
+    SetNavigation, SetTab, SetDefaultTrace, SetDefaultVType
 } = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
@@ -132,7 +139,7 @@ export const selectColor = (state: OpenSee.IRootState) => state.Settings.Colors;
 export const selectUnit = (state: OpenSee.IRootState) => state.Settings.Units;
 
 export const selectdefaultTraces = (state: OpenSee.IRootState) => state.Settings.DefaultTrace;
-
+export const selectVTypeDefault = (state: OpenSee.IRootState) => state.Settings.DefaultVType;
 
 export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
     selectUnit,
@@ -213,6 +220,7 @@ function SaveSettings(state: OpenSee.ISettingsState) {
             SnapToPoint: state.SnapToPoint,
             SinglePlot: state.SinglePlot,
             DefaultTrace: state.DefaultTrace,
+            DefaultVType: state.DefaultVType
         }
         const serializedState = JSON.stringify(saveState);
         localStorage.setItem('openSee.Settings', serializedState);
@@ -244,6 +252,8 @@ function GetSettings(): OpenSee.ISettingsState {
 
         if (state.DefaultTrace == undefined)
             state.DefaultTrace = defaultSettings.DefaultTrace
+        if (state.DefaultVType == undefined)
+            state.DefaultVType = defaultSettings.DefaultVType as "L-L" | 'L-N';
         return state;
     } catch (err) {
         return undefined;

@@ -317,6 +317,7 @@ export namespace OpenSee {
         Tab: Tab,
         Navigation: EventNavigation,
         DefaultTrace: IDefaultTrace,
+        DefaultVType: 'L-L'| 'L-N',
     }
 
     interface IUnitSetting {
