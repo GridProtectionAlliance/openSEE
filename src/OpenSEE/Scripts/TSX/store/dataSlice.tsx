@@ -300,10 +300,13 @@ export const DataReducer = createSlice({
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
             if (index == -1)
                 return state;
+            let updated = [];
+
             action.payload.data.forEach(d => {
-                let dIndex = state.data[index].findIndex(od => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup);
+                let dIndex = state.data[index].findIndex((od,di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
                 if (dIndex == -1)
                     return
+                updated.push(dIndex);
                 state.data[index][dIndex] = d;
             });
             return state;
