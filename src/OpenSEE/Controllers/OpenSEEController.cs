@@ -154,7 +154,7 @@ namespace OpenSEE
                     VICycleDataGroup viCycleDataGroup;
 
                     viCycleDataGroup = QueryVICycleDataGroup(eventId, meter, forceFullRes == 1);
-                    returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type);
+                    returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !(forceFullRes == 1));
 
 
                 }
@@ -232,7 +232,7 @@ namespace OpenSEE
             return "";
         }
 
-        private List<D3Series> GetD3FrequencyDataLookup(VICycleDataGroup vICycleDataGroup, string type)
+        private List<D3Series> GetD3FrequencyDataLookup(VICycleDataGroup vICycleDataGroup, string type, bool includeRMS)
         {
             //Determine Sbase
             double Sbase = 0;
@@ -244,7 +244,7 @@ namespace OpenSEE
 
             foreach (CycleDataGroup cdg in vICycleDataGroup.CycleDataGroups.Where(ds => ds.RMS.SeriesInfo.Channel.MeasurementType.Name == type))
             {
-
+                
                 D3Series flotSeriesRMS = new D3Series
                 {
                     LegendHorizontal = "RMS",
@@ -258,7 +258,8 @@ namespace OpenSEE
                     BaseValue = (type == "Voltage" ? GetBaseV(cdg.RMS.SeriesInfo.Channel, true) * 1000.0 : GetIbase(Sbase, cdg.RMS.SeriesInfo.Channel.Asset.VoltageKV))
 
                 };
-                dataLookup.Add(flotSeriesRMS);
+                if (includeRMS)
+                    dataLookup.Add(flotSeriesRMS);
 
                 D3Series flotSeriesWaveAmp = new D3Series
                 {
