@@ -144,33 +144,9 @@ GO
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'SlidingCacheExpiration', N'2.0', 0, N'Administrator')
 GO
 
-
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'AN', N'#A30000', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'BN', N'#0029A3', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'CN', N'#007A29', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'NG', N'#d3d3d3', 0, N'Administrator')
+INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'downSample', N'-1', 0, N'Administrator')
 GO
 
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'AB', N'#A30000', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'BC', N'#0029A3', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.voltage', N'CA', N'#007A29', 0, N'Administrator')
-GO
-
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.current', N'AN', N'#FF0000', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.current', N'BN', N'#0066CC', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.current', N'CN', N'#33CC33', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.current', N'NG', N'#d3d3d3', 0, N'Administrator')
-GO
-INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'color.current', N'RES', N'#d3d3d3', 0, N'Administrator')
-GO
 
 CREATE TABLE [dbo].[ValueListGroup](
 	[ID] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,

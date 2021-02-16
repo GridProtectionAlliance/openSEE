@@ -166,7 +166,7 @@ namespace OpenSEE
                 returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
                 returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
 
-
+                DownSample(returnDict);
                 return returnDict;
             }           
             
@@ -324,7 +324,7 @@ namespace OpenSEE
                 JsonReturn returnDict = new JsonReturn();
                 
                 returnDict.Data = resultList;
-               
+                DownSample(returnDict);
                 return returnDict;
 
 
@@ -383,7 +383,7 @@ namespace OpenSEE
                 JsonReturn returnDict = new JsonReturn();
             
                 returnDict.Data = returnList;
-
+                DownSample(returnDict);
                 return returnDict;
 
 

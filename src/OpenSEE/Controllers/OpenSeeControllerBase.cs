@@ -27,6 +27,7 @@ using openXDA.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -55,10 +56,11 @@ namespace OpenSEE
         public static double Sbase {
             get
             {
-                double Sbase = 0;
+                if (m_Sbase != null)
+                    return (double)m_Sbase;
                 using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                    Sbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'")?? 100.0;
-                return Sbase;
+                    m_Sbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'") ?? 100.0;
+                return (double)m_Sbase;
             }
         }
 
@@ -68,14 +70,29 @@ namespace OpenSEE
             {
                 if (m_Fbase != null)
                     return (double)m_Fbase;
-                double fbase = 0;
                 using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                    fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
-                return fbase;
+                    m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
+                return (double)m_Fbase;
             }
         }
 
+        public static int DownSampleRate
+        {
+            get
+            {
+                if (m_Downsample != null)
+                    return (int)m_Downsample;
+
+                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                    m_Downsample = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'downSample'") ?? "-1");
+                return (int)m_Downsample;
+            }
+        
+        }
+
         private static double? m_Fbase = null;
+        private static double? m_Sbase = null;
+        private static int? m_Downsample = null;
         #endregion
 
         #region [ Static ]
@@ -84,7 +101,7 @@ namespace OpenSEE
 
         #region [ Methods ]
 
-        
+
 
         /// <summary>
         /// Determines Color based on Channel Information for Full Data Channels
@@ -284,7 +301,7 @@ namespace OpenSEE
         /// <summary>
         /// Formats a Chart Label consistent of Name, Phase and Type
         /// </summary>
-        /// <param name="channel">The Channel from which the Label is genertated.</param>
+        /// <param name="channel">The Channel from which the Label is generated.</param>
         /// <param name="type">The type of the signal (RMS/Pow...)</param>
         /// <returns>Formated Chart Label</returns>
         public static string GetChartLabel(openXDA.Model.Channel channel, string type = null)
@@ -305,6 +322,33 @@ namespace OpenSEE
             return null;
         }
 
+        /// <summary>
+        /// Down samples data if necessary to run in low Resource Systems 
+        /// </summary>
+        /// <param name="dict">The object that will be returned to the Client</param>
+        public static void DownSample(JsonReturn dict)
+        {
+            if (DownSampleRate == -1)
+                return;
+
+            int i = 0;
+            double dT = 0;
+            double cycles = 0;
+            int step = 0;
+            for (i=0; i < dict.Data.Count; i++)
+            {
+                dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
+                cycles = dT * Fbase/1000.0D;
+                if (cycles* DownSampleRate > dict.Data[i].DataPoints.Count)
+                    continue;
+
+                step = (int)Math.Floor((dict.Data[i].DataPoints.Count-1) / (cycles * DownSampleRate));
+                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*DownSampleRate)).Select(j => dict.Data[i].DataPoints[(j * step)]).ToList();
+            }
+            
+
+        }
+            
         #endregion
 
         #region [ Shared Functions ]

@@ -508,7 +508,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
-
+                    DownSample(returnDict);
                     return returnDict;
                 }
 
@@ -619,7 +619,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
-
+                    DownSample(returnDict);
                     return returnDict;
 
 
@@ -814,7 +814,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
-
+                    DownSample(returnDict);
                     return returnDict;
 
 
@@ -975,7 +975,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
-
+                    DownSample(returnDict);
                     return returnDict;
                 }
 
@@ -1275,6 +1275,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
+                    DownSample(returnDict);
 
                     return returnDict;
 
@@ -1362,6 +1363,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
+                    DownSample(returnDict);
 
                     return returnDict;
                 }
