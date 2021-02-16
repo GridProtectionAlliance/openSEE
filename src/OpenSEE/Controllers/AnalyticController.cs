@@ -2702,7 +2702,7 @@ namespace OpenSEE
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Mag",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
@@ -2715,7 +2715,7 @@ namespace OpenSEE
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Ang",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
