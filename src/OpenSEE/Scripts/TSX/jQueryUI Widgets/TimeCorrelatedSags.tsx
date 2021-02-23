@@ -22,7 +22,6 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import OpenSEEService from './../../TS/Services/OpenSEE';
 import { outerDiv, handle, closeButton } from './Common';
 
 
@@ -56,7 +55,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
         handle.done((d) => {
             setTblData(d.map(row =>
                 <tr style={{ display: 'table', tableLayout: 'fixed', background: (row.EventID == props.eventId? 'lightyellow' : 'default') }} key={row.EventID}>
-                    <td style={{ width: 60 }} key={'EventID' + row.EventID}><a id="eventLink" target="_blank" href={'./OpenSEE?eventid=' + row.EventID}><div style={{ width: '100%', height: '100%' }}>{row.EventID}</div></a></td>
+                    <td style={{ width: 60 }} key={'EventID' + row.EventID}><a id="eventLink" target="_blank" href={'./?eventid=' + row.EventID}><div style={{ width: '100%', height: '100%' }}>{row.EventID}</div></a></td>
                     <td style={{ width: 80 }} key={'EventType' + row.EventID}>{row.EventType}</td>
                     <td style={{ width: 80 }} key={'SagMagnitude' + row.EventID}>{row.SagMagnitudePercent}%</td>
                     <td style={{ width: 150 }} key={'SagDuration' + row.EventID}>{row.SagDurationMilliseconds} ms ({row.SagDurationCycles} cycles)</td>
@@ -70,7 +69,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
     }
 
     return (
-        <div id="correlatedsags" className={`ui-widget-content`} style={outerDiv}>>
+        <div id="correlatedsags" className={`ui-widget-content`} style={outerDiv}>
             <div id="correlatedsagshandle" className={handle}></div>
             <div id="correlatedsagscontent">
                 <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
