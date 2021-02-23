@@ -28,6 +28,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectVPhases, selectIPhases } from '../store/dataSlice';
 import { selectColor } from '../store/settingSlice';
 import { uniq } from 'lodash';
+import { OpenSee } from '../global';
 
 interface Iprops {
     closeCallback: () => void,
@@ -67,8 +68,8 @@ const PolarChartWidget = (props: Iprops) => {
 
         const factor = (vec.Unit.short == 'pu' ? (1.0/vec.BaseValue) : vec.Unit.factor);
         return (<>
-            <td key={"mag-" + index}>{(vec.Magnitude * factor).toFixed(2)} ({vec.Unit.short})</td>
-            <td key={"phase-" + index}>{(vec.Angle * vec.PhaseUnit.factor).toFixed(2)} ({vec.PhaseUnit.short})</td>
+            <td key={"mag-" + index}>{(vec.Magnitude * factor).toFixed(2)}</td>
+            <td key={"phase-" + index}>{(vec.Angle * vec.PhaseUnit.factor).toFixed(2)}</td>
         </>)
     }
 
@@ -87,11 +88,18 @@ const PolarChartWidget = (props: Iprops) => {
     let Ic = IVector.filter(item => item.Phase == 'CN');
     let In = IVector.filter(item => item.Phase == 'NG');
     let Ires = IVector.filter(item => item.Phase == 'RES');
-   
+
+    let MagUnits = uniq([...VVector.map((d: OpenSee.IVector) => d.Unit.short), ...IVector.map((d: OpenSee.IVector) => d.Unit.short)]).map((s: string) => {
+        return "[" + s +  "]";
+    }).join("  ");
+    let PhaseUnits = uniq([...VVector.map((d: OpenSee.IVector) => d.PhaseUnit)]).map((unit: OpenSee.iUnitOptions) => {
+        return "[" + unit.short + "]";
+    }).join("  ");
+
     return (
-        <div id="phasor" className="ui-widget-content" style={outerDiv}>
+        <div id="phasor" className="ui-widget-content" style={{ ...outerDiv, maxWidth: '720px' }}>
             <div id="phasorhandle" className={handle}></div>
-            <div id="phasorchart" style={{ width: '520px', height: '300px', zIndex: 1001, overflowX: 'hidden' }}>
+            <div id="phasorchart" style={{ width: '720px', height: '300px', zIndex: 1001}}>
                 <svg width="300" height="300">
                     <circle cx="150" cy="150" r={60} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
                     <circle cx="150" cy="150" r={130} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
@@ -100,13 +108,13 @@ const PolarChartWidget = (props: Iprops) => {
                     {props.isOpen ? VVector.map((v,i) => <path key={i} d={drawVectorSVG(v, scaleV)} style={{ stroke: colors[v.Color], strokeWidth: 3 }} />) : null}
                     {props.isOpen ? IVector.map((v, i) => <path key={i} d={drawVectorSVG(v, scaleI)} style={{ stroke: colors[v.Color], strokeWidth: 3 }} />) : null}
                 </svg>
-                <div style={{ overflowY: 'scroll', maxWidth: 200, maxHeight: 300, float: 'right' }}>
+                <div style={{ overflowY: 'scroll', maxWidth: 250, maxHeight: 300, float: 'right', paddingRight: 5 }}>
                     <table className="table" style={{ height: 300, float: 'right' }}>
                         <thead>
                             {props.isOpen ? 
                             <>
-                                <tr> <th></th> {AssetList.map((item, index) => <th colSpan={2} key={index}><span>{item}</span> </th>)} </tr>
-                                <tr> <th></th> {AssetList.map((item, index) => <><th key={"header-Mag-" + index}>Mag</th><th key={"header-Ang-" + index}>Ang</th></>)} </tr>
+                                    <tr> <th></th> {AssetList.map((item, index) => <th colSpan={2} key={index}><span>{item}</span> </th>)} </tr>
+                                    <tr> <th></th> {AssetList.map((item, index) => <><th key={"header-Mag-" + index}>Mag {MagUnits}</th><th key={"header-Ang-" + index}>Ang {PhaseUnits}</th></>)} </tr>
                             </>
                             : null}
                         </thead>
