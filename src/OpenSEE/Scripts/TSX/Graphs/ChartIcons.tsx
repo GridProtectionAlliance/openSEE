@@ -60,3 +60,15 @@ export const NoDataIcon = (props: {}) => {
 		</div>
 	</div>
 }
+
+export const Zoom = '🔍';
+export const PhasorClock = '🕙';
+export const Tooltip = '📏';
+export const Settings = '⚙';
+export const Pan = '☩'
+export const FFT = '📊'
+
+export const WarningSymbol = '⚠';
+export const Square = '⇄⇅';
+export const TimeRect = '⇅';
+export const ValueRect = '⇄';

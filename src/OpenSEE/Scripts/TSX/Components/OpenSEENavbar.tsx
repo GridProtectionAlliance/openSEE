@@ -40,6 +40,7 @@ import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, 
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import FFTTable from '../jQueryUI Widgets/FFTTable';
+import { FFT, Pan, PhasorClock, Settings, Square, TimeRect, Tooltip, ValueRect, Zoom } from '../Graphs/ChartIcons';
 
 
 declare var homePath: string;
@@ -252,28 +253,28 @@ const OpenSeeNavBar = (props: IProps) => {
 
                     </li>
                     <li className="nav-item" style={{ width: '84px' }}>
-                        <button type="button" className="btn btn-primary" title="ToolTip" style={{ borderRadius: "0.25rem" }} onClick={() =>setShowToolTip(!showToolTip)}>
-                              < i className="fa fa-mouse-pointer" ></i> 
-                            </button>
+                        <button type="button" className="btn btn-primary" title="ToolTip" style={{ borderRadius: "0.25rem" }} onClick={() => setShowToolTip(!showToolTip)}>
+                            <i style={{ fontStyle: "normal" }}>{Tooltip}</i> 
+                        </button>
                     </li>
                     <li className="nav-item" style={{ width: '84px' }}>
                         <button type="button" className="btn btn-primary" title="Polar Chart" style={{ borderRadius: "0.25rem" }} onClick={() => setShowPolar(!showPolar)}>
-                            < i className="fa fa-arrows-alt" ></i>
+                            < i style={{ fontStyle: "normal" }} >{PhasorClock}</i>
                         </button>
                     </li>
                     <li className="nav-item" style={{ width: (analytic == 'FFT' ? '168px' : '123px') }}>
                         <div className="btn-group" role="group">
                             <button type="button" className={"btn btn-primary " + (mouseMode == "zoom" ? "active" : "")} onClick={() => dispatch(SetMouseMode("zoom"))}
                                 data-toggle="tooltip" data-placement="bottom" title="Zoom">
-                                <i className="fa fa-search" ></i>
+                                <i style={{fontStyle: "normal"}}>{Zoom}</i>
                             </button>
                             <button type="button" className={"btn btn-primary " + (mouseMode == "pan" ? "active" : "")} onClick={() => dispatch(SetMouseMode("pan"))}
                                 data-toggle="tooltip" data-placement="bottom" title="Pan">
-                                <i className="fa fa-arrows" ></i>
+                                <i style={{ fontStyle: "normal" }} >{Pan}</i>
                             </button>
                             {analytic == 'FFT'? <button type="button" className={"btn btn-primary " + (mouseMode == "fftMove" ? "active" : "")} onClick={() => dispatch(SetMouseMode("fftMove"))}
                                 data-toggle="tooltip" data-placement="bottom" title="FFT">
-                                <i className="fa fa-bar-chart" ></i>
+                                <i style={{ fontStyle: "normal" }}>{FFT}</i>
                             </button> : null}
                         </div>
                     </li>
@@ -281,19 +282,19 @@ const OpenSeeNavBar = (props: IProps) => {
                     <li className="nav-item" style={{ width: '84px' }}>
                         <div className="btn-group dropright">
                             <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
-                                {zoomMode == "x" ? < i className="fa fa-arrows-h" ></i> : null}
-                                {zoomMode == "y" ? < i className="fa fa-arrows-v" ></i> : null}
-                                {zoomMode == "xy" ? < i className="fa fa-arrows" ></i> : null}
+                                {zoomMode == "x" ? <i style={{ fontStyle: "normal" }}>{TimeRect}</i> : null}
+                                {zoomMode == "y" ? <i style={{ fontStyle: "normal" }}>{ValueRect}</i> : null}
+                                {zoomMode == "xy" ? <i style={{ fontStyle: "normal" }}>{Square}</i> : null}
                             </button>
                             <div className="dropdown-menu">
                                 <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))}>
-                                    <i className="fa fa-arrows-h" ></i> Time
+                                    <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
                                     </a>
                                 <a key={"option-y"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('y'))}>
-                                    <i className="fa fa-arrows-v" ></i> Value
+                                    <i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value
                                     </a>
                                 <a key={"option-xy"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('xy'))}>
-                                    <i className="fa fa-arrows" ></i> Rectangle
+                                    <i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle
                                     </a>
                             </div>
                         </div>
@@ -303,7 +304,7 @@ const OpenSeeNavBar = (props: IProps) => {
                     </li>
                     <li className="nav-item" style={{ width: '84px' }}>
                         <button className="btn btn-primary" onClick={() => setShowSettings(!showSettings)}>
-                            <i className="fa fa-cog" ></i>
+                            <i style={{ fontStyle: "normal" }}>{Settings}</i>
                         </button>
                     </li>
                     {props.Lookup != undefined ?
