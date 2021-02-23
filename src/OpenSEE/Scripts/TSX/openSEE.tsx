@@ -253,7 +253,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                         <tr><td>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
                                         <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
                                         <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
-                                        <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open(homePath + "FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
+                                        <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
                                         <tr><td>Event Date:</td><td>{this.state.eventData.EventDate}</td></tr>
                                         {(this.state.eventData.StartTime != undefined ? <tr><td>Start Time:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
                                         {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
