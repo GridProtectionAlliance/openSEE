@@ -67,6 +67,7 @@ const Legend = (props: iProps) => {
     const [horizontalHeader, setHorizontalHeader] = React.useState<Array<string>>([]);
     const [grid, setGrid] = React.useState<Map<string, ILegendGrid[]>>(new Map<string, ILegendGrid[]>());
 
+    const [wScroll, setWScroll] = React.useState<number>(0);
 
     React.useEffect(() => {
         update();
@@ -76,6 +77,7 @@ const Legend = (props: iProps) => {
         dataUpdate();
     }, [data])
 
+    React.useEffect(() => { setWScroll(measureScrollbarWidth()); }, [])
     function dataUpdate() {
         let categories: Array<ICategory> = [];
         let grid: Array<ILegendGrid> = [];
@@ -322,10 +324,10 @@ const Legend = (props: iProps) => {
         dispatch(EnableTrace({ key: { EventId: props.eventId, DataType: props.type }, trace: updates, enabled: !isAny }))
 
     }
-
+    const isScroll = (props.height - 97) < (verticalHeader.length*(2+hrow));
     return ( 
-        <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px",  overflowY: "hidden" }} >
-            <div className="legend" style={{  width: "100%",  borderStyle: "solid", borderWidth: "2px", overflowY: "hidden" }}>
+        <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px", overflowY: "hidden" }} >
+            <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
                 <div className="btn-group" style={{ width: '100%' }}>
 
                     {(categories.length > 1 ?
@@ -343,16 +345,18 @@ const Legend = (props: iProps) => {
                     </div>
                 </div>
 
-                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2" }}>
+                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: (isScroll ? wScroll : 0) }}>
                     <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }}></div>
                     {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}/>)}
                 </div>
+                <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101 }}>
                 {(verticalHeader.length > 1 ?
                     <div style={{ width: ((200 - 4) / (horizontalHeader.length + 2)), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
                         {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
                     </div> : null)}
                 <div style={{ width: (verticalHeader.length > 1 ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
                     {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.enabled).map(item => item.label)} key={index} label={value[0]} data={grid.get(value[0] + value[1]).sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
+                    </div>
                 </div>
         </div>
         </div>
@@ -444,6 +448,24 @@ function convertHex(hex: string, opacity: number) {
     return result;
 }
 
+function measureScrollbarWidth(): number {
+    // Add temporary box to wrapper
+    let scrollbox = document.createElement('div');
+
+    // Make box scrollable
+    scrollbox.style.overflow = 'scroll';
+
+    // Append box to document
+    document.body.appendChild(scrollbox);
+
+    // Measure inner width of box
+    let scrollBarWidth = scrollbox.offsetWidth - scrollbox.clientWidth;
+
+    // Remove box
+    document.body.removeChild(scrollbox);
+
+    return scrollBarWidth;
+}
 
 
 export default Legend
