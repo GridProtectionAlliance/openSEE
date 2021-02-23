@@ -48,7 +48,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap4-datetimepicker.css" />
+    <Content Include="Content\FaultSpecifics.css" />
     <Content Include="Data\OpenSee.sql" />
+    <Content Include="FaultSpecifics.aspx" />
     <Content Include="Global.asax" />
     <Content Include="CSVDownload.ashx" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
@@ -80,6 +82,10 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="CSVDownload.ashx.cs">
       <DependentUpon>CSVDownload.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="FaultSpecifics.aspx.cs">
+      <DependentUpon>FaultSpecifics.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
