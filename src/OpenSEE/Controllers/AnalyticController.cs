@@ -1615,6 +1615,7 @@ namespace OpenSEE
 
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
+                    DownSample(returnDict);
 
                     return returnDict;
 
@@ -1646,7 +1647,6 @@ namespace OpenSEE
             dataLookup.AddRange(iAN.Select(item => FilteredPassSignal(LPF, item)));
             dataLookup.AddRange(iBN.Select(item => FilteredPassSignal(LPF, item)));
             dataLookup.AddRange(iCN.Select(item => FilteredPassSignal(LPF, item)));
-            DownSample(returnDict);
 
             return dataLookup;
         }
