@@ -70,5 +70,5 @@ export const FFT = '📊'
 
 export const WarningSymbol = '⚠';
 export const Square = '⇄⇅';
-export const TimeRect = '⇅';
-export const ValueRect = '⇄';
+export const ValueRect = '⇅';
+export const TimeRect = '⇄';
