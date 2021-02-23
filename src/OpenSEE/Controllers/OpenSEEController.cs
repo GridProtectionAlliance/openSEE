@@ -189,7 +189,8 @@ namespace OpenSEE
                     LegendVGroup = "",
                     DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     DataMarker = new List<double[]>(),
-                    BaseValue =  GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV)
+                    BaseValue =  GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV),
+                    LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                 } :
                  new D3Series()
                  {
