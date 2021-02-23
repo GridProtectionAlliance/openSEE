@@ -654,14 +654,14 @@ const LineChart = (props: iProps) => {
     
     return (
         <div>
-            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} />
+            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} hasTrace={enabledLine.some(i=> i)} />
             {loading == 'Loading' || lineData.length == 0 ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
 
 
-const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number, hasData: boolean }) => {
+const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number, hasData: boolean, hasTrace: boolean }) => {
     const showSVG = props.loading != 'Loading' && props.hasData;
 
     return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
@@ -669,6 +669,8 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
         {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
             {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height} left={props.hover} />}
+            {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
+                <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
         </svg>
     </div>)
 })
