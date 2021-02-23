@@ -656,6 +656,7 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
             if (isNaN(dataIndex))
                 return;
             result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
+                dataIndex = getIndex(hover[0],d.DataPoints);
                 return {
                     Color: d.Color,
                     Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
@@ -683,6 +684,7 @@ export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, 
             if (isNaN(dataIndex))
                 return;
             result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
+                dataIndex = getIndex(hover[0], d.DataPoints);
                 return {
                     Color: d.Color,
                     Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
@@ -712,7 +714,11 @@ export const selectVPhases = createSelector(selectUnit, selectEventID, selectHov
         if (data[index].length == 0)
             return []
 
-        let pointIndex = getIndex(hover[0], data[index][0].DataPoints);
+
+        if (data[index].find(item => item.LegendHorizontal == 'Ph') == undefined)
+            return [];
+
+        let pointIndex = getIndex(hover[0], data[index].find(item => item.LegendHorizontal == 'Ph').DataPoints);
         if (isNaN(pointIndex))
             return [];
 
@@ -762,7 +768,10 @@ export const selectIPhases = createSelector(selectUnit, selectEventID, selectHov
         if (data[index].length == 0)
             return []
 
-        let pointIndex = getIndex(hover[0], data[index][0].DataPoints);
+        if (data[index].find(item => item.LegendHorizontal == 'Ph') == undefined)
+            return [];
+
+        let pointIndex = getIndex(hover[0], data[index].find(item => item.LegendHorizontal == 'Ph').DataPoints);
         if (isNaN(pointIndex))
             return [];
 
