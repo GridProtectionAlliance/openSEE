@@ -229,7 +229,6 @@ const LineChart = (props: iProps) => {
 
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
-        console.log("updating data based on: " + lineData.map(item => item.DataPoints.length).join(","))
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
         let lineGen = d3.line()
