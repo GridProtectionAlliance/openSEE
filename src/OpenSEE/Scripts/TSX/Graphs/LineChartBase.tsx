@@ -33,6 +33,7 @@ import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../st
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
+import { GetDisplayLabel } from './Utilities';
 
 
 
@@ -603,10 +604,9 @@ const LineChart = (props: iProps) => {
         }
 
         container.select(".xAxisLabel").text(props.timeLabel + " (" + GetTLabel() + ")")
-        container.select(".yAxisLabel").text(GetYLabel())
+        container.select(".yAxisLabel").text(GetDisplayLabel(props.type) + ' ' + GetYLabel())
 
     }
-
 
     //This Function needs to be called whenever (a) Color Setting changes occur
     function updateColors() {

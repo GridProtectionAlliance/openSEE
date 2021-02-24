@@ -29,6 +29,7 @@ import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
 import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
+import { GetDisplayLabel } from '../Graphs/Utilities';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 
@@ -234,38 +235,6 @@ const PlotCard = (props: ICardProps) => {
     let colorSettings: OpenSee.Color[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
 
-    function GetDisplayName() {
-        switch (props.DataType) {
-            case ('FirstDerivative'):
-                return "First Derivative"
-            case ('HighPassFilter'):
-                return "High Pass Filter"
-            case ('LowPassFilter'):
-                return "Low Pass Filter"
-            case ('ClippedWaveforms'):
-                return "Clipped Waveforms"
-            case ('OverlappingWave'):
-                return "Overlapping Waveform"
-            case ('MissingVoltage'):
-                return "Missing Voltage"
-            case ('Rectifier'):
-                return 'Rectifier Output';
-            case ('RapidVoltage'):
-                return "Rapid Voltage Change"
-            case ('RemoveCurrent'):
-                return "Remove Current"
-            case ('Harmonic'):
-                return "Specified Harmonic"
-            case ('SymetricComp'):
-                return "Symetrical Components"
-            case ('FaultDistance'):
-                return "Faulkt Distance"
-            case ('Restrike'):
-                return "Breaker Restrike"
-            default:
-                return (props.DataType as string)
-        }
-    }
 
     function GetColorName(c: OpenSee.Color) {
         return c as string;
@@ -287,7 +256,7 @@ const PlotCard = (props: ICardProps) => {
         <div className="card-header" id={"header-" + props.DataType}>
             <h2 className="mb-0">
                 <button className="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target={"#collaps-" + props.DataType} aria-expanded="true" aria-controls={"#collaps-" + props.DataType}>
-                    {GetDisplayName()} Settings
+                    {GetDisplayLabel(props.DataType)} Settings
                     </button>
             </h2>
         </div>
