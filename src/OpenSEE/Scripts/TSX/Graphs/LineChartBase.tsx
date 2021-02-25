@@ -34,6 +34,7 @@ import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoadin
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
+import { current } from '@reduxjs/toolkit';
 
 
 
@@ -109,7 +110,8 @@ const LineChart = (props: iProps) => {
     const hover = useSelector(selectHover);
     const options = useSelector(selectAnalyticOptionInstance);
     const fftCycles = useSelector(selectCycles);
-    const [oldFFTWindow, setOldFFTWindow] = React.useState<[number,number]>([0, 0]);
+    const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
+    const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
 
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
 
@@ -197,6 +199,14 @@ const LineChart = (props: iProps) => {
             dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
             dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
         }
+        else if (!mouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
+            const deltaT = pointMouse[0] - oldFFTWindow[0];
+            const deltaData = oldFFTWindow[1] - oldFFTWindow[0];
+            let Tstart = (hover[0] - deltaT);
+            Tstart = (Tstart < xScaleRef.current.domain()[0] ? xScaleRef.current.domain()[0] : Tstart)
+            Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
+            dispatch(SetFFTWindow({ startTime: Tstart, cycle: fftCycles }));
+        }
     }, [mouseDown])
 
     React.useEffect(() => {
@@ -205,7 +215,12 @@ const LineChart = (props: iProps) => {
 
     React.useEffect(() => {
         updateFFTWindow()
-    }, [fftWindow, showFFT])
+    }, [currentFFTWindow, showFFT])
+
+    React.useEffect(() => {
+        if (xScaleRef.current != null)
+            setCurrentFFTWindow([(xScaleRef.current as any)(fftWindow[0]), (xScaleRef.current as any)(fftWindow[1])]);
+    }, [fftWindow])
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
@@ -452,7 +467,9 @@ const LineChart = (props: iProps) => {
             })
 
         updateLabels();
-        updateFFTWindow();
+
+        if (xScaleRef.current != null)
+            setCurrentFFTWindow([(xScaleRef.current as any)(fftWindow[0]), (xScaleRef.current as any)(fftWindow[1])]);
     }
 
     function MouseMove(evt) {
@@ -532,16 +549,9 @@ const LineChart = (props: iProps) => {
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
 
-        deltaT = pointMouse[0] - oldFFTWindow[0];
-        deltaData = oldFFTWindow[1] - oldFFTWindow[0];
-
-        if (mouseMode == 'fftMove' && mouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
-            let Tstart = (hover[0] - deltaT);
-            Tstart = (Tstart < xScaleRef.current.domain()[0]? xScaleRef.current.domain()[0] : Tstart)
-            Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
-
-            dispatch(SetFFTWindow({ startTime: Tstart, cycle: fftCycles }));
-        }
+        if (mouseMode == 'fftMove' && mouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) 
+            setCurrentFFTWindow([(xScaleRef.current as any)(oldFFTWindow[0] + deltaT), (xScaleRef.current as any)(oldFFTWindow[1] + deltaT)])
+        
     }
 
     function updateFFTWindow() {
@@ -553,8 +563,8 @@ const LineChart = (props: iProps) => {
             return;
 
         container.select(".fftWindow")
-            .attr("x", xScaleRef.current(fftWindow[0])).attr("width", xScaleRef.current(fftWindow[1]) - xScaleRef.current(fftWindow[0]))
-            .style("opacity", (showFFT? 0.5: 0))
+            .attr("x", currentFFTWindow[0]).attr("width", currentFFTWindow[1] - currentFFTWindow[0])
+            .style("opacity", (showFFT ? 0.5 : 0)).style('cursor', (showFFT ? 'move' : 'default'))
     }
 
     function MouseOut(evt) {
@@ -567,6 +577,7 @@ const LineChart = (props: iProps) => {
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
+
     //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limitw change (due to auto Units)
     function updateLabels() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -620,8 +631,6 @@ const LineChart = (props: iProps) => {
 
     }
 
-    // This determines the active Units if "auto" is used
-   
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
