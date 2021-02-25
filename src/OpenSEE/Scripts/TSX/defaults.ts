@@ -216,14 +216,14 @@ export const defaultSettings = {
             current: 1,
             options: [
                 { label: "Percent", short: "%", factor: 100 },
-                { label: "Ratio", short: "Unbalance", factor: 1 }
+                { label: "Per Unit", short: "p.u.", factor: 1 }
             ]
         },
         THD: {
             current: 1,
             options: [
                 { label: "Percent", short: "%", factor: 1 },
-                { label: "Ratio", short: "THD", factor: 0.01 }
+                { label: "Per Unit", short: "p.u.", factor: 0.01 }
             ]
         },
 
