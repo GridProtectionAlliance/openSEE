@@ -30,6 +30,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
 import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
 import { GetDisplayLabel } from '../Graphs/Utilities';
+import { defaultSettings } from '../defaults';
 
 interface Iprops { closeCallback: () => void, isOpen: boolean }
 
@@ -192,7 +193,7 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
                 <button className="btn btn-primary" onClick={() => setDisplayColorPicker(!displayColorPicker)} style={{ backgroundColor: props.color }}>{props.label}</button>
                 {displayColorPicker ? <div style={popover}>
                     <div style={{ position: 'fixed', transform: `translate(0px,-${props.scrollOffset}px)` }}>
-                        <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} />
+                        <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} colors={defaultSettings.ColorSelection} />
                     </div>
                     {/*<div style={cover} onClick={() => setDisplayColorPicker(false)} />*/}
                 </div> : null}
