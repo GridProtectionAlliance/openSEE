@@ -1477,7 +1477,7 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
         return data.map(item => (item.LegendVertical == 'Pos'))
     
     if (type == 'Unbalance') 
-        return data.map(item => (item.LegendVertical == 'S0/S1'))
+        return data.map(item => (item.LegendVertical == 'S1/S2'))
     
     if (type == 'FFT') 
         return data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
