@@ -254,8 +254,8 @@ const LineChart = (props: iProps) => {
 
         if (xScaleRef.current != undefined && yScaleRef.current != undefined)
             lineGen = d3.line()
-                .x(function (d) { return xScaleRef.current(d[0]) })
-                .y(function (d) { return yScaleRef.current(d[1]) })
+                .x(function (d) { return xScaleRef.current(d[0])})
+                .y(function (d) { return yScaleRef.current(d[1])})
                 .defined(function (d) {
                     let tx = !isNaN(parseFloat(xScaleRef.current(d[0])));
                     let ty = !isNaN(parseFloat(yScaleRef.current(d[1])));
@@ -283,30 +283,31 @@ const LineChart = (props: iProps) => {
 
         let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
             .append("g").classed("root", true)
-                .attr("transform", "translate(40,10)");
+                //.attr("transform", "translate(40,10)");
+        // Everything should start at 40, 20 except the div for overlay....
 
         // Now Create Axis
         yScaleRef.current = d3.scaleLinear()
             .domain(yLimits)
-            .range([props.height - 60, 0]);
+            .range([props.height - 40, 20]);
 
         xScaleRef.current = d3.scaleLinear()
             .domain([startTime, endTime])
-            .range([20, props.width - 280]);
+            .range([60, props.width - 240]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
+        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 280) / 2) + " ," + (props.height - 20) + ")")
+            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel);
 
         svg.append("text").classed("yAxisLabel", true)
             .attr("transform", "rotate(-90)")
-            .attr("y", -30)
-            .attr("x", - (props.height / 2 - 30))
+            .attr("y", 2 )
+            .attr("x", - (props.height / 2 - 20))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text("Units Go here");
@@ -316,40 +317,41 @@ const LineChart = (props: iProps) => {
 
         //Add Clip Path
         svg.append("defs").append("svg:clipPath")
-            .attr("id", "clip-" + props.type + "-" + props.eventId)
+            .attr("id", "clipData-" + props.type + "-" + props.eventId)
             .append("svg:rect").classed("clip",true)
-            .attr("width", 'calc(100% - 60px)')
-            .attr("height", 'calc(100% - 60px)')
-            .attr("x", 20)
-            .attr("y", 0);
+            .attr("width", props.width - 300)
+            .attr("height", props.height - 60)
+            .attr("x", 60)
+            .attr("y", 20);
 
 
         //Add Window to indicate Zooming
 
         svg.append("rect").classed("zoomWindow",true)
             .attr("stroke", "#000")
-            .attr("x", 10).attr("width", 0)
-            .attr("y", 0).attr("height", props.height - 60)
+            .attr("x", 60).attr("width", 0)
+            .attr("y", 20).attr("height", props.height - 60)
             .attr("fill", "black")
             .style("opacity", 0);
 
         // Window Indicating fft 
         if (props.type == 'Voltage' || props.type == 'Current')
             svg.append("rect").classed("fftWindow", true)
+                .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")")
                 .attr("stroke", "#000")
-                .attr("x", 10).attr("width", 0)
-                .attr("y", 0).attr("height", props.height - 60)
+                .attr("x", 60).attr("width", 0)
+                .attr("y", 20).attr("height", props.height - 60)
                 .attr("fill", "black")
                 .style("opacity", 0);
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
-            .attr("clip-path", "url(#clip-" + props.type + "-" + props.eventId + ")");
+            .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")");
 
-        //Event overlay
+        //Event overlay - needs to be treated seperately
 
-        svg.append("svg:rect").classed("Overlay",true)
-            .attr("width", 'calc(100% - 60px)')
+        svg.append("svg:rect").classed("Overlay", true)
+            .attr("width", props.width - 240)
             .attr("height", '100%')
             .attr("x", 20)
             .attr("y", 0)
@@ -476,7 +478,18 @@ const LineChart = (props: iProps) => {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
+        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+
+        if (x0 < 60)
+            x0 = 60;
+        if (x0 > (props.width - 240))
+            x0 = props.width - 240;
+
+        if (y0 < 20)
+            y0 = 20;
+        if (y0 > (props.height - 40))
+            y0 = props.height - 40;
+
         let t0 = (xScaleRef.current as any).invert(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
         dispatch(SetHover({ t: t0, snap: snapToPoint, y: d0 }));
@@ -496,7 +509,8 @@ const LineChart = (props: iProps) => {
         if (props.type == 'OverlappingWave')
             return;
 
-        dispatch(SelectPoint([t0, d0]));
+        if (x0 > 60 && x0 < props.width - 240)
+            dispatch(SelectPoint([t0, d0]));
         setOldFFTWindow(() => { return fftWindow });
 
     }
@@ -523,7 +537,7 @@ const LineChart = (props: iProps) => {
                     .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])))
                     .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
                     .attr("height", props.height - 60)
-                    .attr("y", 0)
+                    .attr("y", 20)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
                     .attr("x", (xScaleRef.current as any)(startTime))
@@ -648,16 +662,18 @@ const LineChart = (props: iProps) => {
     function updateSize() {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        container.select(".xAxis").attr("transform", "translate(0," + (props.height - 60) + ")");
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
-        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
-        xScaleRef.current.range([20, props.width - 280]);
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
+
+        xScaleRef.current.range([60, props.width - 240]);
         yScaleRef.current.range([props.height - 60, 0]);
 
-        container.select(".clip").attr("height", props.height - 60)
-        //container.select(".toolTip").attr("y2", props.height - 60)
-        container.select(".fftwindow").attr("y", 0).attr("height", props.height - 60);
+        container.select(".clip").attr("width", props.width - 300)
+            .attr("height", props.height - 60)
+      
+        container.select(".fftwindow").attr("height", props.height - 60);
+        container.select(".Overlay").attr("width", props.width - 240)
         updateLimits();
     }
     
@@ -677,7 +693,7 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
         {props.loading == 'Loading' ? <LoadingIcon /> : null}
         {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
-            {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height} left={props.hover} />}
+            {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height - 40} left={props.hover} />}
             {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
                 <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
         </svg>
@@ -687,7 +703,7 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
 const ToolTip = (props: { height: number, left: number }) => {
 
     return <g>
-        <polyline points={`${props.left},0 ${props.left},${props.height - 60}`} style={{ stroke: "#000", opacity: 0.5 }} transform={'translate(40,10)'}/>
+        <polyline points={`${props.left},20 ${props.left},${props.height}`} style={{ stroke: "#000", opacity: 0.5 }} />
         </g>
 }
 
