@@ -216,7 +216,9 @@ function SaveSettings(state: OpenSee.ISettingsState) {
         let saveState = {
             Units: state.Units,
             Colors: state.Colors,
-            TimeUnit: state.TimeUnit,
+            TimeUnit: {
+                current: state.TimeUnit.current
+            },
             SnapToPoint: state.SnapToPoint,
             SinglePlot: state.SinglePlot,
             DefaultTrace: state.DefaultTrace,
@@ -237,13 +239,13 @@ function GetSettings(): OpenSee.ISettingsState {
         // overwrite options if new options are available
         let state: OpenSee.ISettingsState = JSON.parse(serializedState);
 
+        // For Unit (Time and regular) only grab current Unit
         Object.keys(defaultSettings.Units).forEach((key) => {
-            if (defaultSettings.Units[key].options.length != state.Units[key].options.length)
-                state.Units[key].options = defaultSettings.Units[key].options;
+            state.Units[key] = { ...defaultSettings.Units[key], current: (state.Units[key] != undefined ? state.Units[key].current : defaultSettings.Units[key].current) }
+
         });
 
-        if (defaultSettings.TimeUnit.options.length != state.TimeUnit.options.length)
-            state.TimeUnit.options = defaultSettings.TimeUnit.options;
+        state.TimeUnit = { ...defaultSettings.TimeUnit, current: (state.TimeUnit != undefined ? state.TimeUnit.current : defaultSettings.TimeUnit.current) }
 
         Object.keys(defaultSettings.Colors).forEach((key) => {
             if (state.Colors[key] == undefined)
