@@ -867,8 +867,8 @@ export const selectFFTData = createSelector(selectUnit, (state: OpenSee.IRootSta
 
                 result.push({
                     Color: phaseChannel.Color,
-                    Unit: baseUnit.Current.options[activeUnits['Voltage']],
-                    PhaseUnit: baseUnit.Angle.options[activeUnits['Angle']],
+                    Unit: activeUnits[magnitudeChannel.Unit],
+                    PhaseUnit: activeUnits['Angle'],
                     Phase: p,
                     Asset: a,
                     Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
