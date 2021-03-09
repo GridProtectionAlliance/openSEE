@@ -73,25 +73,26 @@ const AnalyticOptions = (props: IProps) => {
     return <div style={{ marginTop: '10px', width: '100%', height: '100%' }}>
         <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%' }}>
             <select onChange={(ev) => ChangeAnalytic(ev)} value={analytic} >
+                <option value={'FaultDistance'}> Fault Distance </option>
+                <option value={'FFT'}> FFT </option>
                 <option value={'FirstDerivative'}> First Derivative </option>
                 <option value={'ClippedWaveforms'}> Fix Clipped Waveforms </option>
                 <option value={'Frequency'}> Frequency </option>
                 <option value={'HighPassFilter'}> High Pass </option>
+                <option value={'Impedance'}> Impedance </option>
                 <option value={'LowPassFilter'}> Low Pass </option>
                 <option value={'MissingVoltage'}> Missing Voltage </option>
                 <option value={'OverlappingWave'}> Overlapping Waveform </option>
                 <option value={'Power'}> Power </option>
-                <option value={'Impedance'}> Impedance </option>
-                <option value={'Rectifier'}>Rectifier Output </option>
                 <option value={'RapidVoltage'}> Rapid Voltage Change</option>
+                <option value={'Rectifier'}>Rectifier Output </option>
                 <option value={'RemoveCurrent'}> Remove Current </option>
                 <option value={'Harmonic'}> Specified Harmonic </option>
                 <option value={'SymetricComp'}> Symmetrical Components </option>
                 <option value={'THD'}> THD</option>
                 <option value={'Unbalance'}> Unbalance </option>
-                <option value={'FaultDistance'}> Fault Distance </option>
                 {/*<option value={'Restrike'}> Breaker Restrike </option>*/}
-                <option value={'FFT'}> FFT </option>
+               
             </select>
         </form>
         {analytic == "Harmonic" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
