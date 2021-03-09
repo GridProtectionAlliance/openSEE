@@ -41,6 +41,15 @@ const Icon = styled.div`
 	margin: auto;
 `;
 
+export const SmallLoadingIcon = styled.div`
+	animation: ${spin} 1s linear infinite;
+	border: 3px solid #f3f3f3;
+	border-Top: 3px solid #555;
+	border-Radius: 50%;
+	width: 14px;
+	height: 14px;
+	margin: auto;
+`;
 export const LoadingIcon = (props: {}) => {
 	return <div style={{ width: '100%', height: '100%' }} >
 		<div style={{ width: '200px', margin: 'auto' }} >
@@ -49,6 +58,8 @@ export const LoadingIcon = (props: {}) => {
 		</div>
 	</div>
 }
+
+
 
 export const NoDataIcon = (props: {}) => {
 	return <div style={{ width: '100%', height: '100%' }} >

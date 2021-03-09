@@ -59,6 +59,7 @@ import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
+import { SmallLoadingIcon } from './Graphs/ChartIcons';
 
 
 declare var homePath: string;
@@ -211,23 +212,23 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <fieldset className="border" style={{ padding: '10px' }}>
                         <legend className="w-auto" style={{ fontSize: 'large' }}>Waveform Views:</legend>
                         <div className="form-check form-check-inline">
-                            {this.props.loadVolt ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.props.displayVolt} />}
+                            {this.props.loadVolt ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.props.displayVolt} />}
                             <label className="form-check-label">Voltage</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadCurr ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.props.displayCur} />}
+                            {this.props.loadCurr ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.props.displayCur} />}
                             <label className="form-check-label">Current</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadAnalog ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.props.displayAnalogs} />}
+                            {this.props.loadAnalog ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.props.displayAnalogs} />}
                             <label className="form-check-label">Analogs</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadDigital ? <span> <i className="fa fa-spinner"></i> </span> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.props.displayDigitals} />}
+                            {this.props.loadDigital ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.props.displayDigitals} />}
                             <label className="form-check-label">Digitals</label>
                         </div>
                         <div className="form-check form-check-inline">
-                            {this.props.loadTCE ? <span> <i className="fa fa-spinner"></i> </span> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.props.displayTCE} />}
+                            {this.props.loadTCE ? <SmallLoadingIcon /> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.props.displayTCE} />}
                             <label className="form-check-label">Trip Coil E.</label>
                         </div>
                     </fieldset>
