@@ -211,7 +211,8 @@ export namespace OpenSee {
         Magnitude: number[],
         Angle: number[],
         Asset: string,
-        PhaseUnit: iUnitOptions
+        PhaseUnit: iUnitOptions,
+        BaseValue: number,
     }
 
     interface IPointCollection {
