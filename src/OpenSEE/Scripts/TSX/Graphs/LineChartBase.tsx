@@ -70,8 +70,8 @@ const LineChart = (props: iProps) => {
 
     const selectEndTimeInstance = React.useMemo(() => (props.type == 'OverlappingWave' ? selectCycleEnd : selectEndTime), [props.type])
 
-    const SelectData = React.useMemo(() => selectData(dataKey), [props.eventId, props.type]);
-    const SelectEnabled = React.useMemo(() => selectEnabled(dataKey), [props.eventId, props.type]);
+    const MemoSelectData = React.useMemo(selectData, []);
+    const MemoSelectEnabled = React.useMemo(selectEnabled, []);
     const SelectYLimits = React.useMemo(() => selectYLimits(dataKey), [props.eventId, props.type]);
 
     const xScaleRef = React.useRef<any>();
@@ -88,8 +88,8 @@ const LineChart = (props: iProps) => {
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
     
 
-    const lineData = useSelector(SelectData);
-    const enabledLine = useSelector(SelectEnabled);
+    const lineData = useSelector(state => MemoSelectData(state, dataKey));
+    const enabledLine = useSelector(state => MemoSelectEnabled(state, dataKey));
 
     const startTime = useSelector(selectStartTimeInstance);
     const endTime = useSelector(selectEndTimeInstance);

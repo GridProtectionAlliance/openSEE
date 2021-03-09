@@ -63,6 +63,9 @@ const BarChart = (props: iProps) => {
     const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
     const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
 
+    const MemoSelectData = React.useMemo(selectData, []);
+    const MemoSelecEnable = React.useMemo(selectEnabled, []);
+
     const xScaleRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
 
@@ -73,8 +76,8 @@ const BarChart = (props: iProps) => {
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
-    const barData = useSelector(selectData(dataKey));
-    const enabledBar = useSelector(selectEnabled(dataKey));
+    const barData = useSelector((state) => MemoSelectData(state, dataKey));
+    const enabledBar = useSelector(state => MemoSelecEnable(state,dataKey));
 
     const xLimits = useSelector(selectFFTLimits);
  

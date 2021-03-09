@@ -222,7 +222,10 @@ export const UnitSelector = (props: { label: string, setter: (result: OpenSee.IU
 interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
 
 const PlotCard = (props: ICardProps) => {
-    const lineData = useSelector(selectData(props));
+
+    const SelectData = React.useMemo(selectData, []);
+    const lineData = useSelector((state) => SelectData(state, props));
+
     const colors = useSelector(selectColor);
     const units = useSelector(selectUnit);
     const timeUnit = useSelector(selectTimeUnit);

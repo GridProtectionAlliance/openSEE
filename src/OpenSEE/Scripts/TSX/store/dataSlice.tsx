@@ -553,42 +553,46 @@ export default DataReducer.reducer;
 // #endregion
 
 // #region [ Individual Selectors ]
-export const selectData = (key: OpenSee.IGraphProps) => {
-    return createSelector(
+export const selectData = () =>
+    createSelector(
         (state: OpenSee.IRootState) => state.Data.data,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
         (state: OpenSee.IRootState) => state.Settings.Tab,
-        (data, plotKeys, single, tab) => {
-            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (index == -1)
-                return null;
+        (_, type: OpenSee.IGraphProps) => type,
+        FilterData
+    );
 
-            if (single && tab == 'Compare') {
-                let d = data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId);
-                d = d.map(lst => lst.map(item => { return { ...item, LineType: ':' } }));
-                return data[index].concat(...d);
-            }
-              
-            return data[index];
-        });
+const FilterData = (data: OpenSee.iD3DataSeries[][], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab, type: OpenSee.IGraphProps) => {
+    let index = plotKeys.findIndex((item => item.DataType == type.DataType && item.EventId == type.EventId));
+    if (index == -1)
+        return null;
 
+    if (single && tab == 'Compare') {
+        let d = data.filter((item, i) => plotKeys[i].DataType == type.DataType && type.EventId != plotKeys[i].EventId);
+        d = d.map(lst => lst.map(item => { return { ...item, LineType: ':' } }));
+        return data[index].concat(...d);
+    }
+
+    return data[index];
 }
 
-export const selectEnabled = (key: OpenSee.IGraphProps) => {
-    return createSelector(
-        (state: OpenSee.IRootState) => state.Data.enabled,
-        (state: OpenSee.IRootState) => state.Data.plotKeys,
-        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (state: OpenSee.IRootState) => state.Settings.Tab,
-        (data, plotKeys, single, tab) => {
-            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single && tab == 'Compare')
-                return data[index].concat(...data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId))
-            return data[index];
-        });
+export const selectEnabled = () =>
+    createSelector(
+    (state: OpenSee.IRootState) => state.Data.enabled,
+    (state: OpenSee.IRootState) => state.Data.plotKeys,
+    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (state: OpenSee.IRootState) => state.Settings.Tab,
+    (_, key: OpenSee.IGraphProps) => key,
+    FilterEnabled
+);
 
-}
+const FilterEnabled = (data: boolean[][], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab, key: OpenSee.IGraphProps) => {
+    let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
+    if (single && tab == 'Compare')
+        return data[index].concat(...data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId))
+    return data[index];
+};
 
 export const selectYLimits = (key: OpenSee.IGraphProps) => {
     return createSelector(
@@ -836,10 +840,11 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
         return result;
 })
 
+
 // For FFT Table
-export const selectFFTData = createSelector(selectUnit, (state: OpenSee.IRootState) => selectData({ DataType: 'FFT', EventId: state.Data.eventID })(state),
+export const selectFFTData = createSelector((state: OpenSee.IRootState) => FilterData(state.Data.data, state.Data.plotKeys, state.Settings.SinglePlot, state.Settings.Tab, { DataType: 'FFT', EventId: state.Data.eventID }),
     (state: OpenSee.IRootState) => selectActiveUnit({ DataType: 'FFT', EventId: state.Data.eventID })(state),
-    (baseUnit, data, activeUnits) => {
+    (data, activeUnits) => {
         
         if (data == null)
             return [];

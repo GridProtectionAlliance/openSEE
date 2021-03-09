@@ -57,8 +57,12 @@ const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'T
 
 const Legend = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId }
-    const data = useSelector(selectData(dataKey));
-    const enabled = useSelector(selectEnabled(dataKey))
+
+    const MemoSelectData = React.useMemo(selectData, []);
+    const MemoSelectEnabled = React.useMemo(selectEnabled, []);
+
+    const data = useSelector((state) => MemoSelectData(state, dataKey));
+    const enabled = useSelector((state) => MemoSelectEnabled(state, dataKey))
     const dispatch = useDispatch();
 
     const [categories, setCategories] = React.useState<Array<ICategory>>([]);
