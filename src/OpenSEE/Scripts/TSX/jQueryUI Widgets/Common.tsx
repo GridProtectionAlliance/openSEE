@@ -26,12 +26,11 @@ import { style } from "typestyle"
 
 // styles
 export const outerDiv: React.CSSProperties = {
-    minWidth : '200px',
-    maxWidth: '520px',
     fontSize: '12px',
     marginLeft: 'auto',
     marginRight: 'auto',
     overflowY: 'hidden',
+    overflowX: 'hidden',
     padding: '0em',
     zIndex: 1000,
     boxShadow: '4px 4px 2px #888888',
@@ -41,11 +40,10 @@ export const outerDiv: React.CSSProperties = {
     left: 0,
     display: 'none',
     backgroundColor: 'white',
-    maxHeight: '600px'
 };
 
 export const handle = style({
-    width: '100 %',
+    width: '100%',
     height: '20px',
     backgroundColor: '#808080',
     cursor: 'move',
@@ -71,3 +69,34 @@ export const closeButton = style({
     }
 });
 
+interface IwindowProps {
+    show: boolean,
+    close: () => void,
+    width: number,
+    maxHeight: number,
+}
+
+export const WidgetWindow: React.FunctionComponent<IwindowProps> = (props) => {
+    const refWindow = React.useRef(null);
+    const refHandle = React.useRef(null);
+
+    React.useLayoutEffect(() => {
+        if (props.show)
+            ($(refWindow.current) as any).draggable({ scroll: false, handle: refHandle.current, containment: '#chartpanel' });
+    })
+
+    if (!props.show)
+        return null;
+
+    return (
+        < div ref={refWindow} className="ui-widget-content" style={{ ...outerDiv, width: props.width, maxHeight: props.maxHeight, display: undefined }} >
+            <div style={{ border: 'black solid 2px' }}>
+                <div ref={refHandle} className={handle}></div>
+                <div style={{ width: props.width - 6, maxHeight: props.maxHeight - 24 }}>
+                    {props.children}
+                </div>
+                <button className={closeButton} onClick={() => props.close()}>X</button>
+            </div>
+        </div>
+        )
+}

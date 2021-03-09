@@ -21,7 +21,7 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { outerDiv, handle, closeButton } from './Common';
+import { WidgetWindow } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
 
@@ -37,301 +37,64 @@ const PointWidget = (props: Iprops) => {
 
     const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
 
-    React.useEffect(() => {
-        ($("#accumulatedpoints") as any).draggable({ scroll: false, handle: '#accumulatedpointshandle', containment: '#chartpanel' });
-    }, [props])
-
-    let data: Array<JSX.Element> = (points.length > 0 && props.isOpen ? points[0].Value.map((p, i) => <tr onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
-        <td key={"timeCycles-" + i}><span>{(p[0]- startTime).toFixed(7)} sec<br />{((p[0] - startTime) * 60.0).toFixed(2)} cycles</span> </td>
-        <td key={"timeS-" + i} ><span>{i == 0 ? 'N/A' : <> {(points[0].Value[i - 1][0] - p[0]).toFixed(4)} sec<br /> {((points[0].Value[i - 1][0] - p[0]) * 60.0).toFixed(2)} cycles) </>}</span> </td>
-        {points.map(pt => <> <td><span>{(pt.Value[i][1] * pt.Unit.factor).toFixed(2)} ({pt.Unit.short})</span> </td> <td><span>{i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * pt.Unit.factor).toFixed(4)} ({pt.Unit.short})</span> </td> </>)}        
+    let data: Array<JSX.Element> = (points.length > 0 && props.isOpen ? points[0].Value.map((p, i) => <tr key={i} onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
+        <td>
+            <span>
+                {(p[0] - startTime).toFixed(7)} sec<br />{((p[0] - startTime) * 60.0).toFixed(2)} cycles
+            </span>
+        </td>
+        <td>
+            <span>
+                {i == 0 ? 'N/A' : <> {(points[0].Value[i - 1][0] - p[0]).toFixed(4)} sec<br /> {((points[0].Value[i - 1][0] - p[0]) * 60.0).toFixed(2)} cycles) </>}
+            </span>
+        </td>
+        {points.map((pt, j) => <>
+            <td key={j + '-1'}>
+                <span>
+                    {(pt.Value[i][1] * (pt.Unit.short == 'pu' || pt.Unit.short == 'pu/s' ? 1.0 / pt.BaseValue : pt.Unit.factor)).toFixed(2)} ({pt.Unit.short})
+                </span>
+            </td>
+            <td key={j + '-2'}>
+                <span>
+                    {i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * (pt.Unit.short == 'pu' || pt.Unit.short == 'pu/s' ? 1.0 / pt.BaseValue : pt.Unit.factor)).toFixed(4)} ({pt.Unit.short})
+                </span>
+            </td>
+        </>)}        
     </tr> ): [])
 
     return (
-        <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
-            <div style={{ border: 'black solid 2px' }}>
-                <div id="accumulatedpointshandle" className={handle}></div>
-                <div style={{ overflowY: 'scroll', maxHeight: 950 }}>
-                    {props.isOpen ?
-                        <table className="table table-bordered table-hover">
-                            <thead>
-                                <tr key="row-1">
-                                    {props.isOpen ?
-                                        <>
-                                            <td colSpan={2} key={"header-Time"}> </td>
-                                            {points.map(p => <td colSpan={2} key={"header-" + p.Name + "-" + p.Group}><span>{p.Group}<br />{p.Name}</span> </td>)}
-                                        </>: null}
-                                </tr>
-                                <tr key="row-2">
-                                    {props.isOpen ? <> <td key={"headerValue-Time"}><span>Value</span> </td> <td key={"headerDelta-Time"} ><span>Delta</span> </td> </> : null}
-                                    {props.isOpen ? points.map((p, i) => <> <td key={"headerValue-" + i}><span>Value</span> </td> <td key={"headerDelta-" + i} ><span>Delta</span> </td> </>) : null}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {props.isOpen ? data : null}
-                            </tbody>
-                        </table> : null}
-                </div>
-                <div style={{ margin: '5px', textAlign: 'right' }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={500}>
+            <table className="table table-bordered table-hover" style={{ overflowX: 'scroll', marginBottom: 0, width: 494, display: 'block' }}>
+                <thead>
+                    <tr>
+                        {props.isOpen ?
+                            <>
+                                <td colSpan={2} style={{ minWidth: 240, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}> </td>
+                                {points.map((p, i) => <td style={{ minWidth: 240, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} colSpan={2} key={i}><span>{p.Group}<br />{p.Name}</span> </td>)}
+                            </>: null}
+                    </tr>
+                    <tr>
+                        <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} ><span>Value</span> </td>
+                        <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} ><span>Delta</span> </td>
+                        {points.map((p, i) => <React.Fragment key={i}>
+                            <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}><span>Value</span> </td>
+                            <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}><span>Delta</span> </td>
+                        </React.Fragment>)}
+                    </tr>
+                </thead>
+                <tbody>
+                    {props.isOpen ? data : null}
+                </tbody>
+            </table>
+
+            <div style={{ margin: '5px', textAlign: 'right' }}>
                     <input className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex != -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
                     <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points.lenth - 1))} />
                     <input className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
                 </div>
-                <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
-                    props.closeCallback();
-                }}>X</button>
-            </div>
-
-        </div>
-
+        </WidgetWindow>
     );
 
 }
 
 export default PointWidget;
-
-/*
-export class Points extends React.Component<any, any>{
-    Data: Array<iD3DataRow>
-    props: {
-        data: Map<string, Array<iD3PointOfInterest>>,
-        callback: Function,
-        postedData: any,
-        activeUnits: (lbl: string) => iActiveUnits,
-    }
-
-    constructor(props) {
-        super(props);
-        this.Data = [];
-
-        this.state = {
-            selectedPoint: -1
-        };
-    }
-
-    componentDidMount() {
-        ($("#accumulatedpoints") as any).draggable({ scroll: false, handle: '#accumulatedpointshandle', containment: '#chartpanel' });
-    }
-
-
-    render() {
-
-
-        const headerRow: Array<JSX.Element> = [];
-        const headerKeys: Array<string> = [];
-
-        this.props.data.forEach((val, key) => val.forEach((item, index) => {
-            let asset = ""
-            if (key === "Voltage" || key === "Current")
-                asset = item.LegendGroup;
-            headerRow.push(Header(key, index, asset, item.ChannelName))
-            headerKeys.push(key);
-        })
-        );
-
-        let t = [];
-
-        this.props.data.forEach(item => item.forEach(series => series.Selected.forEach(pt => t.push(pt[0]))));
-        
-
-        t = t.sort();
-        t = uniq(t);
-
-        this.Data = t.map((time, i) => {
-            let val = [];
-            let deltaVal = [];
-            let pointIndex = [];
-            let seriesIndex = [];
-            let label = [];
-            let unit = [];
-            let Toffset = 0;
-            headerKeys.forEach((key) => {
-
-                if (this.props.activeUnits(key).Tstart !== undefined)
-                    Toffset = this.props.activeUnits(key).Tstart;
-
-                this.props.data.get(key).forEach((series, seriesI) => {
-                    let ptIndex = series.Selected.findIndex(pt => pt[0] === time);
-                    if (ptIndex != -1) {
-                        pointIndex.push(ptIndex);
-                        seriesIndex.push(seriesI);
-                        label.push(key);
-                        val.push(series.Selected[ptIndex][1]);
-                        deltaVal.push((ptIndex > 0 ? series.Selected[ptIndex][1] - series.Selected[ptIndex - 1][1] : NaN))
-                        unit.push(series.Unit)
-                    } else {
-                        pointIndex.push(NaN);
-                        seriesIndex.push(NaN);
-                        label.push(key);
-                        val.push(NaN);
-                        deltaVal.push(NaN)
-                        unit.push("Current")
-                    }
-                })
-            })
-
-            let row: iD3DataRow = {
-                Value: val,
-                DeltaValue: deltaVal,
-                DeltaTime: (i > 0 ? t[i] - t[i - 1] : NaN),
-                Time: time - Toffset,
-                GraphLabel: label,
-                PointIndex: pointIndex,
-                SeriesIndex: seriesIndex,
-                Unit: unit
-            }
-            return row;
-        });
-
-        const dataRows: Array<JSX.Element> = this.Data.map((row, i) => Row(row, this.props.postedData.postedSystemFrequency, (obj) => this.setState(obj), i, this.state.selectedPoint, this.props.activeUnits))
-      
-       
-        return (
-            <div id="accumulatedpoints" className="ui-widget-content" style={outerDiv}>
-                <div style={{ border: 'black solid 2px' }}>
-                    <div id="accumulatedpointshandle" className={handle}></div>
-                    <div style={{ overflowY: 'scroll', maxHeight: 950}}>
-                        <table className="table table-bordered table-hover">
-                            <thead>
-                                <tr><td colSpan={2} key="header-time"></td>{headerRow}</tr>
-                                {SubHeader(headerRow.length)}
-                            </thead>
-                            <tbody>
-                                {dataRows}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div style={{ margin: '5px', textAlign: 'right' }}>
-                        <input className="btn btn-primary" type="button" value="Remove" onClick={this.removePoint.bind(this)} />
-                        <input className="btn btn-primary" type="button" value="Pop" onClick={this.popAccumulatedPoints.bind(this)} />
-                        <input className="btn btn-primary" type="button" value="Clear" onClick={this.clearAccumulatedPoints.bind(this)} />
-                    </div>
-                    <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
-                        this.props.callback({ pointsButtonText: "Show Points" });
-                        $('#accumulatedpoints').hide();
-                    }}>X</button>
-                </div>
-
-            </div>
-
-        );
-    }
-
-    removePoint() {
-        if (this.state.selectedPoint < 0)
-            return;
-
-        const row = this.Data[this.state.selectedPoint]
-        this.props.callback((state) => {
-            const obj = cloneDeep(state.tableData);
-            row.GraphLabel.forEach((label, index) => {
-                let data = obj.get(label);
-                if (!isNaN(row.SeriesIndex[index]))
-                    data[row.SeriesIndex[index]].Selected.splice(row.PointIndex[index], 1);
-            })
-            return { tableData: obj };
-        })
-    }
-
-    popAccumulatedPoints() {
-        if (this.Data.length == 0)
-            return;
-
-        const row = this.Data[this.Data.length -1]
-        this.props.callback((state) => {
-            const obj = cloneDeep(state.tableData);
-            row.GraphLabel.forEach((label, index) => {
-                let data = obj.get(label);
-                if (!isNaN(row.SeriesIndex[index]))
-                    data[row.SeriesIndex[index]].Selected.splice(row.PointIndex[index], 1);
-            })
-            return { tableData: obj };
-        })
-    }
-
-    clearAccumulatedPoints() {
-        this.props.callback((state) => {
-            const obj = cloneDeep(state.tableData);
-            obj.forEach(lst => lst.forEach(pnt => pnt.Selected = []));
-            return { tableData: obj };
-        })
-    }
-
-}
-
-const Row = (row: iD3DataRow, systemFrequency: number, stateSetter: Function, arrayIndex: number, currentSelected: number, getUnits: (lbl: string) => iActiveUnits) => {
-    function showTime(thetime) {
-        return <span>{ thetime.toFixed(7) } sec<br/>{(thetime * Number(systemFrequency)).toFixed(2)} cycles</span>;
-    }
-
-    function showDeltaTime(deltatime) {
-        if (isNaN(deltatime))
-            return (<span>N/A</span>)
-        if (deltatime)
-            return <span>{deltatime.toFixed(7)} sec<br/>{(deltatime * Number(systemFrequency)).toFixed(2)} cycles</span>;
-    }
-    function createValue(index) {
-        let unit = getUnits(row.GraphLabel[index])[row.Unit[index]].current;
-        let val = row.Value[index]*unit.Factor
-        if (isNaN(val))
-            return (<td key={"Value-" + index}><span>N/A</span></td>)
-        return (<td key={"Value-" + index}>{val.toFixed(2) + " " + unit.Short}</td>)
-    }
-    function createDeltaValue(index) {
-        if (isNaN(row.DeltaValue[index]))
-            return (<td key={"DeltaValue-" + index} ><span>N/A</span></td>)
-        return (<td key={"DeltaValue-" + index}>{row.DeltaValue[index].toFixed(2)}</td>)
-    }
-    function createCells() {
-        let res = [];
-        row.Value.forEach((a, i) => {
-            res.push(createValue(i))
-            res.push(createDeltaValue(i))
-        })
-        return res;
-    }
-    return (
-        <tr key={arrayIndex} onClick={(e) => stateSetter({ selectedPoint: arrayIndex })} style={{ backgroundColor: (arrayIndex == currentSelected ? 'yellow' : null) }}>
-            <td key="Time">{showTime(row.Time / 1000.0)}</td>
-            <td key="DeltaTime">{showDeltaTime(row.DeltaTime / 1000.0)}</td>
-            {createCells()}
-        </tr>
-    );
-}
-
-const Header = (graphLabel: string, index: number, asset: string, channel: string) => {
-    return (
-        <td colSpan={2} key={"header-" + graphLabel + "-" +  index}><span>{asset}<br/>{channel}</span> </td>
-        )
-}
-
-
-const SubHeader = (collumns: number) => {
-    function createCell(str, i) {
-        return (<td key={str + i}>{str}</td>)
-    }
-
-    function createCells() {
-        let res = [];
-        let i;
-        res.push(createCell("Time",0))
-        res.push(createCell("Delta Time",0))
-        for (i = 0; i < collumns; i++) {
-            res.push(createCell("Value",i))
-            res.push(createCell("Delta Value",i))
-        }
-       
-        return res;
-    }
-
-
-    return (
-        <tr key="subheaders">
-            {createCells()}
-        </tr>
-        );
-
-}
-
-
-*/

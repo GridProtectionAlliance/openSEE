@@ -22,57 +22,39 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { outerDiv, handle, closeButton } from './Common';
+import { WidgetWindow } from './Common';
 import { useSelector } from 'react-redux';
 import { selectFFTData } from '../store/dataSlice';
 import { OpenSee } from '../global';
-import { selectColor } from '../store/settingSlice';
 
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
-    eventID: number,
 }
 const FFTTable = (props: Iprops) => {
     const fftPoints = useSelector(selectFFTData);
-    const colors = useSelector(selectColor);
-
-    React.useEffect(() => {
-        ($("#ffttable") as any).draggable({ scroll: false, handle: '#ffttablehandle', containment: '#chartpanel' });
-    }, [props])
-
- 
-
 
     return (
-        <div id="ffttable" className="ui-widget-content" style={outerDiv}>
-            <div style={{ border: 'black solid 2px' }}>
-                <div id="ffttablehandle" className={handle}></div>
-                <div style={{ overflowY: 'scroll', overflowX: 'scroll', maxHeight: 575 }}>
-                    {props.isOpen ?
-                        <table className="table table-bordered table-hover">
-                            <thead>
-                                <tr>
-                                    <th key="header-harmonic"></th>
-                                    {fftPoints.map((item, index) => <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span> </th>)}
-                                </tr>
-                                <tr>
-                                    <th key="header-harmonic">Harmonic</th>
-                                    {fftPoints.map((item, index) => <><th key={index + '-mag'}><span>Mag</span> </th><th key={index + '-ang'}><span>Ang</span> </th> </>)}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(fftPoints.length > 0 ? fftPoints[0].Angle.map((a, i) => Row(i, fftPoints)) : null)}
-                            </tbody>
-                        </table> : null}
-                </div>
-
-                <button className={closeButton} style={{ top: '2px', right: '2px' }} onClick={() => {
-                    $('#ffttable').hide();
-                }}>X</button>
-            </div>
-
-        </div>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={300} width={700}>
+            <table className="table table-bordered table-hover" style={{ maxHeight: '275px', marginBottom: 0, display: 'block', overflowY: 'scroll' }} >
+                <thead>
+                    <tr>
+                        <th></th>
+                        {fftPoints.map((item, index) => <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span> </th>)}
+                    </tr>
+                    <tr>
+                        <th>Harmonic</th>
+                        {fftPoints.map((item, index) => <React.Fragment key={index}>
+                            <th><span>Mag ({item.Unit.short})</span> </th>
+                            <th><span>Ang ({item.PhaseUnit.short})</span> </th>
+                        </React.Fragment>)}
+                    </tr>
+                </thead>
+                <tbody>
+                    {(fftPoints.length > 0 ? fftPoints[0].Angle.map((a, i) => Row(i, fftPoints)) : null)}
+                </tbody>
+            </table> 
+        </WidgetWindow>
     );
 }
 
@@ -82,15 +64,15 @@ const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
         let f = (data[index].PhaseUnit != undefined ? data[index].PhaseUnit.factor : 1.0);
         let val = data[index].Angle[row] * f;
         if (isNaN(val))
-            return (<td key={"ang-" + index}>N/A</td>)
-        return <td key={"ang-" + index}>{val.toFixed(2)} ({(data[index].PhaseUnit != undefined ? data[index].PhaseUnit.short : '')})</td>;
+            return (<td>N/A</td>)
+        return <td>{val.toFixed(2)}</td>;
     }
     function showMag(index) {
-        let f = (data[index].Unit != undefined ? data[index].Unit.factor : 1.0);
+        let f = (data[index].Unit.short == 'pu' || data[index].Unit.short == 'pu/s' ? 1.0 / data[index].BaseValue : data[index].Unit.factor);
         let val = data[index].Magnitude[row] * f;
         if (isNaN(val))
-            return (<td key={"mag-" + index}>N/A</td>)
-        return <td key={"mag-" + index}>{val.toFixed(2)} ({(data[index].Unit != undefined ? data[index].Unit.short : '')})</td>;
+            return (<td>N/A</td>)
+        return <td>{val.toFixed(2)}</td>;
     }
     
     function createCells() {
@@ -102,8 +84,8 @@ const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
         return res;
     }
     return (
-        <tr key={"row-" + row}>
-            <td key="harmonic">{(row > 1? row.toFixed(0) : row == 0? 'DC' : 'Fund')}</td>
+        <tr key={row}>
+            <td>{(row > 1? row.toFixed(0) : row == 0? 'DC' : 'Fund')}</td>
             {createCells()}
         </tr>
     );

@@ -23,19 +23,14 @@
 
 import * as React from 'react';
 import { utc } from 'moment';
-import { outerDiv, handle, closeButton } from './Common';
+import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
 
 
-interface Iprops { closeCallback: () => void, eventId: number }
+interface Iprops { closeCallback: () => void, eventId: number, isOpen: boolean }
 declare var window: any
 
 const LightningDataWidget = (props: Iprops) => {
     const [tblData, setTBLData] = React.useState<Array<JSX.Element>>([]);
-
-    React.useEffect(() => {
-        ($("#lightningquery") as any).draggable({ scroll: false, handle: '#lightninghandle', containment: '#chartpanel' });
-    }, [props])
-
 
     React.useEffect(() => {
         let handle = getData();
@@ -76,7 +71,7 @@ const LightningDataWidget = (props: Iprops) => {
         };
 
         updateTable({ State: "Loading..." });
-        //this.props.callback({ enableLightningData: true });
+        
 
         let handle =  $.ajax({
             type: "GET",
@@ -112,20 +107,16 @@ const LightningDataWidget = (props: Iprops) => {
         return handle;
     }
     return (
-        <div id="lightningquery" className={`ui-widget-content`} style={outerDiv}>
-            <div id="lightninghandle" className={handle}></div>
-            <div id="lightningcontent" style={{ maxWidth: 800 }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={500} width={800}>
                 <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         {tblData[0]}
                     </thead>
-                    <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                    <tbody style={{ maxHeight: 410, overflowY: 'auto', display: 'block' }}>
                         {tblData.slice(1)}
                     </tbody>
-                </table>
-            </div>
-            <button className={closeButton} onClick={() => props.closeCallback()}>X</button>
-        </div>
+            </table>
+         </WidgetWindow>
     );
 }
 

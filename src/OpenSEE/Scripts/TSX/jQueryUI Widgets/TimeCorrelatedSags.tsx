@@ -22,23 +22,22 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { outerDiv, handle, closeButton } from './Common';
+import { WidgetWindow } from './Common';
 
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number }
+interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
 
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
 
-    React.useEffect(() => {
-        ($("#correlatedsags") as any).draggable({ scroll: false, handle: '#correlatedsagshandle', containment: '#chartpanel' });
-    }, [props])
-
+    
     React.useEffect(() => {
         let handle = getData();
 
         return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
     }, [props.eventId])
+
+    const rowStyle = { paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }
 
     function getData(): JQuery.jqXHR {
 
@@ -55,13 +54,13 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
         handle.done((d) => {
             setTblData(d.map(row =>
                 <tr style={{ display: 'table', tableLayout: 'fixed', background: (row.EventID == props.eventId? 'lightyellow' : 'default') }} key={row.EventID}>
-                    <td style={{ width: 60 }} key={'EventID' + row.EventID}><a id="eventLink" target="_blank" href={'./?eventid=' + row.EventID}><div style={{ width: '100%', height: '100%' }}>{row.EventID}</div></a></td>
-                    <td style={{ width: 80 }} key={'EventType' + row.EventID}>{row.EventType}</td>
-                    <td style={{ width: 80 }} key={'SagMagnitude' + row.EventID}>{row.SagMagnitudePercent}%</td>
-                    <td style={{ width: 150 }} key={'SagDuration' + row.EventID}>{row.SagDurationMilliseconds} ms ({row.SagDurationCycles} cycles)</td>
-                    <td style={{ width: 220 }} key={'StartTime' + row.EventID}>{row.StartTime}</td>
-                    <td style={{ width: 150 }} key={'MeterName' + row.EventID}>{row.MeterName}</td>
-                    <td style={{ width: 400 }} key={'LineName' + row.EventID}>{row.LineName}</td>
+                    <td style={{ width: 60, ...rowStyle }} ><a id="eventLink" target="_blank" href={'./?eventid=' + row.EventID}><div style={{ width: '100%', height: '100%' }}>{row.EventID}</div></a></td>
+                    <td style={{ width: 80, ...rowStyle }} >{row.EventType}</td>
+                    <td style={{ width: 80, ...rowStyle }} >{row.SagMagnitudePercent}%</td>
+                    <td style={{ width: 200, ...rowStyle }}>{row.SagDurationMilliseconds} ms ({row.SagDurationCycles} cycles)</td>
+                    <td style={{ width: 220, ...rowStyle }}>{row.StartTime}</td>
+                    <td style={{ width: 200, ...rowStyle }}>{row.MeterName}</td>
+                    <td style={{ width: 300, ...rowStyle }}>{row.AssetName}</td>
                 </tr>))
         });
                 
@@ -69,28 +68,24 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
     }
 
     return (
-        <div id="correlatedsags" className={`ui-widget-content`} style={outerDiv}>
-            <div id="correlatedsagshandle" className={handle}></div>
-            <div id="correlatedsagscontent">
-                <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
-                    <thead style={{ display: 'table', tableLayout: 'fixed' }}>
-                        <tr key='Header'>
-                            <th style={{ width: 60 }} key='EventID'>Event ID</th>
-                            <th style={{ width: 80 }} key='EventType'>Event Type</th>
-                            <th style={{ width: 80 }} key='SagMagnitude'>Magnitude</th>
-                            <th style={{ width: 150 }} key='SagDuration'>Duration</th>
-                            <th style={{ width: 220 }} key='StartTime'>Start Time</th>
-                            <th style={{ width: 150 }} key='MeterName'>Meter Name</th>
-                            <th style={{ width: 'calc(400px - 1em)' }} key='LineName'>Asset Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th>
-                        </tr>
-                    </thead>
-                    <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
-                        {tblData}
-                    </tbody>
-                </table>
-            </div>
-            <button className={closeButton} onClick={() => props.closeCallback()}>X</button>
-        </div>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={550} width={996}>
+            <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
+                <thead style={{ display: 'table', tableLayout: 'fixed', marginBottom: 0 }}>
+                    <tr>
+                        <th style={{ width: 60, ...rowStyle }}>Event ID</th>
+                        <th style={{ width: 80, ...rowStyle }}>Event Type</th>
+                        <th style={{ width: 80, ...rowStyle }}>Magnitude</th>
+                        <th style={{ width: 200, ...rowStyle }}>Duration</th>
+                        <th style={{ width: 220, ...rowStyle }}>Start Time</th>
+                        <th style={{ width: 200, ...rowStyle }}>Meter Name</th>
+                        <th style={{ width: 300, ...rowStyle }}>Asset Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th>
+                    </tr>
+                </thead>
+                <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                    {tblData}
+                </tbody>
+            </table>
+        </WidgetWindow>
     );
 
 }

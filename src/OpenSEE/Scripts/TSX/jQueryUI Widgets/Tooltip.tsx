@@ -23,8 +23,8 @@
 
 import * as React from 'react';
 import moment = require('moment');
-import { outerDiv, handle, closeButton } from './Common';
-import { useSelector, useDispatch } from 'react-redux';
+import { WidgetWindow } from './Common';
+import { useSelector } from 'react-redux';
 import { selectHover, selectHoverPoints } from '../store/dataSlice';
 import { selectColor } from '../store/settingSlice';
 
@@ -37,33 +37,27 @@ const ToolTipWidget = (props: Iprops) => {
     const hover = useSelector(selectHover);
     const points = useSelector(selectHoverPoints);
     const colors = useSelector(selectColor);
-
-
-    React.useEffect(() => {
-        ($("#unifiedtooltip") as any).draggable({ scroll: false, handle: '#unifiedtooltiphandle', containment: '#chartpanel' });
-    }, [props])
-
    
     return (
-        <div id="unifiedtooltip" className="ui-widget-content" style={outerDiv}>
-            <div id="unifiedtooltiphandle" className={handle}></div>
-            <div id="unifiedtooltipcontent" style={{ maxHeight: '580px' }}>
-                <div style={{ textAlign: 'center', maxHeight: '580px' }} >
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={256}>
+            <div style={{ textAlign: 'center'}} >
                     <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
                     <br />
-                    <table className="table">
-                        <tbody style={{ display: 'block', overflowY: 'scroll', maxHeight: '570px'}}>
+                <table className="table" style={{ maxHeight: '296px', marginBottom: 0, display: 'block', overflowY: 'scroll' }}>
+                    <tbody>
                             {props.isOpen ? points.map((p, i) => <tr key={i}>
-                                <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
-                                <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
-                                <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s'? 1.0/p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+                                <td className="dot" style={{ background: colors[p.Color], width: 12 }}><b>&nbsp;&nbsp;&nbsp;</b></td>
+                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'left' }}>
+                                    <b>{p.Name}</b>
+                                </td>
+                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'right' }}>
+                                    <b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
+                                </td>
                             </tr>) : null}
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <button className={closeButton} onClick={() => { props.closeCallback() }}>X</button>
-        </div>
+        </WidgetWindow>
         )
 }
 

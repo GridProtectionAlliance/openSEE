@@ -24,7 +24,7 @@
 import * as React from 'react';
 import { uniq } from 'lodash';
 import { BlockPicker } from 'react-color';
-import { outerDiv, handle, closeButton } from './Common';
+import { WidgetWindow } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
@@ -44,25 +44,23 @@ const SettingsWidget = (props: Iprops) => {
     const dispatch = useDispatch();
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
+    
     React.useEffect(() => {
-        ($("#settings") as any).draggable({ scroll: false, handle: '#settingshandle', containment: '#chartpanel' });
-    }, [props])
-
-    React.useEffect(() => {
+        if (!props.isOpen)
+            return () => { }
 
         const handleScroll = () => {
             let offset = document.getElementById("settingScrollContainer").scrollTop;
-             setScrollOffset(offset);
+                setScrollOffset(offset);
         }
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
-        return () => { document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
+        return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
     }, [props])
   
 
     return (
-        <div id="settings" className="ui-widget-content" style={outerDiv}>
-            <div id="settingshandle" className={handle}></div>
-            <div id="settingScrollContainer" style={{ width: '510px', height: '300px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516}>
+            <div id="settingScrollContainer" style={{ width: '510px', height: '575px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
                 <div className="accordion" id="panelSettings">
                     <div className="card">
                         <div className="card-header" id="header-general">
@@ -156,10 +154,8 @@ const SettingsWidget = (props: Iprops) => {
                     }
                    
                 </div>
-
             </div>
-            <button className={closeButton} onClick={() => props.closeCallback() }>X</button>
-        </div>
+        </WidgetWindow>
     );
 }
 

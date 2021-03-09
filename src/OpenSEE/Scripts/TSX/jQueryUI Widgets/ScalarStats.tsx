@@ -22,16 +22,12 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { outerDiv, handle, closeButton } from './Common';
+import { WidgetWindow } from './Common';
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number }
+interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
 
 const ScalarStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<Array<JSX.Element>>([]);
-
-    React.useEffect(() => {
-        ($("#scalarstats") as any).draggable({ scroll: false, handle: '#statshandle', containment: '#chartpanel' });
-    }, [props])
 
     React.useEffect(() => {
         let handle = getData();
@@ -61,20 +57,16 @@ const ScalarStatsWidget = (props: Iprops) => {
         }
 
     return (
-        <div id="scalarstats" className="ui-widget-content" style={outerDiv}>
-            <div id="statshandle" className={handle}></div>
-            <div id="statscontent" style={{ maxWidth: 500, overflowX: 'auto' }}>
-                <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={400} width={500}>
+            <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         <tr><th>Stat</th><th>Value&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th></tr>
                     </thead>
-                    <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                    <tbody style={{ maxHeight: 310, overflowY: 'auto', display: 'block' }}>
                         {stats}
                     </tbody>
                 </table>
-            </div>
-            <button className={closeButton} onClick={() => { props.closeCallback()}}>X</button>
-        </div>
+        </WidgetWindow>
     );
 }
 

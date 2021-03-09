@@ -7,7 +7,7 @@
     "lib": [ "dom", "es5", "scripthost", "es2015", "es6" ],
     "noEmitOnError": true,
     "noImplicitAny": false,
-    "removeComments": false,
+    "removeComments": true,
     "sourceMap": true,
     "target": "es5",
     "typeRoots": [ "node_modules/@types" ],

@@ -23,9 +23,9 @@
 
 import * as React from 'react';
 import moment = require('moment');
-import { outerDiv, handle, closeButton } from './Common';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectHover, selectHoverPoints, selectDeltaHoverPoints } from '../store/dataSlice';
+import { WidgetWindow } from './Common';
+import { useSelector } from 'react-redux';
+import { selectHover, selectDeltaHoverPoints } from '../store/dataSlice';
 import { selectColor } from '../store/settingSlice';
 
 
@@ -39,9 +39,6 @@ const ToolTipDeltaWidget = (props: Iprops) => {
     const points = useSelector(selectDeltaHoverPoints);
     const colors = useSelector(selectColor);
 
-    React.useEffect(() => {
-        ($("#tooltipwithdelta") as any).draggable({ scroll: false, handle: '#tooltipwithdeltahandle', containment: '#chartpanel' });
-    }, [props])
 
     let data: Array<JSX.Element> = (props.isOpen? points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
@@ -56,29 +53,34 @@ const ToolTipDeltaWidget = (props: Iprops) => {
     let secondDate = props.isOpen && points.length > 0? points[0].Time : NaN;
 
     return (
-        <div id="tooltipwithdelta" className="ui-widget-content" style={outerDiv}>
-            <div id="tooltipwithdeltahandle" className={handle}></div>
-            <div>
-                <div style={{ textAlign: 'center', maxHeight: '580px' }} >
-                    <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: '580px' }}>
-                        <thead>
-                            <tr><td style={{ width: 34 }}></td>
-                                <td></td>
-                                <td><b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b></td>
-                                {!isNaN(secondDate) ? <>
-                                    <td><b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b></td>
-                                    <td><b>{(!isNaN(firstDate) ? (secondDate - firstDate) / 1000 + ' (s)' : '')}</b></td> 
-                                    </>: <td colSpan={2}><b>Select a Point</b></td>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {props.isOpen? data : null}
-                        </tbody>
-                    </table>
-                </div>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={538}>
+            <div style={{ textAlign: 'center' }} >
+                <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: '576px', overflowX: 'hidden', marginBottom: 0 }}>
+                    <thead>
+                        <tr><td style={{ width: 34 }}></td>
+                            <td style={{width: 120 }}></td>
+                            <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
+                                <b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b>
+                            </td>
+                            {!isNaN(secondDate) ? <>
+                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
+                                    <b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b>
+                                </td>
+                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
+                                    <b>{(!isNaN(firstDate) ? ((secondDate - firstDate) / 1000).toFixed(9) + ' (s)' : '')}</b>
+                                </td> 
+                            </> : <td colSpan={2} style={{ width: 240, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} >
+                                    <b>Select a Point</b>
+                                </td>}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data}
+                    </tbody>
+                </table>
             </div>
-            <button className={closeButton} onClick={() => { props.closeCallback() }}>X</button>
-        </div>
+        </WidgetWindow>
+        
     )
 }
 

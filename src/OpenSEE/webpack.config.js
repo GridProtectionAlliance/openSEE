@@ -8,7 +8,16 @@ module.exports = {
     cache: true,
     entry: {
         OpenSee: "./TSX/OpenSee.tsx",
-
+        ToolTipDeltaWidget: "./TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
+        ToolTipWidget: "./TSX/jQueryUI Widgets/Tooltip.tsx",
+        TimeCorrelatedSagsWidget: "./TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
+        PointWidget: "./TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
+        PolarChartWidget: "./TSX/jQueryUI Widgets/PolarChart.tsx",
+        ScalarStatsWidget: "./TSX/jQueryUI Widgets/ScalarStats.tsx",
+        LightningDataWidget: "./TSX/jQueryUI Widgets/LightningData.tsx",
+        SettingsWidget: "./TSX/jQueryUI Widgets/SettingWindow.tsx",
+        FFTTable: "./TSX/jQueryUI Widgets/FFTTable.tsx",
+        HarmonicStatsWidget: "./TSX/jQueryUI Widgets/HarmonicStats.tsx",
     },
     output: {
         path: path.resolve(__dirname, 'Scripts'),

@@ -22,18 +22,15 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { outerDiv, handle, closeButton } from './Common';
+import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number }
+interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
 
 const HarmonicStatsWidget = (props: Iprops) => {
 
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
 
-    React.useEffect(() => {
-        ($("#harmonicstats") as any).draggable({ scroll: false, handle: '#harmonichandle', containment: '#chartpanel' });
-    }, [props])
-
+    
     React.useEffect(() => {
         let handle = getData();
 
@@ -53,15 +50,15 @@ const HarmonicStatsWidget = (props: Iprops) => {
         handle.done((data) => {
             let rows = [];
             rows.push(
-                <tr key='Header'>
+                <tr>
                     <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.exportCallback()}>Export</button></th>
-                    {data.map(key => <th colSpan={2} scope='colgroup' key={key.Channel}>{key.Channel}</th>)}
+                    {data.map((key,i) => <th colSpan={2} scope='colgroup' key={i}>{key.Channel}</th>)}
                 </tr>)
 
             rows.push(
-                <tr key='SecondaryHeader'>
+                <tr>
                     <th>Harmonic</th>
-                    {data.map((item, index) => <><th key={index + 'Mag'}>Mag</th> <th key={index + 'Ang'}>Ang</th> </>)}
+                    {data.map((item, index) => <React.Fragment key={index}><th>Mag</th> <th>Ang</th> </React.Fragment>)}
                 </tr>)
 
 
@@ -96,9 +93,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
     }
 
     return (
-        <div id="harmonicstats" className="ui-widget-content" style={outerDiv}>
-            <div id="harmonichandle" className={handle}></div>
-            <div id="harmoniccontent" style={{ maxWidth: 1700 }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={1706}>
+            <div style={{ maxWidth: 1700 }}>
                 <table className="table" style={{ fontSize: 'large', marginBottom: 0 }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         {tblData[0]}
@@ -109,8 +105,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
                     </tbody>
                 </table>
             </div>
-            <button className={closeButton} onClick={() => props.closeCallback()}>X</button>
-        </div>
+        </WidgetWindow>
     );
 
 }
