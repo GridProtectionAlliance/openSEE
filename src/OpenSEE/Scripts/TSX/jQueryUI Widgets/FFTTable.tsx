@@ -64,15 +64,15 @@ const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
         let f = (data[index].PhaseUnit != undefined ? data[index].PhaseUnit.factor : 1.0);
         let val = data[index].Angle[row] * f;
         if (isNaN(val))
-            return (<td>N/A</td>)
-        return <td>{val.toFixed(2)}</td>;
+            return (<td key={2}>N/A</td>)
+        return <td key={2}>{val.toFixed(2)}</td>;
     }
     function showMag(index) {
         let f = (data[index].Unit.short == 'pu' || data[index].Unit.short == 'pu/s' ? 1.0 / data[index].BaseValue : data[index].Unit.factor);
         let val = data[index].Magnitude[row] * f;
         if (isNaN(val))
-            return (<td>N/A</td>)
-        return <td>{val.toFixed(2)}</td>;
+            return (<td key={1}>N/A</td>)
+        return <td key={1}>{val.toFixed(2)}</td>;
     }
     
     function createCells() {
@@ -85,7 +85,7 @@ const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
     }
     return (
         <tr key={row}>
-            <td>{(row > 1? row.toFixed(0) : row == 0? 'DC' : 'Fund')}</td>
+            <td key={0}>{(row > 1? row.toFixed(0) : row == 0? 'DC' : 'Fund')}</td>
             {createCells()}
         </tr>
     );
