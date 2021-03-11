@@ -2907,6 +2907,11 @@ namespace OpenSEE
 
         public List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
         {
+            
+            int maxHarmonic;
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'maxFFTHarmonic'") ?? "50");
+
             List<D3Series> dataLookup = new List<D3Series>();
 
             List<DataSeries> vAN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
@@ -2916,21 +2921,21 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT( item, startTime, cycles))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
             return dataLookup;
         }
 
-        private static List<D3Series> GenerateFFT(DataSeries dataSeries, double startTime, int cycles)
+        private static List<D3Series> GenerateFFT(DataSeries dataSeries, double startTime, int cycles, int maxHarmonic)
         {
-            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
-            var groupedByCycle = dataSeries.DataPoints.Select((Point, Index) => new { Point, Index }).GroupBy((Point) => Point.Index / (samplesPerCycle * cycles)).Select((grouping) => grouping.Select((obj) => obj.Point));
 
+            int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
+            
             List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take((samplesPerCycle * cycles)).ToList();
             D3Series fftMag = new D3Series()
             {
@@ -2960,13 +2965,22 @@ namespace OpenSEE
 
             if (cycleData.Count() != (samplesPerCycle * cycles))
                 return new List<D3Series>();
-               
-            double[] points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
+
+            double[] points;
+            if (maxHarmonic > 0 && 2*maxHarmonic < samplesPerCycle)
+            {
+                int step = (int)Math.Floor(samplesPerCycle / (2.0D*(double)maxHarmonic));
+                samplesPerCycle = 2 * maxHarmonic;
+                points = cycleData.Where((point,index) => index%step == 0).Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
+            }
+            else
+                points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
+
 
             FFT fft = new FFT(Fbase * (samplesPerCycle), points);
 
-            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { index, (value / Math.Sqrt(2)) }).ToList();
-            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { index, (value * 180.0D / Math.PI) }).ToList();
+            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value / Math.Sqrt(2)) }).ToList();
+            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value * 180.0D / Math.PI) }).ToList();
 
             return new List<D3Series>() { fftMag, fftAng };
 

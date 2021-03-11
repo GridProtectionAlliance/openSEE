@@ -46,6 +46,7 @@ interface iProps {
 
 // The following Classes are used in this 
 // xAxis, yaxis => The axis Labels
+// xAxisExtLeft, xAxisExtRight => axis extensions because Xaxis stops left and right center Bar
 // xAxisLabel, yAxisLabel => The Text next to the Axis
 // root => The SVG Container 
 // bar => The Trace
@@ -67,10 +68,8 @@ const BarChart = (props: iProps) => {
     const MemoSelecEnable = React.useMemo(selectEnabled, []);
 
     const xScaleRef = React.useRef<any>();
+    const xScaleLblRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
-
-    //const [xScale, setXscale] = React.useState<any>(null);
-    //const [yScale, setYscale] = React.useState<any>(null);
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
@@ -80,7 +79,7 @@ const BarChart = (props: iProps) => {
     const enabledBar = useSelector(state => MemoSelecEnable(state,dataKey));
 
     const xLimits = useSelector(selectFFTLimits);
- 
+
     const loading = useSelector(selectLoading(dataKey));
 
     const colors = useSelector(selectColor);
@@ -119,6 +118,7 @@ const BarChart = (props: iProps) => {
 
     }, [props.height, props.width])
 
+
     React.useEffect(() => {
         updateVisibility();
     }, [enabledBar])
@@ -141,8 +141,10 @@ const BarChart = (props: iProps) => {
 
     //Effect if x Limits change
     React.useEffect(() => {
-        if (xScaleRef.current != undefined) {
-            xScaleRef.current.domain(range(xLimits[0], xLimits[1] + 1))
+        if (xScaleRef.current != undefined && barData.length > 0) {
+            let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
+            xScaleRef.current.domain(domain);
+            xScaleLblRef.current.domain([60.0 * domain[0] , 60.0 * domain[domain.length - 1] ]);
             updateLimits();
         }
     }, [xLimits])
@@ -208,31 +210,42 @@ const BarChart = (props: iProps) => {
     function createPlot() {
         d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove()
 
-        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).append("svg").classed("root",true)
+        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).append("svg").classed("root", true)
             .attr("width", '100%')
             .attr("height", '100%')
             .append("g")
-                .attr("transform", "translate(40,10)");
+            .attr("transform", "translate(40,10)");
 
         // Now Create Axis
         yScaleRef.current = d3.scaleLinear()
             .domain(yLimits)
             .range([props.height - 60, 0]);
 
+
+        // We can assume consistent sampling rate for now
+        let domain = barData[0].DataPoints.filter(pt => pt[0] > xLimits[0] && pt[0] < xLimits[1]).map(pt => pt[0]);
+
         xScaleRef.current = d3.scaleBand()
-            .domain(range(xLimits[0], xLimits[1]+ 1))
+            .domain(domain)
             .range([20, props.width - 280])
             .padding(0.1);
 
+        const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
+        const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
+       
+        xScaleLblRef.current = d3.scaleLinear()
+            .domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)])
+            .range([20 + offsetLeft, props.width - 280 - offsetRight ]);
+
         svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
     
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleRef.current).tickValues(GetTicks()));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSize(6,0));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
             .attr("transform", "translate(" + ((props.width - 280) / 2) + " ," + (props.height - 20) + ")")
             .style("text-anchor", "middle")
-            .text(props.timeLabel);
+            .text(props.timeLabel + ' (Hz)');
 
         svg.append("text").classed("yAxisLabel", true)
             .attr("transform", "rotate(-90)")
@@ -242,6 +255,20 @@ const BarChart = (props: iProps) => {
             .style("text-anchor", "middle")
             .text("Units Go here");
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
+
+        svg.append("line").classed("xAxisExtLeft", true)
+             .attr("stroke", "currentColor")
+             .attr("x1", 20).attr("x2", 20 + offsetLeft)
+            .attr("y1", props.height - 60).attr("y2", props.height - 60)
+        svg.append("line").classed("xAxisExtRight", true)
+            .attr("stroke", "currentColor")
+            .attr("x1", props.width - 280).attr("x2", props.width - 280 - offsetRight)
+            .attr("y1", props.height - 60).attr("y2", props.height - 60)
+         //svg.append("line").classed("toolTip", true)
+        //    .attr("stroke", "#000")
+        //    .attr("x1", 10).attr("x2", 10)
+        //    .attr("y1", 0).attr("y2", props.height - 60)
+        //    .style("opacity", 0.5);
 
         //Add ToolTip
         //svg.append("line").classed("toolTip", true)
@@ -306,22 +333,38 @@ const BarChart = (props: iProps) => {
 
     }
 
-    function GetTicks(): number[] {
-        let ticks = xScaleRef.current.domain();
-        if (ticks.length < 15)
-            return ticks;
-        let n = Math.floor(ticks.length/15)
-        ticks = ticks.filter((d, i) => i % n == 0);
-        return ticks;
+    function formatFrequencyTick(d: number) {
+        let h = 1;
+
+        if (xScaleLblRef.current != undefined)
+            h = xScaleLblRef.current.domain()[1] - xScaleLblRef.current.domain()[0]
+
+        if (h > 100)
+            return d.toFixed(0)
+
+        if (h > 10)
+            return d.toFixed(1)
+        if (h > 1)
+            return d.toFixed(2)
+        else
+            return d.toFixed(3)
 
     }
+    
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
         container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        container.select(".xAxis").call(d3.axisBottom(xScaleRef.current).tickValues(GetTicks()));
+        container.select(".xAxis").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)));
+       
 
+        const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
+        const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
+
+        xScaleLblRef.current.range([20 + offsetLeft, props.width - 280 - offsetRight]);
+        container.select('.xAxisExtLeft').attr("x2", 20 + offsetLeft)
+        container.select('.xAxisExtRight').attr("x2", props.width - 280 - offsetRight)
         let barGen = (unit: OpenSee.Unit) => {
             //Determine Factors
 
@@ -337,7 +380,8 @@ const BarChart = (props: iProps) => {
             .attr("y", d => barGen(d.unit)(d))
             .attr("width", xScaleRef.current.bandwidth() - 1)
             .attr("height", d => { return Math.max(((props.height - 60) - barGen(d.unit)(d)),0)})
-      
+
+
         updateLabels();
     }
 
@@ -478,6 +522,21 @@ const BarChart = (props: iProps) => {
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
         xScaleRef.current.range([20, props.width - 280]);
+
+        const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
+        const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
+
+        xScaleLblRef.current.range([20 + offsetLeft, props.width - 280 - offsetRight]);
+        container.select('.xAxisExtLeft')
+            .attr("x2", 20 + offsetLeft)
+            .attr("y1", props.height - 60)
+            .attr("y2", props.height - 60)
+
+        container.select('.xAxisExtRight')
+            .attr("x2", props.width - 280 - offsetRight)
+            .attr("y1", props.height - 60)
+            .attr("y2", props.height - 60)
+
         yScaleRef.current.range([props.height - 60, 0]);
 
         container.select(".clip").attr("height", props.height - 60)

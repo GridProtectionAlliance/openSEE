@@ -146,6 +146,8 @@ GO
 
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'downSample', N'-1', 0, N'Administrator')
 GO
+INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'maxFFTHarmonic', N'50', 0, N'Administrator')
+GO
 
 
 CREATE TABLE [dbo].[ValueListGroup](

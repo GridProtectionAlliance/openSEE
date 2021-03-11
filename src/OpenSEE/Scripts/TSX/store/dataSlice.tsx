@@ -329,7 +329,7 @@ export const DataReducer = createSlice({
 
         },
         UpdateFFTLimits: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }>) => {
-            if (Math.abs(action.payload.start - action.payload.end) < 5)
+            if (Math.abs(action.payload.start - action.payload.end) < 1)
                 return state;
 
             state.fftLimits = [action.payload.start, action.payload.end];
