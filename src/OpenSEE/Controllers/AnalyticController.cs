@@ -2324,11 +2324,11 @@ namespace OpenSEE
                     Unit = "Voltage",
                     Color = "Vdc",
                     BaseValue = 1.0,
-                    LegendGroup = "",
+                    LegendGroup = dataGroup.VA.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "",
                     LegendHorizontal = "V",
-                    LegendVGroup = dataGroup.VA.SeriesInfo.Channel.Asset.AssetName,
+                    LegendVGroup = "",
                     DataPoints = phaseMaxes.Select(point => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
                 });
 
