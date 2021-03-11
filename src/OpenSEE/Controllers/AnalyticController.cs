@@ -2931,7 +2931,7 @@ namespace OpenSEE
             return dataLookup;
         }
 
-        private static List<D3Series> GenerateFFT(DataSeries dataSeries, double startTime, int cycles, int maxHarmonic)
+        private List<D3Series> GenerateFFT(DataSeries dataSeries, double startTime, int cycles, int maxHarmonic)
         {
 
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
@@ -2941,7 +2941,7 @@ namespace OpenSEE
             {
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
-                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
+                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? GetBaseV(dataSeries.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
@@ -2954,7 +2954,7 @@ namespace OpenSEE
             {
                 Unit = "Angle",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
-                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
+                BaseValue = 1.0,
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),

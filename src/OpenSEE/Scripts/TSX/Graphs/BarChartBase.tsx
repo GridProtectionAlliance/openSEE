@@ -195,11 +195,11 @@ const BarChart = (props: iProps) => {
             .classed("Bar", true)
             .attr("fill", (d) => colors[d.Color])
             .selectAll('rect')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color } }))
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }))
             .enter().append('rect')
             .attr("x", d => xScaleRef.current(d.data[0]))
             .attr("y", d => yScaleRef.current(d.data[1]))
-            .attr("width", xScaleRef.current.bandwidth() - 1)
+            .attr("width", xScaleRef.current.bandwidth())
             .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current(d.data[1])), 0) })
 
 
@@ -279,7 +279,7 @@ const BarChart = (props: iProps) => {
         svg.append("rect").classed("zoomWindow",true)
             .attr("stroke", "#000")
             .attr("x", 60).attr("width", 0)
-            .attr("y", 20).attr("height", props.height - 60)
+            .attr("y", 20).attr("height", props.height - 40)
             .attr("fill", "black")
             .style("opacity", 0);
 
@@ -351,10 +351,14 @@ const BarChart = (props: iProps) => {
         xScaleLblRef.current.range([60 + offsetLeft, props.width - 240 - offsetRight]);
         container.select('.xAxisExtLeft').attr("x2", 60 + offsetLeft)
         container.select('.xAxisExtRight').attr("x2", props.width - 240 - offsetRight)
-        let barGen = (unit: OpenSee.Unit) => {
+        let barGen = (unit: OpenSee.Unit, base: number) => {
             //Determine Factors
-
-            let factor = activeUnit[unit as string].factor
+            let factor = 1.0;
+            if (activeUnit[unit as string] != undefined) {
+                factor = activeUnit[unit as string].factor
+                factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0 / base : factor);
+            }
+        
 
             return (d) => { return yScaleRef.current(d.data[1] * factor)}
           
@@ -363,9 +367,9 @@ const BarChart = (props: iProps) => {
         container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
             .attr("x", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : v) })
             .style("opacity", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
-            .attr("y", d => barGen(d.unit)(d))
-            .attr("width", xScaleRef.current.bandwidth() - 1)
-            .attr("height", d => { return Math.max(((props.height - 40) - barGen(d.unit)(d)),0)})
+            .attr("y", d => barGen(d.unit, d.base)(d))
+            .attr("width", Math.max(xScaleRef.current.bandwidth()))
+            .attr("height", d => { return Math.max(((props.height - 40) - barGen(d.unit,d.base)(d)),0)})
 
 
         updateLabels();
@@ -426,7 +430,7 @@ const BarChart = (props: iProps) => {
                     .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])) + 0.5 * (xScaleRef.current.bandwidth()))
                     .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
                     .attr("height", props.height - 60)
-                    .attr("y", 0)
+                    .attr("y", 20)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
                     .attr("x", (xScaleRef.current as any)(xLimits[0]))
