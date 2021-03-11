@@ -32,6 +32,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit } from '../store/settingSlice'
 import { selectData, selectEnabled,   selectLoading, selectYLimits, selectMouseMode, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../store/dataSlice';
 import { selectAnalyticOptions } from '../store/analyticSlice';
+import { LoadingIcon, NoDataIcon } from './ChartIcons';
 
 
 
@@ -169,7 +170,7 @@ const BarChart = (props: iProps) => {
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove();
+        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
         if (loading == 'Loading') {
             setCreated(false);
@@ -208,18 +209,15 @@ const BarChart = (props: iProps) => {
     }
 
     function createPlot() {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").remove()
+        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
 
-        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).append("svg").classed("root", true)
-            .attr("width", '100%')
-            .attr("height", '100%')
-            .append("g")
-            .attr("transform", "translate(40,10)");
+        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
+            .append("g").classed("root", true)
 
         // Now Create Axis
         yScaleRef.current = d3.scaleLinear()
             .domain(yLimits)
-            .range([props.height - 60, 0]);
+            .range([props.height - 40, 20]);
 
 
         // We can assume consistent sampling rate for now
@@ -227,7 +225,7 @@ const BarChart = (props: iProps) => {
 
         xScaleRef.current = d3.scaleBand()
             .domain(domain)
-            .range([20, props.width - 280])
+            .range([60, props.width - 240])
             .padding(0.1);
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -235,65 +233,53 @@ const BarChart = (props: iProps) => {
        
         xScaleLblRef.current = d3.scaleLinear()
             .domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)])
-            .range([20 + offsetLeft, props.width - 280 - offsetRight ]);
+            .range([60 + offsetLeft, props.width - 240 - offsetRight ]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(20,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
+        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
     
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 60) + ")").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSize(6,0));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSize(6,0));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 280) / 2) + " ," + (props.height - 20) + ")")
+            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel + ' (Hz)');
 
         svg.append("text").classed("yAxisLabel", true)
             .attr("transform", "rotate(-90)")
-            .attr("y", -30)
-            .attr("x", - (props.height / 2 - 30))
+            .attr("y", 2)
+            .attr("x", - (props.height / 2 - 20))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text("Units Go here");
-            //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
+            
 
         svg.append("line").classed("xAxisExtLeft", true)
              .attr("stroke", "currentColor")
-             .attr("x1", 20).attr("x2", 20 + offsetLeft)
-            .attr("y1", props.height - 60).attr("y2", props.height - 60)
+             .attr("x1", 60).attr("x2", 60 + offsetLeft)
+            .attr("y1", props.height - 40).attr("y2", props.height - 40)
         svg.append("line").classed("xAxisExtRight", true)
             .attr("stroke", "currentColor")
-            .attr("x1", props.width - 280).attr("x2", props.width - 280 - offsetRight)
-            .attr("y1", props.height - 60).attr("y2", props.height - 60)
-         //svg.append("line").classed("toolTip", true)
-        //    .attr("stroke", "#000")
-        //    .attr("x1", 10).attr("x2", 10)
-        //    .attr("y1", 0).attr("y2", props.height - 60)
-        //    .style("opacity", 0.5);
-
-        //Add ToolTip
-        //svg.append("line").classed("toolTip", true)
-        //    .attr("stroke", "#000")
-        //    .attr("x1", 10).attr("x2", 10)
-        //    .attr("y1", 0).attr("y2", props.height - 60)
-        //    .style("opacity", 0.5);
-
+            .attr("x1", props.width - 240).attr("x2", props.width - 240 - offsetRight)
+            .attr("y1", props.height - 40).attr("y2", props.height - 40)
+       
 
         //Add Clip Path
         svg.append("defs").append("svg:clipPath")
             .attr("id", "clip-" + props.type + "-" + props.eventId)
             .append("svg:rect").classed("clip",true)
-            .attr("width", 'calc(100% - 60px)')
-            .attr("height", 'calc(100% - 60px)')
-            .attr("x", 20)
-            .attr("y", 0);
+            .attr("width", props.width - 300)
+            .attr("height", props.height - 60)
+            .attr("x", 60)
+            .attr("y", 20);
 
 
         //Add Window to indicate Zooming
 
         svg.append("rect").classed("zoomWindow",true)
             .attr("stroke", "#000")
-            .attr("x", 10).attr("width", 0)
-            .attr("y", 0).attr("height", props.height - 60)
+            .attr("x", 60).attr("width", 0)
+            .attr("y", 20).attr("height", props.height - 60)
             .attr("fill", "black")
             .style("opacity", 0);
 
@@ -303,8 +289,8 @@ const BarChart = (props: iProps) => {
             .attr("clip-path", "url(#clip-" + props.type + "-" + props.eventId + ")");
 
         //Event overlay
-        svg.append("svg:rect").classed("Overlay",true)
-            .attr("width", 'calc(100% - 60px)')
+        svg.append("svg:rect").classed("Overlay", true)
+            .attr("width", props.width - 240)
             .attr("height", '100%')
             .attr("x", 20)
             .attr("y", 0)
@@ -356,15 +342,15 @@ const BarChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
         container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        container.select(".xAxis").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)));
+        container.select(".xAxis").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSizeOuter(0));
        
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
 
-        xScaleLblRef.current.range([20 + offsetLeft, props.width - 280 - offsetRight]);
-        container.select('.xAxisExtLeft').attr("x2", 20 + offsetLeft)
-        container.select('.xAxisExtRight').attr("x2", props.width - 280 - offsetRight)
+        xScaleLblRef.current.range([60 + offsetLeft, props.width - 240 - offsetRight]);
+        container.select('.xAxisExtLeft').attr("x2", 60 + offsetLeft)
+        container.select('.xAxisExtRight').attr("x2", props.width - 240 - offsetRight)
         let barGen = (unit: OpenSee.Unit) => {
             //Determine Factors
 
@@ -379,7 +365,7 @@ const BarChart = (props: iProps) => {
             .style("opacity", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
             .attr("y", d => barGen(d.unit)(d))
             .attr("width", xScaleRef.current.bandwidth() - 1)
-            .attr("height", d => { return Math.max(((props.height - 60) - barGen(d.unit)(d)),0)})
+            .attr("height", d => { return Math.max(((props.height - 40) - barGen(d.unit)(d)),0)})
 
 
         updateLabels();
@@ -519,41 +505,53 @@ const BarChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 60) + ")");
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 320) / 2) + " ," + (props.height - 20) + ")")
-        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 30))
-        xScaleRef.current.range([20, props.width - 280]);
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
+        xScaleRef.current.range([60, props.width - 240]);
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
 
-        xScaleLblRef.current.range([20 + offsetLeft, props.width - 280 - offsetRight]);
+        xScaleLblRef.current.range([60 + offsetLeft, props.width - 240 - offsetRight]);
         container.select('.xAxisExtLeft')
-            .attr("x2", 20 + offsetLeft)
+            .attr("x2", 60 + offsetLeft)
             .attr("y1", props.height - 60)
             .attr("y2", props.height - 60)
 
         container.select('.xAxisExtRight')
-            .attr("x2", props.width - 280 - offsetRight)
+            .attr("x2", props.width - 240 - offsetRight)
             .attr("y1", props.height - 60)
             .attr("y2", props.height - 60)
+            .attr("x1", props.width - 240)
 
         yScaleRef.current.range([props.height - 60, 0]);
 
-        container.select(".clip").attr("height", props.height - 60)
-        container.select(".toolTip").attr("y2", props.height - 60)
+        container.select(".clip")
+            .attr("height", props.height - 60)
+            .attr("width", props.width - 300)
         updateLimits();
     }
     
     return (
         <div>
-            <div id={"graphWindow-" + props.type + "-" + props.eventId} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
-                {loading == 'Loading'? <p> Loading...</p>: null}
-            </div>
-            {loading == 'Loading' ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
+            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hasData={barData.length > 0} hasTrace={enabledBar.some(i => i)} />
+            {loading == 'Loading' || barData.length == 0 ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
 }
 
+const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hasData: boolean, hasTrace: boolean }) => {
+    const showSVG = props.loading != 'Loading' && props.hasData;
+
+    return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
+        {props.loading == 'Loading' ? <LoadingIcon /> : null}
+        {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
+        <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
+            {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
+                <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
+        </svg>
+    </div>)
+})
 
 export default BarChart;
 
