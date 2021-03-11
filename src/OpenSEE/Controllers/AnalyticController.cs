@@ -994,11 +994,11 @@ namespace OpenSEE
             {
                 List<DataPoint> voltagePointsMag = vICycleDataGroup.VA.RMS.DataPoints;
                 List<DataPoint> voltagePointsAng = vICycleDataGroup.VA.Phase.DataPoints;
-                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value / 1000.0D, voltagePointsAng[index].Value)).ToList();
 
                 List<DataPoint> currentPointsMag = vICycleDataGroup.IA.RMS.DataPoints;
                 List<DataPoint> currentPointsAng = vICycleDataGroup.IA.Phase.DataPoints;
-                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value/1000.0D, currentPointsAng[index].Value))).ToList();
 
                 powerPointsAN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
 
@@ -1062,11 +1062,11 @@ namespace OpenSEE
             {
                 List<DataPoint> voltagePointsMag = vICycleDataGroup.VB.RMS.DataPoints;
                 List<DataPoint> voltagePointsAng = vICycleDataGroup.VB.Phase.DataPoints;
-                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value / 1000.0D, voltagePointsAng[index].Value)).ToList();
 
                 List<DataPoint> currentPointsMag = vICycleDataGroup.IB.RMS.DataPoints;
                 List<DataPoint> currentPointsAng = vICycleDataGroup.IB.Phase.DataPoints;
-                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value / 1000.0D, currentPointsAng[index].Value))).ToList();
 
                 powerPointsBN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
                 dataLookup.Add(new D3Series()
@@ -1080,7 +1080,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "BN Reactive Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    DataPoints = powerPointsBN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
                     }).ToList()
                 });
                 dataLookup.Add(new D3Series()
@@ -1094,7 +1094,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "BN Active Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                    DataPoints = powerPointsBN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1107,7 +1107,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "BN Apparent Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                    DataPoints = powerPointsBN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1120,7 +1120,7 @@ namespace OpenSEE
                     BaseValue = 1.0,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "BN Power Factor",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                    DataPoints = powerPointsBN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
                 });
             }
 
@@ -1128,11 +1128,11 @@ namespace OpenSEE
             {
                 List<DataPoint> voltagePointsMag = vICycleDataGroup.VC.RMS.DataPoints;
                 List<DataPoint> voltagePointsAng = vICycleDataGroup.VC.Phase.DataPoints;
-                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value, voltagePointsAng[index].Value)).ToList();
+                List<Complex> voltagePoints = voltagePointsMag.Select((vMagPoint, index) => Complex.FromPolarCoordinates(vMagPoint.Value / 1000.0D, voltagePointsAng[index].Value)).ToList();
 
                 List<DataPoint> currentPointsMag = vICycleDataGroup.IC.RMS.DataPoints;
                 List<DataPoint> currentPointsAng = vICycleDataGroup.IC.Phase.DataPoints;
-                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value, currentPointsAng[index].Value))).ToList();
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value / 1000.0D, currentPointsAng[index].Value))).ToList();
 
                 powerPointsCN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
                 dataLookup.Add(new D3Series()
@@ -1146,7 +1146,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "CN Reactive Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    DataPoints = powerPointsCN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
                     }).ToList()
                 });
                 dataLookup.Add(new D3Series()
@@ -1160,7 +1160,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "CN Active Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                    DataPoints = powerPointsCN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1173,7 +1173,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "CN Apparent Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                    DataPoints = powerPointsCN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1186,7 +1186,7 @@ namespace OpenSEE
                     BaseValue = 1.0,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "CN Power Factor",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                    DataPoints = powerPointsCN.Select((iPoint, index) => new double[] { voltagePointsMag[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
                 });
 
             }
@@ -1207,7 +1207,7 @@ namespace OpenSEE
                     BaseValue = 3*Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Reactive Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] {  vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
+                    DataPoints = powerPoints.Select((iPoint, index) => new double[] {  vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
                     }).ToList()
                 });
                 dataLookup.Add(new D3Series()
@@ -1221,7 +1221,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Active Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
+                    DataPoints = powerPoints.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1234,7 +1234,7 @@ namespace OpenSEE
                     BaseValue = Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Apparent Power",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
+                    DataPoints = powerPoints.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Magnitude }).ToList()
                 });
                 dataLookup.Add(new D3Series()
                 {
@@ -1247,7 +1247,7 @@ namespace OpenSEE
                     BaseValue = 1.0,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Power Factor",
-                    DataPoints = powerPointsAN.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
+                    DataPoints = powerPoints.Select((iPoint, index) => new double[] { vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Real / iPoint.Magnitude }).ToList()
                 });
             }
 
