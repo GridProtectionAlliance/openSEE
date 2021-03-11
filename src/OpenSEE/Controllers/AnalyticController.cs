@@ -1657,7 +1657,6 @@ namespace OpenSEE
                     JsonReturn returnDict = new JsonReturn();
                     returnDict.Data = returnList;
 
-                    DownSample(returnDict);
                     return returnDict;
                 }
 
@@ -1709,9 +1708,27 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
+           
             foreach (var cycle in cycles)
             {
-                series.DataPoints = series.DataPoints.Concat(cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex* factor, dataPoint.Point.Value }).ToList()).ToList();
+                IEnumerable<double[]> cycleData = cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex * factor, dataPoint.Point.Value });
+
+                if (DownSampleRate > -1)
+                {
+                    double dT = cycleData.Max(pt => pt[0]) - cycleData.Min(pt => pt[0]);
+                    double NCycle = dT * Fbase / 1000.0D;
+                    if (NCycle * DownSampleRate < cycleData.Count())
+                    {
+
+                        int step = (int)Math.Floor((cycleData.Count() - 1) / (NCycle * DownSampleRate));
+                        List<double[]> cycleDatalist = cycleData.ToList();
+
+                        cycleData = Enumerable.Range(0, (int)Math.Floor(NCycle * DownSampleRate)).Select(j => cycleDatalist[(j * step)]);
+                    }
+                    
+                }    
+
+                series.DataPoints = series.DataPoints.Concat(cycleData).ToList();
                 series.DataPoints = series.DataPoints.Concat(new List<double[]> { new double[] { double.NaN, double.NaN } }).ToList();
 
             }
