@@ -440,14 +440,15 @@ const BarChart = (props: iProps) => {
                     .attr("height", Math.abs((yScaleRef.current as any)(pointMouse[1]) - (yScaleRef.current as any)(hover[1])))
                     .attr("y", Math.min((yScaleRef.current as any)(pointMouse[1]), (yScaleRef.current as any)(hover[1])))
         }
+
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
 
-        if (mouseMode == 'pan' && mouseDown && zoomMode == "x" || zoomMode == "xy")
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && Math.abs(deltaT) > 0)
             dispatch(SetFFTLimits({ start: (xLimits[0] - deltaT), end: (xLimits[1] - deltaT) }));
 
         
-        if (mouseMode == 'pan' && mouseDown && zoomMode == "y" || zoomMode == "xy")
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
             dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
     }
 
