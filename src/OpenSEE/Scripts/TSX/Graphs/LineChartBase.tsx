@@ -667,7 +667,9 @@ const LineChart = (props: iProps) => {
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
 
         xScaleRef.current.range([60, props.width - 240]);
-        yScaleRef.current.range([props.height - 60, 0]);
+        yScaleRef.current.range([props.height - 40, 20]);
+
+        container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")")
 
         container.select(".clip").attr("width", props.width - 300)
             .attr("height", props.height - 60)
