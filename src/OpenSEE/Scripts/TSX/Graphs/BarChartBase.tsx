@@ -126,29 +126,21 @@ const BarChart = (props: iProps) => {
 
     //Effect to adjust Axes when Units change
     React.useEffect(() => {
-        if (yScaleRef.current != undefined && xScaleRef.current != undefined)
-                updateLimits();
+        if (yScaleRef.current == undefined || xScaleRef.current == undefined)
+            return;
 
+        yScaleRef.current.domain(yLimits);
 
-    }, [activeUnit])
-
-    //Effect if y Limits change
-    React.useEffect(() => {
-        if (yScaleRef.current != undefined) {
-            yScaleRef.current.domain(yLimits);
-            updateLimits();
-        }
-    }, [yLimits])
-
-    //Effect if x Limits change
-    React.useEffect(() => {
-        if (xScaleRef.current != undefined && barData.length > 0) {
+        if (barData.length > 0) {
             let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
             xScaleRef.current.domain(domain);
-            xScaleLblRef.current.domain([60.0 * domain[0] , 60.0 * domain[domain.length - 1] ]);
-            updateLimits();
+            xScaleLblRef.current.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
         }
-    }, [xLimits])
+
+        updateLimits();
+
+    }, [activeUnit, yLimits, xLimits])
+
 
     React.useEffect(() => { updateHover(); }, [hover]);
 
