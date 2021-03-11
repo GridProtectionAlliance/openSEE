@@ -182,7 +182,7 @@ namespace OpenSEE
                 new D3Series()
                 {
                     LegendHorizontal = "TCE ",
-                    LegendVertical = ds.SeriesInfo.Channel.Asset.AssetName,
+                    LegendVertical = "",
                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
                     Unit = "TCE",
                     Color = GetColor(ds.SeriesInfo.Channel),
