@@ -129,7 +129,10 @@ const BarChart = (props: iProps) => {
         if (yScaleRef.current == undefined || xScaleRef.current == undefined)
             return;
 
-        yScaleRef.current.domain(yLimits);
+        if (isFinite(yLimits[0]) && isFinite(yLimits[1]))
+            yScaleRef.current.domain(yLimits);
+        else
+            yScaleRef.current.domain([0,1]);
 
         if (barData.length > 0) {
             let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
