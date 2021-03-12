@@ -2525,31 +2525,37 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
-            //Limit to 100 pts per cycle
-            int step = (int)Math.Floor(samplesPerCycle / 100.0D);
-            if (step == 0 || fullRes)
-                step = 1;
+            // For this analytic only down sample by multiplies of 2.
+            // that could mean no down sampling for some cases where samples per cycle is not a multiple of 2
+            // Because Down sampling is only for performance reasons that is not an issue
+            int downSampled = samplesPerCycle;
 
-            int size = (dataSeries.DataPoints.Count - samplesPerCycle) / step;
+            while (downSampled > 32 && downSampled % 2 == 0)
+                downSampled = downSampled / 2;
 
-            double[][] dataArr = new double[(size + 1)][];
-            int j = 0;
-            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
+            if (fullRes)
+                downSampled = samplesPerCycle;
+
+            for (int i = 0; i <= dataSeries.DataPoints.Count - samplesPerCycle; i += downSampled)
             {
 
-                double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
-                FFT fft = new FFT(Fbase * samplesPerCycle, points);
+                IEnumerable<double> points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle);
+
+                points = points.Where((t,index) => index%(samplesPerCycle/downSampled) == 0);
+
+                FFT fft = new FFT(Fbase * downSampled, points.ToArray());
+
+                double fCenter = fft.Frequency.Min(f => Math.Abs(f - 60.0));
+                int fIndex = Array.FindIndex(fft.Frequency, f => Math.Abs(f - 60.0) == fCenter);
 
 
-                double rmsHarmSum = fft.Magnitude.Where((value, index) => index != 1).Select(value => Math.Pow(value, 2)).Sum();
-                double rmsHarm = fft.Magnitude[1];
+                double rmsHarmSum = fft.Magnitude.Where((value, index) => index != fIndex).Select(value => Math.Pow(value, 2)).Sum();
+                double rmsHarm = fft.Magnitude[fIndex];
                 double thdValue = 100 * Math.Sqrt(rmsHarmSum) / rmsHarm;
 
-                dataArr[j] = new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, thdValue };
-                j++;
+                thd.DataPoints.Add(new double[] { dataSeries.DataPoints[i].Time.Subtract(m_epoch).TotalMilliseconds, thdValue });
             }
 
-            thd.DataPoints = dataArr.ToList();
             return thd;
         }
 
@@ -2884,17 +2890,22 @@ namespace OpenSEE
                 return new List<D3Series>();
 
             double[] points;
-            if (maxHarmonic > 0 && 2*maxHarmonic < samplesPerCycle)
-            {
-                int step = (int)Math.Floor(samplesPerCycle / (2.0D*(double)maxHarmonic));
-                samplesPerCycle = 2 * maxHarmonic;
-                points = cycleData.Where((point,index) => index%step == 0).Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
-            }
-            else
-                points = cycleData.Select(point => point.Value / (samplesPerCycle * cycles)).ToArray();
+
+            // For this analytic only down sample by multiplies of 2.
+            // that could mean no down sampling for some cases where samples per cycle is not a multiple of 2
+            // Because Down sampling is only for performance reasons that is not an issue
+            int downSampled = samplesPerCycle;
+
+           
+
+            while (downSampled > (maxHarmonic) && downSampled % 2 == 0 && maxHarmonic > 0)
+                downSampled = downSampled / 2;
 
 
-            FFT fft = new FFT(Fbase * (samplesPerCycle), points);
+            points = cycleData.Select(point => point.Value / (downSampled * cycles)).Where((pt, i) => i%(samplesPerCycle/downSampled)==0).ToArray();
+
+
+            FFT fft = new FFT(Fbase * (downSampled), points);
 
             fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value / Math.Sqrt(2)) }).ToList();
             fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value * 180.0D / Math.PI) }).ToList();
