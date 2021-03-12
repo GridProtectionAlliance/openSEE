@@ -43,7 +43,7 @@ const FFTTable = (props: Iprops) => {
                         {fftPoints.map((item, index) => <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span> </th>)}
                     </tr>
                     <tr>
-                        <th>Harmonic</th>
+                        <th>Harmonic [Hz]</th>
                         {fftPoints.map((item, index) => <React.Fragment key={index}>
                             <th><span>Mag ({item.Unit.short})</span> </th>
                             <th><span>Ang ({item.PhaseUnit.short})</span> </th>
@@ -85,7 +85,7 @@ const Row = (row: number, data: Array<OpenSee.IFFTSeries>) => {
     }
     return (
         <tr key={row}>
-            <td key={0}>{(row > 1? row.toFixed(0) : row == 0? 'DC' : 'Fund')}</td>
+            <td key={0}>{(row > 0 ? data[0].Frequency[row].toFixed(2) :  'DC')}</td>
             {createCells()}
         </tr>
     );

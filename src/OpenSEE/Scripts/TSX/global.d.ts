@@ -210,6 +210,7 @@ export namespace OpenSee {
         Phase: string,
         Magnitude: number[],
         Angle: number[],
+        Frequency: number [],
         Asset: string,
         PhaseUnit: iUnitOptions,
         BaseValue: number,

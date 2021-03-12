@@ -878,7 +878,8 @@ export const selectFFTData = createSelector((state: OpenSee.IRootState) => Filte
                     Asset: a,
                     Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
                     Angle: phaseChannel.DataPoints.map(item => item[1]),
-                    BaseValue: magnitudeChannel.BaseValue
+                    BaseValue: magnitudeChannel.BaseValue,
+                    Frequency: magnitudeChannel.DataPoints.map(item => item[0]*60.0),
                 });
 
             })
