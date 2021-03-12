@@ -159,7 +159,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             store.dispatch(ClearOverlappingEvent());
         if (prevProps.querystring != this.props.querystring) {
             clearTimeout(this.historyHandle);
-            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + this.props.querystring), 500);
+            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + this.props.querystring), 1000);
         }
     }
 

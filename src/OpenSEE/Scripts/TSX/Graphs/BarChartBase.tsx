@@ -224,6 +224,10 @@ const BarChart = (props: iProps) => {
             .attr("y", d => yScaleRef.current(d.data[1]))
             .attr("width", xScaleRef.current.bandwidth())
             .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current(d.data[1])), 0) })
+            .style("transition", 'x 0.5s')
+            .style("transition", 'y 0.5s')
+            .style("transition", 'width 0.5s')
+            .style("height", 'width 0.5s')
 
 
         container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();

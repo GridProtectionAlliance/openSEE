@@ -254,7 +254,8 @@ const LineChart = (props: iProps) => {
             .style('font-size', yLblFontSize.toString() + 'rem');
     }, [yLblText, yLblFontSize]);
 
-    React.useLayoutEffect(() => {
+
+    React.useEffect(() => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         if (container == null || container.select(".yAxisLabel") == null || yLblText.length == 0)
             return;
@@ -269,8 +270,7 @@ const LineChart = (props: iProps) => {
         if (fs != yLblFontSize)
             setYLblFontSize(fs)
 
-    });
-
+    }, [props.height, yLblText])
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -293,13 +293,13 @@ const LineChart = (props: iProps) => {
                 })
 
         container.select(".DataContainer").selectAll(".Line").data(lineData).enter().append("path").classed("Line", true)
-            .attr("fill", "none")
-            .attr("stroke-width", 0.0)
+            
             .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))
             .attr("d", function (d) {
                 return lineGen(d.DataPoints)
             })
+            
 
         container.select(".DataContainer").selectAll(".Line").data(lineData).exit().remove();
         updateLimits();
@@ -374,7 +374,10 @@ const LineChart = (props: iProps) => {
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
-            .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")");
+            .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")")
+            .style("transition", 'd 0.5s')
+            .attr("fill", "none")
+            .attr("stroke-width", 0.0);
 
         //Event overlay - needs to be treated seperately
 
