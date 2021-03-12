@@ -334,16 +334,17 @@ namespace OpenSEE
             int i = 0;
             double dT = 0;
             double cycles = 0;
-            int step = 0;
+            double step = 0;
             for (i=0; i < dict.Data.Count; i++)
             {
                 dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
                 cycles = dT * Fbase/1000.0D;
+
                 if (cycles* DownSampleRate > dict.Data[i].DataPoints.Count)
                     continue;
 
-                step = (int)Math.Floor((dict.Data[i].DataPoints.Count-1) / (cycles * DownSampleRate));
-                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*DownSampleRate)).Select(j => dict.Data[i].DataPoints[(j * step)]).ToList();
+                step = (dict.Data[i].DataPoints.Count-1) / (cycles * DownSampleRate);
+                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*DownSampleRate)).Select(j => dict.Data[i].DataPoints[((int)Math.Round(j * step))]).ToList();
             }
             
 
