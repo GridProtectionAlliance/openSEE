@@ -93,6 +93,8 @@ const BarChart = (props: iProps) => {
     const options = useSelector(selectAnalyticOptionInstance)
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
+    const [yLblText, setYLblText] = React.useState<string>('');
+    const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
     //Effect to update the Data 
     React.useEffect(() => {
@@ -180,6 +182,32 @@ const BarChart = (props: iProps) => {
       
     }, [props.type, props.eventId, options]);
 
+    React.useEffect(() => {
+        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+
+        if (container == null || container.select(".yAxisLabel") == null)
+            return;
+        container.select(".yAxisLabel")
+            .text(yLblText)
+            .style('font-size', yLblFontSize.toString() + 'rem');
+    }, [yLblText, yLblFontSize]);
+
+    React.useLayoutEffect(() => {
+        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        if (container == null || container.select(".yAxisLabel") == null || yLblText.length == 0)
+            return;
+
+        let fs = 1;
+        let l = GetTextWidth('', '1rem', yLblText);
+
+        while ((l > props.height - 60) && fs > 0.2) {
+            fs = fs - 0.05;
+            l = GetTextWidth('', fs.toString() + 'rem', yLblText);
+        }
+        if (fs != yLblFontSize)
+            setYLblFontSize(fs)
+
+    });
 
 
     // This Function needs to be called whenever Data is Added
@@ -459,16 +487,16 @@ const BarChart = (props: iProps) => {
 
     //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limitw change (due to auto Units)
     function updateLabels() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-
+      
         function GetYLabel() {
             return uniq(barData.map(d => d.Unit)).map(unit => {
                 return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A")+ "]";
             }).join("  ")
         }
 
-        container.select(".yAxisLabel").text(GetYLabel())
-
+        if (yLblText != GetYLabel())
+            setYLblText(GetYLabel())
+        
     }
 
 
@@ -503,7 +531,7 @@ const BarChart = (props: iProps) => {
     function updateSize() {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        container.select(".xAxis").attr("transform", "translate(0," + (props.height - 60) + ")");
+        container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")");
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
@@ -515,23 +543,42 @@ const BarChart = (props: iProps) => {
         xScaleLblRef.current.range([60 + offsetLeft, props.width - 240 - offsetRight]);
         container.select('.xAxisExtLeft')
             .attr("x2", 60 + offsetLeft)
-            .attr("y1", props.height - 60)
-            .attr("y2", props.height - 60)
+            .attr("y1", props.height - 40)
+            .attr("y2", props.height - 40)
 
         container.select('.xAxisExtRight')
             .attr("x2", props.width - 240 - offsetRight)
-            .attr("y1", props.height - 60)
-            .attr("y2", props.height - 60)
+            .attr("y1", props.height - 40)
+            .attr("y2", props.height - 40)
             .attr("x1", props.width - 240)
 
-        yScaleRef.current.range([props.height - 60, 0]);
+        yScaleRef.current.range([props.height - 40, 0]);
 
         container.select(".clip")
             .attr("height", props.height - 60)
             .attr("width", props.width - 300)
         updateLimits();
     }
-    
+
+    // Helper Function
+    function GetTextWidth(font: string, fontSize: string, word: string): number {
+
+        const text = document.createElement("span");
+        document.body.appendChild(text);
+
+        text.style.font = font;
+        text.style.fontSize = fontSize;
+        text.style.height = 'auto';
+        text.style.width = 'auto';
+        text.style.position = 'absolute';
+        text.style.whiteSpace = 'no-wrap';
+        text.innerHTML = word;
+
+        const width = Math.ceil(text.clientWidth);
+        document.body.removeChild(text);
+        return width;
+    } 
+
     return (
         <div>
             <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hasData={barData.length > 0} hasTrace={enabledBar.some(i => i)} />

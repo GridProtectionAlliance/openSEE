@@ -34,7 +34,6 @@ import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoadin
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
-import { current } from '@reduxjs/toolkit';
 
 
 
@@ -114,6 +113,8 @@ const LineChart = (props: iProps) => {
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
 
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
+    const [yLblText, setYLblText] = React.useState<string>('');
+    const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
     const dispatch = useDispatch();
 
@@ -243,6 +244,33 @@ const LineChart = (props: iProps) => {
       
     }, [props.type, props.eventId, options]);
 
+    React.useEffect(() => {
+        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+
+        if (container == null || container.select(".yAxisLabel") == null)
+            return;
+        container.select(".yAxisLabel")
+            .text(yLblText)
+            .style('font-size', yLblFontSize.toString() + 'rem');
+    }, [yLblText, yLblFontSize]);
+
+    React.useLayoutEffect(() => {
+        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        if (container == null || container.select(".yAxisLabel") == null || yLblText.length == 0)
+            return;
+
+        let fs = 1;
+        let l = GetTextWidth('', '1rem', yLblText);
+
+        while ((l > props.height - 60) && fs > 0.2) {
+            fs = fs - 0.05;
+            l = GetTextWidth('', fs.toString() + 'rem', yLblText);
+        }
+        if (fs != yLblFontSize)
+            setYLblFontSize(fs)
+
+    });
+
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -310,7 +338,7 @@ const LineChart = (props: iProps) => {
             .attr("x", - (props.height / 2 - 20))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text("Units Go here");
+            .text(yLblText);
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
 
         setTooltipLocation(10);
@@ -628,9 +656,10 @@ const LineChart = (props: iProps) => {
             }).join("  ")
         }
 
-        container.select(".xAxisLabel").text(props.timeLabel + " (" + GetTLabel() + ")")
-        container.select(".yAxisLabel").text(GetDisplayLabel(props.type) + ' ' + GetYLabel())
+        if (yLblText != GetDisplayLabel(props.type) + ' ' + GetYLabel())
+            setYLblText(GetDisplayLabel(props.type) + ' ' + GetYLabel());
 
+        container.select(".xAxisLabel").text(props.timeLabel + " (" + GetTLabel() + ")")
     }
 
     //This Function needs to be called whenever (a) Color Setting changes occur
@@ -678,7 +707,27 @@ const LineChart = (props: iProps) => {
         container.select(".Overlay").attr("width", props.width - 240)
         updateLimits();
     }
-    
+
+    // Helper Function
+    function GetTextWidth(font: string, fontSize: string, word: string): number {
+
+        const text = document.createElement("span");
+        document.body.appendChild(text);
+
+        text.style.font = font;
+        text.style.fontSize = fontSize;
+        text.style.height = 'auto';
+        text.style.width = 'auto';
+        text.style.position = 'absolute';
+        text.style.whiteSpace = 'no-wrap';
+        text.innerHTML = word;
+
+        const width = Math.ceil(text.clientWidth);
+        document.body.removeChild(text);
+        return width;
+    } 
+
+
     return (
         <div>
             <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} hasTrace={enabledLine.some(i=> i)} />
