@@ -57,6 +57,18 @@ namespace OpenSEE
         
         // Constants
         public const string TimeCorrelatedSagsSQL =
+            "SELECT Disturbance.* " +
+            "INTO #sag " +
+            "FROM " +
+            "    Disturbance JOIN " +
+            "    EventType DisturbanceType ON Disturbance.EventTypeID = DisturbanceType.ID JOIN " +
+            "    Phase ON Disturbance.PhaseID = Phase.ID " +
+            "WHERE " +
+            "    DisturbanceType.Name = 'Sag' AND " +
+            "    Phase.Name = 'Worst' AND " +
+            "    Disturbance.StartTime <= {1} AND " +
+            "    Disturbance.EndTime >= {0} " +
+            "" +
             "SELECT " +
             "    Event.ID AS EventID, " +
             "    EventType.Name AS EventType, " +
@@ -72,30 +84,21 @@ namespace OpenSEE
             "    Meter ON Event.MeterID = Meter.ID JOIN " +
             "    MeterAsset ON " +
             "        Event.MeterID = MeterAsset.MeterID AND " +
-            "        Event.AssetID = MeterAsset.AssetID JOIN" +
-            "   Asset ON Asset.ID = MeterAsset.AssetID  CROSS APPLY " +
+            "        Event.AssetID = MeterAsset.AssetID JOIN " +
+            "    Asset ON Asset.ID = MeterAsset.AssetID CROSS APPLY " +
             "    ( " +
             "        SELECT TOP 1 " +
-            "            Disturbance.PerUnitMagnitude, " +
-            "            Disturbance.DurationSeconds, " +
-            "            Disturbance.DurationCycles " +
-            "        FROM " +
-            "            Disturbance JOIN " +
-            "            EventType DisturbanceType ON Disturbance.EventTypeID = DisturbanceType.ID JOIN " +
-            "            Phase ON " +
-            "                Disturbance.PhaseID = Phase.ID AND " +
-            "                Phase.Name = 'Worst' " +
-            "        WHERE " +
-            "            Disturbance.EventID = Event.ID AND " +
-            "            DisturbanceType.Name = 'Sag' AND " +
-            "            Disturbance.StartTime <= {1} AND " +
-            "            Disturbance.EndTime >= {0} " +
+            "            PerUnitMagnitude, " +
+            "            DurationSeconds, " +
+            "            DurationCycles " +
+            "        FROM #sag " +
+            "        WHERE EventID = Event.ID " +
             "        ORDER BY PerUnitMagnitude DESC " +
             "    ) Sag " +
+            "WHERE Event.ID IN (SELECT EventID FROM #sag) " +
             "ORDER BY " +
             "    Sag.PerUnitMagnitude, " +
             "    Event.StartTime";
-
 
         #endregion
 
