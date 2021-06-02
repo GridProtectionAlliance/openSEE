@@ -89,7 +89,7 @@
       <VersionMinorChange>None</VersionMinorChange>
       <VersionBuildChange>Increment</VersionBuildChange>
       <VersionRevisionChange>None</VersionRevisionChange>
-
+	<VersionFile Condition="'$(VersionFile)' == ''">$(LocalFolder)\scripts\$(ProjectName).version</VersionFile>
       <!-- Override default settings. -->
       <GitServer Condition="'$(GitServer)' == ''">git@github.com:GridProtectionAlliance/OpenSEE.git</GitServer>
 	  <PublishApp>true</PublishApp>
