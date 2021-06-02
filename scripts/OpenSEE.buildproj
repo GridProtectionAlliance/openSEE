@@ -82,7 +82,7 @@
   <Target Name="BeforePrepareSettings">
     <PropertyGroup>
       <!--Must-override setting(s).-->
-      <ProjectName>OpenSEE</ProjectName>
+      <ProjectName>OpenSee</ProjectName>
       <ProjectSolution>$(LocalFolder)\src\$(ProjectName).sln</ProjectSolution>
       <GitBranch>CLDev</GitBranch>
       <VersionMajorChange>None</VersionMajorChange>
