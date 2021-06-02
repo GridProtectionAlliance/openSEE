@@ -68,6 +68,7 @@ declare var userID: boolean;
 declare var eventID: number;
 declare var eventStartTime: string;
 declare var eventEndTime: string;
+declare var version: string;
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
@@ -278,7 +279,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         </div>
                     </div>
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
-                        <span>Version 3.0.1</span>
+                        <span>Version {version}</span>
                         <br/>
                         <span><About/></span>
                     </div>

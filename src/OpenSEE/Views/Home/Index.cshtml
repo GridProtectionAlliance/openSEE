@@ -30,6 +30,9 @@
 @{
     Layout = "";
     bool enableLightningQuery = (ViewBag.EnableLightningQuery ?? false);
+
+    Version assemblyVersionInfo = typeof(OpenSEE.MvcApplication).Assembly.GetName().Version;
+    string applicationVersion = assemblyVersionInfo.Major + "." + assemblyVersionInfo.Minor + "." + assemblyVersionInfo.Build;
 }
 
 @helper ReferenceScript(string path)
@@ -88,6 +91,7 @@
         var cycles = @Html.Raw(ViewBag.Cycles ?? 0);
         var userID = @Html.Raw(ViewBag.UserId ?? 0);
         var analyticHandle = null;
+        var version = '@applicationVersion';
     </script>
     @if (Request.Browser.Browser == "InternetExplorer" || Request.Browser.Browser == "IE")
     {
