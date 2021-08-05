@@ -1,4 +1,4 @@
-![Round Logo](http://www.gridprotectionalliance.org/images/products/icons%2064/openSEE.png)![openSEE](https://raw.githubusercontent.com/GridProtectionAlliance/openSEE/master/src/Documentation/Readme%20files/openSEE%20Logo.png)
+![Round Logo](http://www.gridprotectionalliance.org/images/products/icons%2064/openSEE.png)![openSEE](https://www.gridprotectionalliance.org/images/products/productTitles75/openSEE.png)
 
 openSEE is a browser-based wave-form display tool that can be implemented with [openXDA](https://github.com/GridProtectionAlliance/openXDA). A link to openSEE is typically embedded in e-mails automatically produced by openXDA so that e-mail recipients can quickly access the waveforms that triggered DFR and PQ meter events.
 openSEE allows two waveforms to be displayed so that comparisons of data can be made - from different channels in the same DFR that triggered the event of from channels in other DFRs. An optional phasor display is also available to easily resolve phase angles.
