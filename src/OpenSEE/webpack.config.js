@@ -56,11 +56,6 @@ function buildConfig(env, argv) {
             ]
         },
         externals: {
-            jquery: 'jQuery',
-            react: 'React',
-            'react-dom': 'ReactDOM',
-            moment: 'moment',
-            'react-router-dom': 'ReactRouterDOM',
         },
         optimization: {
             minimizer: [

@@ -109,7 +109,6 @@
     <None Include="Scripts\TS\Services\OpenSee.ts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Scripts\TSX\OpenSee.d.ts" />
     <None Include="Scripts\TSX\openSee.tsx" />
     <None Include="Scripts\TSX\Graphs\LineChartBase.tsx" />
     <None Include="Scripts\TSX\Components\About.tsx" />

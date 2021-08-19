@@ -33,6 +33,7 @@ import { selectColor, selectActiveUnit } from '../store/settingSlice'
 import { selectData, selectEnabled,   selectLoading, selectYLimits, selectMouseMode, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../store/dataSlice';
 import { selectAnalyticOptions } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
+import OpenSEEService from '../../TS/Services/OpenSEE';
 
 
 
@@ -209,6 +210,12 @@ const BarChart = (props: iProps) => {
 
     });
 
+    interface BarSeries {
+        unit: OpenSee.Unit,
+        data: [number, number],
+        color: OpenSee.Color,
+        base: number
+    }
 
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
@@ -218,7 +225,7 @@ const BarChart = (props: iProps) => {
             .classed("Bar", true)
             .attr("fill", (d) => colors[d.Color])
             .selectAll('rect')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }))
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as BarSeries[])
             .enter().append('rect')
             .attr("x", d => xScaleRef.current(d.data[0]))
             .attr("y", d => yScaleRef.current(d.data[1]))
@@ -251,7 +258,7 @@ const BarChart = (props: iProps) => {
         let domain = barData[0].DataPoints.filter(pt => pt[0] > xLimits[0] && pt[0] < xLimits[1]).map(pt => pt[0]);
 
         xScaleRef.current = d3.scaleBand()
-            .domain(domain)
+            .domain(domain.map(d => d.toString()))
             .range([60, props.width - 240])
             .padding(0.1);
 
@@ -262,9 +269,9 @@ const BarChart = (props: iProps) => {
             .domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)])
             .range([60 + offsetLeft, props.width - 240 - offsetRight ]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
+        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
     
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSize(6,0));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(() => d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSize(6));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
@@ -368,8 +375,8 @@ const BarChart = (props: iProps) => {
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        container.select(".xAxis").call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d)).tickSizeOuter(0));
+        container.select(".yAxis").call(() => d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        container.select(".xAxis").call(() => d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSizeOuter(0));
        
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -392,11 +399,11 @@ const BarChart = (props: iProps) => {
         }
 
         container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
-            .attr("x", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : v) })
-            .style("opacity", d => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
-            .attr("y", d => barGen(d.unit, d.base)(d))
+            .attr("x", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : v) })
+            .style("opacity", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
+            .attr("y", (d: BarSeries) => barGen(d.unit, d.base)(d))
             .attr("width", Math.max(xScaleRef.current.bandwidth()))
-            .attr("height", d => { return Math.max(((props.height - 40) - barGen(d.unit,d.base)(d)),0)})
+            .attr("height", (d: BarSeries) => { return Math.max(((props.height - 40) - barGen(d.unit,d.base)(d)),0)})
 
 
         updateLabels();
@@ -512,7 +519,7 @@ const BarChart = (props: iProps) => {
                 return colors[col as string]
         }
 
-        container.select(".DataContainer").selectAll(".Bar").attr("fill", (d) => GetColor(d.Color));
+        container.select(".DataContainer").selectAll(".Bar").attr("fill", (d : OpenSee.iD3DataSeries) => GetColor(d.Color));
 
     }
 

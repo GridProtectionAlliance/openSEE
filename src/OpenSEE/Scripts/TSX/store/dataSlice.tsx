@@ -147,7 +147,7 @@ export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Un
 })
 
 // Thunk to set Analytic
-export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: OpenSee.Analytic, thunkAPI) => {
+export const SetAnalytic = createAsyncThunk<Promise<any>, OpenSee.Analytic, {}>('Data/setAnalytic', (arg: OpenSee.Analytic, thunkAPI) => {
 
     
     // Remove any old Analytic
@@ -168,7 +168,7 @@ export const SetAnalytic = createAsyncThunk('Data/setAnalytic', async (arg: Open
     let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
     AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId },handles)
 
-    return await Promise.all(handles);
+    return Promise.all(handles);
 })
 
 //Thunk to Update Plot
@@ -818,7 +818,7 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
     (state: OpenSee.IRootState) => state.Data.activeUnits, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
     (baseUnit, eventID, data, selectedData, activeUnits, keys, enabled) => {
         let result: OpenSee.IPointCollection[] = [];
-
+        
         data.forEach((item, index) => {
             if (keys[index].EventId != eventID)
                 return;
@@ -831,7 +831,8 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
                     Group: d.LegendGroup,
                     Name: (keys[index].DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical +' ' + d.LegendHorizontal,
                     Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
-                    Value: selectedData[index].map(j => d.DataPoints[j])
+                    Value: selectedData[index].map(j => d.DataPoints[j]),
+                    BaseValue: d.BaseValue
                 }
 
             }))

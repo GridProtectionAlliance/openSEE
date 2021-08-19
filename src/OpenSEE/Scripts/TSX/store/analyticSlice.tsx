@@ -111,7 +111,7 @@ export const selectHPF = (state: OpenSee.IRootState) => state.Analytic.HPFOrder;
 export const selectCycles = (state: OpenSee.IRootState) => state.Analytic.FFTCycles;
 export const selectFFTWindow = createSelector((state: OpenSee.IRootState) => state.Analytic.FFTCycles, (state: OpenSee.IRootState) => state.Analytic.FFTStartTime,
     (cycle, startTime) => {
-        return [startTime, startTime + (cycle * 1 / 60.0 * 1000.0)]
+        return [startTime, startTime + (cycle * 1 / 60.0 * 1000.0)] as [number, number]
     });
 
 export const selectShowFFTWindow = createSelector((state: OpenSee.IRootState) => state.Data.Analytic, (analytic) => analytic == "FFT");

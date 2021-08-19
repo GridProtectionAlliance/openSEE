@@ -127,7 +127,7 @@ const PolarChartWidget = (props: Iprops) => {
                                     {(Vbc.length > 0) ? <tr><td style={{ padding: 2 }}>Vbc</td>{AssetList.map((asset, index) => createTable(Vbc.find(item => item.Asset == asset), index))}</tr> : null}
                                     {(Vca.length > 0) ? <tr><td style={{ padding: 2 }}>Vca</td>{AssetList.map((asset, index) => createTable(Vca.find(item => item.Asset == asset), index))}</tr> : null}
 
-                                    {(Vn.length > 0) ? <tr><td style={{ padding: 2 }}>Vn</td>{AssetList.map((asset, index) => createTable(Vn.find(item => item.asset == asset), index))}</tr> : null}
+                                    {(Vn.length > 0) ? <tr><td style={{ padding: 2 }}>Vn</td>{AssetList.map((asset, index) => createTable(Vn.find(item => item.Asset == asset), index))}</tr> : null}
 
                                     {(Ia.length > 0) ? <tr><td style={{ padding: 2 }}>Ia</td>{AssetList.map((asset, index) => createTable(Ia.find(item => item.Asset == asset), index))}</tr> : null}
                                     {(Ib.length > 0) ? <tr><td style={{ padding: 2 }}>Ib</td>{AssetList.map((asset, index) => createTable(Ib.find(item => item.Asset == asset), index))}</tr> : null}

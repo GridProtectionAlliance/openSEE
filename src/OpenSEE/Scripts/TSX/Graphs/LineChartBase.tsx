@@ -34,6 +34,7 @@ import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoadin
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
+import { AxisDomain } from 'd3';
 
 
 
@@ -311,6 +312,7 @@ const LineChart = (props: iProps) => {
             .data(lineData)
             .enter()
             .append("g")
+            .attr("fill", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .classed("Markers", true)
             .selectAll("circle")
             .data(function (d, i, j) { return d.DataMarker; });
@@ -319,7 +321,6 @@ const LineChart = (props: iProps) => {
         points.enter()
             .append("circle")
             .classed("Circle",true)
-            .attr("fill", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("cx", function (d) {
                 return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
             })
@@ -353,8 +354,8 @@ const LineChart = (props: iProps) => {
             .domain([startTime, endTime])
             .range([60, props.width - 240]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
+        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
@@ -503,8 +504,8 @@ const LineChart = (props: iProps) => {
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".yAxis").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d)));
-        container.select(".xAxis").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d)));
+        container.select(".yAxis").call(() => d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        container.select(".xAxis").call(() => d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
 
         let lineGen = (unit: OpenSee.Unit, base: number) => {
 
@@ -528,15 +529,15 @@ const LineChart = (props: iProps) => {
         let svg = container.select(".DataContainer");
 
         svg.selectAll(".Line")
-            .attr("d", function (d) {
+            .attr("d", function (d: OpenSee.iD3DataSeries) {
                 return lineGen(d.Unit, d.BaseValue)(d.DataPoints)
             })
 
         svg.selectAll(".Circle")
-            .attr("cx", function (d) {
+            .attr("cx", function (d: [number,number]) {
                 return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
             })
-            .attr("cy", function (d) {
+            .attr("cy", function (d: [number, number]) {
                 return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d[1])
             })
 
@@ -717,7 +718,7 @@ const LineChart = (props: iProps) => {
                 return colors[col as string]
         }
 
-        container.select(".DataContainer").selectAll(".Line").attr("stroke", (d) => GetColor(d.Color));
+        container.select(".DataContainer").selectAll(".Line").attr("stroke", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
 
     }
 

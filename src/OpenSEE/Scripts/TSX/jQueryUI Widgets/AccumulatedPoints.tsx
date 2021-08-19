@@ -89,7 +89,7 @@ const PointWidget = (props: Iprops) => {
 
             <div style={{ margin: '5px', textAlign: 'right' }}>
                     <input className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex != -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
-                    <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points.lenth - 1))} />
+                    <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points.length - 1))} />
                     <input className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
                 </div>
         </WidgetWindow>

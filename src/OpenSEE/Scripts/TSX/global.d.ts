@@ -23,11 +23,14 @@
 //
 //******************************************************************************************************
 // global variables declared in openSEE.cshtml scripts section
-declare var homePath: string;
-declare var userIsAdmin: boolean;
-declare var eventID: number;
-declare var eventStartTime: string;
-declare var eventEndTime: string;
+declare global {
+    var homePath: string;
+    var userIsAdmin: boolean;
+    var eventID: number;
+    var eventStartTime: string;
+    var eventEndTime: string;
+
+}
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
@@ -220,7 +223,8 @@ export namespace OpenSee {
         Group: string,
         Name: string,
         Unit: iUnitOptions,
-        Value: Array<[number,number]>
+        Value: Array<[number, number]>,
+        BaseValue: number
     }
 
     // Settings For Plots 

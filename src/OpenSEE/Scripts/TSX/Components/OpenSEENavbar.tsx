@@ -37,7 +37,7 @@ declare var eventEndTime: string;
 
 interface IProps {
     EventData: OpenSee.iPostedData,
-    Lookup: iNextBackLookup,
+    Lookup: OpenSee.iNextBackLookup,
     stateSetter: (ob: any) => void
 }
 

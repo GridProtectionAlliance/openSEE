@@ -23,9 +23,6 @@
 //
 //******************************************************************************************************
 
-/// <reference path="openSee.d.ts" />
-
-
 // To-DO:
 // # Add Analytic Parameters and Selected Events to Query
 // # Fix Pop up windows
