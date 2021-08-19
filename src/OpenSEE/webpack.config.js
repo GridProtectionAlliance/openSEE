@@ -1,24 +1,28 @@
 ﻿"use strict";
-const webpack = require("webpack");
 const path = require("path");
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 function buildConfig(env, argv) {
+    if (env.NODE_ENV == undefined) env.NODE_ENV = 'development';
+
     let config = {
-        mode: 'development',
-        context: path.resolve(__dirname, 'Scripts'),
+        mode: env.NODE_ENV,
+        context: path.resolve(__dirname),
         cache: true,
         entry: {
-            OpenSee: "./TSX/OpenSee.tsx",
-            ToolTipDeltaWidget: "./TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
-            ToolTipWidget: "./TSX/jQueryUI Widgets/Tooltip.tsx",
-            TimeCorrelatedSagsWidget: "./TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
-            PointWidget: "./TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
-            PolarChartWidget: "./TSX/jQueryUI Widgets/PolarChart.tsx",
-            ScalarStatsWidget: "./TSX/jQueryUI Widgets/ScalarStats.tsx",
-            LightningDataWidget: "./TSX/jQueryUI Widgets/LightningData.tsx",
-            SettingsWidget: "./TSX/jQueryUI Widgets/SettingWindow.tsx",
-            FFTTable: "./TSX/jQueryUI Widgets/FFTTable.tsx",
-            HarmonicStatsWidget: "./TSX/jQueryUI Widgets/HarmonicStats.tsx",
+            OpenSee: "./Scripts/TSX/OpenSee.tsx",
+            ToolTipDeltaWidget: "./Scripts/TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
+            ToolTipWidget: "./Scripts/TSX/jQueryUI Widgets/Tooltip.tsx",
+            TimeCorrelatedSagsWidget: "./Scripts/TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
+            PointWidget: "./Scripts/TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
+            PolarChartWidget: "./Scripts/TSX/jQueryUI Widgets/PolarChart.tsx",
+            ScalarStatsWidget: "./Scripts/TSX/jQueryUI Widgets/ScalarStats.tsx",
+            LightningDataWidget: "./Scripts/TSX/jQueryUI Widgets/LightningData.tsx",
+            SettingsWidget: "./Scripts/TSX/jQueryUI Widgets/SettingWindow.tsx",
+            FFTTable: "./Scripts/TSX/jQueryUI Widgets/FFTTable.tsx",
+            HarmonicStatsWidget: "./Scripts/TSX/jQueryUI Widgets/HarmonicStats.tsx",
         },
         output: {
             path: path.resolve(__dirname, 'Scripts'),
@@ -26,7 +30,6 @@ function buildConfig(env, argv) {
         },
         // Enable sourcemaps for debugging webpack's output.
         devtool: "inline-source-map",
-
         resolve: {
             // Add '.ts' and '.tsx' as resolvable extensions.
             extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js", ".css"]
@@ -34,17 +37,22 @@ function buildConfig(env, argv) {
         module: {
             rules: [
                 // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
-                { test: /\.tsx?$/, loader: "ts-loader" },
+                {
+                    test: /\.tsx?$/,
+                    include: path.resolve(__dirname, "Scripts"),
+                    loader: "ts-loader", options: { transpileOnly: true }
+                },
                 {
                     test: /\.css$/,
-                    loaders: ['style-loader', 'css-loader'],
+                    include: path.resolve(__dirname, 'wwwroot', "Content"),
+                    use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
                 },
-                {
-                    test: /\.js$/,
-                    enforce: "pre",
-                    loader: "source-map-loader"
-                },
-                { test: /\.(woff|woff2|ttf|eot|svg|png|gif)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader?limit=100000" }
+                //{
+                //    test: /\.js$/,
+                //    enforce: "pre",
+                //    loader: "source-map-loader"
+                //},
+                { test: /\.(woff|woff2|ttf|eot|svg|png|gif)(\?v=[0-9]\.[0-9]\.[0-9])?$/,loader:'url-loader', options: { limit:100000 } }
             ]
         },
         externals: {
@@ -54,16 +62,14 @@ function buildConfig(env, argv) {
             moment: 'moment',
             'react-router-dom': 'ReactRouterDOM',
         },
+        optimization: {
+            minimizer: [
+                new TerserPlugin({ extractComments: false })
+            ],
+        },
         plugins: [
-            new webpack.ProvidePlugin({
-                //$: 'jquery',
-                //jQuery: 'jquery',
-                //'window.jQuery':'jquery',
-                //Map: 'core-js/es/map',
-                //Set: 'core-js/es/set',
-                //requestAnimationFrame: 'raf',
-                //cancelAnimationFrame: ['raf', 'cancel'],
-            }),
+            new NodePolyfillPlugin(),
+            new ForkTsCheckerWebpackPlugin()
         ]
     };
 
