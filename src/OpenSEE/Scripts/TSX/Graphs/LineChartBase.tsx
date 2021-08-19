@@ -292,7 +292,9 @@ const LineChart = (props: iProps) => {
                     return tx && ty
                 })
 
-        container.select(".DataContainer").selectAll(".Line").data(lineData).enter().append("path").classed("Line", true)
+        let lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
+
+        lines.enter().append("path").classed("Line", true)
             
             .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))
@@ -301,7 +303,35 @@ const LineChart = (props: iProps) => {
             })
             
 
-        container.select(".DataContainer").selectAll(".Line").data(lineData).exit().remove();
+        lines.exit().remove();
+
+        let points = container
+            .select(".DataContainer")
+            .selectAll(".Markers")
+            .data(lineData)
+            .enter()
+            .append("g")
+            .classed("Markers", true)
+            .selectAll("circle")
+            .data(function (d, i, j) { return d.DataMarker; });
+
+
+        points.enter()
+            .append("circle")
+            .classed("Circle",true)
+            .attr("fill", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
+            .attr("cx", function (d) {
+                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
+            })
+            .attr("cy", function (d) {
+                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d[1])
+            })
+            .attr("r", 10)
+
+
+
+        points.exit().remove();
+
         updateLimits();
 
     }
@@ -495,9 +525,23 @@ const LineChart = (props: iProps) => {
                 })
         }
 
-        container.select(".DataContainer").selectAll(".Line").attr("d", function (d) {
+        let svg = container.select(".DataContainer");
+
+        svg.selectAll(".Line")
+            .attr("d", function (d) {
                 return lineGen(d.Unit, d.BaseValue)(d.DataPoints)
             })
+
+        svg.selectAll(".Circle")
+            .attr("cx", function (d) {
+                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
+            })
+            .attr("cy", function (d) {
+                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d[1])
+            })
+
+
+
 
         updateLabels();
 

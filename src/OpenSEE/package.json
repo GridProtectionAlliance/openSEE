@@ -36,5 +36,10 @@
     "reselect": "^4.0.0",
     "styled-components": "^5.2.1",
     "typestyle": "2.0.1"
+  },
+  "scripts": {
+    "build": "npm prune && npm install && webpack --mode=development",
+    "watch": "webpack --watch --color --mode=development",
+    "update": "npx npm-check-updates"
   }
 }

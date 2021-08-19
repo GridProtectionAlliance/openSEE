@@ -181,33 +181,64 @@ namespace OpenSEE
 
             
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
-                ds => (type == "TripCoilCurrent"? 
-                new D3Series()
-                {
-                    LegendHorizontal = "TCE ",
-                    LegendVertical = "",
-                    ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                    Unit = "TCE",
-                    Color = GetColor(ds.SeriesInfo.Channel),
-                    LegendVGroup = "",
-                    DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                    DataMarker = new List<double[]>(),
-                    BaseValue =  GetIbase(Sbase,ds.SeriesInfo.Channel.Asset.VoltageKV),
-                    LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                } :
-                 new D3Series()
-                 {
-                     LegendVGroup = GetVoltageType(ds.SeriesInfo.Channel),
-                     LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
-                     LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase),
-                     ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
-                     Unit = type,
-                     Color = GetColor(ds.SeriesInfo.Channel),
-                     LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                     DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                     DataMarker = new List<double[]>(),
-                     BaseValue = (type == "Voltage" ? GetBaseV(ds.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
-                 })).ToList();
+                ds => {
+                    if (type == "TripCoilCurrent")
+                    {
+                        using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                        {
+                            RelayPerformance relayPerformance = new TableOperations<RelayPerformance>(connection).QueryRecordWhere("EventID = {0} AND ChannelID = {1}", evtID, ds.SeriesInfo.ChannelID);
+                            List<double[]> dataMarkers = new List<double[]>();
+                            
+                            if (relayPerformance != null) {
+
+                                try
+                                {
+                                    if (relayPerformance.TripInitiate != null)
+                                    {
+                                        DateTime tripInitiate = (DateTime)relayPerformance.TripInitiate;
+                                        DateTime pickuptime = tripInitiate.AddTicks((int)relayPerformance.PickupTime);
+                                        DateTime tripTime = tripInitiate.AddTicks((int)relayPerformance.TripTime);
+
+                                        dataMarkers.Add(new double[] { tripInitiate.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripInitiate).FirstOrDefault()?.Value ?? 0 });
+                                        dataMarkers.Add(new double[] { pickuptime.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < pickuptime).FirstOrDefault()?.Value ?? 0 });
+                                        dataMarkers.Add(new double[] { tripTime.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripTime).FirstOrDefault()?.Value ?? 0 });
+                                    }
+                                }
+                                catch (Exception ex) { }
+
+                            }
+
+                            return new D3Series()
+                            {
+                                LegendHorizontal = "TCE ",
+                                LegendVertical = "",
+                                ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                                Unit = "TCE",
+                                Color = GetColor(ds.SeriesInfo.Channel),
+                                LegendVGroup = "",
+                                DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                                DataMarker = dataMarkers,
+                                BaseValue = GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV),
+                                LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                            };
+                        }
+                    }
+                    else {
+                        return new D3Series()
+                        {
+                            LegendVGroup = GetVoltageType(ds.SeriesInfo.Channel),
+                            LegendHorizontal = GetSignalType(ds.SeriesInfo.Channel),
+                            LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase),
+                            ChartLabel = GetChartLabel(ds.SeriesInfo.Channel),
+                            Unit = type,
+                            Color = GetColor(ds.SeriesInfo.Channel),
+                            LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                            DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                            DataMarker = new List<double[]>(),
+                            BaseValue = (type == "Voltage" ? GetBaseV(ds.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
+                        };
+                  }
+                }).ToList();
 
             if (type == "TripCoilCurrent")
                 AdjustLegendNumbering(dataLookup);
