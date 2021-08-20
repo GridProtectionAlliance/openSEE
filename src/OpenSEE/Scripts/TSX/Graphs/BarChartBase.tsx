@@ -375,8 +375,8 @@ const BarChart = (props: iProps) => {
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".yAxis").call(() => d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
-        container.select(".xAxis").call(() => d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSizeOuter(0));
+        container.selectAll(".yAxis").transition().call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)) as any);
+        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSizeOuter(0) as any);
        
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();

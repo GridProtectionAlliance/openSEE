@@ -504,8 +504,8 @@ const LineChart = (props: iProps) => {
     function updateLimits() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".yAxis").call(() => d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
-        container.select(".xAxis").call(() => d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
+        container.selectAll(".yAxis").transition().call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)) as any);
+        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)) as any);
 
         let lineGen = (unit: OpenSee.Unit, base: number) => {
 
