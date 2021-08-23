@@ -360,8 +360,8 @@ namespace OpenSEE
 
             Task<DataGroup> dataGroupTask = new Task<DataGroup>(() =>
             {
-               
-                    List<byte[]> data = ChannelData.DataFromEvent(eventID, "dbOpenXDA");
+                    
+                    List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("dbOpenXDA"));
                     return ToDataGroup(meter, data);
                 
             });
