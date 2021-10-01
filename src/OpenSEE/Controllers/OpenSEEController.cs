@@ -25,14 +25,10 @@
 //
 //******************************************************************************************************
 using FaultData.DataAnalysis;
-using GSF;
 using GSF.Data;
 using GSF.Data.Model;
 using GSF.Identity;
-using GSF.NumericalAnalysis;
-using GSF.Security;
 using GSF.Web;
-using GSF.Web.Model;
 using OpenSEE.Model;
 using openXDA.Model;
 using System;
@@ -196,12 +192,33 @@ namespace OpenSEE
                                     if (relayPerformance.TripInitiate != null)
                                     {
                                         DateTime tripInitiate = (DateTime)relayPerformance.TripInitiate;
+                                        DateTime TImax = tripInitiate.AddTicks((int)relayPerformance.Tmax1);
+                                        DateTime TplungerLatch = tripInitiate.AddTicks((int)relayPerformance.TplungerLatch);
                                         DateTime pickuptime = tripInitiate.AddTicks((int)relayPerformance.PickupTime);
                                         DateTime tripTime = tripInitiate.AddTicks((int)relayPerformance.TripTime);
+                                        DateTime Tdrop = tripInitiate.AddTicks((int)relayPerformance.TiDrop);
+                                        DateTime Tend = tripInitiate.AddTicks((int)relayPerformance.Tend);
+
+                                        DateTime Ta = tripInitiate.AddTicks((int)(relayPerformance.ExtinctionTimeA ?? 0));
+                                        DateTime Tb = tripInitiate.AddTicks((int)(relayPerformance.ExtinctionTimeB ?? 0));
+                                        DateTime Tc = tripInitiate.AddTicks((int)(relayPerformance.ExtinctionTimeC ?? 0));
+
 
                                         dataMarkers.Add(new double[] { tripInitiate.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripInitiate).FirstOrDefault()?.Value ?? 0 });
-                                        dataMarkers.Add(new double[] { pickuptime.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < pickuptime).FirstOrDefault()?.Value ?? 0 });
-                                        dataMarkers.Add(new double[] { tripTime.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripTime).FirstOrDefault()?.Value ?? 0 });
+                                        dataMarkers.Add(new double[] { TImax.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Imax1 ?? 0.0D });
+                                        dataMarkers.Add(new double[] { TplungerLatch.Subtract(m_epoch).TotalMilliseconds, relayPerformance.IplungerLatch });
+                                        dataMarkers.Add(new double[] { pickuptime.Subtract(m_epoch).TotalMilliseconds, relayPerformance.PickupTimeCurrent ?? 0.0D });
+                                        dataMarkers.Add(new double[] { tripTime.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Imax2 ?? 0 });
+                                        dataMarkers.Add(new double[] { Tdrop.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Idrop ?? 0 });
+                                        dataMarkers.Add(new double[] { Tend.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tend).FirstOrDefault()?.Value  ?? 0 });
+
+                                        if (Ta > tripInitiate)
+                                            dataMarkers.Add(new double[] { Ta.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Ta).FirstOrDefault()?.Value ?? 0 });
+                                        if (Tb > tripInitiate)
+                                            dataMarkers.Add(new double[] { Tb.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tb).FirstOrDefault()?.Value ?? 0 });
+                                        if (Tc > tripInitiate)
+                                            dataMarkers.Add(new double[] { Tc.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tc).FirstOrDefault()?.Value ?? 0 });
+
                                     }
                                 }
                                 catch (Exception ex) { }
