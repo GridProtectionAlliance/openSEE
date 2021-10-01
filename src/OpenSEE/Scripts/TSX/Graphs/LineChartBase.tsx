@@ -34,7 +34,6 @@ import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoadin
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
-import { AxisDomain } from 'd3';
 
 
 
