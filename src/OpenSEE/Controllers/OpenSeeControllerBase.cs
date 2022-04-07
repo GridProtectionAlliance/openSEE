@@ -373,6 +373,8 @@ namespace OpenSEE
                     .Select(sample => dict.Data[i].DataPoints[0][0] + sample / samplesPerSecond * 1000.0D)
                     .Select(x => new double[] { x, splineFit.CalculateY(x) })
                     .ToList();
+
+                dict.Data[i].DataMarker = dict.Data[i].DataPoints;
             }
         }
 
