@@ -76,23 +76,22 @@ namespace OpenSEE
             }
         }
 
-        public static int DownSampleRate
+        public static int MaxSampleRate
         {
             get
             {
-                if (m_Downsample != null)
-                    return (int)m_Downsample;
+                if (m_MaxSampleRate != null)
+                    return (int)m_MaxSampleRate;
 
                 using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                    m_Downsample = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'downSample'") ?? "-1");
-                return (int)m_Downsample;
+                    m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'maxSampleRate'") ?? "-1");
+                return (int)m_MaxSampleRate;
             }
-        
         }
 
         private static double? m_Fbase = null;
         private static double? m_Sbase = null;
-        private static int? m_Downsample = null;
+        private static int? m_MaxSampleRate = null;
         #endregion
 
         #region [ Static ]
@@ -328,7 +327,7 @@ namespace OpenSEE
         /// <param name="dict">The object that will be returned to the Client</param>
         public static void DownSample(JsonReturn dict)
         {
-            if (DownSampleRate == -1)
+            if (MaxSampleRate == -1)
                 return;
 
             int i = 0;
@@ -340,14 +339,12 @@ namespace OpenSEE
                 dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
                 cycles = dT * Fbase/1000.0D;
 
-                if (cycles* DownSampleRate > dict.Data[i].DataPoints.Count)
+                if (cycles* MaxSampleRate > dict.Data[i].DataPoints.Count)
                     continue;
 
-                step = (dict.Data[i].DataPoints.Count-1) / (cycles * DownSampleRate);
-                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*DownSampleRate)).Select(j => dict.Data[i].DataPoints[((int)Math.Round(j * step))]).ToList();
+                step = (dict.Data[i].DataPoints.Count-1) / (cycles * MaxSampleRate);
+                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*MaxSampleRate)).Select(j => dict.Data[i].DataPoints[((int)Math.Round(j * step))]).ToList();
             }
-            
-
         }
             
         #endregion
