@@ -165,6 +165,7 @@ namespace OpenSEE
                 returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
                 returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
 
+                UpSample(returnDict);
                 DownSample(returnDict);
                 return returnDict;
             }           

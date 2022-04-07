@@ -22,6 +22,7 @@
 //******************************************************************************************************
 using FaultData.DataAnalysis;
 using GSF.Data;
+using GSF.NumericalAnalysis;
 using OpenSEE.Model;
 using openXDA.Model;
 using System;
@@ -89,9 +90,23 @@ namespace OpenSEE
             }
         }
 
+        public static int MinSampleRate
+        {
+            get
+            {
+                if (m_MinSampleRate != null)
+                    return (int)m_MinSampleRate;
+
+                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                    m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'minSampleRate'") ?? "-1");
+                return (int)m_MinSampleRate;
+            }
+        }
+
         private static double? m_Fbase = null;
         private static double? m_Sbase = null;
         private static int? m_MaxSampleRate = null;
+        private static int? m_MinSampleRate = null;
         #endregion
 
         #region [ Static ]
@@ -319,6 +334,46 @@ namespace OpenSEE
                 return "I" + DisplayPhaseName(channel.Phase) + " " + type;
 
             return null;
+        }
+
+        /// <summary>
+        /// Up samples data if necessary to smooth out the curve on the chart
+        /// </summary>
+        /// <param name="dict">The object that will be returned to the Client</param>
+        public static void UpSample(JsonReturn dict)
+        {
+            if (MinSampleRate == -1)
+                return;
+
+            int i = 0;
+            double dT = 0;
+            double cycles = 0;
+            for (i = 0; i < dict.Data.Count; i++)
+            {
+                dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
+                cycles = dT * Fbase / 1000.0D;
+
+                if (cycles * MinSampleRate < dict.Data[i].DataPoints.Count)
+                    continue;
+
+                List<double> xValues = dict.Data[i].DataPoints
+                    .Select(point => point[0])
+                    .ToList();
+
+                List<double> yValues = dict.Data[i].DataPoints
+                    .Select(point => point[1])
+                    .ToList();
+
+                SplineFit splineFit = SplineFit.ComputeCubicSplines(xValues, yValues);
+                int numSamples = (int)(cycles * MinSampleRate);
+                double samplesPerSecond = MinSampleRate * Fbase;
+
+                dict.Data[i].SmoothDataPoints = Enumerable
+                    .Range(0, numSamples)
+                    .Select(sample => dict.Data[i].DataPoints[0][0] + sample / samplesPerSecond * 1000.0D)
+                    .Select(x => new double[] { x, splineFit.CalculateY(x) })
+                    .ToList();
+            }
         }
 
         /// <summary>

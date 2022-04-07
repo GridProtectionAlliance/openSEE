@@ -99,6 +99,11 @@ namespace OpenSEE.Model
         public double BaseValue;
 
         /// <summary>
+        /// Datapoints upsampled for visualization
+        /// </summary>
+        public List<double[]> SmoothDataPoints = new List<double[]>();
+
+        /// <summary>
         /// Datapoints 
         /// </summary>
         public List<double[]> DataPoints = new List<double[]>();

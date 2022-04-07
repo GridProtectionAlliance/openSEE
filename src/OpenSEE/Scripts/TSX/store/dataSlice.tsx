@@ -1316,21 +1316,26 @@ function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenS
 //This Function Recomputes y Limits based on X limits for all states
 function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3DataSeries>, baseUnit: OpenSee.IUnitCollection, activeUnits: OpenSee.IActiveUnits): [number, number] {
 
-    let limitedData = data.map((item,index) => {
-        let indexStart = getIndex(start, item.DataPoints);
-        let indexEnd = getIndex(end, item.DataPoints);
+    let limitedData = data.map((item, index) => {
+        let dataPoints = item.DataPoints;
+        if (item.SmoothDataPoints.length > 0)
+            dataPoints = item.SmoothDataPoints;
+
+        let indexStart = getIndex(start, dataPoints);
+        let indexEnd = getIndex(end, dataPoints);
 
         let factor = baseUnit[item.Unit].options[activeUnits[item.Unit]].factor;
 
         factor = (baseUnit[item.Unit].options[activeUnits[item.Unit]].short == 'pu' ? 1.0 / item.BaseValue : factor);
-        let dt = item.DataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
+        let dt = dataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
         return [Math.min(...dt) * factor, Math.max(...dt) * factor];
         
     });
 
     let yMin = Math.min(...limitedData.map(item => item[0]));
     let yMax = Math.max(...limitedData.map(item => item[1]));
-    return [yMin, yMax];
+    const pad = (yMax - yMin) / 20;
+    return [yMin - pad, yMax + pad];
     
 }
 

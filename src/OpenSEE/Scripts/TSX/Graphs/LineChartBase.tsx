@@ -299,7 +299,9 @@ const LineChart = (props: iProps) => {
             .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))
             .attr("d", function (d) {
-                return lineGen(d.DataPoints)
+                if (d.SmoothDataPoints.length > 0)
+                    return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                return lineGen(d.DataPoints);
             })
             
 
@@ -529,7 +531,10 @@ const LineChart = (props: iProps) => {
 
         svg.selectAll(".Line")
             .attr("d", function (d: OpenSee.iD3DataSeries) {
-                return lineGen(d.Unit, d.BaseValue)(d.DataPoints)
+                const scopedLineGen = lineGen(d.Unit, d.BaseValue);
+                if (d.SmoothDataPoints.length > 0)
+                    return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                return lineGen(d.Unit, d.BaseValue)(d.DataPoints);
             })
 
         svg.selectAll(".Circle")

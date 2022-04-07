@@ -146,6 +146,7 @@ GO
 
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'maxSampleRate', N'-1', 0, N'Administrator')
 GO
+INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'minSampleRate', N'-1', 0, N'Administrator')
 GO
 INSERT [dbo].[Settings] ([Scope], [Name], [Value], [ApplicationInstance], [Roles]) VALUES (N'app.setting', N'maxFFTHarmonic', N'50', 0, N'Administrator')
 GO
