@@ -42,7 +42,7 @@
     "reselect": "^4.0.0",
     "styled-components": "^5.2.1",
     "typestyle": "2.0.1",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "jquery": "3.6.0"
   },
   "scripts": {
