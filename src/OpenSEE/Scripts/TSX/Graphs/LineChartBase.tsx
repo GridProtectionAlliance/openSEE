@@ -737,6 +737,14 @@ const LineChart = (props: iProps) => {
 
         container.select(".DataContainer").selectAll(".Line:not(.active)").attr("stroke-width", 0);
 
+        // Also disbale/enable points of interest
+        container.selectAll(".Markers").data(lineData).classed("active", (d, index) => enabledLine[index])
+
+        container.select(".DataContainer").selectAll(".Markers.active").attr("opacity", 1.0);
+
+        container.select(".DataContainer").selectAll(".Markers:not(.active)").attr("opacity", 0);
+
+
     }
 
     // This Function needs to be called whenever height or width change
