@@ -502,11 +502,6 @@ namespace OpenSEE
 
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                returnDict.Add("enableLightningData", connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'EnableLightningQuery'") ?? "false");
-            }
-
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);

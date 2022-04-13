@@ -21,14 +21,13 @@
 //
 //******************************************************************************************************
 
+using System;
+using System.Web.Mvc;
 using GSF.Data;
 using GSF.Identity;
 using GSF.Web.Model;
-using GSF.Web.Security;
 using OpenSEE.Model;
 using openXDA.Model;
-using System;
-using System.Web.Mvc;
 
 namespace OpenSEE.Controllers
 {
@@ -37,26 +36,29 @@ namespace OpenSEE.Controllers
     /// </summary>
     public class HomeController : Controller
     {
+        #region [ Constructors ]
 
-        public HomeController() {
+        public HomeController()
+        {
             ViewData.Model = new AppModel();
         }
+
+        #endregion
+
         #region [ Methods ]
+
         public ActionResult Home()
         {
             int eventID = -1;
 
             using (DataContext dataContext = new DataContext("systemSettings"))
             {
-                ViewBag.EnableLightningQuery = dataContext.Connection.ExecuteScalar<bool?>("SELECT Value FROM Settings WHERE Name = 'EnableLightningQuery'") ?? false;
-
                 ViewBag.IsAdmin = ValidateAdminRequest();
 
                 
                 if (Request.QueryString.Get("eventid") != null)
                     eventID = int.Parse(Request.QueryString["eventid"]);
             }
-           
 
             using (DataContext dataContext = new DataContext("dbOpenXDA"))
             {
@@ -71,8 +73,6 @@ namespace OpenSEE.Controllers
                 ViewBag.Cycles = Math.Floor((evt.EndTime - evt.StartTime).TotalSeconds * 60.0D);
                 return View("Index");
             }
-
-            
         }
 
         private bool ValidateAdminRequest()
@@ -96,9 +96,8 @@ namespace OpenSEE.Controllers
                 if (isAdmin) return true;
                 else return false;
             }
-
-            
         }
+
         #endregion
     }
 }
