@@ -27,39 +27,32 @@ import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
 
 
 interface Iprops { closeCallback: () => void, eventId: number, isOpen: boolean }
-declare var window: any
+declare const window: any
 
 const LightningDataWidget = (props: Iprops) => {
     const [tblData, setTBLData] = React.useState<Array<JSX.Element>>([]);
 
-    React.useEffect(() => {
-        let handle = getData();
-
-        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props.eventId])
-
     function getData(): JQuery.jqXHR {
-        var lightningQuery = window.LightningQuery;
+        const lightningQuery = window.LightningQuery;
 
         if (lightningQuery === undefined)
             return;
 
-
-        let updateTable = displayData => {
-            let arr = Array.isArray(displayData) ? displayData : [displayData];
-            let result = [];
+        const updateTable = displayData => {
+            const arr = Array.isArray(displayData) ? displayData : [displayData];
+            const result = [];
             result.push(
                 <tr key='Header'>
                     {Object.keys(arr[0]).map(key => <th key={key}>{key}</th>)}
                 </tr>)
-            result.push(...arr.map((row,index) => 
+            result.push(...arr.map((row, index) =>
                 <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={"row" + index}>
                     {Object.keys(row).map(key => <td key={"row" + index + key}>{row[key]}</td>)}
                 </tr>))
             setTBLData(result);
         };
 
-        let errHandler = err => {
+        const errHandler = err => {
             let message = "Unknown error";
 
             if (typeof (err) === "string")
@@ -71,9 +64,8 @@ const LightningDataWidget = (props: Iprops) => {
         };
 
         updateTable({ State: "Loading..." });
-        
 
-        let handle =  $.ajax({
+        const handle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetLightningParameters?eventId=${props.eventId}`,
             contentType: "application/json; charset=utf-8",
@@ -83,11 +75,11 @@ const LightningDataWidget = (props: Iprops) => {
         });
 
         handle.done(lightningParameters => {
-            let noData = { State: "No Data" };
+            const noData = { State: "No Data" };
 
-            let lineKey = lightningParameters.LineKey;
-            let startTime = utc(lightningParameters.StartTime).toDate();
-            let endTime = utc(lightningParameters.EndTime).toDate();
+            const lineKey = lightningParameters.LineKey;
+            const startTime = utc(lightningParameters.StartTime).toDate();
+            const endTime = utc(lightningParameters.EndTime).toDate();
 
             if (!lineKey) {
                 updateTable(noData);
@@ -97,7 +89,7 @@ const LightningDataWidget = (props: Iprops) => {
             lightningQuery.queryLineGeometry(lineKey, lineGeometry => {
                 lightningQuery.queryLineBufferGeometry(lineGeometry, lineBufferGeometry => {
                     lightningQuery.queryLightningData(lineBufferGeometry, startTime, endTime, lightningData => {
-                        var displayData = (lightningData.length !== 0) ? lightningData : noData;
+                        const displayData = (lightningData.length !== 0) ? lightningData : noData;
                         updateTable(displayData);
                     }, errHandler);
                 }, errHandler);
@@ -106,6 +98,13 @@ const LightningDataWidget = (props: Iprops) => {
 
         return handle;
     }
+
+    React.useEffect(() => {
+        const handle = getData();
+
+        return () => { if (handle !== undefined && handle.abort !== undefined) handle.abort(); }
+    }, [props.eventId]);
+
     return (
         <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={500} width={800}>
                 <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
