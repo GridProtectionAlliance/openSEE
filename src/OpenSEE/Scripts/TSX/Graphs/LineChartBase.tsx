@@ -723,7 +723,7 @@ const LineChart = (props: iProps) => {
         }
 
         container.select(".DataContainer").selectAll(".Line").attr("stroke", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
-
+        container.select(".DataContainer").selectAll(".Markers").attr("fill", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
     }
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
@@ -737,7 +737,7 @@ const LineChart = (props: iProps) => {
 
         container.select(".DataContainer").selectAll(".Line:not(.active)").attr("stroke-width", 0);
 
-        // Also disbale/enable points of interest
+        // Also disable/enable points of interest
         container.selectAll(".Markers").data(lineData).classed("active", (d, index) => enabledLine[index])
 
         container.select(".DataContainer").selectAll(".Markers.active").attr("opacity", 1.0);
