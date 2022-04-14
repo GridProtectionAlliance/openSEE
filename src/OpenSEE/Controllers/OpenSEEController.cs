@@ -24,13 +24,7 @@
 //       Split Analytics in sepperate File
 //
 //******************************************************************************************************
-using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Identity;
-using GSF.Web;
-using OpenSEE.Model;
-using openXDA.Model;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,11 +32,15 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Numerics;
 using System.Runtime.Caching;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Http;
+using FaultData.DataAnalysis;
+using GSF.Data;
+using GSF.Data.Model;
+using GSF.Identity;
+using GSF.Web;
+using OpenSEE.Model;
+using openXDA.Model;
 
 namespace OpenSEE
 {
@@ -732,49 +730,50 @@ namespace OpenSEE
             }
         }
 
-       
-        [Route("GetLightningParameters"), HttpGet]
-        public object GetLightningParameters()
+        [Route("GetLightningData"), HttpGet]
+        public IEnumerable<object> GetLightningData()
         {
             Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventId"]);
+            int eventID = int.Parse(query["eventID"]);
 
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
-                const string Query =
-                    "SELECT " +
-                    "    Asset.AssetKey AS LineKey, " +
-                    "    DATEADD(SECOND, -2, Fault.Inception) AS StartTime, " +
-                    "    DATEADD(SECOND, 2, Fault.Inception) AS EndTime " +
+                const string QueryFormat =
+                    "SELECT * " +
                     "FROM " +
-                    "    Event JOIN " +
-                    "    Asset ON Event.AssetID = Asset.ID CROSS APPLY " +
-                    "    ( " +
-                    "        SELECT " +
-                    "            DATEADD " +
-                    "            ( " +
-                    "                MINUTE, " +
-                    "                -Event.TimeZoneOffset, " +
-                    "                DATEADD " +
-                    "                ( " +
-                    "                    NANOSECOND, " +
-                    "                    -DATEPART(NANOSECOND, FaultSummary.Inception), " +
-                    "                    FaultSummary.Inception " +
-                    "                ) " +
-                    "            ) AS Inception " +
-                    "        FROM FaultSummary " +
-                    "        WHERE " +
-                    "            FaultSummary.EventID = Event.ID AND " +
-                    "            FaultSummary.FaultNumber = 1 AND " +
-                    "            FaultSummary.IsSelectedAlgorithm <> 0 " +
-                    "    ) Fault " +
-                    "WHERE Event.ID = {0}";
+                    "    LightningStrike LEFT OUTER JOIN " +
+                    "    VaisalaExtendedLightningData ON VaisalaExtendedLightningData.LightningStrikeID = LightningStrike.ID " +
+                    "WHERE EventID = {0}";
 
-                DataRow row = connection.RetrieveRow(Query, eventID);
-                string LineKey = row.ConvertField<string>("LineKey");
-                DateTime StartTime = row.ConvertField<DateTime>("StartTime");
-                DateTime EndTime = row.ConvertField<DateTime>("EndTime");
-                return new { LineKey, StartTime, EndTime };
+                object ToLightningStrike(DataRow row) => new
+                {
+                    Service = row.ConvertField<string>("Service"),
+                    UTCTime = row.ConvertField<DateTime>("UTCTime"),
+                    DisplayTime = row.ConvertField<string>("DisplayTime"),
+                    Amplitude = row.ConvertField<double>("Amplitude"),
+                    Latitude = row.ConvertField<double>("Latitude"),
+                    Longitude = row.ConvertField<double>("Longitude"),
+                    PeakCurrent = row.ConvertField<int>("PeakCurrent"),
+                    FlashMultiplicity = row.ConvertField<int>("FlashMultiplicity"),
+                    ParticipatingSensors = row.ConvertField<int>("ParticipatingSensors"),
+                    DegreesOfFreedom = row.ConvertField<int>("DegreesOfFreedom"),
+                    EllipseAngle = row.ConvertField<double>("EllipseAngle"),
+                    SemiMajorAxisLength = row.ConvertField<double>("SemiMajorAxisLength"),
+                    SemiMinorAxisLength = row.ConvertField<double>("SemiMinorAxisLength"),
+                    ChiSquared = row.ConvertField<double>("ChiSquared"),
+                    Risetime = row.ConvertField<double>("Risetime"),
+                    PeakToZeroTime = row.ConvertField<double>("PeakToZeroTime"),
+                    MaximumRateOfRise = row.ConvertField<double>("MaximumRateOfRise"),
+                    CloudIndicator = row.ConvertField<bool>("CloudIndicator"),
+                    AngleIndicator = row.ConvertField<bool>("AngleIndicator"),
+                    SignalIndicator = row.ConvertField<bool>("SignalIndicator"),
+                    TimingIndicator = row.ConvertField<bool>("TimingIndicator")
+                };
+
+                return connection
+                    .RetrieveData(QueryFormat, eventID)
+                    .AsEnumerable()
+                    .Select(ToLightningStrike);
             }
         }
 
