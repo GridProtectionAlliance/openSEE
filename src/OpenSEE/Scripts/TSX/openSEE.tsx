@@ -77,6 +77,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
     overlappingEventHandle: JQuery.jqXHR;
     eventDataHandle: JQuery.jqXHR;
+    navigationDataHandle: JQuery.jqXHR;
 
 
     constructor(props) {
@@ -126,6 +127,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         if (this.eventDataHandle !== undefined)
             this.eventDataHandle.abort();
 
+        if (this.navigationDataHandle !== undefined)
+            this.navigationDataHandle.abort();
+
         this.eventDataHandle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` +
@@ -138,11 +142,25 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
         this.eventDataHandle.then(data => {
             this.setState({
-                eventData: data,
-                lookup: data.nextBackLookup
+                eventData: data
             });
             store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
 
+        });
+
+        this.navigationDataHandle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetNavData?eventId=${this.props.eventID}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
+
+        this.navigationDataHandle.then(data => {
+            this.setState({
+                lookup: data
+            });
         });
     }
 
