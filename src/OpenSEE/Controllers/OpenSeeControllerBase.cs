@@ -22,6 +22,7 @@
 //******************************************************************************************************
 using FaultData.DataAnalysis;
 using GSF.Data;
+using GSF.NumericalAnalysis;
 using OpenSEE.Model;
 using openXDA.Model;
 using System;
@@ -76,23 +77,36 @@ namespace OpenSEE
             }
         }
 
-        public static int DownSampleRate
+        public static int MaxSampleRate
         {
             get
             {
-                if (m_Downsample != null)
-                    return (int)m_Downsample;
+                if (m_MaxSampleRate != null)
+                    return (int)m_MaxSampleRate;
 
                 using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                    m_Downsample = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'downSample'") ?? "-1");
-                return (int)m_Downsample;
+                    m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'maxSampleRate'") ?? "-1");
+                return (int)m_MaxSampleRate;
             }
-        
+        }
+
+        public static int MinSampleRate
+        {
+            get
+            {
+                if (m_MinSampleRate != null)
+                    return (int)m_MinSampleRate;
+
+                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                    m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'minSampleRate'") ?? "-1");
+                return (int)m_MinSampleRate;
+            }
         }
 
         private static double? m_Fbase = null;
         private static double? m_Sbase = null;
-        private static int? m_Downsample = null;
+        private static int? m_MaxSampleRate = null;
+        private static int? m_MinSampleRate = null;
         #endregion
 
         #region [ Static ]
@@ -323,12 +337,54 @@ namespace OpenSEE
         }
 
         /// <summary>
+        /// Up samples data if necessary to smooth out the curve on the chart
+        /// </summary>
+        /// <param name="dict">The object that will be returned to the Client</param>
+        public static void UpSample(JsonReturn dict)
+        {
+            if (MinSampleRate == -1)
+                return;
+
+            int i = 0;
+            double dT = 0;
+            double cycles = 0;
+            for (i = 0; i < dict.Data.Count; i++)
+            {
+                dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
+                cycles = dT * Fbase / 1000.0D;
+
+                if (cycles * MinSampleRate < dict.Data[i].DataPoints.Count)
+                    continue;
+
+                List<double> xValues = dict.Data[i].DataPoints
+                    .Select(point => point[0])
+                    .ToList();
+
+                List<double> yValues = dict.Data[i].DataPoints
+                    .Select(point => point[1])
+                    .ToList();
+
+                SplineFit splineFit = SplineFit.ComputeCubicSplines(xValues, yValues);
+                int numSamples = (int)(cycles * MinSampleRate);
+                double samplesPerSecond = MinSampleRate * Fbase;
+
+                dict.Data[i].SmoothDataPoints = Enumerable
+                    .Range(0, numSamples)
+                    .Select(sample => dict.Data[i].DataPoints[0][0] + sample / samplesPerSecond * 1000.0D)
+                    .Select(x => new double[] { x, splineFit.CalculateY(x) })
+                    .ToList();
+
+                dict.Data[i].DataMarker = dict.Data[i].DataPoints;
+            }
+        }
+
+        /// <summary>
         /// Down samples data if necessary to run in low Resource Systems 
         /// </summary>
         /// <param name="dict">The object that will be returned to the Client</param>
         public static void DownSample(JsonReturn dict)
         {
-            if (DownSampleRate == -1)
+            if (MaxSampleRate == -1)
                 return;
 
             int i = 0;
@@ -340,14 +396,12 @@ namespace OpenSEE
                 dT = dict.Data[i].DataPoints.Max(pt => pt[0]) - dict.Data[i].DataPoints.Min(pt => pt[0]);
                 cycles = dT * Fbase/1000.0D;
 
-                if (cycles* DownSampleRate > dict.Data[i].DataPoints.Count)
+                if (cycles* MaxSampleRate > dict.Data[i].DataPoints.Count)
                     continue;
 
-                step = (dict.Data[i].DataPoints.Count-1) / (cycles * DownSampleRate);
-                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*DownSampleRate)).Select(j => dict.Data[i].DataPoints[((int)Math.Round(j * step))]).ToList();
+                step = (dict.Data[i].DataPoints.Count-1) / (cycles * MaxSampleRate);
+                dict.Data[i].DataPoints = Enumerable.Range(0, (int)Math.Floor(cycles*MaxSampleRate)).Select(j => dict.Data[i].DataPoints[((int)Math.Round(j * step))]).ToList();
             }
-            
-
         }
             
         #endregion

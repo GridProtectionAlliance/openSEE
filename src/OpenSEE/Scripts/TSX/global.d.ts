@@ -181,6 +181,7 @@ export namespace OpenSee {
         Enabled: boolean,
 
         BaseValue: number,
+        SmoothDataPoints: Array<[number, number]>,
         DataPoints: Array<[number, number]>,
         DataMarker: Array<[number, number]>,
         LineType?: ('-'|':')

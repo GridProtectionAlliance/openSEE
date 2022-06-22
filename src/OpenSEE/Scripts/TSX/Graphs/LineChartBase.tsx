@@ -46,6 +46,8 @@ interface iProps {
     timeLabel: string,
 };
 
+interface IMarker { x: number, y: number, unit: string, base: number}
+
 // The following Classes are used in this 
 // xAxis, yaxis => The axis Labels
 // xAxisLabel, yAxisLabel => The Text next to the Axis
@@ -299,7 +301,9 @@ const LineChart = (props: iProps) => {
             .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))
             .attr("d", function (d) {
-                return lineGen(d.DataPoints)
+                if (d.SmoothDataPoints.length > 0)
+                    return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                return lineGen(d.DataPoints);
             })
             
 
@@ -314,17 +318,21 @@ const LineChart = (props: iProps) => {
             .attr("fill", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .classed("Markers", true)
             .selectAll("circle")
-            .data(function (d, i, j) { return d.DataMarker; });
+            .data(function (d, i, j) {
+                return d.DataMarker.map(v => ({
+                    x: v[0], y: v[1], unit: d.Unit as string, base: d.BaseValue
+                } as IMarker))
+            });
 
 
         points.enter()
             .append("circle")
             .classed("Circle",true)
             .attr("cx", function (d) {
-                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
+                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d.x)
             })
             .attr("cy", function (d) {
-                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d[1])
+                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d.y)
             })
             .attr("r", 10)
 
@@ -508,7 +516,7 @@ const LineChart = (props: iProps) => {
 
         let lineGen = (unit: OpenSee.Unit, base: number) => {
 
-            let factor = 1.0;
+            let factor: number = 1.0;
             if (activeUnit[unit as string] != undefined) {
                 factor = activeUnit[unit as string].factor
                 factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0 / base : factor);
@@ -529,19 +537,26 @@ const LineChart = (props: iProps) => {
 
         svg.selectAll(".Line")
             .attr("d", function (d: OpenSee.iD3DataSeries) {
-                return lineGen(d.Unit, d.BaseValue)(d.DataPoints)
+                const scopedLineGen = lineGen(d.Unit, d.BaseValue);
+                if (d.SmoothDataPoints.length > 0)
+                    return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                return lineGen(d.Unit, d.BaseValue)(d.DataPoints);
             })
 
-        svg.selectAll(".Circle")
-            .attr("cx", function (d: [number,number]) {
-                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d[0])
+        svg.selectAll("circle")
+            .attr("cx", function (d: IMarker) {
+                return isNaN(xScaleRef.current(d.x)) ? null : xScaleRef.current(d.x)
             })
-            .attr("cy", function (d: [number, number]) {
-                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d[1])
+            .attr("cy", function (d: IMarker) {
+
+                let factor: number = 1.0;
+                if (activeUnit[d.unit] != undefined) {
+                    factor = activeUnit[d.unit].factor
+                    factor = (activeUnit[d.unit].short == 'pu' || activeUnit[d.unit].short == 'pu/s' ? 1.0 / d.base : factor);
+                }
+
+                return isNaN(yScaleRef.current(d.y)) ? null : yScaleRef.current(d.y*factor)
             })
-
-
-
 
         updateLabels();
 
@@ -718,7 +733,7 @@ const LineChart = (props: iProps) => {
         }
 
         container.select(".DataContainer").selectAll(".Line").attr("stroke", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
-
+        container.select(".DataContainer").selectAll(".Markers").attr("fill", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
     }
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
@@ -731,6 +746,14 @@ const LineChart = (props: iProps) => {
         container.select(".DataContainer").selectAll(".Line.active").attr("stroke-width", 2.5);
 
         container.select(".DataContainer").selectAll(".Line:not(.active)").attr("stroke-width", 0);
+
+        // Also disable/enable points of interest
+        container.selectAll(".Markers").data(lineData).classed("active", (d, index) => enabledLine[index])
+
+        container.select(".DataContainer").selectAll(".Markers.active").attr("opacity", 1.0);
+
+        container.select(".DataContainer").selectAll(".Markers:not(.active)").attr("opacity", 0);
+
 
     }
 
