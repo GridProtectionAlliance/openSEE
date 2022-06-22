@@ -150,9 +150,9 @@ const OpenSeeNavBar = (props: IProps) => {
                             <a className="dropdown-item" onClick={() => setShowPolar(!showPolar)}>{(showPolar ? 'Close Phasor' : 'Show Phasor')}</a>
                             <a className="dropdown-item" onClick={() => setShowScalarStats(!showScalarStats) }>{(showScalarStats ? 'Close Stats' : 'Show Stats')}</a>
                             <a className="dropdown-item" onClick={() => setShowCorrelatedSags(!showCorrelatedSags)}>{(showCorrelatedSags ? 'Close Correlated Sags' : 'Show Correlated Sags')}</a>
+                            <a className="dropdown-item" onClick={() => setShowLightning(!showLightning)} >{(showLightning ? 'Close Lightning Data' : 'Show Lightning Data')}</a>
                             {props.EventData != undefined ? 
                                 <>
-                                    {(props.EventData.enableLightningData ? <a className="dropdown-item" onClick={() => setShowLightning(!showLightning)} >{(showLightning ? 'Close Lightning Data' : 'Show Lightning Data')} </a> : null)}
                                     {(props.EventData.EventName == "Snapshot" ? <a className="dropdown-item" onClick={() => setShowHarmonicStats(!showHarmonicStats) }>{(showHarmonicStats ? 'Hide Harmonics' : 'Show Harmonics')}</a> : null)}
                             </> : null
                             }

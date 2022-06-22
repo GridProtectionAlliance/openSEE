@@ -24,13 +24,7 @@
 //       Split Analytics in sepperate File
 //
 //******************************************************************************************************
-using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Identity;
-using GSF.Web;
-using OpenSEE.Model;
-using openXDA.Model;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,11 +32,15 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Numerics;
 using System.Runtime.Caching;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Http;
+using FaultData.DataAnalysis;
+using GSF.Data;
+using GSF.Data.Model;
+using GSF.Identity;
+using GSF.Web;
+using OpenSEE.Model;
+using openXDA.Model;
 
 namespace OpenSEE
 {
@@ -478,35 +476,7 @@ namespace OpenSEE
             int eventId = int.Parse(query["eventId"]);
             string breakerOperationID = (query.ContainsKey("breakeroperation") ? query["breakeroperation"] : "-1");
 
-            Func<string, string> func = inputString => {
-                switch (inputString)
-                {
-                    case "System":
-                        return "GetPreviousAndNextEventIdsForSystem";
-                    case "Station":
-                        return "GetPreviousAndNextEventIdsForMeterLocation";
-                    case "Meter":
-                        return "GetPreviousAndNextEventIdsForMeter";
-                    default:
-                        return "GetPreviousAndNextEventIdsForLine";
-                }
-
-            };
-
-            Dictionary<string, Tuple<EventView, EventView>> nextBackLookup = new Dictionary<string, Tuple<EventView, EventView>>()
-            {
-                { "System", Tuple.Create((EventView)null, (EventView)null) },
-                { "Station", Tuple.Create((EventView)null, (EventView)null) },
-                { "Meter", Tuple.Create((EventView)null, (EventView)null) },
-                { "Asset", Tuple.Create((EventView)null, (EventView)null) }
-            };
-
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                returnDict.Add("enableLightningData", connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'EnableLightningQuery'") ?? "false");
-            }
 
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
@@ -525,43 +495,7 @@ namespace OpenSEE
                                 
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));
 
-                using (IDbCommand cmd = connection.Connection.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new SqlParameter("@EventID", eventId));
-                    cmd.CommandTimeout = 300;
-
-                    foreach (string procedure in nextBackLookup.Keys.ToList())
-                    {
-                        EventView back = null;
-                        EventView next = null;
-                        int backID = -1;
-                        int nextID = -1;
-
-                        cmd.CommandText = func(procedure);
-
-                        using (IDataReader rdr = cmd.ExecuteReader())
-                        {
-                            rdr.Read();
-
-                            if (!rdr.IsDBNull(0))
-                            {
-                                backID = rdr.GetInt32(0);
-                            }
-
-                            if (!rdr.IsDBNull(1))
-                            {
-                                nextID = rdr.GetInt32(1);
-                            }
-                        }
-
-                        back = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", backID);
-                        next = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", nextID);
-                        nextBackLookup[procedure] = Tuple.Create(back, next);
-                    }
-                }
-
-                returnDict.Add("nextBackLookup", nextBackLookup);
+                
 
                 if (new List<string>() { "Fault", "RecloseIntoFault" }.Contains(returnDict["EventName"]))
                 {
@@ -636,45 +570,116 @@ namespace OpenSEE
             }
         }
 
+    [Route("GetNavData"), HttpGet]
+    public Dictionary<string, Tuple<EventView, EventView>> GetNavData()
+    {
+        Dictionary<string, string> query = Request.QueryParameters();
+        int eventId = int.Parse(query["eventId"]);
 
-        #endregion
-
-        #region [ Compare ]
-
-        [Route("GetOverlappingEvents"),HttpGet]
-        public DataTable GetOverlappingEvents()
-        {
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+        Dictionary<string, Tuple<EventView, EventView>> nextBackLookup = new Dictionary<string, Tuple<EventView, EventView>>()
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                { "System", Tuple.Create((EventView)null, (EventView)null) },
+                { "Station", Tuple.Create((EventView)null, (EventView)null) },
+                { "Meter", Tuple.Create((EventView)null, (EventView)null) },
+                { "Asset", Tuple.Create((EventView)null, (EventView)null) }
+            };
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-                DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
-
-
-                DataTable dataTable = connection.RetrieveData(@"
-                SELECT
-	                DISTINCT
-	                Meter.Name as MeterName,
-	                Asset.AssetName,
-	                Event.ID as EventID
-                FROM
-	                Event JOIN
-	                Meter ON Meter.ID = Event.MeterID JOIN
-	                Asset ON Asset.ID = Event.AssetID
-                WHERE
-	                Event.ID != {0} AND  
-	                Event.StartTime <= {2} AND
-	                Event.EndTime >= {1} 
-                ", eventId, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
-                return dataTable;
-
+        Func<string, string> func = inputString => {
+            switch (inputString)
+            {
+                case "System":
+                    return "GetPreviousAndNextEventIdsForSystem";
+                case "Station":
+                    return "GetPreviousAndNextEventIdsForMeterLocation";
+                case "Meter":
+                    return "GetPreviousAndNextEventIdsForMeter";
+                default:
+                    return "GetPreviousAndNextEventIdsForLine";
             }
-        }
 
-        #endregion
+        };
+
+        using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+        {
+            EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
+            using (IDbCommand cmd = connection.Connection.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add(new SqlParameter("@EventID", eventId));
+                cmd.CommandTimeout = 300;
+
+                foreach (string procedure in nextBackLookup.Keys.ToList())
+                {
+                    EventView back = null;
+                    EventView next = null;
+                    int backID = -1;
+                    int nextID = -1;
+
+                    cmd.CommandText = func(procedure);
+
+                    using (IDataReader rdr = cmd.ExecuteReader())
+                    {
+                        rdr.Read();
+
+                        if (!rdr.IsDBNull(0))
+                        {
+                            backID = rdr.GetInt32(0);
+                        }
+
+                        if (!rdr.IsDBNull(1))
+                        {
+                            nextID = rdr.GetInt32(1);
+                        }
+                    }
+
+                    back = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", backID);
+                    next = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", nextID);
+                    nextBackLookup[procedure] = Tuple.Create(back, next);
+                }
+            }
+            return nextBackLookup;
+        }
+    }
+
+           
+    #endregion
+
+    #region [ Compare ]
+
+    [Route("GetOverlappingEvents"),HttpGet]
+    public DataTable GetOverlappingEvents()
+    {
+        using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+        {
+            Dictionary<string, string> query = Request.QueryParameters();
+            int eventId = int.Parse(query["eventId"]);
+
+            Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+            DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
+            DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
+
+
+            DataTable dataTable = connection.RetrieveData(@"
+            SELECT
+	            DISTINCT
+	            Meter.Name as MeterName,
+	            Asset.AssetName,
+	            Event.ID as EventID
+            FROM
+	            Event JOIN
+	            Meter ON Meter.ID = Event.MeterID JOIN
+	            Asset ON Asset.ID = Event.AssetID
+            WHERE
+	            Event.ID != {0} AND  
+	            Event.StartTime <= {2} AND
+	            Event.EndTime >= {1} 
+            ", eventId, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
+            return dataTable;
+
+        }
+    }
+
+    #endregion
 
 
         #region [ UI Widgets ]
@@ -738,49 +743,50 @@ namespace OpenSEE
             }
         }
 
-       
-        [Route("GetLightningParameters"), HttpGet]
-        public object GetLightningParameters()
+        [Route("GetLightningData"), HttpGet]
+        public IEnumerable<object> GetLightningData()
         {
             Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventId"]);
+            int eventID = int.Parse(query["eventID"]);
 
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
-                const string Query =
-                    "SELECT " +
-                    "    Asset.AssetKey AS LineKey, " +
-                    "    DATEADD(SECOND, -2, Fault.Inception) AS StartTime, " +
-                    "    DATEADD(SECOND, 2, Fault.Inception) AS EndTime " +
+                const string QueryFormat =
+                    "SELECT * " +
                     "FROM " +
-                    "    Event JOIN " +
-                    "    Asset ON Event.AssetID = Asset.ID CROSS APPLY " +
-                    "    ( " +
-                    "        SELECT " +
-                    "            DATEADD " +
-                    "            ( " +
-                    "                MINUTE, " +
-                    "                -Event.TimeZoneOffset, " +
-                    "                DATEADD " +
-                    "                ( " +
-                    "                    NANOSECOND, " +
-                    "                    -DATEPART(NANOSECOND, FaultSummary.Inception), " +
-                    "                    FaultSummary.Inception " +
-                    "                ) " +
-                    "            ) AS Inception " +
-                    "        FROM FaultSummary " +
-                    "        WHERE " +
-                    "            FaultSummary.EventID = Event.ID AND " +
-                    "            FaultSummary.FaultNumber = 1 AND " +
-                    "            FaultSummary.IsSelectedAlgorithm <> 0 " +
-                    "    ) Fault " +
-                    "WHERE Event.ID = {0}";
+                    "    LightningStrike LEFT OUTER JOIN " +
+                    "    VaisalaExtendedLightningData ON VaisalaExtendedLightningData.LightningStrikeID = LightningStrike.ID " +
+                    "WHERE EventID = {0}";
 
-                DataRow row = connection.RetrieveRow(Query, eventID);
-                string LineKey = row.ConvertField<string>("LineKey");
-                DateTime StartTime = row.ConvertField<DateTime>("StartTime");
-                DateTime EndTime = row.ConvertField<DateTime>("EndTime");
-                return new { LineKey, StartTime, EndTime };
+                object ToLightningStrike(DataRow row) => new
+                {
+                    Service = row.ConvertField<string>("Service"),
+                    UTCTime = row.ConvertField<DateTime>("UTCTime"),
+                    DisplayTime = row.ConvertField<string>("DisplayTime"),
+                    Amplitude = row.ConvertField<double>("Amplitude"),
+                    Latitude = row.ConvertField<double>("Latitude"),
+                    Longitude = row.ConvertField<double>("Longitude"),
+                    PeakCurrent = row.ConvertField<int>("PeakCurrent"),
+                    FlashMultiplicity = row.ConvertField<int>("FlashMultiplicity"),
+                    ParticipatingSensors = row.ConvertField<int>("ParticipatingSensors"),
+                    DegreesOfFreedom = row.ConvertField<int>("DegreesOfFreedom"),
+                    EllipseAngle = row.ConvertField<double>("EllipseAngle"),
+                    SemiMajorAxisLength = row.ConvertField<double>("SemiMajorAxisLength"),
+                    SemiMinorAxisLength = row.ConvertField<double>("SemiMinorAxisLength"),
+                    ChiSquared = row.ConvertField<double>("ChiSquared"),
+                    Risetime = row.ConvertField<double>("Risetime"),
+                    PeakToZeroTime = row.ConvertField<double>("PeakToZeroTime"),
+                    MaximumRateOfRise = row.ConvertField<double>("MaximumRateOfRise"),
+                    CloudIndicator = row.ConvertField<bool>("CloudIndicator"),
+                    AngleIndicator = row.ConvertField<bool>("AngleIndicator"),
+                    SignalIndicator = row.ConvertField<bool>("SignalIndicator"),
+                    TimingIndicator = row.ConvertField<bool>("TimingIndicator")
+                };
+
+                return connection
+                    .RetrieveData(QueryFormat, eventID)
+                    .AsEnumerable()
+                    .Select(ToLightningStrike);
             }
         }
 

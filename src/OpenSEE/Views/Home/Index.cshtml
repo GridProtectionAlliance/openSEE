@@ -29,7 +29,6 @@
 
 @{
     Layout = "";
-    bool enableLightningQuery = (ViewBag.EnableLightningQuery ?? false);
 
     Version assemblyVersionInfo = typeof(OpenSEE.MvcApplication).Assembly.GetName().Version;
     string applicationVersion = assemblyVersionInfo.Major + "." + assemblyVersionInfo.Minor + "." + assemblyVersionInfo.Build;
@@ -104,13 +103,6 @@
    
     <script src="@Url.Content("~/@GSF/Web/Shared/Scripts/popper.js")"></script>
     <script src="@Url.Content("~/@GSF/Web/Shared/Scripts/bootstrap4.js")"></script>
-
-
-    @if (enableLightningQuery)
-    {
-        <script src="http://js.arcgis.com/3.15/"></script>
-        <script src="~/Scripts/openSEE-lightning-query.js"></script>
-    }
 
     @*@Scripts.Render("~/Scripts/OpenSEE")*@
     <script src="@Url.Content("~/Scripts/OpenSEE.js")"></script>

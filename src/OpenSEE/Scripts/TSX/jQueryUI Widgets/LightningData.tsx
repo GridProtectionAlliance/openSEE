@@ -22,100 +22,100 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { utc } from 'moment';
-import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
+import { WidgetWindow } from './Common';
+import { ConfigurableTable } from '@gpa-gemstone/react-interactive';
 
 
-interface Iprops { closeCallback: () => void, eventId: number, isOpen: boolean }
-declare var window: any
+interface Iprops {
+    closeCallback: () => void;
+    eventId: number;
+    isOpen: boolean;
+}
+
+interface Column {
+    key: string;
+    label: string;
+    field: keyof any;
+    content: (item: any, key: string, field: keyof any, style: React.CSSProperties, index: number) => React.ReactNode;
+}
 
 const LightningDataWidget = (props: Iprops) => {
-    const [tblData, setTBLData] = React.useState<Array<JSX.Element>>([]);
-
-    React.useEffect(() => {
-        let handle = getData();
-
-        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props.eventId])
+    const [lightningData, setLightningData] = React.useState([]);
+    const [cols, setCols] = React.useState<Column[]>([]);
 
     function getData(): JQuery.jqXHR {
-        var lightningQuery = window.LightningQuery;
+        setLightningData([{ State: "Loading..." }]);
 
-        if (lightningQuery === undefined)
-            return;
-
-
-        let updateTable = displayData => {
-            let arr = Array.isArray(displayData) ? displayData : [displayData];
-            let result = [];
-            result.push(
-                <tr key='Header'>
-                    {Object.keys(arr[0]).map(key => <th key={key}>{key}</th>)}
-                </tr>)
-            result.push(...arr.map((row,index) => 
-                <tr style={{ display: 'table', tableLayout: 'fixed', width: '100%' }} key={"row" + index}>
-                    {Object.keys(row).map(key => <td key={"row" + index + key}>{row[key]}</td>)}
-                </tr>))
-            setTBLData(result);
-        };
-
-        let errHandler = err => {
-            let message = "Unknown error";
-
-            if (typeof (err) === "string")
-                message = err;
-            else if (err && typeof (err.message) === "string" && err.message !== "")
-                message = err.message;
-
-            updateTable({ Error: message });
-        };
-
-        updateTable({ State: "Loading..." });
-        
-
-        let handle =  $.ajax({
+        const handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetLightningParameters?eventId=${props.eventId}`,
+            url: `${homePath}api/OpenSEE/GetLightningData?eventID=${props.eventId}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
             async: true
         });
 
-        handle.done(lightningParameters => {
-            let noData = { State: "No Data" };
-
-            let lineKey = lightningParameters.LineKey;
-            let startTime = utc(lightningParameters.StartTime).toDate();
-            let endTime = utc(lightningParameters.EndTime).toDate();
-
-            if (!lineKey) {
-                updateTable(noData);
+        handle.done((lightningData: unknown[]) => {
+            if (lightningData.length === 0) {
+                const noData = [{ State: "No Data" }];
+                setLightningData(noData);
                 return;
             }
 
-            lightningQuery.queryLineGeometry(lineKey, lineGeometry => {
-                lightningQuery.queryLineBufferGeometry(lineGeometry, lineBufferGeometry => {
-                    lightningQuery.queryLightningData(lineBufferGeometry, startTime, endTime, lightningData => {
-                        var displayData = (lightningData.length !== 0) ? lightningData : noData;
-                        updateTable(displayData);
-                    }, errHandler);
-                }, errHandler);
-            }, errHandler);
+            setLightningData(lightningData);
+        });
+
+        handle.fail((_, __, err) => {
+            setLightningData([{ Error: err }]);
         });
 
         return handle;
     }
+
+    React.useEffect(() => {
+        const handle = getData();
+
+        return () => { if (handle !== undefined && handle.abort !== undefined) handle.abort(); }
+    }, [props.eventId]);
+
+    React.useEffect(() => {
+        if (lightningData.length === 0)
+            return;
+
+        const keys = Object.keys(lightningData[0]);
+
+        const content = (item, _, field) => {
+            return item[field];
+        };
+
+        const cols = keys.map(key => {
+            const col: Column = {
+                key: key,
+                label: key,
+                field: key,
+                content: content
+            };
+
+            return col;
+        });
+
+        setCols(cols);
+    }, [lightningData]);
+
     return (
         <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={500} width={800}>
-                <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
-                    <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
-                        {tblData[0]}
-                    </thead>
-                    <tbody style={{ maxHeight: 410, overflowY: 'auto', display: 'block' }}>
-                        {tblData.slice(1)}
-                    </tbody>
-            </table>
+            <ConfigurableTable<any>
+                cols={cols}
+                tableClass="table"
+                data={lightningData}
+                sortKey="UTCTime"
+                ascending={true}
+                onSort={() => { /* Sort not implemented */ }}
+                theadStyle={{ display: "table", tableLayout: "fixed", width: "calc(100% - 1em)" }}
+                tbodyStyle={{ maxHeight: 410, overflowY: 'auto', display: 'block' }}
+                rowStyle={{ display: 'table', tableLayout: 'fixed', width: '100%' }}
+                defaultColumns={["Service", "DisplayTime", "Amplitude", "Latitude", "Longitude", "State"]}
+            />
          </WidgetWindow>
     );
 }
