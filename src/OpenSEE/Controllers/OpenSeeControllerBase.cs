@@ -20,11 +20,6 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.NumericalAnalysis;
-using OpenSEE.Model;
-using openXDA.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -32,6 +27,11 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
+using FaultData.DataAnalysis;
+using GSF.Data;
+using GSF.NumericalAnalysis;
+using OpenSEE.Model;
+using openXDA.Model;
 
 namespace OpenSEE
 {
@@ -408,50 +408,112 @@ namespace OpenSEE
 
         #region [ Shared Functions ]
 
-        public static DataGroup QueryDataGroup(int eventID, Meter meter)
+        public static async Task<DataGroup> QueryDataGroupAsync(int eventID, Meter meter)
         {
             string target = $"DataGroup-{eventID}";
 
-            Task<DataGroup> dataGroupTask = new Task<DataGroup>(() =>
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously;
+            TaskCompletionSource<DataGroup> taskCompletionSource = new TaskCompletionSource<DataGroup>(taskCreationOptions);
+
+            if (!s_memoryCache.Add(target, taskCompletionSource.Task, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
             {
-                    
-                    List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("dbOpenXDA"));
-                    return ToDataGroup(meter, data);
-                
-            });
+                Task<DataGroup> dataGroupTask = (Task<DataGroup>)s_memoryCache.Get(target);
+                return await dataGroupTask;
+            }
 
-            if (s_memoryCache.Add(target, dataGroupTask, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
-                dataGroupTask.Start();
-
-            dataGroupTask = (Task<DataGroup>)s_memoryCache.Get(target);
-
-            return dataGroupTask.Result;
+            try
+            {
+                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("dbOpenXDA"));
+                DataGroup dataGroup = ToDataGroup(meter, data);
+                taskCompletionSource.SetResult(dataGroup);
+                return dataGroup;
+            }
+            catch (Exception ex)
+            {
+                s_memoryCache.Remove(target);
+                taskCompletionSource.SetException(ex);
+                throw;
+            }
         }
 
-        public static VICycleDataGroup QueryVICycleDataGroup(int eventID, Meter meter, bool fullres=false)
+        public static async Task<VIDataGroup> QueryVIDataGroupAsync(int eventID, Meter meter)
+        {
+            string target = $"VIDataGroup-{eventID}";
+
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously;
+            TaskCompletionSource<VIDataGroup> taskCompletionSource = new TaskCompletionSource<VIDataGroup>(taskCreationOptions);
+
+            if (!s_memoryCache.Add(target, taskCompletionSource.Task, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
+            {
+                Task<VIDataGroup> viDataGroupTask = (Task<VIDataGroup>)s_memoryCache.Get(target);
+                return await viDataGroupTask;
+            }
+
+            try
+            {
+                DataGroup dataGroup = await QueryDataGroupAsync(eventID, meter);
+                VIDataGroup viDataGroup = new VIDataGroup(dataGroup);
+                taskCompletionSource.SetResult(viDataGroup);
+                return viDataGroup;
+            }
+            catch (Exception ex)
+            {
+                s_memoryCache.Remove(target);
+                taskCompletionSource.SetException(ex);
+                throw;
+            }
+        }
+
+        public static async Task<VICycleDataGroup> QueryVICycleDataGroupAsync(int eventID, Meter meter, bool fullres = false)
         {
             string target = $"VICycleDataGroup-{eventID}";
-            if (s_memoryCache.Contains(target))
-                return (VICycleDataGroup)s_memoryCache.Get(target);
 
-            DataGroup dataGroup = QueryDataGroup(eventID, meter);
-            Task<bool> viCycleDataGroupTask = new Task<bool>(() =>
+            TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously;
+            TaskCompletionSource<VICycleDataGroup> taskCompletionSource = new TaskCompletionSource<VICycleDataGroup>(taskCreationOptions);
+
+            if (!s_memoryCache.Add(target, taskCompletionSource.Task, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
             {
-                    return 
-                s_memoryCache.Add(target,Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), Fbase, false), new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) });
-                
-            });
-            
-            viCycleDataGroupTask.Start();
+                Task<VICycleDataGroup> fullresTask = (Task<VICycleDataGroup>)s_memoryCache.Get(target);
+
+                if (fullres || fullresTask.IsCompleted)
+                    return await fullresTask;
+            }
+
+            VIDataGroup viDataGroup;
+
+            try
+            {
+                viDataGroup = await QueryVIDataGroupAsync(eventID, meter);
+            }
+            catch (Exception ex)
+            {
+                s_memoryCache.Remove(target);
+                taskCompletionSource.SetException(ex);
+                throw;
+            }
+
+            Func<VICycleDataGroup> makeFullres = () =>
+            {
+                try
+                {
+                    VICycleDataGroup viCycleDataGroup = Transform.ToVICycleDataGroup(viDataGroup, Fbase, false);
+                    taskCompletionSource.SetResult(viCycleDataGroup);
+                    return viCycleDataGroup;
+                }
+                catch (Exception ex)
+                {
+                    s_memoryCache.Remove(target);
+                    taskCompletionSource.SetException(ex);
+                    throw;
+                }
+            };
 
             if (fullres)
-            {
-                viCycleDataGroupTask.Wait();
-                if (s_memoryCache.Contains(target))
-                    return (VICycleDataGroup)s_memoryCache.Get(target);
-            }
-            return Transform.ToVICycleDataGroup(new VIDataGroup(dataGroup), Fbase, true);
-            
+                return makeFullres();
+
+            _ = Task.Run(makeFullres);
+            return Transform.ToVICycleDataGroup(viDataGroup, Fbase, true);
+
         }
 
         public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
@@ -461,7 +523,6 @@ namespace OpenSEE
             VIDataGroup vIDataGroup = new VIDataGroup(dataGroup);
             return vIDataGroup.ToDataGroup();
         }
-
 
         protected IDbDataParameter ToDateTime2(AdoDataConnection connection, DateTime dateTime)
         {

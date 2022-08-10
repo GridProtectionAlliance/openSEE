@@ -21,6 +21,16 @@
 //
 //******************************************************************************************************
 
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Web;
 using FaultData.DataAnalysis;
 using GSF.Collections;
 using GSF.Data;
@@ -29,17 +39,6 @@ using GSF.Threading;
 using Newtonsoft.Json;
 using OpenSEE.Model;
 using openXDA.Model;
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Data;
-using System.Data.SqlClient;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using System.Web;
 using CancellationToken = System.Threading.CancellationToken;
 
 namespace OpenSEE
@@ -172,10 +171,8 @@ namespace OpenSEE
                 ExportCorrelatedSagsToCSV(responseStream, requestParameters);
             else if (requestParameters["type"] == "fft")
                 ExportFFTToCSV(responseStream, requestParameters);
-            
         }
 
-      
         // Converts the data group row of CSV data.
         private string ToCSV(IEnumerable<D3Series> data, int index)
         {
@@ -229,13 +226,14 @@ namespace OpenSEE
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
-
-
                 // only get Single Voltage and Single Current Data for This....
                 List<PQDS.DataSeries> data = new List<PQDS.DataSeries>();
                 List<PQDS.MetaDataTag> metaData = new List<PQDS.MetaDataTag>();
 
-                VIDataGroup dataGroup = new VIDataGroup( OpenSEEController.QueryDataGroup(evt.ID, meter));
+                VIDataGroup dataGroup = OpenSEEBaseController
+                    .QueryVIDataGroupAsync(evt.ID, meter)
+                    .GetAwaiter()
+                    .GetResult();
 
                 if (dataGroup.VA != null)
                     data.Add(PQDSSeries(dataGroup.VA, "va"));
@@ -253,8 +251,8 @@ namespace OpenSEE
                 if (dataGroup.IR != null)
                     data.Add(PQDSSeries(dataGroup.IR, "in"));
 
-
-                if (data.Count() == 0) return;
+                if (data.Count() == 0)
+                    return;
 
                 // Add MetaData Information
                 metaData = PQDSMetaData(evt, meter);
@@ -452,10 +450,10 @@ namespace OpenSEE
             public double Angle;
         }
 
-
         public void ExportFFTToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
             int eventId = int.Parse(requestParameters["eventID"]);
+
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
@@ -467,12 +465,14 @@ namespace OpenSEE
                 meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
 
                 AnalyticController ctrl = new AnalyticController();
-                DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+                DataGroup dataGroup = OpenSEEBaseController
+                    .QueryDataGroupAsync(evt.ID, meter)
+                    .GetAwaiter()
+                    .GetResult();
 
                 List<D3Series> harmonics = ctrl.GetFFTLookup(dataGroup, startTime, cycles); // AnalyticController.GetFFTLookup(dataGroup, startTime, cycles);
-
                 List<string> headers = new List<string>() { "Harmonic" };
-
                 headers = headers.Concat(harmonics.Select(item => item.LegendGroup + " " + item.LegendVertical + " " + item.LegendHorizontal)).ToList();
 
                 if (headers.Count == 1)
@@ -483,16 +483,12 @@ namespace OpenSEE
 
                 for (int i = 0; i < harmonics.First().DataPoints.Count(); ++i)
                 {
-                    
                     List<string> line = new List<string>() { harmonics.First().DataPoints[i][0].ToString() };
-
                     line = line.Concat(harmonics.Select(item => item.DataPoints[i][1].ToString())).ToList();
-                    
                     writer.WriteLine(string.Join(",", line));
                 }
             }
         }
-
 
         public void ExportHarmonicsToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
@@ -595,59 +591,80 @@ namespace OpenSEE
 
         private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc, int harmonic)
         {
-            DataGroup dataGroup = OpenSEEBaseController.QueryDataGroup(evt.ID, meter);
-            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController.QueryVICycleDataGroup(evt.ID, meter);
+            Lazy<DataGroup> lazyDataGroup = new Lazy<DataGroup>(() =>
+            {
+                return OpenSEEBaseController
+                    .QueryDataGroupAsync(evt.ID, meter)
+                    .GetAwaiter()
+                    .GetResult();
+            });
+
+            Lazy<VIDataGroup> lazyVIDataGroup = new Lazy<VIDataGroup>(() =>
+            {
+                return OpenSEEBaseController
+                    .QueryVIDataGroupAsync(evt.ID, meter)
+                    .GetAwaiter()
+                    .GetResult();
+            });
+
+            Lazy<VICycleDataGroup> lazyVICycleDataGroup = new Lazy<VICycleDataGroup>(() =>
+            {
+                return OpenSEEBaseController
+                    .QueryVICycleDataGroupAsync(evt.ID, meter)
+                    .GetAwaiter()
+                    .GetResult();
+            });
 
             AnalyticController controller = new AnalyticController();
 
             if (analytic == "FirstDerivative")
-                return controller.GetFirstDerivativeLookup(dataGroup, viCycleDataGroup);
+                return controller.GetFirstDerivativeLookup(lazyDataGroup.Value, lazyVICycleDataGroup.Value);
             if (analytic == "ClippedWaveforms")
-                return controller.GetClippedWaveformsLookup(dataGroup);
+                return controller.GetClippedWaveformsLookup(lazyDataGroup.Value);
             if (analytic == "Frequency")
-                return controller.GetFrequencyLookup(new VIDataGroup(dataGroup));
+                return controller.GetFrequencyLookup(lazyVIDataGroup.Value);
             if (analytic == "Impedance")
-                return controller.GetImpedanceLookup(viCycleDataGroup);
+                return controller.GetImpedanceLookup(lazyVICycleDataGroup.Value);
             if (analytic == "Power")
-                return controller.GetPowerLookup(viCycleDataGroup);
+                return controller.GetPowerLookup(lazyVICycleDataGroup.Value);
             if (analytic == "RemoveCurrent")
-                return controller.GetRemoveCurrentLookup(dataGroup);
+                return controller.GetRemoveCurrentLookup(lazyDataGroup.Value);
             if (analytic == "MissingVoltage")
-                return controller.GetMissingVoltageLookup(dataGroup);
+                return controller.GetMissingVoltageLookup(lazyDataGroup.Value);
             if (analytic == "LowPassFilter")
-                return controller.GetLowPassFilterLookup(dataGroup, order);
+                return controller.GetLowPassFilterLookup(lazyDataGroup.Value, order);
             if (analytic == "HighPassFilter")
-                return controller.GetHighPassFilterLookup(dataGroup, order);
+                return controller.GetHighPassFilterLookup(lazyDataGroup.Value, order);
             if (analytic == "SymmetricalComponents")
-                return controller.GetSymmetricalComponentsLookup(viCycleDataGroup);
+                return controller.GetSymmetricalComponentsLookup(lazyVICycleDataGroup.Value);
             if (analytic == "Unbalance")
-                return controller.GetUnbalanceLookup(viCycleDataGroup);
+                return controller.GetUnbalanceLookup(lazyVICycleDataGroup.Value);
             if (analytic == "Rectifier")
-                return controller.GetRectifierLookup(new VIDataGroup(dataGroup),Trc);
+                return controller.GetRectifierLookup(lazyVIDataGroup.Value, Trc);
             if (analytic == "RapidVoltageChange")
-                return controller.GetRapidVoltageChangeLookup(viCycleDataGroup);
+                return controller.GetRapidVoltageChangeLookup(lazyVICycleDataGroup.Value);
             if (analytic == "THD")
-                return controller.GetTHDLookup(dataGroup,true);
+                return controller.GetTHDLookup(lazyDataGroup.Value, true);
             if (analytic == "SpecifiedHarmonic")
-                return controller.GetSpecifiedHarmonicLookup(dataGroup,harmonic,true);
+                return controller.GetSpecifiedHarmonicLookup(lazyDataGroup.Value, harmonic, true);
             if (analytic == "OverlappingWaveform")
-                return controller.GetOverlappingWaveformLookup(dataGroup);
-            
-
+                return controller.GetOverlappingWaveformLookup(lazyDataGroup.Value);
 
             return new List<D3Series>();
         }
 
-
-        private List<D3Series> QueryVoltageData( Meter meter, Event evt)
+        private List<D3Series> QueryVoltageData(Meter meter, Event evt)
         {
             bool useLL;
             using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
                 useLL = connection.ExecuteScalar<bool?>("SELECT Value FROM Settings WHERE Name = 'useLLVoltage'") ?? false;
             }
-                            
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+
+            DataGroup dataGroup = OpenSEEBaseController
+                .QueryDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && (
                 (useLL && !(ds.SeriesInfo.Channel.Phase.Name == "AB" || ds.SeriesInfo.Channel.Phase.Name == "BC" || ds.SeriesInfo.Channel.Phase.Name == "CA")) ||
@@ -656,7 +673,7 @@ namespace OpenSEE
                     ds => new D3Series()
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
-                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        ChartLabel = OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     }).ToList();
@@ -669,7 +686,10 @@ namespace OpenSEE
                     return a.LegendGroup.CompareTo(b.LegendGroup);
                 });
 
-            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController
+                .QueryVICycleDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> result = new List<D3Series>();
 
@@ -699,19 +719,22 @@ namespace OpenSEE
                 }
             }
 
-
             return result;
         }
+
         private List<D3Series> QueryCurrentData(Meter meter, Event evt)
         {
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+            DataGroup dataGroup = OpenSEEBaseController
+                .QueryDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Current"                 
                 ).Select(
                     ds => new D3Series()
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
-                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        ChartLabel = OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     }).ToList();
@@ -724,7 +747,10 @@ namespace OpenSEE
                 return a.LegendGroup.CompareTo(b.LegendGroup);
             });
 
-            VICycleDataGroup viCycleDataGroup = OpenSEEController.QueryVICycleDataGroup(evt.ID, meter);
+            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController
+                .QueryVICycleDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> result = new List<D3Series>();
 
@@ -754,20 +780,22 @@ namespace OpenSEE
                 }
             }
 
-
             return result;
         }
 
         private List<D3Series> QueryTCEData(Meter meter, Event evt)
         {
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+            DataGroup dataGroup = OpenSEEBaseController
+                .QueryDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "TripCoilCurrent"
                 ).Select(
                     ds => new D3Series()
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
-                        ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                        ChartLabel = OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     }).ToList();
@@ -777,7 +805,10 @@ namespace OpenSEE
 
         private List<D3Series> QueryDigitalData(Meter meter, Event evt)
         {
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+            DataGroup dataGroup = OpenSEEBaseController
+                .QueryDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital"
                 ).Select(
@@ -828,7 +859,10 @@ namespace OpenSEE
 
         private List<D3Series> QueryAnalogData(Meter meter, Event evt)
         {
-            DataGroup dataGroup = OpenSEEController.QueryDataGroup(evt.ID, meter);
+            DataGroup dataGroup = OpenSEEBaseController
+                .QueryDataGroupAsync(evt.ID, meter)
+                .GetAwaiter()
+                .GetResult();
 
             List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds =>
                ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" &&
@@ -838,12 +872,10 @@ namespace OpenSEE
                   new D3Series()
                   {
                       ChannelID = ds.SeriesInfo.Channel.ID,
-                      ChartLabel = ds.SeriesInfo.Channel.Description?? OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
+                      ChartLabel = ds.SeriesInfo.Channel.Description ?? OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
                       LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                       DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-
                   }).ToList();
-
 
             return dataLookup;
         }
