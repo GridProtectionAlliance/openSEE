@@ -470,6 +470,7 @@ namespace OpenSEE
 
             TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously;
             TaskCompletionSource<VICycleDataGroup> taskCompletionSource = new TaskCompletionSource<VICycleDataGroup>(taskCreationOptions);
+            VIDataGroup viDataGroup;
 
             if (!s_memoryCache.Add(target, taskCompletionSource.Task, new CacheItemPolicy { SlidingExpiration = TimeSpan.FromMinutes(m_cacheSlidingExpiration) }))
             {
@@ -477,9 +478,10 @@ namespace OpenSEE
 
                 if (fullres || fullresTask.IsCompleted)
                     return await fullresTask;
-            }
 
-            VIDataGroup viDataGroup;
+                viDataGroup = await QueryVIDataGroupAsync(eventID, meter);
+                return Transform.ToVICycleDataGroup(viDataGroup, Fbase, true);
+            }
 
             try
             {
@@ -513,7 +515,6 @@ namespace OpenSEE
 
             _ = Task.Run(makeFullres);
             return Transform.ToVICycleDataGroup(viDataGroup, Fbase, true);
-
         }
 
         public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
