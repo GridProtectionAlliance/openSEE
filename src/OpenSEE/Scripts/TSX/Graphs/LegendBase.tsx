@@ -53,7 +53,7 @@ interface ILegendGrid {
 
 const horizontalSort = ['W', 'Pk', 'RMS', 'Ph', 'V', 'I', 'Pre', 'Post', 'P', 'Q', 'S', 'Pf', 'R', 'X', 'Z', 'Mag', 'Ang'];
 const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.','V','I'];
-const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero','S0/S1','S2/S1'];
+const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero','S0/S1','S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
 
 const Legend = (props: iProps) => {
     const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId }

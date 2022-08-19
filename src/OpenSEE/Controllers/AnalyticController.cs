@@ -20,6 +20,7 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -420,32 +421,27 @@ namespace OpenSEE
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                Asset asset = new TableOperations<Asset>(connection).QueryRecordWhere("ID = {0}", evt.AssetID);
                 meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
 
-                DataTable table;
-                
-                table = connection.RetrieveData("SELECT ID FROM FaultCurve WHERE EventID = {0}", evt.ID);
                 List<D3Series> returnList = new List<D3Series>();
 
-                foreach (DataRow row in table.Rows)
+                using (DataTable table = connection.RetrieveData("SELECT ID FROM FaultCurve WHERE EventID = {0}", evt.ID))
                 {
-                    D3Series temp = QueryFaultDistanceData(int.Parse(row["ID"].ToString()), meter);
-
-                    returnList.Add(temp);
+                    foreach (DataRow row in table.Rows)
+                    {
+                        D3Series series = QueryFaultDistanceData(int.Parse(row["ID"].ToString()), meter, asset);
+                        returnList.Add(series);
+                    }
                 }
 
-                
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
-
-
                 return returnDict;
             }
-
-
         }
 
-        private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter)
+        private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter, Asset asset)
         {
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
@@ -457,8 +453,10 @@ namespace OpenSEE
                 D3Series series = new D3Series()
                 {
                     ChartLabel = faultCurve.Algorithm,
+                    LegendGroup = asset.AssetName,
+                    LegendVertical = faultCurve.Algorithm,
                     Unit = "Distance",
-                    Color = GetFaultDistanceColort(faultCurve.Algorithm),
+                    Color = GetFaultDistanceColor(faultCurve.Algorithm),
                     DataPoints = dataGroup.DataSeries[0].DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList()
                 };
 
@@ -466,9 +464,7 @@ namespace OpenSEE
                     series.DataPoints = series.DataPoints.Select(pt => new double[] { pt[0], pt[1] * 0.621371 }).ToList();
 
                 return series;
-
             }
-
         }
 
         #endregion

@@ -1459,6 +1459,14 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
             (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||
             (item.LegendHorizontal == 'W' && defaultTraces.W)
         ))
+
+    if (type == 'FaultDistance')
+        return data.map(item =>
+            item.LegendVertical == 'Simple' ||
+            item.LegendVertical == 'Reactance' ||
+            item.LegendVertical == 'Takagi' ||
+            item.LegendVertical == 'ModifiedTakagi' ||
+            item.LegendVertical == 'Novosel')
     
     if (type == 'FirstDerivative') 
         return data.map(item => ((item.LegendHorizontal == 'W' && defaultTraces.W) ||

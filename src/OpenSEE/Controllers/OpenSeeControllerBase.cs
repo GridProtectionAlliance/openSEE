@@ -199,9 +199,9 @@ namespace OpenSEE
         /// <summary>
         /// Determines Color for a FaultDistance Calculation based on the Algorithm.
         /// </summary>
-        /// <param name="algorithm">Fault Distance ALgorithm</param>
+        /// <param name="algorithm">Fault Distance Algorithm</param>
         /// <returns>A color designation</returns>
-        protected string GetFaultDistanceColort(string algorithm)
+        protected string GetFaultDistanceColor(string algorithm)
         {
             string random = string.Format("#{0:X6}", m_random.Next(0x1000001));
             switch (algorithm)
