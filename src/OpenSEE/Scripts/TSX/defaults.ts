@@ -87,6 +87,14 @@ export const defaultSettings = {
         faultDistModTakagi: "#4da74d",
         faultDistNovosel: "#9440ed",
         faultDistDoubleEnd: "#BD9B33",
+        Generic1: "#EE2E2F",
+        Generic2: "#008C48",
+        Generic3: "#185AA9",
+        Generic4: "#F47D23",
+        Generic5: "#662C91",
+        Generic6: "#A21D21",
+        Generic7: "#B43894",
+        Generic8: "#737373",
     } as OpenSee.IColorCollection,
     Units: {
         Voltage: {
@@ -226,7 +234,12 @@ export const defaultSettings = {
                 { label: "Per Unit", short: "p.u.", factor: 0.01 }
             ]
         },
-
+        [""]: {
+            current: 0,
+            options: [
+                { label: "", short: "", factor: 1 }
+            ]
+        }
 
     } as OpenSee.IUnitCollection,
     TimeUnit: {

@@ -371,15 +371,15 @@ namespace OpenSEE
         private List<D3Series> GetBreakerLookup(DataGroup dataGroup)
         {
 
-            List<D3Series>  dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital").Select(ds =>
+            List<D3Series>  dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital").Select((ds, i) =>
                 new D3Series()
                    {
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
                        Unit = "",
-                       Color = GetColor(ds.SeriesInfo.Channel),
-                       LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
-                       LegendVertical = "D ",
-                       LegendGroup = "",
+                       Color = $"Generic{i % 8 + 1}",
+                       LegendHorizontal = "Digital",
+                       LegendVertical = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
+                       LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                 }).ToList();
 
