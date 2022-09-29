@@ -285,7 +285,9 @@ const BarChart = (props: iProps) => {
             .attr("x", - (props.height / 2 - 20))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text("Units Go here");
+            .text(uniq(barData.map(d => d.Unit)).map(unit => {
+                return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A") + "]";
+            }).join("  "));
             
 
         svg.append("line").classed("xAxisExtLeft", true)
