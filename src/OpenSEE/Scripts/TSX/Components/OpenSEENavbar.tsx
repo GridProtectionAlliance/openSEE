@@ -196,7 +196,7 @@ const OpenSeeNavBar = (props: IProps) => {
 
                     <li className="nav-item" style={{ width: '84px' }}>
                         <div className="btn-group dropright">
-                            <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
+                            <button type="button" title='Zoom Mode' className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
                                 {zoomMode == "x" ? <i style={{ fontStyle: "normal" }}>{TimeRect}</i> : null}
                                 {zoomMode == "y" ? <i style={{ fontStyle: "normal" }}>{ValueRect}</i> : null}
                                 {zoomMode == "xy" ? <i style={{ fontStyle: "normal" }}>{Square}</i> : null}
@@ -215,10 +215,10 @@ const OpenSeeNavBar = (props: IProps) => {
                         </div>
                     </li>
                     <li className="nav-item" style={{ width: '156px' }}>
-                        <button className="btn btn-primary" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>Reset Zoom</button>
+                        <button className="btn btn-primary" title='Reset Zoom' onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>Reset Zoom</button>
                     </li>
                     <li className="nav-item" style={{ width: '84px' }}>
-                        <button className="btn btn-primary" onClick={() => setShowSettings(!showSettings)}>
+                        <button className="btn btn-primary" title='Settings' onClick={() => setShowSettings(!showSettings)}>
                             <i style={{ fontStyle: "normal" }}>{Settings}</i>
                         </button>
                     </li>
