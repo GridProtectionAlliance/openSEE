@@ -492,7 +492,10 @@ export const DataReducer = createSlice({
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
         },
         RemoveSelectPoints: (state, action: PayloadAction<number>) => {
-            state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].slice(action.payload,1));
+            state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].splice(action.payload, 1));
+        },
+        RemoveLastPoint: (state) => {
+            state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].pop())
         },
         UpdateActiveUnits: (state, action: PayloadAction<OpenSee.IUnitCollection>) => {
             //Update All Units and limits
@@ -547,7 +550,7 @@ export const DataReducer = createSlice({
 });
 
 
-export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
+export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, RemoveLastPoint, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion
