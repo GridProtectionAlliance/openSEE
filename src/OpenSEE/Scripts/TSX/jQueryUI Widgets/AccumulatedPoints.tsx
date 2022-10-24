@@ -23,7 +23,7 @@
 import * as React from 'react';
 import { WidgetWindow } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints, RemoveLastPoint } from '../store/dataSlice';
+import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
 
 interface Iprops {
     closeCallback: () => void,
@@ -89,7 +89,7 @@ const PointWidget = (props: Iprops) => {
 
             <div style={{ margin: '5px', textAlign: 'right' }}>
                 <input className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex != -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
-                <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveLastPoint())} />
+                <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
                 <input className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
                 </div>
         </WidgetWindow>
