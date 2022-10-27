@@ -30,12 +30,14 @@ import { OpenSee } from '../global';
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
+    position: [number, number]
+    setPosition: (t: number, l: number) => void
 }
 const FFTTable = (props: Iprops) => {
     const fftPoints = useSelector(selectFFTData);
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={300} width={700}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={300} width={700} position={props.position} setPosition={props.setPosition}>
             <table className="table table-bordered table-hover" style={{ maxHeight: '275px', marginBottom: 0, display: 'block', overflowY: 'scroll' }} >
                 <thead>
                     <tr>

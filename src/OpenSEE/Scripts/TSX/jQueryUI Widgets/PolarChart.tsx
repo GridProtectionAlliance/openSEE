@@ -33,6 +33,8 @@ import { OpenSee } from '../global';
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
 }
 
 const PolarChartWidget = (props: Iprops) => {
@@ -93,8 +95,12 @@ const PolarChartWidget = (props: Iprops) => {
         return "[" + unit.short + "]";
     }).join("  ");
 
+    function setPosition(t, l) {
+        if (t != props.position[0] || l != props.position[1])
+            props.setPosition(t, l);
+    }
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={325} width={720}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={325} width={720} position={props.position} setPosition={setPosition}>
             <div style={{ width: 714, height: 300, zIndex: 1001 }}>
             <div style={{ width: 300, height: 300, zIndex: 1001, display: 'inline-block'}}>
                 <svg width="300" height="300">
@@ -111,8 +117,8 @@ const PolarChartWidget = (props: Iprops) => {
                         <thead>
                             {props.isOpen ? 
                             <>
-                                <tr> <th></th> {AssetList.map((item, index) => <th colSpan={2} key={index}><span>{item}</span> </th>)} </tr>
-                                <tr> <th></th> {AssetList.map((item, index) => <React.Fragment key={index}><th>Mag {MagUnits}</th><th>Ang {PhaseUnits}</th></React.Fragment>)} </tr>
+                                <tr><th></th>{AssetList.map((item, index) => <th colSpan={2} key={index}><span>{item}</span></th>)}</tr>
+                                <tr><th></th>{AssetList.map((item, index) => <React.Fragment key={index}><th>Mag{MagUnits}</th><th>Ang{PhaseUnits}</th></React.Fragment>)}</tr>
                             </>
                             : null}
                         </thead>

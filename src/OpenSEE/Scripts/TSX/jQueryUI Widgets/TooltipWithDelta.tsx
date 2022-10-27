@@ -32,6 +32,8 @@ import { selectColor } from '../store/settingSlice';
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
 }
 
 const ToolTipDeltaWidget = (props: Iprops) => {
@@ -53,7 +55,7 @@ const ToolTipDeltaWidget = (props: Iprops) => {
     let secondDate = props.isOpen && points.length > 0? points[0].Time : NaN;
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={538}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={538} position={props.position} setPosition={props.setPosition} >
             <div style={{ textAlign: 'center' }} >
                 <table className="table" style={{ display: 'block', overflowY: 'scroll', maxHeight: '576px', overflowX: 'hidden', marginBottom: 0 }}>
                     <thead>

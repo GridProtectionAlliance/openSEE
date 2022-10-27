@@ -32,7 +32,12 @@ import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapT
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
 
-interface Iprops { closeCallback: () => void, isOpen: boolean }
+interface Iprops {
+    closeCallback: () => void,
+    isOpen: boolean,
+    position: [number, number]
+    setPosition: (t: number, l: number) => void
+}
 
 const SettingsWidget = (props: Iprops) => {
     const list = useSelector(selectGraphTypes);
@@ -59,7 +64,7 @@ const SettingsWidget = (props: Iprops) => {
   
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516} position={props.position} setPosition={props.setPosition} >
             <div id="settingScrollContainer" style={{ width: '510px', height: '575px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
                 <div className="accordion" id="panelSettings">
                     <div className="card">

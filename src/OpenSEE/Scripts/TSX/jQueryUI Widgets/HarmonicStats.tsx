@@ -24,7 +24,14 @@
 import * as React from 'react';
 import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
+interface Iprops {
+    closeCallback: () => void,
+    exportCallback: () => void,
+    eventId: number,
+    isOpen: boolean,
+    position: [number, number]
+    setPosition: (t: number, l: number) => void
+}
 
 const HarmonicStatsWidget = (props: Iprops) => {
 
@@ -93,7 +100,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
     }
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={1706}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={1706} position={props.position} setPosition={props.setPosition} >
             <div style={{ maxWidth: 1700 }}>
                 <table className="table" style={{ fontSize: 'large', marginBottom: 0 }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>

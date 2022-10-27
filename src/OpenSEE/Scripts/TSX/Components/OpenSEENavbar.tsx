@@ -84,8 +84,20 @@ const OpenSeeNavBar = (props: IProps) => {
     const [showCorrelatedSags, setShowCorrelatedSags] = React.useState<boolean>(false);
     const [showLightning, setShowLightning] = React.useState<boolean>(false);
     const [showFFTTable, setShowFFTTable] = React.useState<boolean>(false);
-
     const [showSettings, setShowSettings] = React.useState<boolean>(false);
+
+    const [positionPoints, setPositionPoints] = React.useState<[number, number]>([0,0]);
+    const [positionToolTip, setPositionToolTip] = React.useState<[number, number]>([0,0]);
+    const [positionToolTipDelta, setPositionToolTipDelta] = React.useState<[number, number]>([0, 0]);
+    const [positionPolar, setPositionPolar] = React.useState<[number, number]>([0, 0]);
+    const [positionScalarStats, setPositionScalarStats] = React.useState<[number, number]>([0, 0]);
+    const [positionHarmonicStats, setPositionHarmonicStats] = React.useState<[number, number]>([0, 0]);
+    const [positionCorrelatedSags, setPositionCorrelatedSags] = React.useState<[number, number]>([0, 0]);
+    const [positionLightning, setPositionLightning] = React.useState<[number, number]>([0, 0]);
+    const [positionFFTTable, setPositionFFTTable] = React.useState<[number, number]>([0, 0]);
+    const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
+    
+
 
     React.useEffect(() => {
         if (showPoints) {
@@ -135,7 +147,6 @@ const OpenSeeNavBar = (props: IProps) => {
             `&EventType=${props.EventData.EventName}`
         );
     }
-
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
 
@@ -250,17 +261,16 @@ const OpenSeeNavBar = (props: IProps) => {
                 </ul>
             </div>
             <React.Suspense fallback={<div>Loading...</div>}>
-
-                <PointWidget closeCallback={() => setShowPoints(false)} isOpen={showPoints} />
-                <ToolTipWidget closeCallback={() => setShowToolTip(false)} isOpen={showToolTip} />
-                <ToolTipDeltaWidget closeCallback={() => setShowToolTipDelta(false)} isOpen={showToolTipDelta} />
-                <PolarChartWidget closeCallback={() => setShowPolar(false)} isOpen={showPolar} />
-                <ScalarStatsWidget isOpen={showScalarStats} eventId={eventId} closeCallback={() => setShowScalarStats(false)} exportCallback={() => exportData('stats')} />
-                <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventId} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} />
-                <TimeCorrelatedSagsWidget eventId={eventId} closeCallback={() => setShowCorrelatedSags(false)} exportCallback={() => exportData('correlatedsags')} isOpen={showCorrelatedSags} />
-                <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} />
-                <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} />
-                <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)}/>
+                <PointWidget closeCallback={() => setShowPoints(false)} isOpen={showPoints} position={positionPoints} setPosition={(t, l) => setPositionPoints([t, l])} />
+                <ToolTipWidget closeCallback={() => setShowToolTip(false)} isOpen={showToolTip} position={positionToolTip} setPosition={(t, l) => setPositionToolTip([t, l])} />
+                <ToolTipDeltaWidget closeCallback={() => setShowToolTipDelta(false)} isOpen={showToolTipDelta} position={positionToolTipDelta} setPosition={(t, l) => setPositionToolTipDelta([t, l])} />
+                <PolarChartWidget closeCallback={() => setShowPolar(false)} isOpen={showPolar} position={positionPolar} setPosition={(t, l) => setPositionPolar([t, l])} />
+                <ScalarStatsWidget isOpen={showScalarStats} eventId={eventId} closeCallback={() => setShowScalarStats(false)} exportCallback={() => exportData('stats')} position={positionScalarStats} setPosition={(t, l) => setPositionScalarStats([t, l])} />
+                <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventId} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} />
+                <TimeCorrelatedSagsWidget eventId={eventId} closeCallback={() => setShowCorrelatedSags(false)} exportCallback={() => exportData('correlatedsags')} isOpen={showCorrelatedSags} position={positionCorrelatedSags} setPosition={(t, l) => setPositionCorrelatedSags([t, l])} />
+                <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} position={positionLightning} setPosition={(t, l) => setPositionLightning([t, l])} />
+                <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />
+                <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
             </React.Suspense>
         </nav>
     );

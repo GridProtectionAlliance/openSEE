@@ -30,6 +30,8 @@ interface Iprops {
     closeCallback: () => void;
     eventId: number;
     isOpen: boolean;
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
 }
 
 interface Column {
@@ -103,7 +105,7 @@ const LightningDataWidget = (props: Iprops) => {
     }, [lightningData]);
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={500} width={800}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={500} width={800} position={props.position} setPosition={props.setPosition} >
             <ConfigurableTable<any>
                 cols={cols}
                 tableClass="table"
