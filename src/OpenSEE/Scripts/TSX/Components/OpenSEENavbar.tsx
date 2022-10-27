@@ -98,7 +98,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
     
 
-
     React.useEffect(() => {
         if (showPoints) {
             let oldMode = clone(mouseMode);
