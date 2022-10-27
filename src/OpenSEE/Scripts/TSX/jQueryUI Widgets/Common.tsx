@@ -23,7 +23,6 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
-import { container } from 'webpack';
 
 // styles
 export const outerDiv: React.CSSProperties = {
