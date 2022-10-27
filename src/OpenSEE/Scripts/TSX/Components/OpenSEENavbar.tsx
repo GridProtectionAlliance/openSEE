@@ -96,7 +96,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const [positionLightning, setPositionLightning] = React.useState<[number, number]>([0, 0]);
     const [positionFFTTable, setPositionFFTTable] = React.useState<[number, number]>([0, 0]);
     const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
-    
 
     React.useEffect(() => {
         if (showPoints) {
