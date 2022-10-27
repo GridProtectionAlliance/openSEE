@@ -24,10 +24,13 @@ import * as React from 'react';
 import { WidgetWindow } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
+import { Dispatch } from '@reduxjs/toolkit';
 
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
 }
 
 const PointWidget = (props: Iprops) => {
@@ -63,7 +66,7 @@ const PointWidget = (props: Iprops) => {
     </tr> ): [])
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={500}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={500} position={props.position} setPosition={props.setPosition}>
             <table className="table table-bordered table-hover" style={{ overflowX: 'scroll', marginBottom: 0, width: 494, display: 'block' }}>
                 <thead>
                     <tr>

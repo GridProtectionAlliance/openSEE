@@ -25,7 +25,14 @@ import * as React from 'react';
 import { WidgetWindow } from './Common';
 
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
+interface Iprops {
+    closeCallback: () => void,
+    exportCallback: () => void,
+    eventId: number,
+    isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
+}
 
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
@@ -68,7 +75,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
     }
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={550} width={996}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={550} width={996} position={props.position} setPosition={props.setPosition}>
             <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
                 <thead style={{ display: 'table', tableLayout: 'fixed', marginBottom: 0 }}>
                     <tr>

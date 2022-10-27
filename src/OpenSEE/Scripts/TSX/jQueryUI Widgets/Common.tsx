@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { style } from "typestyle"
+import { container } from 'webpack';
 
 // styles
 export const outerDiv: React.CSSProperties = {
@@ -36,8 +37,6 @@ export const outerDiv: React.CSSProperties = {
     boxShadow: '4px 4px 2px #888888',
     border: '2px solid black',
     position: 'absolute',
-    top: '0',
-    left: 0,
     display: 'none',
     backgroundColor: 'white',
 };
@@ -74,22 +73,34 @@ interface IwindowProps {
     close: () => void,
     width: number,
     maxHeight: number,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void,
 }
 
 export const WidgetWindow: React.FunctionComponent<IwindowProps> = (props) => {
     const refWindow = React.useRef(null);
     const refHandle = React.useRef(null);
-
+    
     React.useLayoutEffect(() => {
-        if (props.show)
+        if (props.show) {
             ($(refWindow.current) as any).draggable({ scroll: false, handle: refHandle.current, containment: '#chartpanel' });
-    })
+            return () => {
+                let left = 0;
+                let top = 0;
+                if ($(refWindow.current).css('left') !== undefined)
+                    left = parseFloat($(refWindow.current).css('left'));
+                if ($(refWindow.current).css('top') !== undefined)
+                    top = parseFloat($(refWindow.current).css('top'));
+                props.setPosition(top, left);
+            };
+        }
+    });
 
     if (!props.show)
         return null;
 
     return (
-        < div ref={refWindow} className="ui-widget-content" style={{ ...outerDiv, width: props.width, maxHeight: props.maxHeight, display: undefined }} >
+        < div ref={refWindow} className="ui-widget-content" style={{ ...outerDiv, top: props.position[0], left: props.position[1], width: props.width, maxHeight: props.maxHeight, display: undefined }} >
             <div style={{ border: 'black solid 2px' }}>
                 <div ref={refHandle} className={handle}></div>
                 <div style={{ width: props.width - 6, maxHeight: props.maxHeight - 24 }}>

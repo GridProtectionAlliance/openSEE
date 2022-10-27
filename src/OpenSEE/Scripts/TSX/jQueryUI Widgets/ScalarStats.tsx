@@ -24,7 +24,14 @@
 import * as React from 'react';
 import { WidgetWindow } from './Common';
 
-interface Iprops { closeCallback: () => void, exportCallback: () => void, eventId: number, isOpen: boolean }
+interface Iprops {
+    closeCallback: () => void,
+    exportCallback: () => void,
+    eventId: number,
+    isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
+}
 
 const ScalarStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<Array<JSX.Element>>([]);
@@ -57,7 +64,7 @@ const ScalarStatsWidget = (props: Iprops) => {
         }
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={400} width={500}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={400} width={500} position={props.position} setPosition={props.setPosition} >
             <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         <tr><th>Stat</th><th>Value&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th></tr>

@@ -31,6 +31,8 @@ import { selectColor } from '../store/settingSlice';
 interface Iprops {
     closeCallback: () => void,
     isOpen: boolean,
+    position: [number, number],
+    setPosition: (t: number, l: number) => void
 }
 
 const ToolTipWidget = (props: Iprops) => {
@@ -39,7 +41,7 @@ const ToolTipWidget = (props: Iprops) => {
     const colors = useSelector(selectColor);
    
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={256}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={256} position={props.position} setPosition={props.setPosition} >
             <div style={{ textAlign: 'center'}} >
                     <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
                     <br />
