@@ -24,7 +24,6 @@ import * as React from 'react';
 import { WidgetWindow } from './Common';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
-import { Dispatch } from '@reduxjs/toolkit';
 
 interface Iprops {
     closeCallback: () => void,
