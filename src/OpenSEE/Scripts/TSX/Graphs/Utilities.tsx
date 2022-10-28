@@ -48,7 +48,7 @@ export function GetDisplayLabel(type: OpenSee.graphType): string {
         case ('SymetricComp'):
             return "Symetrical Components"
         case ('FaultDistance'):
-            return "Faulkt Distance"
+            return "Fault Distance"
         case ('Restrike'):
             return "Breaker Restrike"
         default:
