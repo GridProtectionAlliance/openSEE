@@ -945,14 +945,12 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
                 async: true
             });
 
-            handleFreq.then((data) => {
-                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true }));
-                dispatch(InitiateDetailed(key));
-            })
-            handlePOW.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
+            handlePOW.then((data) => dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })));
+            handleFreq.then((data) => dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true })));
+            Promise.all([handlePOW, handleFreq]).then(() => dispatch(InitiateDetailed(key)));
 
-            result.push(handleFreq);
             result.push(handlePOW);
+            result.push(handleFreq);
             break;
         case ('Analogs'):
             let breakerAnalogsDataHandle = $.ajax({
@@ -1253,28 +1251,40 @@ function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnal
 
 function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore): Array<JQuery.jqXHR<any>> {
     let result = [];
-    switch (key.DataType) {
 
+    switch (key.DataType) {
         case ('Current'):
         case ('Voltage'):
-           
+            let handlePOW = $.ajax({
+                type: "GET",
+                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
+                    `&type=${key.DataType}` +
+                    `&dataType=Time` +
+                    (key.NoCompress ? `&dbgNocompress=1` : ``),
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
             let handleFreq = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
                     `&type=${key.DataType}` +
-                    `&dataType=Freq`,
+                    `&dataType=Freq` +
+                    (key.NoCompress ? `&dbgNocompress=1` : ``),
                 contentType: "application/json; charset=utf-8",
                 dataType: 'json',
                 cache: true,
                 async: true
             });
 
-            handleFreq.then((data) => {
-                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data}));
-            })
+            handlePOW.then((data) => dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data })));
+            handleFreq.then((data) => dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data })));
 
+            result.push(handlePOW);
             result.push(handleFreq);
             break;
+
         case ('THD'):
             let thdDataHandle = $.ajax({
                 type: "GET",
@@ -1288,7 +1298,8 @@ function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenS
                 dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
             })
             result.push(thdDataHandle);
-            break
+            break;
+
         case ('Harmonic'):
             let specifiedHarmonicDataHandle = $.ajax({
                 type: "GET",
@@ -1303,10 +1314,12 @@ function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenS
                 dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
             })
             result.push(specifiedHarmonicDataHandle);
-            break
+            break;
+
         default:
             return [];
     }
+
     return result;
 }
 // #endregion

@@ -50,7 +50,7 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
         if (!ToBool(query.displayVolt))
             dispatch(RemovePlot({ DataType: "Voltage", EventId: oldState.Data.eventID }))
         else
-            dispatch(AddPlot({ DataType: "Voltage", EventId: oldState.Data.eventID }))
+            dispatch(AddPlot({ DataType: "Voltage", EventId: oldState.Data.eventID, NoCompress: ToBool(query.dbgNocompress) }))
         dispatch(SetdisplayVolt(ToBool(query.displayVolt)));
     }
 
@@ -58,7 +58,7 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
         if (!ToBool(query.displayCur))
             dispatch(RemovePlot({ DataType: "Current", EventId: oldState.Data.eventID }))
         else
-            dispatch(AddPlot({ DataType: "Current", EventId: oldState.Data.eventID }))
+            dispatch(AddPlot({ DataType: "Current", EventId: oldState.Data.eventID, NoCompress: ToBool(query.dbgNocompress) }))
         dispatch(SetdisplayCur(ToBool(query.displayCur)));
     }
     if (ToBool(query.displayAnalogs) != oldState.Settings.displayAnalogs || arg.initial) {
