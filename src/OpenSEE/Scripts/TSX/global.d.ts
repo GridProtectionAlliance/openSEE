@@ -346,7 +346,8 @@ export namespace OpenSee {
 
     interface IGraphProps {
         DataType: graphType,
-        EventId: number
+        EventId: number,
+        NoCompress?: boolean
     }
 
     // Data For plots

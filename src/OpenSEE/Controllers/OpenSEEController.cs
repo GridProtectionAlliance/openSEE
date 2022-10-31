@@ -130,7 +130,15 @@ namespace OpenSEE
                 string type = query["type"];
                 string dataType = query["dataType"];
 
-                int forceFullRes = int.Parse(query.ContainsKey("fullRes")? query["fullRes"] : "0");
+                bool forceFullRes =
+                    query.TryGetValue("fullRes", out string fullResSetting) &&
+                    int.TryParse(fullResSetting, out int fullResNum) &&
+                    fullResNum != 0;
+
+                bool dbgNocompress =
+                    query.TryGetValue("dbgNocompress", out string dbgNocompressSetting) &&
+                    int.TryParse(dbgNocompressSetting, out int dbgNocompressNum) &&
+                    dbgNocompressNum != 0;
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -146,8 +154,8 @@ namespace OpenSEE
                 }
                 else
                 {
-                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, meter, forceFullRes == 1);
-                    returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !(forceFullRes == 1));
+                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, meter, !dbgNocompress);
+                    returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !forceFullRes);
                 }
 
                 JsonReturn returnDict = new JsonReturn();
@@ -156,7 +164,10 @@ namespace OpenSEE
                 returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
 
                 UpSample(returnDict);
-                DownSample(returnDict);
+
+                if (!forceFullRes)
+                    DownSample(returnDict);
+
                 return returnDict;
             }           
         }
