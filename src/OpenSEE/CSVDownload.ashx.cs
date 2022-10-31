@@ -101,7 +101,7 @@ namespace OpenSEE
 
             try
             {
-                Filename = (requestParameters["Meter"] == null? (requestParameters["Meter"] + "_") : "") + (requestParameters["EventType"] == null? requestParameters["EventType"] + "_" : "") + "Event_" + requestParameters["eventID"] + ".csv";
+                Filename = (requestParameters["Meter"] == null? "" : (requestParameters["Meter"] + "_")) + (requestParameters["EventType"] == null? "" : requestParameters["EventType"] + "_") + "Event_" + requestParameters["eventID"] + ".csv";
                 if (requestParameters["type"] == "pqds")
                     Filename = "PQDS_" + Filename;
                 response.ClearContent();
@@ -131,7 +131,7 @@ namespace OpenSEE
             {
                 try
                 {
-                    Filename = (requestParameters["Meter"] == null ? (requestParameters["Meter"] + "_") : "") + (requestParameters["EventType"] == null ? requestParameters["EventType"] + "_" : "") + "Event_" + requestParameters["eventID"] + ".csv";
+                    Filename = (requestParameters["Meter"] == null ? "" : (requestParameters["Meter"] + "_")) + (requestParameters["EventType"] == null ? "" : requestParameters["EventType"] + "_") + "Event_" + requestParameters["eventID"] + ".csv";
                     if (requestParameters["type"] == "pqds")
                         Filename = "PQDS_" + Filename;
 
