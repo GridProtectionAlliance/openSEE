@@ -46,7 +46,7 @@ export function GetDisplayLabel(type: OpenSee.graphType): string {
         case ('Harmonic'):
             return "Specified Harmonic"
         case ('SymetricComp'):
-            return "Symetrical Components"
+            return "Symmetrical Components"
         case ('FaultDistance'):
             return "Fault Distance"
         case ('Restrike'):
