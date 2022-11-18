@@ -28,7 +28,7 @@ import { WidgetWindow } from './Common';
 import { OpenSee } from '../global';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
-import { selectColor, SetColor, selectSnap, selectUnit, selectTimeUnit, SetSnapToPoint, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
+import { selectColor, SetColor, selectUnit, selectTimeUnit, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
 
@@ -41,7 +41,6 @@ interface Iprops {
 
 const SettingsWidget = (props: Iprops) => {
     const list = useSelector(selectGraphTypes);
-    const snapToPoint = useSelector(selectSnap);
     const eventOverlay = useSelector(selectEventOverlay);
     const defaultTraces = useSelector(selectdefaultTraces);
     const defaultVtype = useSelector(selectVTypeDefault);
@@ -79,14 +78,7 @@ const SettingsWidget = (props: Iprops) => {
                         <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings">
                             <div className="card-body">
                                 <div className="row">
-                                    <div className="col" style={{ width: '50%' }}>
-                                        <div className="form-check">
-                                            <input className="form-check-input" type="checkbox" checked={snapToPoint}
-                                                onChange={() => dispatch(SetSnapToPoint(!snapToPoint)) } />
-                                            <label className="form-check-label">Snap ToolTip to Data Point</label>
-                                        </div>
-                                    </div>
-                                    <div className="col" style={{ width: '50%' }}>
+                                    <div className="col" style={{ width: '100%' }}>
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={eventOverlay}
                                                 onChange={() => dispatch(SetSinglePlot(!eventOverlay))} />

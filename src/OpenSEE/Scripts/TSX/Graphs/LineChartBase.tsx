@@ -29,7 +29,7 @@ import { OpenSee } from '../global';
 import moment from "moment"
 import Legend from './LegendBase';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectColor, selectActiveUnit, selectTimeUnit, selectSnap } from '../store/settingSlice'
+import { selectColor, selectActiveUnit, selectTimeUnit} from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
@@ -101,7 +101,6 @@ const LineChart = (props: iProps) => {
     const colors = useSelector(selectColor);
     const timeUnit = useSelector(selectTimeUnit);
     const activeUnit = useSelector(SelectActiveUnitInstance);
-    const snapToPoint = useSelector(selectSnap);
     const mouseMode = useSelector(selectMouseMode);
     const zoomMode = useSelector(selectZoomMode);
 
@@ -582,7 +581,7 @@ const LineChart = (props: iProps) => {
 
         let t0 = (xScaleRef.current as any).invert(x0);
         let d0 = (yScaleRef.current as any).invert(y0);
-        dispatch(SetHover({ t: t0, snap: snapToPoint, y: d0 }));
+        dispatch(SetHover({ t: t0, y: d0 }));
     }
 
     function MouseDown(evt) {
