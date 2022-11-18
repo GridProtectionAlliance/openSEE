@@ -33,7 +33,6 @@ export const SettingsReducer = createSlice({
         Units: {} as OpenSee.IUnitCollection,
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
-        SnapToPoint: false as boolean,
         SinglePlot: true as boolean,
         displayVolt: true as boolean,
         displayCur: true as boolean,
@@ -53,7 +52,6 @@ export const SettingsReducer = createSlice({
                 state.Units = preserved.Units;
                 state.Colors = preserved.Colors;
                 state.TimeUnit = preserved.TimeUnit;
-                state.SnapToPoint = preserved.SnapToPoint;
                 state.SinglePlot = preserved.SinglePlot;
                 state.DefaultTrace = preserved.DefaultTrace;
                 state.DefaultVType = preserved.DefaultVType;
@@ -62,7 +60,6 @@ export const SettingsReducer = createSlice({
                 state.Units = defaultSettings.Units;
                 state.Colors = defaultSettings.Colors;
                 state.TimeUnit = defaultSettings.TimeUnit;
-                state.SnapToPoint = defaultSettings.snapToPoint;
                 state.SinglePlot = defaultSettings.singlePoint;
                 state.DefaultTrace = defaultSettings.DefaultTrace;
                 state.DefaultVType = defaultSettings.DefaultVType;
@@ -79,10 +76,6 @@ export const SettingsReducer = createSlice({
         },
         SetTimeUnit: (state, action: PayloadAction<number>) => {
             state.TimeUnit.current = action.payload
-            SaveSettings(state);
-        },
-        SetSnapToPoint: (state, action: PayloadAction<boolean>) => {
-            state.SnapToPoint = action.payload,
             SaveSettings(state);
         },
         SetSinglePlot: (state, action: PayloadAction<boolean>) => {
@@ -126,7 +119,7 @@ export const SettingsReducer = createSlice({
 
 });
 
-export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSnapToPoint, SetSinglePlot,
+export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSinglePlot,
     SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt,
     SetNavigation, SetTab, SetDefaultTrace, SetDefaultVType
 } = SettingsReducer.actions;
@@ -165,7 +158,6 @@ export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
 
 
 export const selectTimeUnit = (state: OpenSee.IRootState) => state.Settings.TimeUnit;
-export const selectSnap = (state: OpenSee.IRootState) => state.Settings.SnapToPoint
 export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.SinglePlot
 export const SelectdisplayVolt = (state: OpenSee.IRootState) => state.Settings.displayVolt
 export const SelectdisplayCur = (state: OpenSee.IRootState) => state.Settings.displayCur
@@ -219,7 +211,6 @@ function SaveSettings(state: OpenSee.ISettingsState) {
             TimeUnit: {
                 current: state.TimeUnit.current
             },
-            SnapToPoint: state.SnapToPoint,
             SinglePlot: state.SinglePlot,
             DefaultTrace: state.DefaultTrace,
             DefaultVType: state.DefaultVType
