@@ -434,14 +434,8 @@ export const DataReducer = createSlice({
             }
             return state
         },
-        SetHover: (state, action: PayloadAction<{ t: number, y: number, snap: boolean }>) => {
-            if (!action.payload.snap)
-                state.hover = [action.payload.t, action.payload.y];
-            else {
-                let d = state.data.find((item,i) => !state.loading[i] && item.length > 0)[0];
-                state.hover[1] = d.DataPoints[getIndex(action.payload.t, d.DataPoints)][0];
-                state.hover[0] = action.payload.t;
-            }
+        SetHover: (state, action: PayloadAction<{ t: number, y: number }>) => {
+            state.hover = [action.payload.t, action.payload.y];
             return state;
         },
         SelectPoint: (state, action: PayloadAction<[number, number]>) => {
