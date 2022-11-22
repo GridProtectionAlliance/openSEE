@@ -102,7 +102,7 @@ export const WidgetWindow: React.FunctionComponent<IwindowProps> = (props) => {
         < div ref={refWindow} className="ui-widget-content" style={{ ...outerDiv, top: props.position[0], left: props.position[1], width: props.width, maxHeight: props.maxHeight, display: undefined }} >
             <div style={{ border: 'black solid 2px' }}>
                 <div ref={refHandle} className={handle}></div>
-                <div style={{ width: props.width - 6, maxHeight: props.maxHeight - 24 }}>
+                <div style={{ width: props.width - 6, maxHeight: props.maxHeight - 14 }}>
                     {props.children}
                 </div>
                 <button className={closeButton} onClick={() => props.close()}>X</button>

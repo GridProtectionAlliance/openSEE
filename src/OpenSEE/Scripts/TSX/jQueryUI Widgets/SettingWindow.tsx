@@ -64,8 +64,8 @@ const SettingsWidget = (props: Iprops) => {
   
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516} position={props.position} setPosition={props.setPosition} >
-            <div id="settingScrollContainer" style={{ width: '510px', height: '575px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
+        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={700} width={516} position={props.position} setPosition={props.setPosition} >
+            <div id="settingScrollContainer" style={{ width: '510px', height: '765px', zIndex: 1001, overflowY: 'scroll', overflowX: 'scroll' }}> 
                 <div className="accordion" id="panelSettings">
                     <div className="card">
                         <div className="card-header" id="header-general">

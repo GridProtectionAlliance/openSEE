@@ -29,7 +29,6 @@ import { OpenSee } from './global';
 // Default Settings
 export const defaultSettings = {
     DefaultVType: 'L-L' as 'L-L'|'L-N',
-    snapToPoint: false,
     singlePoint: true,
     Colors: {
         Va: "#A30000",
