@@ -44,6 +44,7 @@ export const SettingsReducer = createSlice({
         Navigation: 'system' as OpenSee.EventNavigation,
         DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
         DefaultVType: "L-L",
+
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {

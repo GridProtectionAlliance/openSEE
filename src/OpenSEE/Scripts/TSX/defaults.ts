@@ -248,7 +248,7 @@ export const defaultSettings = {
             { label: "minutes", short: "min", factor: 0 },
             { label: "milliseconds", short: "ms", factor: 0 },
             { label: "milliseconds since event", short: "ms since event", factor: 0 },
-            { label: "cycles since event", short: "cycles", factor: 0 },
+            { label: "cycles since record start", short: "cycles", factor: 0 },
             { label: "auto", short: "auto", factor: 0 }
         ]
     },
