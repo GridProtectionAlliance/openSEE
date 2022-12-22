@@ -308,7 +308,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     
                     <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
                         {plotData[this.props.eventID] != undefined ?
-                            <div className="card" style={{borderLeft: 0, borderRight: 0}}>
+                            <div className="card" style={{ borderLeft: 0, borderRight: 0, borderBottomColor: 'transparent' }}>
                                 <div className="card-body" style={{ padding: 0 }}>
                                     {plotData[this.props.eventID].sort(this.sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
                                         <BarChart
