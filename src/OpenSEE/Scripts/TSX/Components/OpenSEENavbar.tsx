@@ -176,17 +176,17 @@ const OpenSeeNavBar = (props: IProps) => {
                     <li className="nav-item" style={{ width:  (analytic == 'FFT' ? 'calc(100% - 954px)': 'calc(100% - 909px)'), textAlign: 'center' }}>
 
                     </li>
-                    <li className="nav-item" style={{ width: '84px' }}>
+                    <li className="nav-item" style={{ width: '64px' }}>
                         <button type="button" className="btn btn-primary" title="ToolTip" style={{ borderRadius: "0.25rem" }} onClick={() => setShowToolTip(!showToolTip)}>
                             <i style={{ fontStyle: "normal" }}>{Tooltip}</i> 
                         </button>
                     </li>
-                    <li className="nav-item" style={{ width: '84px' }}>
+                    <li className="nav-item" style={{ width: '64px' }}>
                         <button type="button" className="btn btn-primary" title="Polar Chart" style={{ borderRadius: "0.25rem" }} onClick={() => setShowPolar(!showPolar)}>
                             < i style={{ fontStyle: "normal" }} >{PhasorClock}</i>
                         </button>
                     </li>
-                    <li className="nav-item" style={{ width: (analytic == 'FFT' ? '168px' : '123px') }}>
+                    <li className="nav-item" style={{ width: (analytic == 'FFT' ? '168px' : '103px') }}>
                         <div className="btn-group" role="group">
                             <button type="button" className={"btn btn-primary " + (mouseMode == "zoom" ? "active" : "")} onClick={() => dispatch(SetMouseMode("zoom"))}
                                 data-toggle="tooltip" data-placement="bottom" title="Zoom">
@@ -203,7 +203,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </div>
                     </li>
 
-                    <li className="nav-item" style={{ width: '84px' }}>
+                    <li className="nav-item" style={{ width: '64px' }}>
                         <div className="btn-group dropright">
                             <button type="button" title='Zoom Mode' className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
                                 {zoomMode == "x" ? <i style={{ fontStyle: "normal" }}>{TimeRect}</i> : null}
@@ -223,16 +223,16 @@ const OpenSeeNavBar = (props: IProps) => {
                             </div>
                         </div>
                     </li>
-                    <li className="nav-item" style={{ width: '156px' }}>
+                    <li className="nav-item" style={{ width: '136px' }}>
                         <button className="btn btn-primary" title='Reset Zoom' onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>Reset Zoom</button>
                     </li>
-                    <li className="nav-item" style={{ width: '84px' }}>
+                    <li className="nav-item" style={{ width: '64px' }}>
                         <button className="btn btn-primary" title='Settings' onClick={() => setShowSettings(!showSettings)}>
                             <i style={{ fontStyle: "normal" }}>{Settings}</i>
                         </button>
                     </li>
                     {props.Lookup != undefined ?
-                        <li className="nav-item" style={{ width: '193px' }}>
+                        <li className="nav-item" style={{ width: '183px' }}>
                             <div className="input-group mb-3">
                                 <div className="input-group-prepend">
                                     {(navigation == "system" ? <a href={(props.Lookup.System.m_Item1 != null ? "?eventID=" + props.Lookup.System.m_Item1.ID + "&Navigation=system" : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (props.Lookup.System.m_Item1 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')} style={{ padding: '4px 20px' }}>&lt;</a> : null)}
