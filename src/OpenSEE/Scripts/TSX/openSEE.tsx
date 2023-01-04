@@ -281,7 +281,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                         {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
                                         {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
                                         {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
-                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
+                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open('https://pqvis.gridprotectionalliance.org/SEBrowser/EventSearch?date=' + this.state.eventStartTime.split('T')[0].split('-')[1] + '%2F' + this.state.eventStartTime.split('T')[0].split('-')[2] + '%2F' + this.state.eventStartTime.split('T')[0].split('-')[0] + '&time=' + this.state.eventStartTime.split('T')[1].split(':')[0] + '%3A' + this.state.eventStartTime.split('T')[1].split(':')[1] + '%3A' + this.state.eventStartTime.split('T')[1].split(':')[2].slice(0, -4) + '&windowSize=12&timeWindowUnits=3') }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
                                     </tbody>
                                 </table> :
                             null}
