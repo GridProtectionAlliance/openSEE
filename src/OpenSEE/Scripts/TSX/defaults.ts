@@ -102,7 +102,7 @@ export const defaultSettings = {
                 { label: "Volt", short: "V", factor: 1 },
                 { label: "kiloVolt", short: "kV", factor: 0.001 },
                 { label: "milliVolt", short: "mV", factor: 1000 },
-                { label: "per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: 0 },
                 { label: "auto", short: "auto", factor: 0 }
             ]
         },
