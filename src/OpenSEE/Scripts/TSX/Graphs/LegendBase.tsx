@@ -24,10 +24,10 @@
 //******************************************************************************************************
 import * as React from "react";
 import { OpenSee } from '../global';
-import { cloneDeep, uniq } from "lodash";
-import { useSelector, useDispatch } from 'react-redux';
+import { cloneDeep } from "lodash";
 import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
 import { selectColor } from "../store/settingSlice";
+import { useAppDispatch, useAppSelector } from "../hooks";
 
 const hrow = 26;
 
@@ -61,9 +61,9 @@ const Legend = (props: iProps) => {
     const MemoSelectData = React.useMemo(selectData, []);
     const MemoSelectEnabled = React.useMemo(selectEnabled, []);
 
-    const data = useSelector((state) => MemoSelectData(state, dataKey));
-    const enabled = useSelector((state) => MemoSelectEnabled(state, dataKey))
-    const dispatch = useDispatch();
+    const data = useAppSelector((state) => MemoSelectData(state, dataKey));
+    const enabled = useAppSelector((state) => MemoSelectEnabled(state, dataKey))
+    const dispatch = useAppDispatch();
 
     const [categories, setCategories] = React.useState<Array<ICategory>>([]);
     const [showCategories, setShowCategories] = React.useState<boolean>(false);
@@ -416,8 +416,8 @@ const Row = (props: { category: string, label: string, data: Array<ILegendGrid>,
 }
 
 const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: number, dataKey: OpenSee.IGraphProps }) => {
-    const colors = useSelector(selectColor)
-    const dispatch = useDispatch();
+    const colors = useAppSelector(selectColor)
+    const dispatch = useAppDispatch();
 
     function getColor(color: OpenSee.Color) {
 
