@@ -28,12 +28,12 @@ import { OpenSee } from '../global';
 
 
 import Legend from './LegendBase';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit } from '../store/settingSlice'
 import { selectData, selectEnabled,   selectLoading, selectYLimits, selectMouseMode, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../store/dataSlice';
 import { selectAnalyticOptions } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import OpenSEEService from '../../TS/Services/OpenSEE';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 
 
@@ -77,21 +77,21 @@ const BarChart = (props: iProps) => {
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
-    const barData = useSelector((state) => MemoSelectData(state, dataKey));
-    const enabledBar = useSelector(state => MemoSelecEnable(state,dataKey));
+    const barData = useAppSelector((state) => MemoSelectData(state, dataKey));
+    const enabledBar = useAppSelector(state => MemoSelecEnable(state,dataKey));
 
-    const xLimits = useSelector(selectFFTLimits);
+    const xLimits = useAppSelector(selectFFTLimits);
 
-    const loading = useSelector(selectLoading(dataKey));
+    const loading = useAppSelector(selectLoading(dataKey));
 
-    const colors = useSelector(selectColor);
-    const activeUnit = useSelector(SelectActiveUnitInstance);
-    const mouseMode = useSelector(selectMouseMode);
-    const zoomMode = useSelector(selectZoomMode);
+    const colors = useAppSelector(selectColor);
+    const activeUnit = useAppSelector(SelectActiveUnitInstance);
+    const mouseMode = useAppSelector(selectMouseMode);
+    const zoomMode = useAppSelector(selectZoomMode);
 
-    const dispatch = useDispatch();
-    const yLimits = useSelector(selectYLimits(dataKey));
-    const options = useSelector(selectAnalyticOptionInstance)
+    const dispatch = useAppDispatch();
+    const yLimits = useAppSelector(selectYLimits(dataKey));
+    const options = useAppSelector(selectAnalyticOptionInstance)
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
     const [yLblText, setYLblText] = React.useState<string>('');

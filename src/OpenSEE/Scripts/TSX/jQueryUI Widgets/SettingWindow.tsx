@@ -26,11 +26,11 @@ import { uniq } from 'lodash';
 import { BlockPicker } from 'react-color';
 import { WidgetWindow } from './Common';
 import { OpenSee } from '../global';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
 import { selectColor, SetColor, selectUnit, selectTimeUnit, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 interface Iprops {
     closeCallback: () => void,
@@ -40,12 +40,12 @@ interface Iprops {
 }
 
 const SettingsWidget = (props: Iprops) => {
-    const list = useSelector(selectGraphTypes);
-    const eventOverlay = useSelector(selectEventOverlay);
-    const defaultTraces = useSelector(selectdefaultTraces);
-    const defaultVtype = useSelector(selectVTypeDefault);
+    const list = useAppSelector(selectGraphTypes);
+    const eventOverlay = useAppSelector(selectEventOverlay);
+    const defaultTraces = useAppSelector(selectdefaultTraces);
+    const defaultVtype = useAppSelector(selectVTypeDefault);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
     
@@ -221,13 +221,13 @@ interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
 const PlotCard = (props: ICardProps) => {
 
     const SelectData = React.useMemo(selectData, []);
-    const lineData = useSelector((state) => SelectData(state, props));
+    const lineData = useAppSelector((state) => SelectData(state, props));
 
-    const colors = useSelector(selectColor);
-    const units = useSelector(selectUnit);
-    const timeUnit = useSelector(selectTimeUnit);
+    const colors = useAppSelector(selectColor);
+    const units = useAppSelector(selectUnit);
+    const timeUnit = useAppSelector(selectTimeUnit);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     let colorSettings: OpenSee.Color[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
