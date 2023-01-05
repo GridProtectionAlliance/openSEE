@@ -99,11 +99,11 @@ export const defaultSettings = {
     Units: {
         Voltage: {
             current: 4, options: [
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "milliVolt", short: "mV", factor: 1000 },
                 { label: "Volt", short: "V", factor: 1 },
                 { label: "kiloVolt", short: "kV", factor: 0.001 },
-                { label: "milliVolt", short: "mV", factor: 1000 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
             ]
         },
         Angle: {
@@ -115,83 +115,83 @@ export const defaultSettings = {
         Current: {
             current: 4,
             options: [
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 },
-                { label: "milliAmps", short: "mA", factor: 1000 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
             ]
         },
         VoltageperSecond: {
             current: 5,
             options: [
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "Per Unit", short: "p.u./s", factor: 0 },
+                { label: "milliVolts per sec", short: "mV/s", factor: 1000 },
                 { label: "Volt per sec", short: "V/s", factor: 1 },
                 { label: "kiloVolts per sec", short: "kV/s", factor: 0.001 },
                 { label: "megaVolts per sec", short: "MV/s", factor: 0.000001 },
-                { label: "milliVolts per sec", short: "mV/s", factor: 1000 },
-                { label: "Per Unit", short: "p.u./s", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
             ]
         },
         CurrentperSecond: {
             current: 4,
             options: [
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "Per Unit", short: "p.u./s", factor: 0 },
+                { label: "milliAmps per sec", short: "mA/s", factor: 1000 },
                 { label: "Amps per sec", short: "A/s", factor: 1 },
                 { label: "kiloAmps per sec", short: "kA/s", factor: 0.001 },
-                { label: "milliAmps per sec", short: "mA/s", factor: 1000 },
-                { label: "Per Unit", short: "p.u./s", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 },
-                { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 },
+                { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 }
             ]
         },
         Freq: {
             current:4,
             options: [
-                { label: "Hertz", short: "Hz", factor: 1 },
-                { label: "milliHertz", short: "mHz", factor: 1000 },
-                { label: "kiloHertz", short: "kHz", factor: 0.001 },
+                { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "milliHertz", short: "mHz", factor: 1000 },
+                { label: "Hertz", short: "Hz", factor: 1 },
+                { label: "kiloHertz", short: "kHz", factor: 0.001 } 
             ]
         },
         Impedance: {
             current: 4,
             options: [
+                { label: "auto", short: "auto", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "milliOhms", short: "mOhm", factor: 1000 },
                 { label: "Ohms", short: "Ohm", factor: 1 },
                 { label: "kiloOhms", short: "kOhm", factor: 0.001 },
-                { label: "milliOhms", short: "mOhm", factor: 1000 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
             ]
         },
         PowerP: {
             current: 4,
             options: [
-                { label: "Watt", short: "W", factor: 1000000 },
-                { label: "Mega Watt", short: "MW", factor: 1 },
-                { label: "Kilo Watt", short: "kW", factor: 1000 },
+                { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "Watt", short: "W", factor: 1000000 },
+                { label: "Kilo Watt", short: "kW", factor: 1000 },
+                { label: "Mega Watt", short: "MW", factor: 1 }
             ]
         },
         PowerQ: {
             current: 4,
             options: [
-                { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
-                { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 },
-                { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
+                { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
+                { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
+                { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 }
             ]
         },
         PowerS: {
             current: 4,
             options: [
-                { label: "Volt-Amps", short: "VA", factor: 1000000 },
-                { label: "Mega Volt-Amps", short: "MVA", factor: 1 },
-                { label: "Kilo Volt-Amps", short: "kVA", factor: 1000 },
+                { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "Volt-Amps", short: "VA", factor: 1000000 },
+                { label: "Kilo Volt-Amps", short: "kVA", factor: 1000 },
+                { label: "Mega Volt-Amps", short: "MVA", factor: 1 }
             ]
         },
         PowerPf: {
@@ -204,11 +204,11 @@ export const defaultSettings = {
         TCE: {
             current: 4,
             options: [
-                { label: "Amps", short: "A", factor: 1 },
-                { label: "kiloAmps", short: "kA", factor: 0.001 },
-                { label: "milliAmps", short: "mA", factor: 1000 },
+                { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
-                { label: "auto", short: "auto", factor: 0 }
+                { label: "milliAmps", short: "mA", factor: 1000 },
+                { label: "Amps", short: "A", factor: 1 },
+                { label: "kiloAmps", short: "kA", factor: 0.001 }
             ]
         },
 
@@ -244,12 +244,12 @@ export const defaultSettings = {
     } as OpenSee.IUnitCollection,
     TimeUnit: {
         current: 5, options: [
-            { label: "seconds", short: "s", factor: 0 },
-            { label: "minutes", short: "min", factor: 0 },
+            { label: "auto", short: "auto", factor: 0 },
             { label: "milliseconds", short: "ms", factor: 0 },
             { label: "milliseconds since event", short: "ms since event", factor: 0 },
-            { label: "cycles since record start", short: "cycles", factor: 0 },
-            { label: "auto", short: "auto", factor: 0 }
+            { label: "seconds", short: "s", factor: 0 },
+            { label: "minutes", short: "min", factor: 0 },
+            { label: "cycles since record start", short: "cycles", factor: 0 }
         ]
     },
     DefaultTrace: {
