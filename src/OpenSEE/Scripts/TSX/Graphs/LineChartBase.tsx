@@ -28,12 +28,12 @@ import { OpenSee } from '../global';
 
 import moment from "moment"
 import Legend from './LegendBase';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit} from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 
 
@@ -89,27 +89,27 @@ const LineChart = (props: iProps) => {
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
     
 
-    const lineData = useSelector(state => MemoSelectData(state, dataKey));
-    const enabledLine = useSelector(state => MemoSelectEnabled(state, dataKey));
+    const lineData = useAppSelector(state => MemoSelectData(state, dataKey));
+    const enabledLine = useAppSelector(state => MemoSelectEnabled(state, dataKey));
 
-    const startTime = useSelector(selectStartTimeInstance);
-    const endTime = useSelector(selectEndTimeInstance);
-    const yLimits = useSelector(SelectYLimits);
+    const startTime = useAppSelector(selectStartTimeInstance);
+    const endTime = useAppSelector(selectEndTimeInstance);
+    const yLimits = useAppSelector(SelectYLimits);
 
-    const loading = useSelector(selectLoading(dataKey));
+    const loading = useAppSelector(selectLoading(dataKey));
 
-    const colors = useSelector(selectColor);
-    const timeUnit = useSelector(selectTimeUnit);
-    const activeUnit = useSelector(SelectActiveUnitInstance);
-    const mouseMode = useSelector(selectMouseMode);
-    const zoomMode = useSelector(selectZoomMode);
+    const colors = useAppSelector(selectColor);
+    const timeUnit = useAppSelector(selectTimeUnit);
+    const activeUnit = useAppSelector(SelectActiveUnitInstance);
+    const mouseMode = useAppSelector(selectMouseMode);
+    const zoomMode = useAppSelector(selectZoomMode);
 
-    const fftWindow = useSelector(selectFFTWindow);
-    const showFFT = useSelector(selectShowFFTWindow);
+    const fftWindow = useAppSelector(selectFFTWindow);
+    const showFFT = useAppSelector(selectShowFFTWindow);
 
-    const hover = useSelector(selectHover);
-    const options = useSelector(selectAnalyticOptionInstance);
-    const fftCycles = useSelector(selectCycles);
+    const hover = useAppSelector(selectHover);
+    const options = useAppSelector(selectAnalyticOptionInstance);
+    const fftCycles = useAppSelector(selectCycles);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
 
@@ -117,7 +117,7 @@ const LineChart = (props: iProps) => {
     const [yLblText, setYLblText] = React.useState<string>('');
     const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     //Effect to update the Data 
     React.useEffect(() => {
