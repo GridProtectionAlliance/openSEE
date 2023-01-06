@@ -29,6 +29,7 @@ import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, 
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import { FFT, Pan, PhasorClock, Settings, Square, TimeRect, Tooltip, ValueRect, Zoom } from '../Graphs/ChartIcons';
+import { ToolTip } from '@gpa-gemstone/react-interactive';
 
 
 declare var homePath: string;
@@ -97,6 +98,7 @@ const OpenSeeNavBar = (props: IProps) => {
     const [positionFFTTable, setPositionFFTTable] = React.useState<[number, number]>([0, 0]);
     const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
 
+    const [hover, setHover] = React.useState<('None'|'Zoom')>('None')
     React.useEffect(() => {
         if (showPoints) {
             let oldMode = clone(mouseMode);
@@ -204,11 +206,16 @@ const OpenSeeNavBar = (props: IProps) => {
 
                     <li className="nav-item" style={{ width: '64px' }}>
                         <div className="btn-group dropright">
-                            <button type="button" title='Zoom Mode' className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'}>
+                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem" }}
+                                disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom')}
+                                onMouseLeave={() => setHover('None')} >
                                 {zoomMode == "x" ? <i style={{ fontStyle: "normal" }}>{TimeRect}</i> : null}
                                 {zoomMode == "y" ? <i style={{ fontStyle: "normal" }}>{ValueRect}</i> : null}
                                 {zoomMode == "xy" ? <i style={{ fontStyle: "normal" }}>{Square}</i> : null}
                             </button>
+                            <ToolTip Show={hover == 'Zoom'} Position={'bottom'} Target={'zoom-btn'} Theme={'dark'}>
+                                <p>Zoom</p>
+                            </ToolTip>
                             <div className="dropdown-menu">
                                 <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))}>
                                     <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
