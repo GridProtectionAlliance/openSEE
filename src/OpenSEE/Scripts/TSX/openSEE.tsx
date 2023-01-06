@@ -57,7 +57,7 @@ import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
-
+import styled from "styled-components";
 
 declare var homePath: string;
 declare var userIsAdmin: boolean;
@@ -69,6 +69,20 @@ declare var version: string;
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
+
+const MainDiv = styled.div`
+& {
+    top: 40px;
+    position: absolute;
+    width: calc(100% - ${0}px);
+    height: calc(100% - 48px);
+    overflow: hidden;
+    left: ${props => 0}px;
+}
+& svg {
+    user-select: none;
+ }`;
+
 
 class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
     history: object;
@@ -228,7 +242,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
 
         return (
-            <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
+            <div style={{ width: window.innerWidth, height: window.innerHeight, position: "absolute" }}>
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
@@ -313,7 +327,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                          />
 
                     
-                    <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
+                    <MainDiv>
                         {plotData[this.props.eventID] != undefined ?
                             <div className="card" style={{borderLeft: 0, borderRight: 0}}>
                                 <div className="card-body" style={{ padding: 0 }}>
@@ -354,7 +368,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </div>)
                                     }
                         {/* FFT Analytic */}
-                    </div>
+                    </MainDiv>
                 </div>
         );
     }
