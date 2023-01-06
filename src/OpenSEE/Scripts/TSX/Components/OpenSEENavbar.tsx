@@ -24,12 +24,12 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { clone } from 'lodash';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic, selectFFTLimits } from '../store/dataSlice';
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import { FFT, Pan, PhasorClock, Settings, Square, TimeRect, Tooltip, ValueRect, Zoom } from '../Graphs/ChartIcons';
 import { ToolTip } from '@gpa-gemstone/react-interactive';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 
 declare var homePath: string;
@@ -55,26 +55,26 @@ const OpenSeeNavBar = (props: IProps) => {
     const FFTTable = React.lazy(() => import(/* webpackChunkName: "FFTTable" */ '../jQueryUI Widgets/FFTTable'));
     const HarmonicStatsWidget = React.lazy(() => import(/* webpackChunkName: "HarmonicStatsWidget" */ '../jQueryUI Widgets/HarmonicStats'));
     
-    const dispatch = useDispatch()
-    const mouseMode = useSelector(selectMouseMode);
-    const zoomMode = useSelector(selectZoomMode);
-    const eventId = useSelector(selectEventID);
-    const analytic = useSelector(selectAnalytic);
-    const navigation = useSelector(SelectNavigation);
+    const dispatch = useAppDispatch()
+    const mouseMode = useAppSelector(selectMouseMode);
+    const zoomMode = useAppSelector(selectZoomMode);
+    const eventId = useAppSelector(selectEventID);
+    const analytic = useAppSelector(selectAnalytic);
+    const navigation = useAppSelector(SelectNavigation);
 
-    const showVolts = useSelector(SelectdisplayVolt);
-    const showCurr = useSelector(SelectdisplayCur);
-    const showDigitals = useSelector(SelectdisplayDigitals);
-    const showAnalog = useSelector(SelectdisplayAnalogs);
-    const showTCE = useSelector(SelectdisplayTCE);
-    const tab = useSelector(SelectTab);
+    const showVolts = useAppSelector(SelectdisplayVolt);
+    const showCurr = useAppSelector(SelectdisplayCur);
+    const showDigitals = useAppSelector(SelectdisplayDigitals);
+    const showAnalog = useAppSelector(SelectdisplayAnalogs);
+    const showTCE = useAppSelector(SelectdisplayTCE);
+    const tab = useAppSelector(SelectTab);
 
-    const harmonic = useSelector(selectHarmonic);
-    const trc = useSelector(selectTRC);
-    const lpf = useSelector(selectLPF);
-    const hpf = useSelector(selectHPF);
-    const cycles = useSelector(selectCycles);
-    const fftTime = useSelector(selectFFTLimits);
+    const harmonic = useAppSelector(selectHarmonic);
+    const trc = useAppSelector(selectTRC);
+    const lpf = useAppSelector(selectLPF);
+    const hpf = useAppSelector(selectHPF);
+    const cycles = useAppSelector(selectCycles);
+    const fftTime = useAppSelector(selectFFTLimits);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
     const [showToolTip, setShowToolTip] = React.useState<boolean>(false);
@@ -206,9 +206,9 @@ const OpenSeeNavBar = (props: IProps) => {
 
                     <li className="nav-item" style={{ width: '64px' }}>
                         <div className="btn-group dropright">
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem" }}
-                                disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom')}
-                                onMouseLeave={() => setHover('None')} >
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem" }}
+                            disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom')}
+                            onMouseLeave={() => setHover('None')} data-tooltip={'zoom-btn'}>
                                 {zoomMode == "x" ? <i style={{ fontStyle: "normal" }}>{TimeRect}</i> : null}
                                 {zoomMode == "y" ? <i style={{ fontStyle: "normal" }}>{ValueRect}</i> : null}
                                 {zoomMode == "xy" ? <i style={{ fontStyle: "normal" }}>{Square}</i> : null}
