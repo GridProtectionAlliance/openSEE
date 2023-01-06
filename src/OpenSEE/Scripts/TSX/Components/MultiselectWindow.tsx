@@ -23,16 +23,16 @@
 
 import { groupBy } from 'lodash';
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import { selectEventListLoading, selectEventGroup, EnableOverlappingEvent } from '../store/eventSlice';
 
 interface Iprops { }
 
 const OverlappingEventWindow = (props: Iprops) => {
     
-    const eventList = useSelector(selectEventGroup);
-    const loading = useSelector(selectEventListLoading);
+    const eventList = useAppSelector(selectEventGroup);
+    const loading = useAppSelector(selectEventListLoading);
 
     return (
         <div style={{ marginTop: '10px', width: '100%', height: '100%' }}>
@@ -59,7 +59,7 @@ const Group = (props: { name: string, children: Array<OpenSee.iListObject>}): an
 }
 
 const ListItem = (props: { name: string, value: number, data: OpenSee.iListObject }) => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     return <li key={props.data.group + props.name}><label><input type="checkbox" value={props.value} onClick={() => dispatch(EnableOverlappingEvent(props.value))} defaultChecked={props.data.selected} /> {props.name}</label></li>
 }
