@@ -24,10 +24,10 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { OpenSee } from '../global';
 import { selectAnalytic, SetAnalytic } from '../store/dataSlice';
 import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc, selectCycles, selectFFTWindow, SetFFTWindow } from '../store/analyticSlice';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 declare var cycles: number;
 declare var samplesPerCycle: number;
@@ -36,14 +36,14 @@ declare var samplesPerCycle: number;
 interface IProps {}
 
 const AnalyticOptions = (props: IProps) => {
-    const dispatch = useDispatch();
-    const analytic = useSelector(selectAnalytic)
-    const harmonic = useSelector(selectHarmonic)
-    const hpf = useSelector(selectHPF)
-    const lpf = useSelector(selectLPF)
-    const trc = useSelector(selectTRC)
-    const cycles = useSelector(selectCycles);
-    const FFTWindow = useSelector(selectFFTWindow);
+    const dispatch = useAppDispatch();
+    const analytic = useAppSelector(selectAnalytic)
+    const harmonic = useAppSelector(selectHarmonic)
+    const hpf = useAppSelector(selectHPF)
+    const lpf = useAppSelector(selectLPF)
+    const trc = useAppSelector(selectTRC)
+    const cycles = useAppSelector(selectCycles);
+    const FFTWindow = useAppSelector(selectFFTWindow);
 
     function ChangeAnalytic(event) {
         let val = event.target.value as OpenSee.Analytic;
