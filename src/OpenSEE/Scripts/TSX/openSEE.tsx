@@ -222,7 +222,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
 
         return (
             <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
-                {/* the navigation side bar*/}
+                {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
                     <fieldset className="border" style={{ padding: '10px' }}>
@@ -299,8 +299,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         <span><About/></span>
                     </div>
                 </div> 
-                <div id="chartpanel" style={{ width: 'calc(100% - 300px)', height: 'inherit', position: 'relative', float: 'right', overflow: 'hidden' }}>
-                    <OpenSeeNavBar
+                */}
+                <OpenSeeNavBar
                         EventData={this.state.eventData} Lookup={this.state.lookup} 
                         stateSetter={this.setState}
                          />
@@ -349,7 +349,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         {/* FFT Analytic */}
                     </div>
                 </div>
-            </div>
         );
     }
 
