@@ -150,7 +150,7 @@ const OpenSeeNavBar = (props: IProps) => {
     return (
         <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
             <a className="navbar-brand col-sm-3 col-md-2 mr-0 mr-auto" href={''} ><img style={{ maxHeight: 35, margin: -5 }} src={'openSee.png'} /></a>
-                <ul className="navbar-nav mr-auto nav-expand">
+                <ul className="navbar-nav mr-auto navbar-expand">
                     <li className="nav-item dropdown" style={{ width: '150px' }}>
                         <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Data Tools</a>
                         <div className="dropdown-menu" aria-labelledby="navbarDropdown">
