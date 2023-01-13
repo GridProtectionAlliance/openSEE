@@ -212,13 +212,20 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             return 1;
 
         return (item1 > item2 ? 1 : -1);
-    }   
+    }
+
+    pad(n) {
+        return (n.length == 1) ? ('0' + n) : n;
+    }
 
     render() {
         var height = this.calculateHeights();
         var windowHeight = window.innerHeight;
 
-        let plotData = groupBy(this.props.graphList,"EventId");
+        let plotData = groupBy(this.props.graphList, "EventId");
+        const evtStartTime = new Date(this.state.eventStartTime + 'Z');
+        const startDateString = this.pad((evtStartTime.getUTCMonth() + 1).toString()) + '%2F' + this.pad(evtStartTime.getUTCDate().toString()) + '%2F' + this.pad(evtStartTime.getUTCFullYear().toString());
+        const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
 
         return (
             <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
@@ -281,7 +288,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                         {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
                                         {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
                                         {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
-                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
+                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open('https://pqvis.gridprotectionalliance.org/SEBrowser/EventSearch?date=' + startDateString + '&time=' + startTimeString + '&windowSize=12&timeWindowUnits=3') }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
                                     </tbody>
                                 </table> :
                             null}
@@ -314,15 +321,15 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                         <BarChart
                                             eventId={item.EventId}
                                             width={this.state.graphWidth}
-                                            eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                            eventStartTime={evtStartTime.getTime()}
                                             height={this.calculateHeights()}
                                             timeLabel={"Harmonic"}
                                             type={item.DataType}
                                         /> : <LineChart
                                             key={idx}
                                         eventId={item.EventId}
-                                        width={this.state.graphWidth}
-                                        eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                            width={this.state.graphWidth}
+                                            eventStartTime={evtStartTime.getTime()}
                                         height={this.calculateHeights()}
                                         timeLabel={"Time"}
                                         type={item.DataType}
@@ -337,8 +344,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 <div className="card-body" style={{ padding: 0 }}>
                                 {plotData[key].sort(this.sortGraph).map(item => < LineChart
                                         eventId={item.EventId}
-                                        width={this.state.graphWidth}
-                                        eventStartTime={new Date(this.state.eventStartTime + "Z").getTime()}
+                                    width={this.state.graphWidth}
+                                    eventStartTime={evtStartTime.getTime()}
                                         height={this.calculateHeights()}
                                         timeLabel={"Time"}
                                         type={item.DataType}
