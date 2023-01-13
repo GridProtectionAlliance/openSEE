@@ -340,7 +340,8 @@ namespace OpenSEE
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = 1.0
+                    BaseValue = 1.0, 
+                    Axis = 1
                 };
             
                 dataLookup.Add(flotSeriesPolarAngle);
@@ -449,7 +450,6 @@ namespace OpenSEE
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
                        Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
-                       LegendClass = "",
                        LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
                        LegendVertical = "A ",
                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
