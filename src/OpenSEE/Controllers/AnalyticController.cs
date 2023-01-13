@@ -1371,8 +1371,6 @@ namespace OpenSEE
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
                 LegendVGroup = "",
-                LegendClass = "",
-                SecondaryLegendClass = type,
                 DataPoints = new List<double[]>()
             };
 
@@ -2657,7 +2655,7 @@ namespace OpenSEE
                 {
                     item.DataMarker = new List<double[]>();
 
-                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.LegendVertical).ToList().ForEach(restrike =>
                     {
                         item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
                         item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);
@@ -2671,7 +2669,7 @@ namespace OpenSEE
                 {
                     item.DataMarker = new List<double[]>();
 
-                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.LegendVertical).ToList().ForEach(restrike =>
                     {
                         item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
                         item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);

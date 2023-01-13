@@ -49,16 +49,16 @@ namespace OpenSEE.Model
         public D3Series()
         {
             this.LegendHorizontal = "";
-            this.LegendVertical = "";
-            this.LegendClass = "";
-            this.SecondaryLegendClass = "";
-            this.ChannelID = 0;
+            this.LegendVertical = "";          
         }
 
         #endregion
 
         #region [ Properties ]
-
+        /// <summary>
+        /// Vertical axis to be used 
+        /// </summary>
+        public int Axis; 
         /// <summary>
         /// Label of this Channel
         /// </summary>
@@ -115,10 +115,6 @@ namespace OpenSEE.Model
 
         #endregion
 
-        // ---------------------- These Are unneccesarry -------------------
-        public string LegendClass; 
-        public string SecondaryLegendClass;
         public int ChannelID;
-
     }
 }
