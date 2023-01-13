@@ -58,6 +58,7 @@ import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
+import { SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 
 declare var homePath: string;
 declare var userIsAdmin: boolean;
@@ -72,8 +73,8 @@ const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digita
 
 const MainDiv = styled.div`
 & {
-    top: 40px;
-    position: absolute;
+    top: 70px;
+    position: relative;
     width: calc(100% - ${0}px);
     height: calc(100% - 48px);
     overflow: hidden;
@@ -235,7 +236,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         let plotData = groupBy(this.props.graphList,"EventId");
 
         return (
-            <div style={{ width: window.innerWidth, height: window.innerHeight, position: "absolute" }}>
+            <div style={{ width: window.innerWidth, height: window.innerHeight, position: "relative" }}>
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
@@ -320,10 +321,27 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                          />
 
                     
-                    <MainDiv>
+                <MainDiv>
+                    <VerticalSplit>
+                        <SplitDrawer open={false} width={25} title={"Info"} minWidth={20} maxWidth={30}>
+                           <p>Hello Info</p>
+                        </SplitDrawer>
+                        <SplitDrawer open={false} width={25} title={"Compare"} minWidth={20} maxWidth={30}>
+                            <p>Compare</p>
+                        </SplitDrawer>
+                        <SplitDrawer open={false} width={25} title={"Analytics"} minWidth={20} maxWidth={30}>
+                            <p>Hello Analytics</p>
+                        </SplitDrawer>
+                        <SplitDrawer open={false} width={25} title={"Tooltip"} minWidth={20} maxWidth={30}>
+                            <p>Hello Tooltip</p>
+                        </SplitDrawer>
+                        <SplitDrawer open={false} width={25} title={"Tooltip w/ Delta"} minWidth={20} maxWidth={30}>
+                            <p>Hello Tooltip w/ Delta</p>
+                        </SplitDrawer>
+                        <SplitSection minWidth={100} maxWidth={100} width={100 }>
                         {plotData[this.props.eventID] != undefined ?
-                            <div className="card" style={{borderLeft: 0, borderRight: 0}}>
-                                <div className="card-body" style={{ padding: 0 }}>
+                        <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
+                            <div className="card-body" style={{ padding: '25px' }}>
                                     {plotData[this.props.eventID].sort(this.sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
                                         <BarChart
                                             eventId={item.EventId}
@@ -360,8 +378,10 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </div>
                                 </div>)
                                     }
-                        {/* FFT Analytic */}
-                    </MainDiv>
+                            {/* FFT Analytic */}
+                        </SplitSection>
+                    </VerticalSplit>
+                </MainDiv>
                 </div>
         );
     }
