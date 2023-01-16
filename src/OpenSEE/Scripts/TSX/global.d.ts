@@ -173,6 +173,7 @@ export namespace OpenSee {
         LegendVertical: string,
         LegendGroup: string,
         LegendVGroup: string,
+        Axis: number, 
 
         Unit: Unit,
         Color: Color,
