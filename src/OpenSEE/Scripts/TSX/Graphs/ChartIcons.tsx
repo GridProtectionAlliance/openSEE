@@ -72,14 +72,24 @@ export const NoDataIcon = (props: {}) => {
 	</div>
 }
 
+export const WaveformViews = '👁'; 
+export const PhasorClock = '⟴';
+export const statsIcon = 'ℹ';
+export const lightningData = '⚡';
+export const exportBtn = '💾';
+
 export const Zoom = '🔍';
-export const PhasorClock = '🕙';
-export const Tooltip = '📏';
+export const Pan = '🖐';
+export const FFT = '📊';
+export const Reset = '↻';
+
 export const Settings = '⚙';
-export const Pan = '☩'
-export const FFT = '📊'
+export const leftArrow = '⏮';
+export const rightArrow = '⏭'; 
+
 
 export const WarningSymbol = '⚠';
 export const Square = '⇄⇅';
 export const ValueRect = '⇅';
 export const TimeRect = '⇄';
+//export const Tooltip = '📏';
