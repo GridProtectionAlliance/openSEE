@@ -28,6 +28,7 @@ import { cloneDeep } from "lodash";
 import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
 import { selectColor } from "../store/settingSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
 
 const hrow = 26;
 
@@ -128,7 +129,7 @@ const Legend = (props: iProps) => {
 
             let index = item.LegendVertical + item.LegendVGroup;
             if (!updateGrid.has(index)) {
-                updateGrid.set(index,[{ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup }])
+                updateGrid.set(index, [{ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup }])
             }
             let dIndex = updateGrid.get(index).findIndex(g => g.hLabel === item.LegendHorizontal)
 
@@ -152,7 +153,7 @@ const Legend = (props: iProps) => {
         });
 
         setGrid(updateGrid);
-        
+
     }
 
     function sortHorizontal(item1: string, item2: string): number {
@@ -219,7 +220,7 @@ const Legend = (props: iProps) => {
 
             if (tmp[index].enabled)
                 grid.forEach(row => row.forEach(data => {
-                   if (data.traces.has(item.label) && data.enabled)
+                    if (data.traces.has(item.label) && data.enabled)
                         traces = traces.concat(data.traces.get(item.label));
                 }));
             else
@@ -249,7 +250,7 @@ const Legend = (props: iProps) => {
         return result;
     }
 
-    function groupBy(list: Array < ILegendGrid >, fnct: (val: ILegendGrid) => string) {
+    function groupBy(list: Array<ILegendGrid>, fnct: (val: ILegendGrid) => string) {
         let result: Map<string, ILegendGrid[]> = new Map<string, ILegendGrid[]>();
 
         list.forEach(item => {
@@ -328,8 +329,9 @@ const Legend = (props: iProps) => {
         dispatch(EnableTrace({ key: { EventId: props.eventId, DataType: props.type }, trace: updates, enabled: !isAny }))
 
     }
-    const isScroll = (props.height - 97) < (verticalHeader.length*(2+hrow));
-    return ( 
+    const isScroll = (props.height - 97) < (verticalHeader.length * (2 + hrow));
+    return (
+        <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.type + "-" + props.eventId}> {/* fix eventID*/}
         <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px", overflowY: "hidden" }} >
             <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
                 <div className="btn-group" style={{ width: '100%' }}>
@@ -364,6 +366,7 @@ const Legend = (props: iProps) => {
                 </div>
         </div>
         </div>
+        </OverlayDrawer>
         );
     
 }
