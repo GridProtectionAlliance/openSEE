@@ -197,7 +197,7 @@ export const defaultSettings = {
         PowerPf: {
             current: 0,
             options: [
-                { label: "", short: "pf", factor: 1 }
+                { label: "None", short: "pf", factor: 1 }
             ]
         },
 
