@@ -32,7 +32,7 @@ export function GetDisplayLabel(type: OpenSee.graphType): string {
         case ('LowPassFilter'):
             return "Low Pass Filter"
         case ('ClippedWaveforms'):
-            return "Clipped Waveforms"
+            return "Fixed Waveforms"
         case ('OverlappingWave'):
             return "Overlapping Waveform"
         case ('MissingVoltage'):
