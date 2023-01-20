@@ -98,7 +98,7 @@ export const defaultSettings = {
     } as OpenSee.IColorCollection,
     Units: {
         Voltage: {
-            current: 4, options: [
+            current: 0, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
                 { label: "milliVolt", short: "mV", factor: 1000 },
@@ -113,7 +113,7 @@ export const defaultSettings = {
             ]
         },
         Current: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -123,7 +123,7 @@ export const defaultSettings = {
             ]
         },
         VoltageperSecond: {
-            current: 5,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u./s", factor: 0 },
@@ -134,7 +134,7 @@ export const defaultSettings = {
             ]
         },
         CurrentperSecond: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u./s", factor: 0 },
@@ -145,7 +145,7 @@ export const defaultSettings = {
             ]
         },
         Freq: {
-            current:4,
+            current:0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -155,7 +155,7 @@ export const defaultSettings = {
             ]
         },
         Impedance: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -165,7 +165,7 @@ export const defaultSettings = {
             ]
         },
         PowerP: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -175,7 +175,7 @@ export const defaultSettings = {
             ]
         },
         PowerQ: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -185,7 +185,7 @@ export const defaultSettings = {
             ]
         },
         PowerS: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
@@ -202,7 +202,7 @@ export const defaultSettings = {
         },
 
         TCE: {
-            current: 4,
+            current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
