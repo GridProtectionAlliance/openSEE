@@ -233,11 +233,20 @@ function GetSettings(): OpenSee.ISettingsState {
 
         // For Unit (Time and regular) only grab current Unit
         Object.keys(defaultSettings.Units).forEach((key) => {
-            state.Units[key] = { ...defaultSettings.Units[key], current: (state.Units[key] != undefined ? state.Units[key].current : defaultSettings.Units[key].current) }
+            const unitValid =
+                state.Units[key] != undefined &&
+                state.Units[key].current >= 0 &&
+                state.Units[key].current < defaultSettings.Units[key].options.length;
 
+            state.Units[key] = { ...defaultSettings.Units[key], current: unitValid ? state.Units[key].current : defaultSettings.Units[key].current };
         });
 
-        state.TimeUnit = { ...defaultSettings.TimeUnit, current: (state.TimeUnit != undefined ? state.TimeUnit.current : defaultSettings.TimeUnit.current) }
+        const timeUnitValid =
+            state.TimeUnit != undefined &&
+            state.TimeUnit.current >= 0 &&
+            state.TimeUnit.current < defaultSettings.TimeUnit.options.length;
+
+        state.TimeUnit = { ...defaultSettings.TimeUnit, current: timeUnitValid ? state.TimeUnit.current : defaultSettings.TimeUnit.current };
 
         Object.keys(defaultSettings.Colors).forEach((key) => {
             if (state.Colors[key] == undefined)
