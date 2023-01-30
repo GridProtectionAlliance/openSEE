@@ -178,7 +178,7 @@ export const defaultSettings = {
             current: 4,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: 0 },  
                 { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
                 { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
                 { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 }
@@ -245,10 +245,9 @@ export const defaultSettings = {
     TimeUnit: {
         current: 5, options: [
             { label: "auto", short: "auto", factor: 0 },
-            { label: "milliseconds", short: "ms", factor: 0 },
-            { label: "milliseconds since record start", short: "ms since event", factor: 0 },
             { label: "cycles since record start", short: "cycles", factor: 0 },
-            { label: "auto", short: "auto", factor: 0 }
+            { label: "milliseconds", short: "ms", factor: 0 },
+            { label: "milliseconds since record start", short: "ms since event", factor: 0 }
         ]
     },
     DefaultTrace: {
