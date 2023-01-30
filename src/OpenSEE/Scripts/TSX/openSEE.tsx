@@ -52,6 +52,7 @@ import {
 } from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic, selectAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
+import { eventInfoAction } from "./store/InfoAction"
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
@@ -59,6 +60,7 @@ import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
 import { SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+
 
 declare var homePath: string;
 declare var userIsAdmin: boolean;
@@ -145,6 +147,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         if (this.navigationDataHandle !== undefined)
             this.navigationDataHandle.abort();
 
+        const url = `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` + `${this.state.breakeroperation != undefined ? `&breakeroperation=${this.state.breakeroperation}` : ``}`
+
         this.eventDataHandle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` +
@@ -154,12 +158,14 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             cache: true,
             async: true
         });
-
+        
+        store.dispatch((dispatch) => eventInfoAction(dispatch, url))
         this.eventDataHandle.then(data => {
             this.setState({
                 eventData: data
             });
-            store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
+
+        store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
 
         });
 
