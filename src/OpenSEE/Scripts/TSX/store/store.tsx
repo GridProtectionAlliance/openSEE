@@ -25,6 +25,7 @@ import  SettingsReducer from './settingSlice';
 import  DataReducer from './dataSlice';
 import AnalyticReducer  from './analyticSlice';
 import EventReducer from './eventSlice';
+import EventInfoReducer from './infoSlice'
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>
@@ -35,13 +36,13 @@ const store = configureStore({
         Data: DataReducer,
         Analytic: AnalyticReducer,
         Event: EventReducer,
+        EventInfo: EventInfoReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: false,
             immutableCheck: false
         }),
-
 });
 
 export default store;

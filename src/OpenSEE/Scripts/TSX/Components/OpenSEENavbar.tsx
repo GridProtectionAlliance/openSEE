@@ -24,12 +24,14 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { clone } from 'lodash';
+import { useSelector } from 'react-redux'
 import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic, selectFFTLimits } from '../store/dataSlice';
 import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation } from '../store/settingSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, Pan, FFT, Reset, Square, ValueRect, TimeRect, Settings, leftArrow, rightArrow } from '../Graphs/ChartIcons';
 import { ToolTip } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
+import moment from "moment"
 
 
 declare var homePath: string;
@@ -99,6 +101,10 @@ const OpenSeeNavBar = (props: IProps) => {
     const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
 
     const [hover, setHover] = React.useState<('None'|'Waveform'|'Show Points'|'Polar Chart'|'Stat'|'Sags'|'Lightning'|'Export'|'Tooltip'|'Clock'|'Zoom Mode'|'Pan'|'Reset Zoom'| 'Settings'| 'NavLeft' | 'NavRight'| 'Help')>('None')
+    
+    const {eventInfo} = useAppSelector(state => state.EventInfo)
+
+    
     React.useEffect(() => {
         if (showPoints) {
             let oldMode = clone(mouseMode);
@@ -148,26 +154,27 @@ const OpenSeeNavBar = (props: IProps) => {
         );
     }
 
+
             return (
                 <nav className="navbar navbar-expand-md navbar-light fixed-top bg-light flex-md-nowrap p-0 shadow">
                     {/* need to finalize slice before completing the data */}
                     <a className="navbar-brand col-sm-3 col-md-2 mr-0 mr-auto" href={''} ><img style={{ maxHeight: 70, margin: -5 }} src={`${homePath}Images/openSEE.jpg`} /></a>
 
-                    <ul className="navbar-nav mr-auto">
-                        <li className="nav-item" style={{ width: '54px' }}>
-                            Meter:
+                    <ul className="navbar-nav mr-auto ml-3">
+                        <li className="nav-item" >
+                            Meter: { eventInfo?.MeterName?.split(" ")[0] }
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
-                            Station:
+                        <li className="nav-item" >
+                            Station: {eventInfo?.StationName}
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
-                            Asset:
+                        <li className="nav-item" >
+                            Asset: {eventInfo?.AssetName?.split(" ")[0]}
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
-                            Event Type:
+                        <li className="nav-item" >
+                            Event Type: {eventInfo?.EventName}
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
-                            Event Inception:
+                        <li className="nav-item" >
+                            Event Inception: {moment(eventInfo?.EventDate).format('YYYY-MM-DD h:mm')}...
                         </li>
                     </ul>
 
