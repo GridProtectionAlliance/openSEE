@@ -243,7 +243,7 @@ export const defaultSettings = {
 
     } as OpenSee.IUnitCollection,
     TimeUnit: {
-        current: 5, options: [
+        current: 0, options: [
             { label: "auto", short: "auto", factor: 0 },
             { label: "cycles since record start", short: "cycles", factor: 0 },
             { label: "milliseconds", short: "ms", factor: 0 },
