@@ -221,7 +221,9 @@ const BarChart = (props: iProps) => {
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g")
+        //Draw all bars when selected type is not FFT
+        if (props.type !== 'FFT') {
+            container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g")
             .classed("Bar", true)
             .attr("fill", (d) => colors[d.Color])
             .selectAll('rect')
@@ -237,7 +239,54 @@ const BarChart = (props: iProps) => {
             .style("height", 'width 0.5s')
 
 
-        container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
+            container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
+        }
+        //condition for when selected type is FFT
+        else{
+            //draw bars for Mag 
+            let rectangles = container.select(".DataContainer").selectAll(".Bar")
+            .data(barData.filter(function(d){ return d.LegendHorizontal === 'Mag'; })) //filter data for LegendHorizontal === 'Mag'
+            .enter().append("g")
+            .classed("Bar", true)
+            .attr("stroke", (d) => colors[d.Color])
+            .selectAll('rect')
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as BarSeries[])
+            .enter()
+            .append('rect')
+            .attr("x", d => xScaleRef.current(d.data[0]))
+            .attr("y", d => yScaleRef.current(d.data[1]))
+            .attr("width", xScaleRef.current.bandwidth())
+            .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current(d.data[1])), 0) })
+            .attr("fill", "none")
+            .attr("stroke-width", 2)
+            .style("transition", 'x 0.5s')
+            .style("transition", 'y 0.5s')
+            .style("transition", 'width 0.5s')
+            .style("height", 'width 0.5s')
+             
+            //draw circles for Ang
+            let circles = container.select(".DataContainer").selectAll(".Point")
+            .data(barData.filter(function(d){ return d.LegendHorizontal === 'Ang'; }))//filter data for LegendHorizontal === 'Ang'
+            .enter().append("g")
+            .classed("Point", true)
+            .attr("fill", (d) => colors[d.Color])
+            .selectAll('circle')
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as BarSeries[])
+            .enter().append('circle')
+            .attr("cx", d => xScaleRef.current(d.data[0])) //set the circle cx position
+            .attr("cy", d => yScaleRef.current(d.data[1])) //set the circle cy position
+            .attr("r", 5) //set the radius as 5
+            .attr("stroke", "none") //set the stroke as none
+            .style("transition", 'cx 0.5s')
+            .style("transition", 'cy 0.5s')
+            .style("transition", 'r 0.5s')
+
+            container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
+            container.select(".DataContainer").selectAll(".Point").data(barData).exit().remove();
+           
+            
+        }
+       
         updateLimits();
 
     }
@@ -407,7 +456,12 @@ const BarChart = (props: iProps) => {
             .attr("width", Math.max(xScaleRef.current.bandwidth()))
             .attr("height", (d: BarSeries) => { return Math.max(((props.height - 40) - barGen(d.unit,d.base)(d)),0)})
 
-
+        container.select(".DataContainer").selectAll(".Point").selectAll('circle')
+            .attr("cx", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0 : v) })
+            .style("opacity", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
+            .attr("cy", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? -1 : (barGen(d.unit, d.base)(d))) })
+            .attr("r", (d: BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 5) })
+            
         updateLabels();
     }
 
