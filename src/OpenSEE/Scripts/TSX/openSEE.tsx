@@ -59,7 +59,7 @@ import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
-import { SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 
 
 declare var homePath: string;
@@ -249,7 +249,16 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
 
         return (
-            <div style={{ width: window.innerWidth, height: window.innerHeight, position: "relative" }}>
+            <Application HomePath={homePath}
+                DefaultPath={""}
+                HideSideBar={true}
+                Version={version}
+                Logo={`${homePath}Images/openSEE.jpg`}
+                NavBarContent={<OpenSeeNavBar
+                    EventData={this.state.eventData}
+                    Lookup={this.state.lookup}
+                    stateSetter={this.setState}
+                />}>
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
@@ -328,30 +337,23 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     </div>
                 </div> 
                 */}
-                <OpenSeeNavBar
-                        EventData={this.state.eventData} Lookup={this.state.lookup} 
-                        stateSetter={this.setState}
-                         />
-
-                    
-                <MainDiv>
-                    <VerticalSplit>
-                        <SplitDrawer open={false} width={25} title={"Info"} minWidth={20} maxWidth={30}>
+                <VerticalSplit>
+                        <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
                            <p>Hello Info</p>
                         </SplitDrawer>
-                        <SplitDrawer open={false} width={25} title={"Compare"} minWidth={20} maxWidth={30}>
+                        <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
                             <p>Compare</p>
                         </SplitDrawer>
-                        <SplitDrawer open={false} width={25} title={"Analytics"} minWidth={20} maxWidth={30}>
+                        <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Analytics</p>
                         </SplitDrawer>
-                        <SplitDrawer open={false} width={25} title={"Tooltip"} minWidth={20} maxWidth={30}>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip</p>
                         </SplitDrawer>
-                        <SplitDrawer open={false} width={25} title={"Tooltip w/ Delta"} minWidth={20} maxWidth={30}>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip w/ Delta</p>
                         </SplitDrawer>
-                        <SplitSection minWidth={100} maxWidth={100} width={100 }>
+                        <SplitSection MinWidth={100} MaxWidth={100} Width={100 }>
                         {plotData[this.props.eventID] != undefined ?
                         <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
                             <div className="card-body" style={{ padding: '25px' }}>
@@ -394,8 +396,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                             {/* FFT Analytic */}
                         </SplitSection>
                     </VerticalSplit>
-                </MainDiv>
-                </div>
+            </Application>
         );
     }
 

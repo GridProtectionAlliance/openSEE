@@ -156,11 +156,10 @@ const OpenSeeNavBar = (props: IProps) => {
 
 
             return (
-                <nav className="navbar navbar-expand-md navbar-light fixed-top bg-light flex-md-nowrap p-0 shadow">
-                    <a className="navbar-brand col-sm-3 col-md-2 mr-0 mr-auto" href={''} ><img style={{ maxHeight: 70, margin: -5 }} src={`${homePath}Images/openSEE.jpg`} /></a>
-
-                    <ul className="navbar-nav mr-auto ml-3">
-                        <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom" style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd',  paddingLeft: '30px', paddingRight: '30px' }}>
+                 <>
+                    <ul className="navbar-nav mr-auto ml-3 nacvbar-expand">
+                        <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
+                            style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                             <div style={{textAlign: 'center'}}>Meter:</div>
                             <div style={{textAlign: 'center'}}> { eventInfo?.MeterName?.split(" ")[0] }</div>
                             <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Theme={'dark'}>
@@ -441,8 +440,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />
                         <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
                     </React.Suspense>
-
-                </nav>
+                    </>
             );
 
 }
