@@ -36,6 +36,20 @@ declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
 export namespace OpenSee {
 
+    interface iEventInfoObject {
+        MeterName: string,
+        StationName: string,
+        AssetName: string,
+        EventName: string,
+        EventDate: string,
+      }
+
+    interface iEventInfoStore {
+        eventInfo: iEventInfoObject,
+        error: boolean,
+        loading: boolean
+    }
+
     interface iOpenSeeState {
         //For Plots
         graphWidth: number,
@@ -398,6 +412,7 @@ export namespace OpenSee {
         Data: IDataState,
         Analytic: IAnalyticStore,
         Event: IEventStore,
+        EventInfo: iEventInfoStore 
     }
 
     // for Redux to store active units (in case of Auto Unit)
