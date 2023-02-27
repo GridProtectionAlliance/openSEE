@@ -52,7 +52,7 @@ import {
 } from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic, selectAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
-import { eventInfoAction } from "./store/InfoAction"
+import { setEventInfo } from "./store/infoSlice"
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
@@ -159,7 +159,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             async: true
         });
         
-        store.dispatch((dispatch) => eventInfoAction(dispatch, url))
+        store.dispatch(setEventInfo({eventID: this.props.eventID, breakeroperation: this.state.breakeroperation }))
         this.eventDataHandle.then(data => {
             this.setState({
                 eventData: data
