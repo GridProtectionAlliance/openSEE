@@ -156,40 +156,40 @@ const OpenSeeNavBar = (props: IProps) => {
 
 
             return (
-                 <>
-                    <ul className="navbar-nav mr-auto ml-3 nacvbar-expand">
+                <>
+                    <ul className="navbar-nav mr-auto navbar-expand ml-auto">
                         <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
                             style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
-                            <div style={{textAlign: 'center'}}>Meter:</div>
-                            <div style={{textAlign: 'center'}}> { eventInfo?.MeterName?.split(" ")[0] }</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>Meter:</div>
+                            <div style={{textAlign: 'center', color: 'white'}}> { eventInfo?.MeterName?.split(" ")[0] }</div>
                             <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Theme={'dark'}>
                                 <p>{ eventInfo?.MeterName?.split(" ")[0] }</p>
                             </ToolTip>
                         </li>
                         <li className="nav-item" onMouseEnter={() => setHover('Station')} onMouseLeave={() => setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center'}}>Station:</div> 
-                            <div style={{textAlign: 'center'}}>{eventInfo?.StationName}</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>Station:</div> 
+                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.StationName}</div>
                             <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Theme={'dark'}>
                                 <p>{eventInfo?.StationName}</p>
                             </ToolTip>
                         </li>
                         <li className="nav-item" onMouseEnter={() => setHover('Asset')} onMouseLeave={() => setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center'}}>Asset:</div> 
-                            <div style={{textAlign: 'center'}}>{eventInfo?.AssetName?.split(" ")[0]}</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>Asset:</div> 
+                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.AssetName?.split(" ")[0]}</div>
                             <ToolTip Show={hover == 'Asset'} Position={'bottom'} Target={'asset'} Theme={'dark'}>
                                 <p>{eventInfo?.AssetName?.split(" ")[0]}</p>
                             </ToolTip>
                         </li>
                         <li className="nav-item" onMouseEnter={() => setHover('EType')}onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center'}}>Event Type:</div>
-                            <div style={{textAlign: 'center'}}>{eventInfo?.EventName}</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>Event Type:</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.EventName}</div>
                             <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Theme={'dark'}>
                                 <p>{eventInfo?.EventName}</p>
                             </ToolTip>
                         </li>
                         <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center'}}>Event Inception: </div>
-                            <div style={{ textAlign: 'center' }}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD h:mm')}...</div>
+                            <div style={{textAlign: 'center', color: 'white'}}>Event Inception: </div>
+                            <div style={{ textAlign: 'center', color: 'white'}}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD h:mm')}...</div>
                             <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'}>
                                 <p>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</p>
                             </ToolTip>
@@ -365,7 +365,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                     <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
                                 </button>
                                 <ToolTip Show={hover == 'FFT'} Position={'bottom'} Target={'fft-btn'} Theme={'dark'}>
-                                    <p>Pan</p>
+                                    <p>FFT</p>
                                 </ToolTip>
 
                                 {/*reset*/}
