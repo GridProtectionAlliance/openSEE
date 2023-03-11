@@ -56,6 +56,7 @@ const OpenSeeNavBar = (props: IProps) => {
     const SettingsWidget = React.lazy(() => import(/* webpackChunkName: "SettingsWidget" */ '../jQueryUI Widgets/SettingWindow'));
     const FFTTable = React.lazy(() => import(/* webpackChunkName: "FFTTable" */ '../jQueryUI Widgets/FFTTable'));
     const HarmonicStatsWidget = React.lazy(() => import(/* webpackChunkName: "HarmonicStatsWidget" */ '../jQueryUI Widgets/HarmonicStats'));
+    const AboutWindow = React.lazy(() => import(/* webpackChunkName: "About"*/ './About'));
     
     const dispatch = useAppDispatch()
     const mouseMode = useAppSelector(selectMouseMode);
@@ -88,6 +89,8 @@ const OpenSeeNavBar = (props: IProps) => {
     const [showLightning, setShowLightning] = React.useState<boolean>(false);
     const [showFFTTable, setShowFFTTable] = React.useState<boolean>(false);
     const [showSettings, setShowSettings] = React.useState<boolean>(false);
+
+    const [showAbout, setShowAbout] = React.useState<boolean>(false); 
 
     const [positionPoints, setPositionPoints] = React.useState<[number, number]>([0,0]);
     const [positionToolTip, setPositionToolTip] = React.useState<[number, number]>([0,0]);
@@ -227,7 +230,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '54px' }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(!showPoints)}>
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(true)}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
                             <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}>
@@ -420,7 +423,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '74px' }}>
                             <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Help')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
-                                data-toggle="tooltip" data-placement="bottom">
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowAbout(true)}>
                                 <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
                             </button>
                             <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'} Theme={'dark'}>
@@ -439,6 +442,8 @@ const OpenSeeNavBar = (props: IProps) => {
                         <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} position={positionLightning} setPosition={(t, l) => setPositionLightning([t, l])} />
                         <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />
                         <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
+
+                        <AboutWindow isOpen={showAbout} closeCallback={() => setShowAbout(false)}/>
                     </React.Suspense>
                     </>
             );
