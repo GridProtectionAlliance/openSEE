@@ -23,19 +23,23 @@
 
 import * as React from 'react';
 
-export default function About () {
-    const [show, setShow] = React.useState<boolean>(false);
+interface Iprops {
+    closeCallback: () => void,
+    isOpen: boolean,
+}
+
+const About = (props: Iprops) => {
 
     return (
-        <>
-        <button className="btn btn-link" onClick={() => { setShow(true) }}>Help</button>
+        <div>
+       
 
-        <div className="modal fade show" style={{ display: (show ? 'block' : 'none') }} role="dialog">
+        <div className="modal fade show" style={{ display: (props.isOpen ? 'block' : 'none') }} role="dialog">
             <div className="modal-dialog" style={{maxWidth: 1200}} role="document">
                 <div className="modal-content">
                     <div className="modal-header">
                         <h3 className="modal-title">About openSEE -- System Event Explorer</h3>
-                            <button type="button" className="close" onClick={() => { setShow(false) }}>
+                            <button type="button" className="close" onClick={() => { props.closeCallback() }}>
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -76,12 +80,14 @@ export default function About () {
 
                     </div>
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={() => { setShow(false) }}>Close</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => { props.closeCallback() }}>Close</button>
                     </div>
                 </div>
             </div>
         </div>
-        </>
+        </div>
     );
 
 }
+
+export default About; 
