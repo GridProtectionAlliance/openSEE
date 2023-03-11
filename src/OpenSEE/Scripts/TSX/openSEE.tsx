@@ -59,7 +59,7 @@ import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
-import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import { Application, Page, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 
 
 declare var homePath: string;
@@ -249,8 +249,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
 
         return (
-            <Application HomePath={homePath}
-                DefaultPath={""}
+            <Application HomePath={"/"}
+                DefaultPath=""
                 HideSideBar={true}
                 Version={version}
                 Logo={`${homePath}Images/openSEE.jpg`}
@@ -259,6 +259,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     Lookup={this.state.lookup}
                     stateSetter={this.setState}
                 />}>
+                <Page Name= "">
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
@@ -337,15 +338,36 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     </div>
                 </div> 
                 */}
-                <VerticalSplit>
+
+                    <VerticalSplit>
                         <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
-                           <p>Hello Info</p>
+                                {this.state.eventData != undefined ?
+                                    <table className="table">
+                                        <tbody style={{ display: 'block' }}>
+                                            <tr><td>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
+                                            <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
+                                            <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
+                                            <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
+                                            <tr><td>Event Date:</td><td>{this.state.eventData.EventDate}</td></tr>
+                                            {(this.state.eventData.StartTime != undefined ? <tr><td>Event Start:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
+                                            {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
+                                            {(this.state.eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.eventData.DurationPeriod}</td></tr> : null)}
+                                            {(this.state.eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{this.state.eventData.Magnitude}</td></tr> : null)}
+                                            {(this.state.eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{this.state.eventData.SagDepth}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.eventData.BreakerNumber}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
+                                            <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
+                                        </tbody>
+                                    </table> :
+                                null}
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
-                            <p>Compare</p>
+                            <OverlappingEventWindow />
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30}>
-                            <p>Hello Analytics</p>
+                            <AnalyticOptions />
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip</p>
@@ -393,10 +415,10 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </div>
                                 </div>)
                                     }
-                            {/* FFT Analytic */}
                         </SplitSection>
                     </VerticalSplit>
-            </Application>
+            </Page>
+        </Application>
         );
     }
 
