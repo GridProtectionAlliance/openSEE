@@ -33,6 +33,17 @@ import { ToolTip } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
 
+import ToolTipDeltaWidget from '../jQueryUI Widgets/TooltipWithDelta';
+import ToolTipWidget from '../jQueryUI Widgets/Tooltip'; 
+import TimeCorrelatedSagsWidget from '../jQueryUI Widgets/TimeCorrelatedSags';
+import PointWidget from '../jQueryUI Widgets/AccumulatedPoints';
+import PolarChartWidget from '../jQueryUI Widgets/PolarChart';
+import ScalarStatsWidget from '../jQueryUI Widgets/ScalarStats'; 
+import LightningDataWidget from '../jQueryUI Widgets/LightningData'; 
+import SettingsWidget from '../jQueryUI Widgets/SettingWindow'; 
+import FFTTable from '../jQueryUI Widgets/FFTTable'; 
+import HarmonicStatsWidget from '../jQueryUI Widgets/HarmonicStats'; 
+import About from './About'; 
 
 declare var homePath: string;
 declare var eventStartTime: string;
@@ -46,17 +57,17 @@ interface IProps {
 
 const OpenSeeNavBar = (props: IProps) => {
 
-    const ToolTipDeltaWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipDeltaWidget" */ '../jQueryUI Widgets/TooltipWithDelta'));
-    const ToolTipWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipWidget" */ '../jQueryUI Widgets/Tooltip'));
-    const TimeCorrelatedSagsWidget = React.lazy(() => import(/* webpackChunkName: "TimeCorrelatedSagsWidget" */ '../jQueryUI Widgets/TimeCorrelatedSags'));
-    const PointWidget = React.lazy(() => import(/* webpackChunkName: "PointWidget" */ '../jQueryUI Widgets/AccumulatedPoints'));
-    const PolarChartWidget = React.lazy(() => import(/* webpackChunkName: "PolarChartWidget" */ '../jQueryUI Widgets/PolarChart'));
-    const ScalarStatsWidget = React.lazy(() => import(/* webpackChunkName: "ScalarStatsWidget" */ '../jQueryUI Widgets/ScalarStats'));
-    const LightningDataWidget = React.lazy(() => import(/* webpackChunkName: "LightningDataWidget" */ '../jQueryUI Widgets/LightningData'));
-    const SettingsWidget = React.lazy(() => import(/* webpackChunkName: "SettingsWidget" */ '../jQueryUI Widgets/SettingWindow'));
-    const FFTTable = React.lazy(() => import(/* webpackChunkName: "FFTTable" */ '../jQueryUI Widgets/FFTTable'));
-    const HarmonicStatsWidget = React.lazy(() => import(/* webpackChunkName: "HarmonicStatsWidget" */ '../jQueryUI Widgets/HarmonicStats'));
-    const AboutWindow = React.lazy(() => import(/* webpackChunkName: "About"*/ './About'));
+    //const ToolTipDeltaWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipDeltaWidget" */ '../jQueryUI Widgets/TooltipWithDelta'));
+    //const ToolTipWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipWidget" */ '../jQueryUI Widgets/Tooltip'));
+    //const TimeCorrelatedSagsWidget = React.lazy(() => import(/* webpackChunkName: "TimeCorrelatedSagsWidget" */ '../jQueryUI Widgets/TimeCorrelatedSags'));
+    //const PointWidget = React.lazy(() => import(/* webpackChunkName: "PointWidget" */ '../jQueryUI Widgets/AccumulatedPoints'));
+    //const PolarChartWidget = React.lazy(() => import(/* webpackChunkName: "PolarChartWidget" */ '../jQueryUI Widgets/PolarChart'));
+    //const ScalarStatsWidget = React.lazy(() => import(/* webpackChunkName: "ScalarStatsWidget" */ '../jQueryUI Widgets/ScalarStats'));
+    //const LightningDataWidget = React.lazy(() => import(/* webpackChunkName: "LightningDataWidget" */ '../jQueryUI Widgets/LightningData'));
+    //const SettingsWidget = React.lazy(() => import(/* webpackChunkName: "SettingsWidget" */ '../jQueryUI Widgets/SettingWindow'));
+    //const FFTTable = React.lazy(() => import(/* webpackChunkName: "FFTTable" */ '../jQueryUI Widgets/FFTTable'));
+    //const HarmonicStatsWidget = React.lazy(() => import(/* webpackChunkName: "HarmonicStatsWidget" */ '../jQueryUI Widgets/HarmonicStats'));
+    //const AboutWindow = React.lazy(() => import(/* webpackChunkName: "About"*/ './About'));
     
     const dispatch = useAppDispatch()
     const mouseMode = useAppSelector(selectMouseMode);
@@ -89,7 +100,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const [showLightning, setShowLightning] = React.useState<boolean>(false);
     const [showFFTTable, setShowFFTTable] = React.useState<boolean>(false);
     const [showSettings, setShowSettings] = React.useState<boolean>(false);
-
     const [showAbout, setShowAbout] = React.useState<boolean>(false); 
 
     const [positionPoints, setPositionPoints] = React.useState<[number, number]>([0,0]);
@@ -442,8 +452,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} position={positionLightning} setPosition={(t, l) => setPositionLightning([t, l])} />
                         <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />
                         <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
-
-                        <AboutWindow isOpen={showAbout} closeCallback={() => setShowAbout(false)}/>
+                        <About isOpen={showAbout} closeCallback={() => setShowAbout(false)}/>
                     </React.Suspense>
                     </>
             );
