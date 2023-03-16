@@ -17,7 +17,7 @@
     "webpack-cli": "4.8.0"
   },
   "dependencies": {
-    "@gpa-gemstone/react-interactive": "1.0.74",
+    "@gpa-gemstone/react-interactive": "1.0.77",
     "@reduxjs/toolkit": "1.8.3",
     "@types/d3": "7.0.0",
     "@types/eonasdan-bootstrap-datetimepicker": "4.17.26",
