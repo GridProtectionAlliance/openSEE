@@ -258,8 +258,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     EventData={this.state.eventData}
                     Lookup={this.state.lookup}
                     stateSetter={this.setState}
-                />}>
-                <Page Name= "">
+                />}
+                OverrideNavigation={true}
+            >
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
@@ -417,7 +418,6 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                     }
                         </SplitSection>
                     </VerticalSplit>
-            </Page>
         </Application>
         );
     }
