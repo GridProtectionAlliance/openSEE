@@ -259,7 +259,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     Lookup={this.state.lookup}
                     stateSetter={this.setState}
                 />}
-                OverrideNavigation={true}
+                UseLegacyNavigation={true}
             >
                 {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
