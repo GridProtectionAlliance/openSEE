@@ -193,14 +193,14 @@ const OpenSeeNavBar = (props: IProps) => {
                                 <p>{eventInfo?.AssetName?.split(" ")[0]}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('EType')}onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
+                        <li className="nav-item" onMouseEnter={() => setHover('EType')}onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px'  }}>
                             <div style={{textAlign: 'center', color: 'white'}}>Event Type:</div>
                             <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.EventName}</div>
                             <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Theme={'dark'}>
                                 <p>{eventInfo?.EventName}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
+                        <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', padding: "0 5px", minWidth: "60px", marginRight: "10px"  }}>
                             <div style={{textAlign: 'center', color: 'white'}}>Event Inception: </div>
                             <div style={{ textAlign: 'center', color: 'white'}}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD h:mm')}...</div>
                             <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'}>
