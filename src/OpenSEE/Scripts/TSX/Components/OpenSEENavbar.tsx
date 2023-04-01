@@ -237,7 +237,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: (analytic == 'FFT' ? 'calc(100% - 954px)' : 'calc(100% - 909px)'), textAlign: 'center' }}>
 
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'}
                                 data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(true)}>
@@ -248,7 +248,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item dropdown" style={{ width: '54px' }}>
+                        <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Show Points')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
                                 data-toggle="dropdown" data-placement="bottom">
@@ -276,7 +276,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item" style={{ width: '54px' }}>
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Clock')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                                 data-toggle="tooltip" data-placement="bottom">
@@ -287,7 +287,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item" style={{ width: '54px' }}>
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Stat')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
                                 data-toggle="tooltip" data-placement="bottom">
@@ -297,7 +297,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 <p>Stats</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" style={{ width: '54px' }}>
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Sags')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
                                 data-toggle="tooltip" data-placement="bottom">
@@ -308,7 +308,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item" style={{ width: '54px' }}>
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Lightning')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
                                 data-toggle="tooltip" data-placement="bottom">
@@ -319,7 +319,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item dropdown" style={{ width: '84px' }}>
+                        <li className="nav-item dropdown" style={{ width: '84px', position: "relative", marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"  style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Export')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'export-btn'}
                                  data-placement="bottom">
@@ -338,7 +338,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item" style={{ width: '180px' }}>
+                        <li className="nav-item" style={{ width: '180px', position: "relative", marginTop: "10px" }}>
                             <div className="btn-group" role="group">
                             <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom Mode')} onMouseLeave={() => setHover('None')} data-tooltip={'zoom-btn'}
                                 data-placement="bottom">
@@ -392,8 +392,8 @@ const OpenSeeNavBar = (props: IProps) => {
                             </div>
                         </li>
 
-                        <li className="nav-item" style={{ width: '74px' }}>
-                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom">
+                        <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
+                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => setShowSettings(!showSettings)}>
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                             </button>
                             <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'} Theme={'dark'}>
@@ -401,7 +401,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
                         {props.Lookup != undefined ?
-                            <li className="nav-item" style={{ width: '163px' }}>
+                            <li className="nav-item" style={{ width: '163px', marginTop: "10px" }}>
                                 <div className="input-group mb-3">
                                     <div className="input-group-prepend">
                                     <ToolTip Show={hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'} Theme={'dark'}>
@@ -430,7 +430,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </div>
                             </li> : null}
 
-                        <li className="nav-item" style={{ width: '74px' }}>
+                        <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
                             <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Help')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
                                 data-toggle="tooltip" data-placement="bottom" onClick={() => setShowAbout(true)}>
