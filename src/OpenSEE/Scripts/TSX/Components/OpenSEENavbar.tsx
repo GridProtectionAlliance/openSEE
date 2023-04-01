@@ -419,7 +419,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                         <option value="asset">Asset</option>
                                     </select>
                                     <div className="input-group-append">
-                                    <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'next-btn'} Theme={'dark'}>
+                                    <ToolTip Show={hover == 'NavRight'} Position={'bottom'} Target={'next-btn'} Theme={'dark'}>
                                         <p>Navigate to Next Event</p>
                                     </ToolTip>
                                         {(navigation == "system" ? <a href={(props.Lookup.System.m_Item2 != null ? "?eventID=" + props.Lookup.System.m_Item2.ID + "&Navigation=system" : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (props.Lookup.System.m_Item2 == null ? ' disabled' : '')} title={(props.Lookup.System.m_Item2 != null ? props.Lookup.System.m_Item2.StartTime : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
