@@ -363,7 +363,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 {/*Pan*/}
                                 <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? "active" : "")} style={{ padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Pan')}
                                     onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
-                                    data-toggle="tooltip" data-placement="bottom">
+                                    data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
                                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
                                 </button>
                                 <ToolTip Show={hover == 'Pan'} Position={'bottom'} Target={'pan-btn'} Theme={'dark'}>
