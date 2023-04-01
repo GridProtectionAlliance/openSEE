@@ -300,7 +300,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Sags')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
-                                data-toggle="tooltip" data-placement="bottom">
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowCorrelatedSags(!showCorrelatedSags)}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
                             </button>
                             <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'} Theme={'dark'}>
