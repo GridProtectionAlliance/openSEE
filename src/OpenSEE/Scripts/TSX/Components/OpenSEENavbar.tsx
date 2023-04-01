@@ -325,7 +325,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                  data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{exportBtn}</i>
                             </button>
-                            <div className="dropdown-menu">
+                            <div className="dropdown-menu" style={{position: "absolute"}}>
                                 <a className="dropdown-item" onClick={() => { exportData('csv') }}>
                                     Export CSV
                                 </a>
