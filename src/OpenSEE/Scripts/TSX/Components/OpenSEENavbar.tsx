@@ -311,7 +311,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Lightning')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
-                                data-toggle="tooltip" data-placement="bottom">
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowLightning(!showLightning)}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
                             </button>
                             <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'} Theme={'dark'}>
