@@ -290,7 +290,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                             <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Stat')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
-                                data-toggle="tooltip" data-placement="bottom">
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowScalarStats(!showScalarStats) }>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{statsIcon}</i>
                             </button>
                             <ToolTip Show={hover == 'Stat'} Position={'bottom'} Target={'stats-btn'} Theme={'dark'}>
