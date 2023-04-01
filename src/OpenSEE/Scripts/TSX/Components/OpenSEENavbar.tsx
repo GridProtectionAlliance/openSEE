@@ -254,7 +254,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 data-toggle="dropdown" data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
                             </button>
-                            <div className="dropdown-menu">
+                            <div className="dropdown-menu" style={{position: 'absolute'}}>
                                 <label><input type = "checkbox"/>
                                     Voltage
                                 </label>
