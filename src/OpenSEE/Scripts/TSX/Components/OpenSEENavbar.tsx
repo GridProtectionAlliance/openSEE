@@ -341,10 +341,10 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: '180px', position: "relative", marginTop: "10px" }}>
                             <div className="btn-group" role="group">
                             <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom Mode')} onMouseLeave={() => setHover('None')} data-tooltip={'zoom-btn'}
-                                data-placement="bottom">
+                                data-placement="bottom" onClick={() => dispatch(SetMouseMode("zoom"))}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{Zoom}</i>
                             </button>
-                            <div className="dropdown-menu">
+                            <div className="dropdown-menu" style={{position: "absolute"}}>
                                 <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))}>
                                     <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
                                 </a>
