@@ -382,7 +382,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </ToolTip>
 
                                 {/*reset*/}
-                                <button className="btn btn-primary" style={{padding: "0.195rem"}} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom">
+                                <button className="btn btn-primary" style={{padding: "0.195rem"}} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
                                 <i style={{ fontStyle: "normal", fontSize: "21px"}}>{Reset}</i>
                                 </button>
                                 <ToolTip Show={hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'} Theme={'dark'}>
