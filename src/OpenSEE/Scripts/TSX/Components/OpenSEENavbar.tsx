@@ -237,22 +237,12 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: (analytic == 'FFT' ? 'calc(100% - 954px)' : 'calc(100% - 909px)'), textAlign: 'center' }}>
 
                         </li>
-                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')}
-                                onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(true)}>
-                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
-                            </button>
-                            <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}>
-                                <p>Waveform Views</p>
-                            </ToolTip>
-                        </li>
 
                         <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
-                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Show Points')}
-                                onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')}
+                                onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'}
                                 data-toggle="dropdown" data-placement="bottom">
-                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
+                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
                             <div className="dropdown-menu" style={{position: 'absolute'}}>
                                 <label><input type = "checkbox"/>
@@ -271,7 +261,18 @@ const OpenSeeNavBar = (props: IProps) => {
                                     Trip Coil E.
                                 </label>
                             </div>
-                            <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'} Theme={'dark'}> 
+                            <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}> 
+                                <p>Waveform Views</p>
+                            </ToolTip>
+                        </li>
+
+                        <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
+                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Show Points')}
+                                onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(true)}>
+                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
+                            </button>
+                            <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'} Theme={'dark'}>
                                 <p>Show Points</p>
                             </ToolTip>
                         </li>
