@@ -284,22 +284,27 @@ const OpenSeeNavBar = (props: IProps) => {
                                 data-toggle="dropdown" data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
-                            <div className="dropdown-menu" style={{position: 'absolute'}}>
-                                <label><input type = "checkbox"/>
-                                    Voltage
-                                </label>
-                                <label><input type = "checkbox"/>
-                                    Current
-                                </label>
-                                <label><input type = "checkbox"/>
-                                    Analogs
-                                </label>
-                                <label><input type = "checkbox"/>
-                                    Digitals
-                                </label>
-                                <label><input type = "checkbox"/>
-                                    Trip Coil E.
-                                </label>
+                            <div className="dropdown-menu" style={{ maxHeight: window.innerHeight * 0.75, overflowY: 'auto', padding: '10 5', position: 'absolute', backgroundColor: '#fff', boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)', zIndex: 401, minWidth: '100%' }}>
+                                <div className = "form-check form-check-inline" >
+                                    <input className="form-check-input" name="voltage" type="checkbox" onChange={() => toggleVoltage()} checked={showVolts}/>
+                                    <label className="form-check-label">Voltage</label>
+                                </div>
+                                <div className = "form-check form-check-inline" >
+                                    <input className="form-check-input" name="current" type="checkbox" onChange={() => toggleCurrent()} checked={showCurr}/>
+                                    <label className="form-check-label">Current</label>
+                                </div>
+                                <div className = "form-check form-check-inline" >
+                                    <input className="form-check-input" name="analog" type="checkbox" onChange={() => toggleAnalogs()} checked={showAnalog}/>
+                                    <label className="form-check-label">Analogs</label>
+                                </div>
+                                <div className = "form-check form-check-inline" >
+                                    <input className="form-check-input" name="digitals" type="checkbox" onChange={() => toggleDigitals()} checked={showDigitals}/>
+                                    <label className="form-check-label">Digitals</label>
+                                </div>
+                                <div className = "form-check form-check-inline" >
+                                    <input className="form-check-input" name="digitals" type="checkbox" onChange={() => toggleTCE()} checked={showTCE}/>
+                                    <label className="form-check-label">Trip Coil E.</label>
+                                </div>
                             </div>
                             <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}> 
                                 <p>Waveform Views</p>
