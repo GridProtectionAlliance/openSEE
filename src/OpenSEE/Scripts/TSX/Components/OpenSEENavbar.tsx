@@ -117,7 +117,46 @@ const OpenSeeNavBar = (props: IProps) => {
     
     const {eventInfo} = useAppSelector(state => state.EventInfo)
 
+    const toggleVoltage = () => {
+        if (showVolts)
+            store.dispatch(RemovePlot({ DataType: "Voltage", EventId: eventId }))
+        else
+            store.dispatch(AddPlot({ DataType: "Voltage", EventId: eventId }))
+        store.dispatch(SetdisplayVolt( !showVolts));
+    }
+
+    const toggleCurrent = () => {
+        if (showCurr)
+            store.dispatch(RemovePlot({ DataType: "Current", EventId: eventId }))
+        else
+            store.dispatch(AddPlot({ DataType: "Current", EventId: eventId }))
+        store.dispatch(SetdisplayCur( !showCurr));
+    }
+
+    const toggleAnalogs = () => {
+        if (showAnalog)
+            store.dispatch(RemovePlot({ DataType: 'Analogs', EventId: eventId}))
+        else
+            store.dispatch(AddPlot({ DataType: "Analogs", EventId: eventId }))
+        store.dispatch(SetdisplayAnalogs( !showAnalog));
+    }
     
+    const toggleDigitals = () => {
+        if (showDigitals)
+            store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: eventId}))
+        else
+            store.dispatch(AddPlot({ DataType: "Digitals", EventId: eventId}))
+        store.dispatch(SetdisplayDigitals( !showDigitals))
+    }
+
+    const toggleTCE = () => {
+        if (showTCE)
+            store.dispatch(RemovePlot({ DataType: 'TripCoil', EventId: eventId }))
+        else
+            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: eventId }))
+        store.dispatch(SetdisplayTCE( !showTCE));
+    }
+
     React.useEffect(() => {
         if (showPoints) {
             let oldMode = clone(mouseMode);
