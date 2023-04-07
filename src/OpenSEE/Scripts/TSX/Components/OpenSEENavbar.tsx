@@ -210,7 +210,7 @@ const OpenSeeNavBar = (props: IProps) => {
 
             return (
                 <>
-                    <ul className="navbar-nav mr-auto navbar-expand ml-auto" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                    <ul className="navbar-nav mr-auto navbar-expand ml-auto">
                         <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
                             style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                             <div style={{textAlign: 'center', color: 'white'}}>Meter:</div>
