@@ -241,7 +241,7 @@ export const defaultSettings = {
             ]
         }
 
-    } as OpenSee.IUnitCollection,
+    } as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
     TimeUnit: {
         current: 5, options: [
             { label: "seconds", short: "s", factor: 0 },
