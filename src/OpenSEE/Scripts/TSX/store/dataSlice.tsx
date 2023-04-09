@@ -269,7 +269,7 @@ export const DataReducer = createSlice({
             state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
+        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (state.activeRequest[index] != action.payload.requestID)
@@ -311,7 +311,7 @@ export const DataReducer = createSlice({
             });
             return state;
         },
-        UpdateTimeLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }> ) => {
+        UpdateTimeLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }> ) => {
             if (Math.abs(action.payload.start - action.payload.end) < 10)
                 return state;
 
@@ -328,7 +328,7 @@ export const DataReducer = createSlice({
             return state;
 
         },
-        UpdateFFTLimits: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }>) => {
+        UpdateFFTLimits: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 1)
                 return state;
 
@@ -345,7 +345,7 @@ export const DataReducer = createSlice({
             return state;
 
         },
-        updatecycleLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection }>) => {
+        updatecycleLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 5)
                 return state;
 
@@ -362,7 +362,7 @@ export const DataReducer = createSlice({
             return state;
 
         },
-        UpdateTrace: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection, singlePlot: boolean }>) => {
+        UpdateTrace: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, singlePlot: boolean }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             let dat = state.enabled[index];
@@ -462,7 +462,7 @@ export const DataReducer = createSlice({
         SetZoomMode: (state, action: PayloadAction<OpenSee.ZoomMode>) => {
             state.zoomMode = action.payload
         },
-        UpdateYLimit: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, min?: number, max?: number, baseUnits: OpenSee.IUnitCollection }>) => {
+        UpdateYLimit: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, min?: number, max?: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (action.payload.min != undefined)
@@ -488,7 +488,7 @@ export const DataReducer = createSlice({
         RemoveSelectPoints: (state, action: PayloadAction<number>) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].splice(action.payload, 1));
         },
-        UpdateActiveUnits: (state, action: PayloadAction<OpenSee.IUnitCollection>) => {
+        UpdateActiveUnits: (state, action: PayloadAction<OpenSee.IUnitCollection<OpenSee.IUnitSetting>>) => {
             //Update All Units and limits
             state.plotKeys
                 .forEach((graph, index) => {
@@ -1321,7 +1321,7 @@ function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenS
 // #region [ Helper Functions ]
 
 //This Function Recomputes y Limits based on X limits for all states
-function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3DataSeries>, baseUnit: OpenSee.IUnitCollection, activeUnits: OpenSee.IActiveUnits): [number, number] {
+function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3DataSeries>, baseUnit: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, activeUnits: OpenSee.IActiveUnits): [number, number] {
 
     let limitedData = data.map((item, index) => {
         let dataPoints = item.DataPoints;
@@ -1365,7 +1365,7 @@ function getIndex(t: number, data: Array<[number, number]>): number {
 }
 
 //function that Updates the Current Units if they are on auto
-function updateUnits(baseUnits: OpenSee.IUnitCollection, data: Array<OpenSee.iD3DataSeries>, startTime: number, endTime: number): OpenSee.IActiveUnits  {
+function updateUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, data: Array<OpenSee.iD3DataSeries>, startTime: number, endTime: number): OpenSee.IActiveUnits  {
     let result = mapUnits(baseUnits);
     let relevantUnits = _.uniq(data.map(item => item.Unit));
 
@@ -1411,7 +1411,7 @@ function updateUnits(baseUnits: OpenSee.IUnitCollection, data: Array<OpenSee.iD3
 }
 
 // function returns current units as IActiveUnits
-function mapUnits(units: OpenSee.IUnitCollection): OpenSee.IActiveUnits {
+function mapUnits(units: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IActiveUnits {
     let result = {};
     Object.keys(units).forEach(key => { result[key] = units[key].current });
     return result as OpenSee.IActiveUnits; 

@@ -30,7 +30,7 @@ import * as queryString from "query-string";
 export const SettingsReducer = createSlice({
     name: 'Settings',
     initialState: {
-        Units: {} as OpenSee.IUnitCollection,
+        Units: {} as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
         SinglePlot: true as boolean,
