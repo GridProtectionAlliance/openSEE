@@ -363,8 +363,7 @@ export namespace OpenSee {
         loading: LoadingState[],
         activeRequest: string[]
         activeUnits: IActiveUnits[],
-        yLimits: [number, number][],
-        autoLimits: boolean[],
+        yLimits: IUnitCollection<IAxisSettings>[],
         selectedIndixes: Array<number>[],
         cycleLimit: [number,number],
         fftLimits: [number, number],

@@ -213,13 +213,12 @@ export const DataReducer = createSlice({
         enabled: [] as Array<boolean>[],
         loading: [] as OpenSee.LoadingState[],
         activeUnits: [] as OpenSee.IActiveUnits[],
-        yLimits: [] as [number, number][],
-        autoLimits: [] as boolean[],
+        yLimits: [] as OpenSee.IUnitCollection<OpenSee.IAxisSettings>[],
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0/60.0]
     } as OpenSee.IDataState,
     reducers: {
-        RemovePlot: (state, action: PayloadAction<OpenSee.IGraphProps>) => {
+        RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId)
             if (index > -1) {
                 state.plotKeys.splice(index, 1);
@@ -228,25 +227,24 @@ export const DataReducer = createSlice({
                 state.loading.splice(index, 1);
                 state.activeUnits.splice(index, 1);
                 state.yLimits.splice(index, 1);
-                state.autoLimits.splice(index, 1);
                 state.selectedIndixes.splice(index, 1);
                 state.activeRequest.splice(index, 1);
             }
         },
-        UpdateEventId: (state, action: PayloadAction<number>) => {
+        UpdateEventId: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.eventID = action.payload;
         },
-        SetLoading: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, state: OpenSee.LoadingState }>) => {
+        SetLoading: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, state: OpenSee.LoadingState }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId);
 
             state.loading[index] = action.payload.state;
             return state;
         },
-        UpdateAnalytic: (state, action: PayloadAction<OpenSee.Analytic>) => {
+        UpdateAnalytic: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.Analytic>) => {
             state.Analytic = action.payload;
             return state;
         },
-        AddKey: (state, action: PayloadAction<IExtendedKey>) => {
+        AddKey: (state: OpenSee.IDataState, action: PayloadAction<IExtendedKey>) => {
 
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId)
             if (index > -1) {
@@ -262,14 +260,35 @@ export const DataReducer = createSlice({
             state.loading.push('Idle');
             state.activeUnits.push({
                 Voltage: 0, Current: 0, Angle: 0, VoltageperSecond: 0, CurrentperSecond: 0, Freq: 0, Impedance: 0,
-                PowerP: 0, PowerQ: 0, PowerS: 0, PowerPf: 0, TCE: 0, Distance: 0, Unbalance: 0, THD: 0, });
-            state.yLimits.push([0, 1]);
-            state.autoLimits.push(true);
+                PowerP: 0, PowerQ: 0, PowerS: 0, PowerPf: 0, TCE: 0, Distance: 0, Unbalance: 0, THD: 0,
+            });
+            state.yLimits.push({
+                Voltage: {
+                    activeUnit: 0,
+                    dataLimits: [0, 1],
+                    label: '',
+                    limits: [0, 1]
+                },
+                Current: null,
+                Angle: null,
+                VoltageperSecond: null,
+                CurrentperSecond: null,
+                Freq: null,
+                Impedance: null,
+                PowerP: null,
+                PowerQ: null,
+                PowerS: null,
+                PowerPf: null,
+                TCE: null,
+                Distance: null,
+                Unbalance: null,
+                THD: null,
+            });
             state.selectedIndixes.push([]);
             state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
+        AppendData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (state.activeRequest[index] != action.payload.requestID)
@@ -286,17 +305,18 @@ export const DataReducer = createSlice({
             if (state.plotKeys[index].DataType == 'FFT')
                 state.fftLimits = [Math.min(...state.data[index].map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...state.data[index].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
 
-            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
-                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave')
-                state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            const autoLimits = true;
+            if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (index && state.plotKeys[index].DataType == 'FFT')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
            
             return state
         },
-        ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
+        ReplaceData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
             if (index == -1)
                 return state;
@@ -311,7 +331,7 @@ export const DataReducer = createSlice({
             });
             return state;
         },
-        UpdateTimeLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }> ) => {
+        UpdateTimeLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }> ) => {
             if (Math.abs(action.payload.start - action.payload.end) < 10)
                 return state;
 
@@ -319,50 +339,53 @@ export const DataReducer = createSlice({
             state.endTime = action.payload.end;
 
             //Update All Units and limits
+            const autoLimits = true;
             state.plotKeys 
                 .forEach((graph, index) => {
                     state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
-                    if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
-                        state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                    if (autoLimits && state.plotKeys[index].DataType != 'FFT')
+                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                 });
             return state;
 
         },
-        UpdateFFTLimits: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
+        UpdateFFTLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 1)
                 return state;
 
             state.fftLimits = [action.payload.start, action.payload.end];
 
             //Update All Units and limits
+            const autoLimits = true;
             state.plotKeys
                 .forEach((graph, index) => {
-                    if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT') {
+                    if (autoLimits && state.plotKeys[index].DataType == 'FFT') {
                         state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.fftLimits[0], state.fftLimits[1]);
-                        state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                     }
                 });
             return state;
 
         },
-        updatecycleLimit: (state, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
+        updatecycleLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 5)
                 return state;
 
             state.cycleLimit = [action.payload.start, action.payload.end];
 
+            const autoLimits = true;
             //Update All Units and limits
             state.plotKeys
                 .forEach((graph, index) => {
-                    if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave') {
+                    if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave') {
                         state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.cycleLimit[0], state.cycleLimit[1]);
-                        state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
                     }
                 });
             return state;
 
         },
-        UpdateTrace: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, singlePlot: boolean }>) => {
+        UpdateTrace: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, singlePlot: boolean }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             let dat = state.enabled[index];
@@ -389,9 +412,9 @@ export const DataReducer = createSlice({
 
             let yLimits: [number, number] = [0, 0];
             let adjustLimits = true;
-
+            const autoLimits = true;
             // If we enabled some trace we only need to update if it's actually exceeding current Limits....
-            if (state.autoLimits[index] && action.payload.enabled && state.plotKeys[index].DataType != 'FFT') {
+            if (autoLimits && action.payload.enabled && state.plotKeys[index].DataType != 'FFT') {
                 adjustLimits = false;
                 let start = state.startTime;
                 let end = state.endTime;
@@ -401,13 +424,13 @@ export const DataReducer = createSlice({
                 }
                 let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
-                if (dLim[0] < state.yLimits[index][0])
-                    state.yLimits[index][0] = dLim[0];
-                if (dLim[1] > state.yLimits[index][1])
-                    state.yLimits[index][1] = dLim[1];
+                if (dLim[0] < state.yLimits[index].Voltage.limits[0])
+                    state.yLimits[index].Voltage.limits[0] = dLim[0];
+                if (dLim[1] > state.yLimits[index].Voltage.limits[1])
+                    state.yLimits[index].Voltage.limits[1] = dLim[1];
             }
             // If we disabled some traces and they are just inside the limits we don't have to recompute limits
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT') {
+            else if (autoLimits && state.plotKeys[index].DataType != 'FFT') {
                 let start = state.startTime;
                 let end = state.endTime;
                 if (state.plotKeys[index].DataType == 'OverlappingWave') {
@@ -416,11 +439,11 @@ export const DataReducer = createSlice({
                 }
 
                 let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                if (dLim[0] > state.yLimits[index][0] && dLim[1] < state.yLimits[index][1])
+                if (dLim[0] > state.yLimits[index].Voltage.limits[0] && dLim[1] < state.yLimits[index][1])
                     adjustLimits = false;
             }
 
-            if (state.autoLimits[index] && adjustLimits) {
+            if (autoLimits && adjustLimits) {
 
                 if (state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
                     yLimits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
@@ -429,16 +452,16 @@ export const DataReducer = createSlice({
                 else
                     yLimits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
 
-                if (yLimits[0] != state.yLimits[index][0] || yLimits[1] != state.yLimits[index][1])
-                    state.yLimits[index] = yLimits;
+                if (yLimits[0] != state.yLimits[index].Voltage.limits[0] || yLimits[1] != state.yLimits[index].Voltage.limits[1])
+                    state.yLimits[index].Voltage.limits = yLimits;
             }
             return state
         },
-        SetHover: (state, action: PayloadAction<{ t: number, y: number }>) => {
+        SetHover: (state: OpenSee.IDataState, action: PayloadAction<{ t: number, y: number }>) => {
             state.hover = [action.payload.t, action.payload.y];
             return state;
         },
-        SelectPoint: (state, action: PayloadAction<[number, number]>) => {
+        SelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
             if (state.mouseMode == 'none')
                 return state;
             if (state.mouseMode == 'zoom')
@@ -456,47 +479,49 @@ export const DataReducer = createSlice({
                 })
             }
         },
-        SetMouseMode: (state, action: PayloadAction<OpenSee.MouseMode>) => {
+        SetMouseMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.MouseMode>) => {
             state.mouseMode = action.payload
         },
-        SetZoomMode: (state, action: PayloadAction<OpenSee.ZoomMode>) => {
+        SetZoomMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.ZoomMode>) => {
             state.zoomMode = action.payload
         },
-        UpdateYLimit: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, min?: number, max?: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
+        UpdateYLimit: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, min?: number, max?: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
-
+            /*
             if (action.payload.min != undefined)
                 state.autoLimits[index] = false;
             else
                 state.autoLimits[index] = true;
-
-            if (!state.autoLimits[index])
-                state.yLimits[index] = [action.payload.min, action.payload.max];
+                */
+            const autoLimits = true;
+            if (!autoLimits)
+                state.yLimits[index].Voltage.limits = [action.payload.min, action.payload.max];
 
             state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
-            if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'FFT')
-                state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (state.autoLimits[index] && state.plotKeys[index].DataType == 'OverlappingWave')
-                state.yLimits[index] = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (autoLimits && state.plotKeys[index].DataType == 'FFT')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
+                state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
         },
-        ClearSelectPoints: (state) => {
+        ClearSelectPoints: (state: OpenSee.IDataState) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
         },
-        RemoveSelectPoints: (state, action: PayloadAction<number>) => {
+        RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].splice(action.payload, 1));
         },
-        UpdateActiveUnits: (state, action: PayloadAction<OpenSee.IUnitCollection<OpenSee.IUnitSetting>>) => {
+        UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IUnitCollection<OpenSee.IUnitSetting>>) => {
             //Update All Units and limits
+            const autoLimits = true;
             state.plotKeys
                 .forEach((graph, index) => {
                     state.activeUnits[index] = updateUnits(action.payload, state.data[index], state.startTime, state.endTime);
-                    if (state.autoLimits[index] && state.plotKeys[index].DataType != 'FFT')
-                        state.yLimits[index] = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
-                    else if (state.autoLimits[index])
-                        state.yLimits[index] = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
+                    if (autoLimits && state.plotKeys[index].DataType != 'FFT')
+                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
+                    else if (autoLimits)
+                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
                 });
             return state;
         },
@@ -593,14 +618,14 @@ export const selectYLimits = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Data.yLimits,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (state: OpenSee.IRootState) => state.Data.autoLimits,
+        (state: OpenSee.IRootState) => true,
         (state: OpenSee.IRootState) => state.Settings.Tab,
-        (data, plotKeys, single, autoLimits, tab) => {
+        (data: OpenSee.IUnitCollection<OpenSee.IAxisSettings>[], plotKeys: OpenSee.IGraphProps[], single: boolean, autoLimits, tab: OpenSee.Tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single && autoLimits[index] && tab == 'Compare')
-                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType))
-            
-            return data[index];
+            if (single && autoLimits && tab == 'Compare')
+                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType).map((item) => item.Voltage.limits))
+
+            return data[index].Voltage.limits;
         });
 
 }
