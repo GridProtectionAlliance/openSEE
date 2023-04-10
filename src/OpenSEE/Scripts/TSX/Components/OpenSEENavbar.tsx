@@ -279,9 +279,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
-                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')}
-                                onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'}
-                                data-toggle="dropdown" data-placement="bottom">
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')} onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'} data-toggle="dropdown" data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
                             <div className="dropdown-menu" style={{ maxHeight: window.innerHeight * 0.75, overflowY: 'auto', padding: '10 5', position: 'absolute', backgroundColor: '#fff', boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)', zIndex: 401, minWidth: '100%' }}>
