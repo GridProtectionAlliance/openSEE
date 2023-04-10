@@ -325,7 +325,8 @@ export namespace OpenSee {
 
     interface IUnitSetting {
         current: number,
-        options: Array<iUnitOptions>
+        options: Array<iUnitOptions>,
+        useAutoLimits: boolean
     }
 
     interface IDefaultTrace {
@@ -414,7 +415,12 @@ export namespace OpenSee {
         THD: T,
     }
 
-
+    interface IAxisSettings {
+        activeUnit: number,
+        limits: [number, number],
+        dataLimits: [number, number]
+        label: string
+    }
     // for Redux to store active units (in case of Auto Unit)
     interface IActiveUnits extends IUnitCollection<number> { }
 }
