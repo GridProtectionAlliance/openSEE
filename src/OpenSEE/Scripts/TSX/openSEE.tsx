@@ -348,7 +348,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     </div>
                 </div> 
                 */}
-
+                <div style={{position: 'relative', height: 'calc(100% - 40px)', width: '100%'}}>
+                    <div style={{position:'relative', top: '31px'}}>
                     <VerticalSplit>
                         <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
                                 {this.state.eventData != undefined ?
@@ -430,6 +431,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                     }
                         </SplitSection>
                     </VerticalSplit>
+                    </div>
+                </div>
         </Application>
         );
     }
