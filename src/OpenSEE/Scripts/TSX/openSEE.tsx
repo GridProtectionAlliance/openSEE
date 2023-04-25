@@ -60,6 +60,7 @@ import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
 import { Application, Page, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import SettingsWidget from  './jQueryUI Widgets/SettingWindow';
 
 
 declare var homePath: string;
@@ -116,6 +117,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             eventData: null,
             lookup: null,
             breakeroperation: undefined,
+            drawValue: undefined,
         }
 
         let startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(this.state.eventStartTime + "Z").getTime());
@@ -239,6 +241,12 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         return (n.length == 1) ? ('0' + n) : n;
     }
 
+    drawerState(data){
+        this.setState({
+            drawValue: data, 
+        });
+        return data;
+    }
     render() {
         var height = this.calculateHeights();
         var windowHeight = window.innerHeight;
@@ -258,6 +266,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     EventData={this.state.eventData}
                     Lookup={this.state.lookup}
                     stateSetter={this.setState}
+                    ToggleDrawer={this.drawerState}
                 />}
                 UseLegacyNavigation={true}
             >
@@ -375,6 +384,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip w/ Delta</p>
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => {this.drawerState = func;}}>
+                                 <SettingsWidget />
                         </SplitDrawer>
                         <SplitSection MinWidth={100} MaxWidth={100} Width={100 }>
                         {plotData[this.props.eventID] != undefined ?
