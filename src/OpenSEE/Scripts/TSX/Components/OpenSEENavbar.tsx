@@ -53,7 +53,8 @@ declare var eventEndTime: string;
 interface IProps {
     EventData: OpenSee.iPostedData,
     Lookup: OpenSee.iNextBackLookup,
-    stateSetter: (ob: any) => void
+    stateSetter: (ob: any) => void, 
+    ToggleDrawer: (drawer: any) => void
 }
 
 const OpenSeeNavBar = (props: IProps) => {
@@ -441,7 +442,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => setShowSettings(!showSettings)}>
+                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => {setShowSettings(!showSettings); props.ToggleDrawer(!showSettings);}}>
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                             </button>
                             <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'} Theme={'dark'}>
@@ -498,7 +499,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventId} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} />
                         <TimeCorrelatedSagsWidget eventId={eventId} closeCallback={() => setShowCorrelatedSags(false)} exportCallback={() => exportData('correlatedsags')} isOpen={showCorrelatedSags} position={positionCorrelatedSags} setPosition={(t, l) => setPositionCorrelatedSags([t, l])} />
                         <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} position={positionLightning} setPosition={(t, l) => setPositionLightning([t, l])} />
-                        <SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />
+                        {/*<SettingsWidget closeCallback={() => setShowSettings(false)} isOpen={showSettings} position={positionSettings} setPosition={(t, l) => setPositionSettings([t, l])} />*/}
                         <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
                         <About isOpen={showAbout} closeCallback={() => setShowAbout(false)}/>
                     </React.Suspense>
