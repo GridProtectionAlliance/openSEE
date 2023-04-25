@@ -24,7 +24,7 @@
 import * as React from 'react';
 import { uniq } from 'lodash';
 import { BlockPicker } from 'react-color';
-import { WidgetWindow } from './Common';
+//import { WidgetWindow } from './Common';
 import { OpenSee } from '../global';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
 import { selectColor, SetColor, selectUnit, selectTimeUnit, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
@@ -33,10 +33,10 @@ import { defaultSettings } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
 interface Iprops {
-    closeCallback: () => void,
-    isOpen: boolean,
-    position: [number, number]
-    setPosition: (t: number, l: number) => void
+    //closeCallback: () => void,
+    //isOpen: boolean,
+    //position: [number, number]
+    //setPosition: (t: number, l: number) => void
 }
 
 const SettingsWidget = (props: Iprops) => {
@@ -49,9 +49,9 @@ const SettingsWidget = (props: Iprops) => {
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
     
-    React.useEffect(() => {
-        if (!props.isOpen)
-            return () => { }
+   {/* React.useEffect(() => {
+        //if (!props.isOpen)
+            //return () => { }
 
         const handleScroll = () => {
             let offset = document.getElementById("settingScrollContainer").scrollTop;
@@ -60,11 +60,10 @@ const SettingsWidget = (props: Iprops) => {
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
         return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
     }, [props])
-  
-
+*/}
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516} position={props.position} setPosition={props.setPosition} >
-            <div id="settingScrollContainer" style={{ width: '510px', height: '575px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
+        <div style={{ marginTop: '10px', width: '100%', height: '100%' }}>
+            <div id="settingScrollContainer" style={{height: '80%', zIndex: 1001, overflowY: 'auto', overflowX: 'hidden' }}>
                 <div className="accordion" id="panelSettings">
                     <div className="card">
                         <div className="card-header" id="header-general">
@@ -146,13 +145,13 @@ const SettingsWidget = (props: Iprops) => {
                         </div>
                     </div>
 
-                    {props.isOpen ?
+                   {/* {props.isOpen ?
                         list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />) : null
-                    }
+                    }*/}
                    
                 </div>
             </div>
-        </WidgetWindow>
+       </div>
     );
 }
 
