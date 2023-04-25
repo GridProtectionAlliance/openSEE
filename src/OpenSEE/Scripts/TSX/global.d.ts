@@ -70,6 +70,8 @@ export namespace OpenSee {
         //Not sure what this is for maybe GTC?
         breakeroperation: any,
 
+        // drawValue helps us to store boolean value(True/False) in OpenSEE which is coming from openSeeNvbar.
+        drawValue: any
     }
 
     interface IOpenSeeProps {
