@@ -353,9 +353,9 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <VerticalSplit>
                         <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
                                 {this.state.eventData != undefined ?
-                                    <table className="table">
-                                        <tbody style={{ display: 'block' }}>
-                                            <tr><td>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
+                                    <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
+                                        <tbody style={{ display: 'block'}}>
+                                            <tr><td style={{width: '100%'}}>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
                                             <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
                                             <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
                                             <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
@@ -478,7 +478,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals))
+        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals));
     }
 
     toggleTCE() {
