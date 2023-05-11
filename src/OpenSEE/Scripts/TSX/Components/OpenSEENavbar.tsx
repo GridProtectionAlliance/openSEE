@@ -255,7 +255,6 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </div>
                             </div>
                         </li> : null}
-
                 </ul>
             </div>
             <React.Suspense fallback={<div>Loading...</div>}>

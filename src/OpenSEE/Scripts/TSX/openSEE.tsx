@@ -303,7 +303,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
                         <span>Version {version}</span>
                         <br/>
-                        <span><About/></span>
+                        <span><About /> <button className="btn btn-link" onClick={() => { window.location.href = `${homePath}/Logout` }}>Log out</button></span>
                     </div>
                 </div> 
                 <div id="chartpanel" style={{ width: 'calc(100% - 300px)', height: 'inherit', position: 'relative', float: 'right', overflow: 'hidden' }}>
