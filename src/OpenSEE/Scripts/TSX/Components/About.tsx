@@ -27,7 +27,7 @@ export default function About () {
     const [show, setShow] = React.useState<boolean>(false);
 
     return (
-        <div>
+        <>
         <button className="btn btn-link" onClick={() => { setShow(true) }}>Help</button>
 
         <div className="modal fade show" style={{ display: (show ? 'block' : 'none') }} role="dialog">
@@ -81,7 +81,7 @@ export default function About () {
                 </div>
             </div>
         </div>
-        </div>
+        </>
     );
 
 }

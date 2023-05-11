@@ -21,30 +21,25 @@
 //
 //******************************************************************************************************
 
-using GSF;
-using GSF.Configuration;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Identity;
-using GSF.Security;
-using GSF.Web.Embedded;
-using GSF.Web.Hubs;
-using GSF.Web.Model;
-using Microsoft.AspNet.SignalR;
-using Microsoft.AspNet.SignalR.Hubs;
-using Microsoft.AspNet.SignalR.Json;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Web;
 using System.Web.Mvc;
-using System.Web.Routing;
-using System.IO;
-using OpenSEE.Model;
 using System.Web.Optimization;
+using System.Web.Routing;
+using GSF;
+using GSF.Configuration;
+using GSF.Data;
+using GSF.Identity;
+using GSF.IO;
+using GSF.Security;
+using GSF.Web.Embedded;
+using GSF.Web.Model;
+using OpenSEE.Model;
 
 namespace OpenSEE
 {
@@ -57,6 +52,8 @@ namespace OpenSEE
 
         protected void Application_Start()
         {
+            Directory.SetCurrentDirectory(FilePath.GetAbsolutePath(""));
+
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
@@ -101,7 +98,6 @@ namespace OpenSEE
                 // Validate users and groups exist in the database as SIDs
                 ValidateAccountsAndGroups(dataContext.Connection);
 
-
                 // Load global web settings
                 Dictionary<string, string> appSetting = dataContext.LoadDatabaseSettings("app.setting");
                 global.ApplicationName = appSetting["applicationName"];
@@ -109,20 +105,10 @@ namespace OpenSEE
                 global.ApplicationKeywords = appSetting["applicationKeywords"];
                 global.BootstrapTheme = appSetting["bootstrapTheme"];
 
-
                 // Cache application settings
                 foreach (KeyValuePair<string, string> item in appSetting)
                     global.ApplicationSettings.Add(item.Key, item.Value);
-
             }
-
-            // Modify the JSON serializer to serialize dates as UTC -
-            // otherwise, timezone will not be appended to date strings
-            // and browsers will select whatever timezone suits them
-            JsonSerializerSettings settings = JsonUtility.CreateDefaultSerializerSettings();
-            settings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-            JsonSerializer serializer = JsonSerializer.Create(settings);
-            GlobalHost.DependencyResolver.Register(typeof(JsonSerializer), () => serializer);
         }
 
         private void Page_Error(object sender, EventArgs e)
