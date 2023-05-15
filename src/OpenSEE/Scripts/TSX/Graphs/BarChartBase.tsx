@@ -247,6 +247,7 @@ const BarChart = (props: iProps) => {
 
         let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
             .append("g").classed("root", true)
+            .attr("transform", "translate(40,0)");
 
         // Now Create Axis
         yScaleRef.current = d3.scaleLinear()
@@ -275,7 +276,7 @@ const BarChart = (props: iProps) => {
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
+            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 10) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel + ' (Hz)');
 

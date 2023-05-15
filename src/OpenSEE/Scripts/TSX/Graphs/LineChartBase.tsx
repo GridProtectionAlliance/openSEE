@@ -361,7 +361,7 @@ const LineChart = (props: iProps) => {
 
         let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
             .append("g").classed("root", true)
-            .attr("transform", "translate(40,10)");
+            .attr("transform", "translate(40,0)");
         // Everything should start at 40, 20 except the div for overlay....
 
         // Now Create Axis
@@ -791,7 +791,7 @@ const LineChart = (props: iProps) => {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height -5) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
         container.select(".yAxis.right").attr("transform", "translate(" + (width - 150) + ",0)")
 
