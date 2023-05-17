@@ -76,7 +76,7 @@ const SettingsWidget = (props: Iprops) => {
 
                         <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings">
                             <div className="card-body">
-                                <div className="row">
+                                <div className="col">
                                     <div className="col" style={{ width: '100%' }}>
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={eventOverlay}
@@ -85,11 +85,11 @@ const SettingsWidget = (props: Iprops) => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="row">
+                                <div className="col">
                                     <div className="col">
                                     <fieldset className="border" style={{ padding: '10px', height: '100%', display: "block", width: '100%' }}>
-                                            <legend className="w-auto" style={{ fontSize: 'large' }}>Default Traces (on Loading):</legend>
-                                        <div className="row">
+                                            <legend className="w-auto">Default Traces (on Loading):</legend>
+                                        <div className="col">
                                             <div className="col" style={{ width: '25%' }}>
                                                 <div className="form-check">
                                                         <input className="form-check-input" type="checkbox" checked={defaultTraces.W}
@@ -120,21 +120,21 @@ const SettingsWidget = (props: Iprops) => {
                                                 </div>
                                                 
                                             </div>
-                                            <div className="row">
+                                            <div className="col">
                                                 <div className="col" style={{ width: '100%', paddingTop: 10 }}>
                                                     <div className="form-check form-check-inline">
                                                         <input className="form-check-input" type="radio" checked={defaultVtype == 'L-L'} onChange={() => {
                                                             if (defaultVtype == 'L-N')
                                                                 dispatch(SetDefaultVType('L-L'))
                                                         }} />
-                                                            <label className="form-check-label" >Line to Line</label>
+                                                            <label className="form-check-label">Line to Line</label>
                                                     </div>
                                                     <div className="form-check form-check-inline">
                                                         <input className="form-check-input" type="radio" checked={defaultVtype == 'L-N'} onChange={() => {
                                                             if (defaultVtype == 'L-L')
                                                                 dispatch(SetDefaultVType('L-N'))
                                                         }}/>
-                                                        <label className="form-check-label" >Line to Neutral</label>
+                                                        <label className="form-check-label">Line to Neutral</label>
                                                     </div>
                                                  </div>      
                                             </div>
@@ -145,9 +145,7 @@ const SettingsWidget = (props: Iprops) => {
                         </div>
                     </div>
 
-                   {/* {props.isOpen ?
-                        list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />) : null
-                    }*/}
+                   {list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />)}
                    
                 </div>
             </div>
