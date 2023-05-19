@@ -36,8 +36,8 @@ const Icon = styled.div`
 	border: 10px solid #f3f3f3;
 	border-Top: 10px solid #555;
 	border-Radius: 50%;
-	width: 50px;
-	height: 50px;
+	width: 30px;
+	height: 30px;
 	margin: auto;
 `;
 
@@ -72,12 +72,26 @@ export const NoDataIcon = (props: {}) => {
 	</div>
 }
 
+export const WaveformViews = '👁'; 
+export const ShowPoints = '✏'; 
+export const CorrelatedSags = '📈'; 
+export const PhasorClock = '⟴';
+export const statsIcon = 'ℹ';
+export const lightningData = '⚡';
+export const exportBtn = '💾';
+
+
+
 export const Zoom = '🔍';
-export const PhasorClock = '🕙';
-export const Tooltip = '📏';
+export const Pan = '🖐';
+export const FFT = '📊';
+export const Reset = '↻';
+
 export const Settings = '⚙';
-export const Pan = '☩'
-export const FFT = '📊'
+export const leftArrow = '⏮';
+export const rightArrow = '⏭';
+export const Help = '❔'; 
+
 
 export const WarningSymbol = '⚠';
 export const Square = '⇄⇅';

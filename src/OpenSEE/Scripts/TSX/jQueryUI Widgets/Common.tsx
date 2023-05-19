@@ -93,7 +93,7 @@ export const WidgetWindow: React.FunctionComponent<IwindowProps> = (props) => {
                 props.setPosition(top, left);
             };
         }
-    });
+    }, [refWindow.current]);
 
     if (!props.show)
         return null;

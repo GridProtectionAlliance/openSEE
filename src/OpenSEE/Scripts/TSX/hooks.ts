@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
-//  store.tsx - Gbtc
+//  hooks.ts - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright © 2019, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -14,35 +14,17 @@
 //  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
 //  License for the specific language governing permissions and limitations.
 //
+//  Type definitions for openSEE.tsx
+//
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  11/01/2020 - C. Lackner
+//  01/05/2022 - C. Lackner
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { configureStore } from '@reduxjs/toolkit';
-import  SettingsReducer from './settingSlice';
-import  DataReducer from './dataSlice';
-import AnalyticReducer  from './analyticSlice';
-import EventReducer from './eventSlice';
-import EventInfoReducer from './infoSlice'
 
-export type AppDispatch = typeof store.dispatch;
-export type RootState = ReturnType<typeof store.getState>
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from './store/store';
 
-const store = configureStore({
-    reducer: {
-        Settings: SettingsReducer,
-        Data: DataReducer,
-        Analytic: AnalyticReducer,
-        Event: EventReducer,
-        EventInfo: EventInfoReducer,
-    },
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-            serializableCheck: false,
-            immutableCheck: false
-        }),
-});
-
-export default store;
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

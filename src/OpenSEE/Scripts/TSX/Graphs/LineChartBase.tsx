@@ -28,12 +28,12 @@ import { OpenSee } from '../global';
 
 import moment from "moment"
 import Legend from './LegendBase';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectColor, selectActiveUnit, selectTimeUnit} from '../store/settingSlice'
 import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
 import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { GetDisplayLabel } from './Utilities';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 
 
@@ -77,6 +77,7 @@ const LineChart = (props: iProps) => {
 
     const xScaleRef = React.useRef<any>();
     const yScaleRef = React.useRef<any>();
+   // const zScaleRef = React.useRef<any>();
 
     //const [xScale, setXscale] = React.useState<any>(null);
     //const [yScale, setYscale] = React.useState<any>(null);
@@ -87,38 +88,44 @@ const LineChart = (props: iProps) => {
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
+
+    const [width, setWidth] = React.useState<number>(100); 
     
+    const lineData = useAppSelector(state => MemoSelectData(state, dataKey));
+    const enabledLine = useAppSelector(state => MemoSelectEnabled(state, dataKey));
 
-    const lineData = useSelector(state => MemoSelectData(state, dataKey));
-    const enabledLine = useSelector(state => MemoSelectEnabled(state, dataKey));
+    const startTime = useAppSelector(selectStartTimeInstance);
+    const endTime = useAppSelector(selectEndTimeInstance);
+    const yLimits = useAppSelector(SelectYLimits);
 
-    const startTime = useSelector(selectStartTimeInstance);
-    const endTime = useSelector(selectEndTimeInstance);
-    const yLimits = useSelector(SelectYLimits);
+    const loading = useAppSelector(selectLoading(dataKey));
 
-    const loading = useSelector(selectLoading(dataKey));
+    const colors = useAppSelector(selectColor);
+    const timeUnit = useAppSelector(selectTimeUnit);
+    const activeUnit = useAppSelector(SelectActiveUnitInstance);
+    const mouseMode = useAppSelector(selectMouseMode);
+    const zoomMode = useAppSelector(selectZoomMode);
 
-    const colors = useSelector(selectColor);
-    const timeUnit = useSelector(selectTimeUnit);
-    const activeUnit = useSelector(SelectActiveUnitInstance);
-    const mouseMode = useSelector(selectMouseMode);
-    const zoomMode = useSelector(selectZoomMode);
+    const fftWindow = useAppSelector(selectFFTWindow);
+    const showFFT = useAppSelector(selectShowFFTWindow);
 
-    const fftWindow = useSelector(selectFFTWindow);
-    const showFFT = useSelector(selectShowFFTWindow);
-
-    const hover = useSelector(selectHover);
-    const options = useSelector(selectAnalyticOptionInstance);
-    const fftCycles = useSelector(selectCycles);
+    const hover = useAppSelector(selectHover);
+    const options = useAppSelector(selectAnalyticOptionInstance);
+    const fftCycles = useAppSelector(selectCycles);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
 
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
-    const [yLblText, setYLblText] = React.useState<string>('');
+    const [yLblTextLeft, setYLblTextLeft] = React.useState<string>('');
+    const [yLblTextRight, setYLblTextRight] = React.useState<string>('');
     const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
+    React.useLayoutEffect(() => {
+        setWidth(document.getElementById("graphWindow-" + props.type + "-" + props.eventId).offsetWidth)
+
+    });
     //Effect to update the Data 
     React.useEffect(() => {
         if (loading == 'Loading')
@@ -143,7 +150,7 @@ const LineChart = (props: iProps) => {
         if (yScaleRef.current != undefined && xScaleRef.current != undefined)
             updateSize();
 
-    }, [props.height, props.width])
+    }, [props.height, width])
 
     React.useEffect(() => {
         updateVisibility();
@@ -251,27 +258,33 @@ const LineChart = (props: iProps) => {
         if (container == null || container.select(".yAxisLabel") == null)
             return;
         container.select(".yAxisLabel")
-            .text(yLblText)
             .style('font-size', yLblFontSize.toString() + 'rem');
-    }, [yLblText, yLblFontSize]);
+
+        container.select(".yAxisLabel.left")
+            .text(yLblTextLeft)
+        container.select(".yAxisLabel.right")
+            .text(yLblTextRight)
+    }, [yLblTextLeft, yLblTextRight, yLblFontSize]);
 
 
     React.useEffect(() => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        if (container == null || container.select(".yAxisLabel") == null || yLblText.length == 0)
+        if (container == null || container.select(".yAxisLabel") == null)
             return;
 
         let fs = 1;
-        let l = GetTextWidth('', '1rem', yLblText);
+        let l = GetTextWidth('', '1rem', yLblTextLeft);
+        let r = GetTextWidth('', '1rem', yLblTextRight);
 
-        while ((l > props.height - 60) && fs > 0.2) {
+        while (((l > props.height - 60) || (r > props.height - 60)) && fs > 0.2) {
             fs = fs - 0.05;
-            l = GetTextWidth('', fs.toString() + 'rem', yLblText);
+            l = GetTextWidth('', fs.toString() + 'rem', yLblTextLeft);
+            r = GetTextWidth('', fs.toString() + 'rem', yLblTextRight);
         }
         if (fs != yLblFontSize)
             setYLblFontSize(fs)
 
-    }, [props.height, yLblText])
+    }, [props.height, yLblTextLeft, yLblTextRight])
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -348,7 +361,7 @@ const LineChart = (props: iProps) => {
 
         let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
             .append("g").classed("root", true)
-                //.attr("transform", "translate(40,10)");
+            .attr("transform", "translate(40,0)");
         // Everything should start at 40, 20 except the div for overlay....
 
         // Now Create Axis
@@ -358,25 +371,39 @@ const LineChart = (props: iProps) => {
 
         xScaleRef.current = d3.scaleLinear()
             .domain([startTime, endTime])
-            .range([60, props.width - 240]);
+            .range([60, width - 150]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        //ScaleRef.current = d3.scaleLinear()
+          //  .domain(yLimits)
+            //.range([props.height - 40, 20]);
+
+        svg.append("g").classed("yAxis", true).classed("left", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        svg.append("g").classed("yAxis", true).classed("right", true).attr("transform", "translate(" + (width - 150) + ",0)").call(d3.axisRight(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
         svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
+            
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
+            .attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
             .style("text-anchor", "middle")
             .text(props.timeLabel);
 
-        svg.append("text").classed("yAxisLabel", true)
+        svg.append("text").classed("yAxisLabel", true).classed("left", true)
             .attr("transform", "rotate(-90)")
             .attr("y", 2 )
             .attr("x", - (props.height / 2 - 20))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(yLblText);
+            .text(yLblTextLeft);
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
+
+        svg.append("text").classed("yAxisLabel", true).classed("right", true)
+            .attr("transform", "rotate(-90)")
+            .attr("y", (width - 92))
+            .attr("x", - (props.height / 2 - 20))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text(yLblTextRight);
 
         setTooltipLocation(10);
 
@@ -384,7 +411,7 @@ const LineChart = (props: iProps) => {
         svg.append("defs").append("svg:clipPath")
             .attr("id", "clipData-" + props.type + "-" + props.eventId)
             .append("svg:rect").classed("clip",true)
-            .attr("width", props.width - 300)
+            .attr("width", width - 210)
             .attr("height", props.height - 60)
             .attr("x", 60)
             .attr("y", 20);
@@ -419,7 +446,7 @@ const LineChart = (props: iProps) => {
         //Event overlay - needs to be treated seperately
 
         svg.append("svg:rect").classed("Overlay", true)
-            .attr("width", props.width - 240)
+            .attr("width", width - 210)
             .attr("height", '100%')
             .attr("x", 20)
             .attr("y", 0)
@@ -571,8 +598,8 @@ const LineChart = (props: iProps) => {
 
         if (x0 < 60)
             x0 = 60;
-        if (x0 > (props.width - 240))
-            x0 = props.width - 240;
+        if (x0 > (width - 140))
+            x0 = width - 140;
 
         if (y0 < 20)
             y0 = 20;
@@ -598,7 +625,7 @@ const LineChart = (props: iProps) => {
         if (props.type == 'OverlappingWave')
             return;
 
-        if (x0 > 60 && x0 < props.width - 240)
+        if (x0 > 60 && x0 < width - 140)
             dispatch(SelectPoint([t0, d0]));
         setOldFFTWindow(() => { return fftWindow });
 
@@ -711,14 +738,17 @@ const LineChart = (props: iProps) => {
                 return "s"
         }
 
-        function GetYLabel() {
-            return uniq(lineData.map(d => d.Unit)).map(unit => {
+        function GetYLabel(axis: number) {
+            return uniq(lineData.filter(d => d.Axis == axis ).map(d => d.Unit)).map(unit => {
                 return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A")+ "]";
             }).join("  ")
         }
 
-        if (yLblText != GetDisplayLabel(props.type) + ' ' + GetYLabel())
-            setYLblText(GetDisplayLabel(props.type) + ' ' + GetYLabel());
+        if (yLblTextLeft != GetDisplayLabel(props.type) + ' ' + GetYLabel(0))
+            setYLblTextLeft(GetDisplayLabel(props.type) + ' ' + GetYLabel(0));
+
+        if (yLblTextRight != GetDisplayLabel(props.type) + ' ' + GetYLabel(1))
+            setYLblTextRight(GetDisplayLabel(props.type) + ' ' + GetYLabel(1));
 
         container.select(".xAxisLabel").text(props.timeLabel + " (" + GetTLabel() + ")")
     }
@@ -761,19 +791,22 @@ const LineChart = (props: iProps) => {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height -5) + ")")
         container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
+        container.select(".yAxis.right").attr("transform", "translate(" + (width - 150) + ",0)")
 
-        xScaleRef.current.range([60, props.width - 240]);
+        container.select(".yAxisLabel.right").attr("y", (width - 92))
+
+        xScaleRef.current.range([60, width - 140]);
         yScaleRef.current.range([props.height - 40, 20]);
 
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")")
 
-        container.select(".clip").attr("width", props.width - 300)
+        container.select(".clip").attr("width", width - 210)
             .attr("height", props.height - 60)
       
         container.select(".fftwindow").attr("height", props.height - 60);
-        container.select(".Overlay").attr("width", props.width - 240)
+        container.select(".Overlay").attr("width", width - 210)
         updateLimits();
     }
 
@@ -799,7 +832,7 @@ const LineChart = (props: iProps) => {
 
     return (
         <div>
-            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} hasTrace={enabledLine.some(i=> i)} />
+            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} hasTrace={enabledLine.some(i => i)} />
             {loading == 'Loading' || lineData.length == 0 ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
         </div>
     );
@@ -809,7 +842,7 @@ const LineChart = (props: iProps) => {
 const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number, hasData: boolean, hasTrace: boolean }) => {
     const showSVG = props.loading != 'Loading' && props.hasData;
 
-    return (<div id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: 'calc(100% - 220px)' }}>
+    return (<div data-drawer={"graphWindow-" + props.type + "-" + props.eventID}  id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: '100%' }}>
         {props.loading == 'Loading' ? <LoadingIcon /> : null}
         {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
