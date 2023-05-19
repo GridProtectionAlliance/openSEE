@@ -38,7 +38,6 @@ using System.Web.Http;
 using FaultData.DataAnalysis;
 using GSF.Data;
 using GSF.Data.Model;
-using GSF.Identity;
 using GSF.Web;
 using OpenSEE.Model;
 using openXDA.Model;
@@ -264,10 +263,6 @@ namespace OpenSEE
             return dataLookup;
         }
 
-     
-
-        
-
         private string GetSignalType(Channel channel)
         {
             if (channel.MeasurementType.Name == "Voltage" || channel.MeasurementType.Name == "Current")
@@ -340,7 +335,8 @@ namespace OpenSEE
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = 1.0
+                    BaseValue = 1.0, 
+                    Axis = 1
                 };
             
                 dataLookup.Add(flotSeriesPolarAngle);
@@ -349,10 +345,6 @@ namespace OpenSEE
 
             return dataLookup;
         }
-
-        
-
-        
 
         #endregion
 
@@ -449,7 +441,6 @@ namespace OpenSEE
                        ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
                        Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
-                       LegendClass = "",
                        LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
                        LegendVertical = "A ",
                        DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
@@ -460,7 +451,6 @@ namespace OpenSEE
         }
 
         #endregion
-        
        
         #region [ Info ]
 
@@ -639,43 +629,42 @@ namespace OpenSEE
            
     #endregion
 
-    #region [ Compare ]
+        #region [ Compare ]
 
-    [Route("GetOverlappingEvents"),HttpGet]
-    public DataTable GetOverlappingEvents()
-    {
-        using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+        [Route("GetOverlappingEvents"),HttpGet]
+        public DataTable GetOverlappingEvents()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                Dictionary<string, string> query = Request.QueryParameters();
+                int eventId = int.Parse(query["eventId"]);
 
-            Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-            DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-            DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
+                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+                DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
+                DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
 
 
-            DataTable dataTable = connection.RetrieveData(@"
-            SELECT
-	            DISTINCT
-	            Meter.Name as MeterName,
-	            Asset.AssetName,
-	            Event.ID as EventID
-            FROM
-	            Event JOIN
-	            Meter ON Meter.ID = Event.MeterID JOIN
-	            Asset ON Asset.ID = Event.AssetID
-            WHERE
-	            Event.ID != {0} AND  
-	            Event.StartTime <= {2} AND
-	            Event.EndTime >= {1} 
-            ", eventId, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
-            return dataTable;
+                DataTable dataTable = connection.RetrieveData(@"
+                SELECT
+	                DISTINCT
+	                Meter.Name as MeterName,
+	                Asset.AssetName,
+	                Event.ID as EventID
+                FROM
+	                Event JOIN
+	                Meter ON Meter.ID = Event.MeterID JOIN
+	                Asset ON Asset.ID = Event.AssetID
+                WHERE
+	                Event.ID != {0} AND  
+	                Event.StartTime <= {2} AND
+	                Event.EndTime >= {1} 
+                ", eventId, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
+                return dataTable;
 
+            }
         }
-    }
 
-    #endregion
-
+        #endregion
 
         #region [ UI Widgets ]
         [Route("GetScalarStats"),HttpGet]
@@ -823,7 +812,7 @@ namespace OpenSEE
         {
             Dictionary<string, string> query = Request.QueryParameters();
             int eventID = int.Parse(query["eventId"]);
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 const string SQL = "SELECT * FROM EventNote WHERE EventID = {0}";
 
@@ -854,12 +843,12 @@ namespace OpenSEE
         [Route("AddNote"),HttpPost]
         public IHttpActionResult AddNote(FormData note)
         {
-            IHttpActionResult result = ValidateAdminRequest();
-            if (result != null) return result;
+            if (!User.IsInRole("Administrator"))
+                return StatusCode(HttpStatusCode.Forbidden);
 
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
                 {
                     EventNote record = new EventNote()
                     {
@@ -869,175 +858,122 @@ namespace OpenSEE
                         Timestamp = DateTime.Now
                     };
 
-                    new TableOperations<EventNote>(connection).AddNewRecord(record);
+                    TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
+                    eventNoteTable.AddNewRecord(record);
 
-                    result = Ok(record);
-
+                    return Ok(record);
                 }
             }
             catch (Exception ex)
             {
-                result = InternalServerError(ex);
+                return InternalServerError(ex);
             }
-
-            return result;
         }
 
         [Route("AddMultiNote"),HttpPost]
         public IHttpActionResult AddMultiNote(FormDataMultiNote note)
         {
-            IHttpActionResult result = ValidateAdminRequest();
-            if (result != null) return result;
+            if (!User.IsInRole("Administrator"))
+                return StatusCode(HttpStatusCode.Forbidden);
 
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                DateTime now = DateTime.Now;
+
+                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
+                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
+                List<EventNote> records = new List<EventNote>();
+
+                foreach (int eventId in note.EventIDs)
                 {
-                    DateTime now = DateTime.Now;
-                    List<EventNote> records = new List<EventNote>();
-                    foreach(int eventId in note.EventIDs)
+                    EventNote record = new EventNote()
                     {
-                        EventNote record = new EventNote()
-                        {
-                            EventID = eventId,
-                            Note = note.Note,
-                            UserAccount = User.Identity.Name,
-                            Timestamp = now
-                        };
+                        EventID = eventId,
+                        Note = note.Note,
+                        UserAccount = User.Identity.Name,
+                        Timestamp = now
+                    };
 
-                        new TableOperations<EventNote>(connection).AddNewRecord(record);
-                        records.Add(record);
-                    }
-
-                    result = Ok(records);
-
+                    eventNoteTable.AddNewRecord(record);
+                    records.Add(record);
                 }
-            }
-            catch (Exception ex)
-            {
-                result = InternalServerError(ex);
-            }
 
-            return result;
-        }
-
-
-        [Route("DeleteNote"),HttpDelete]
-        public IHttpActionResult DeleteNote(FormData note)
-        {
-            try
-            {
-               IHttpActionResult result = ValidateAdminRequest();
-
-                if (result != null) return result;
-
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                {
-                    EventNote record = new TableOperations<EventNote>(connection).QueryRecordWhere("ID = {0}", note.ID);
-                    new TableOperations<EventNote>(connection).DeleteRecord(record);
-                    result = Ok(record);
-
-                }
-                return result;
-
+                return Ok(records);
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
             }
+        }
 
+        [Route("DeleteNote"),HttpDelete]
+        public IHttpActionResult DeleteNote(FormData note)
+        {
+            if (!User.IsInRole("Administrator"))
+                return StatusCode(HttpStatusCode.Forbidden);
 
+            try
+            {
+                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
+                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
+                EventNote record = eventNoteTable.QueryRecordWhere("ID = {0}", note.ID);
+                eventNoteTable.DeleteRecord(record);
+                return Ok(record);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
         [Route("DeleteMultiNote"),HttpDelete]
         public IHttpActionResult DeleteMultiNote(FormDataMultiNote note)
         {
+            if (!User.IsInRole("Administrator"))
+                return StatusCode(HttpStatusCode.Forbidden);
+
             try
             {
-                IHttpActionResult result = ValidateAdminRequest();
-
-                if (result != null) return result;
-
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                {
-                    connection.ExecuteNonQuery(@"
+                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
+                connection.ExecuteNonQuery(@"
                         DELETE FROM EventNote WHERE Note = {0} AND UserAccount = {1} AND Timestamp = {2}
                     ", note.Note, note.UserAccount, note.Timestamp);
-
-                }
                 return Ok();
-
             }
             catch (Exception ex)
             {
                 return InternalServerError(ex);
             }
-
-
         }
-
 
         [Route("UpdateNote"),HttpPatch]
         public IHttpActionResult UpdateNote(FormData note)
         {
-            IHttpActionResult result = ValidateAdminRequest();
-            if (result != null) return result;
+            if (!User.IsInRole("Administrator"))
+                return StatusCode(HttpStatusCode.Forbidden);
+
             try
             {
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                {
-                    EventNote record = new TableOperations<EventNote>(connection).QueryRecordWhere("ID = {0}", note.ID);
+                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
+                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
 
-                    record.Note = note.Note;
-                    record.UserAccount = User.Identity.Name;
-                    record.Timestamp = DateTime.Now;
+                EventNote record = eventNoteTable.QueryRecordWhere("ID = {0}", note.ID);
+                record.Note = note.Note;
+                record.UserAccount = User.Identity.Name;
+                record.Timestamp = DateTime.Now;
 
+                eventNoteTable.UpdateRecord(record);
 
-                    new TableOperations<EventNote>(connection).UpdateRecord(record);
-
-                    result = Ok(record);
-
-                }
+                return Ok(record);
             }
             catch (Exception ex)
             {
-                result = InternalServerError(ex);
+                return InternalServerError(ex);
             }
-
-            return result;
         }
 
         #endregion
 
-        #region [ Security ]
-
-        private IHttpActionResult ValidateAdminRequest()
-        {
-            string username = User.Identity.Name;
-            string userid = UserInfo.UserNameToSID(username);
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings")) {
-                bool isAdmin = connection.ExecuteScalar<int>(@"
-					select 
-						COUNT(*) 
-					from 
-						UserAccount JOIN 
-						ApplicationRoleUserAccount ON ApplicationRoleUserAccount.UserAccountID = UserAccount.ID JOIN
-						ApplicationRole ON ApplicationRoleUserAccount.ApplicationRoleID = ApplicationRole.ID
-					WHERE 
-						ApplicationRole.Name = 'Administrator' AND UserAccount.Name = {0}
-                ", userid) > 0;
-
-                if (isAdmin) return null;
-                else return StatusCode(HttpStatusCode.Forbidden);
-            }
-            
-
-        }
         #endregion
-        
-
-        #endregion
-
     }
 }

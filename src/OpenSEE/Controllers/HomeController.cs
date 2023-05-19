@@ -24,6 +24,7 @@
 using System;
 using System.Web.Mvc;
 using GSF.Data;
+using GSF.Data.Model;
 using GSF.Identity;
 using GSF.Web.Model;
 using OpenSEE.Model;
@@ -49,53 +50,30 @@ namespace OpenSEE.Controllers
 
         public ActionResult Home()
         {
+            ViewBag.IsAdmin = User.IsInRole("Administrator");
+
             int eventID = -1;
+            Event evt;
 
-            using (DataContext dataContext = new DataContext("systemSettings"))
+            if (Request.QueryString.Get("eventid") != null)
+                eventID = int.Parse(Request.QueryString["eventid"]);
+
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
-                ViewBag.IsAdmin = ValidateAdminRequest();
+                TableOperations<Event> eventTable = new TableOperations<Event>(connection);
 
-                
-                if (Request.QueryString.Get("eventid") != null)
-                    eventID = int.Parse(Request.QueryString["eventid"]);
-            }
-
-            using (DataContext dataContext = new DataContext("dbOpenXDA"))
-            {
                 if (eventID == -1)
-                    eventID = dataContext.Table<Event>().QueryRecord("ID > 0").ID;
+                    eventID = eventTable.QueryRecord("ID > 0").ID;
 
-                Event evt = dataContext.Table<Event>().QueryRecordWhere("ID = {0}", eventID);
-                ViewBag.EventID = eventID;
-                ViewBag.EventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                ViewBag.EventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                ViewBag.SamplesPerCycle = evt.SamplesPerCycle;
-                ViewBag.Cycles = Math.Floor((evt.EndTime - evt.StartTime).TotalSeconds * 60.0D);
-                return View("Index");
+                evt = eventTable.QueryRecordWhere("ID = {0}", eventID);
             }
-        }
 
-        private bool ValidateAdminRequest()
-        {
-            string username = User.Identity.Name;
-            string userid = UserInfo.UserNameToSID(username);
-
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                bool isAdmin = connection.ExecuteScalar<int>(@"
-					select 
-						COUNT(*) 
-					from 
-						UserAccount JOIN 
-						ApplicationRoleUserAccount ON ApplicationRoleUserAccount.UserAccountID = UserAccount.ID JOIN
-						ApplicationRole ON ApplicationRoleUserAccount.ApplicationRoleID = ApplicationRole.ID
-					WHERE 
-						ApplicationRole.Name = 'Administrator' AND UserAccount.Name = {0}
-                ", userid) > 0;
-
-                if (isAdmin) return true;
-                else return false;
-            }
+            ViewBag.EventID = eventID;
+            ViewBag.EventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            ViewBag.EventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            ViewBag.SamplesPerCycle = evt.SamplesPerCycle;
+            ViewBag.Cycles = Math.Floor((evt.EndTime - evt.StartTime).TotalSeconds * 60.0D);
+            return View("Index");
         }
 
         #endregion

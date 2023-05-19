@@ -1,4 +1,4 @@
-﻿//******************************************************************************************************
+//******************************************************************************************************
 //  defaults.d.ts - Gbtc
 //
 //  Copyright © 2019, Grid Protection Alliance.  All Rights Reserved.
@@ -104,13 +104,15 @@ export const defaultSettings = {
                 { label: "milliVolt", short: "mV", factor: 1000 },
                 { label: "Volt", short: "V", factor: 1 },
                 { label: "kiloVolt", short: "kV", factor: 0.001 },
-            ]
+            ],
+            useAutoLimits: true
         },
         Angle: {
             current: 0, options: [
                 { label: "degree", short: "deg", factor: 1 },
                 { label: "radians", short: "rad", factor: 0.0174532925 }
-            ]
+            ],
+            useAutoLimits: true
         },
         Current: {
             current: 0,
@@ -120,7 +122,8 @@ export const defaultSettings = {
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 },
-            ]
+            ],
+            useAutoLimits: true
         },
         VoltageperSecond: {
             current: 0,
@@ -131,7 +134,8 @@ export const defaultSettings = {
                 { label: "Volt per sec", short: "V/s", factor: 1 },
                 { label: "kiloVolts per sec", short: "kV/s", factor: 0.001 },
                 { label: "megaVolts per sec", short: "MV/s", factor: 0.000001 },
-            ]
+            ],
+            useAutoLimits: true
         },
         CurrentperSecond: {
             current: 0,
@@ -142,7 +146,8 @@ export const defaultSettings = {
                 { label: "Amps per sec", short: "A/s", factor: 1 },
                 { label: "kiloAmps per sec", short: "kA/s", factor: 0.001 },
                 { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 }
-            ]
+            ],
+            useAutoLimits: true
         },
         Freq: {
             current:0,
@@ -152,7 +157,8 @@ export const defaultSettings = {
                 { label: "milliHertz", short: "mHz", factor: 1000 },
                 { label: "Hertz", short: "Hz", factor: 1 },
                 { label: "kiloHertz", short: "kHz", factor: 0.001 } 
-            ]
+            ],
+            useAutoLimits: true
         },
         Impedance: {
             current: 0,
@@ -162,7 +168,8 @@ export const defaultSettings = {
                 { label: "milliOhms", short: "mOhm", factor: 1000 },
                 { label: "Ohms", short: "Ohm", factor: 1 },
                 { label: "kiloOhms", short: "kOhm", factor: 0.001 },
-            ]
+            ],
+            useAutoLimits: true
         },
         PowerP: {
             current: 0,
@@ -172,7 +179,8 @@ export const defaultSettings = {
                 { label: "Watt", short: "W", factor: 1000000 },
                 { label: "Kilo Watt", short: "kW", factor: 1000 },
                 { label: "Mega Watt", short: "MW", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         },
         PowerQ: {
             current: 0,
@@ -182,7 +190,8 @@ export const defaultSettings = {
                 { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
                 { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
                 { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         },
         PowerS: {
             current: 0,
@@ -192,13 +201,15 @@ export const defaultSettings = {
                 { label: "Volt-Amps", short: "VA", factor: 1000000 },
                 { label: "Kilo Volt-Amps", short: "kVA", factor: 1000 },
                 { label: "Mega Volt-Amps", short: "MVA", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         },
         PowerPf: {
             current: 0,
             options: [
                 { label: "None", short: "pf", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         },
 
         TCE: {
@@ -209,7 +220,8 @@ export const defaultSettings = {
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 }
-            ]
+            ],
+            useAutoLimits: true
         },
 
         Distance: {
@@ -217,7 +229,8 @@ export const defaultSettings = {
             options: [
                 { label: "kilometers", short: "km", factor: 1.60934 },
                 { label: "miles", short: "mile", factor: 1 },
-            ]
+            ],
+            useAutoLimits: true
         },
 
         Unbalance: {
@@ -225,23 +238,26 @@ export const defaultSettings = {
             options: [
                 { label: "Percent", short: "%", factor: 100 },
                 { label: "Per Unit", short: "p.u.", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         },
         THD: {
             current: 1,
             options: [
                 { label: "Percent", short: "%", factor: 1 },
                 { label: "Per Unit", short: "p.u.", factor: 0.01 }
-            ]
+            ],
+            useAutoLimits: true
         },
         [""]: {
             current: 0,
             options: [
                 { label: "", short: "", factor: 1 }
-            ]
+            ],
+            useAutoLimits: true
         }
 
-    } as OpenSee.IUnitCollection,
+    } as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
     TimeUnit: {
         current: 0, options: [
             { label: "auto", short: "auto", factor: 0 },
@@ -250,7 +266,8 @@ export const defaultSettings = {
             { label: "milliseconds since record start", short: "ms since event", factor: 0 },
             { label: "minutes", short: "min", factor: 0 },
             { label: "seconds", short: "s", factor: 0 }
-        ]
+        ],
+        useAutoLimits: true
     },
     DefaultTrace: {
         Pk: false,

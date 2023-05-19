@@ -21,34 +21,119 @@
 //
 //******************************************************************************************************
 
+using System;
+using System.IO;
+using System.Reflection;
+using System.Web.Http;
+using GSF.Diagnostics;
+using GSF.IO;
 using GSF.Web.Security;
-using Microsoft.AspNet.SignalR;
+using GSF.Web.Shared;
 using Microsoft.Owin;
 using Owin;
-using System.Web.Http;
+using static OpenSEE.Common;
 
-[assembly: OwinStartupAttribute(typeof(OpenSEE.Startup))]
-namespace OpenSEE
+[assembly: OwinStartup(typeof(OpenSEE.Startup))]
+namespace OpenSEE;
+
+public class Startup
 {
-    public class Startup
+    public void Configuration(IAppBuilder app)
     {
-        public void Configuration(IAppBuilder app)
+        // Enable GSF role-based security authentication
+        app.UseAuthentication(s_authenticationOptions);
+
+        OwinLoaded = true;
+
+        // Configure Web API for self-host
+        HttpConfiguration config = new HttpConfiguration();
+
+        // Enable GSF session management
+        config.EnableSessions(s_authenticationOptions);
+
+        // Set configuration to use reflection to setup routes
+        config.MapHttpAttributeRoutes();
+
+        app.UseWebApi(config);
+    }
+
+    private static readonly AuthenticationOptions s_authenticationOptions;
+
+    static Startup()
+    {
+        SetupTempPath();
+
+        s_authenticationOptions = new AuthenticationOptions
         {
-            app.Use<AuthenticationMiddleware>(new AuthenticationOptions()
-            {
-                SessionToken = "session",
-                AuthFailureRedirectResourceExpression = "(?!)",
-                AnonymousResourceExpression = "(?!)"
-            });
+            LoginPage = "~/Login",
+            LogoutPage = "~/Security/logout",
+            LoginHeader = $"<h3><img src=\"{Resources.Root}/Shared/Images/gpa-smalllock.png\"/> {ApplicationName}</h3>",
+            AuthTestPage = "~/AuthTest",
+            AnonymousResourceExpression = AnonymousResourceExpression,
+            AuthFailureRedirectResourceExpression = @"^/$|^/.+$"
+        };
 
-            // Configure Web API for self-host. 
-            HttpConfiguration config = new HttpConfiguration();
-            // Set configuration to use reflection to setup routes
-            config.MapHttpAttributeRoutes();
+        AuthenticationOptions = CreateInstance<ReadonlyAuthenticationOptions>(s_authenticationOptions);
 
+        if (!LogEnabled)
+            return;
 
-            app.UseWebApi(config);
+        // Retrieve application log path as defined in the config file
+        string logPath = LogPath;
 
+        // Make sure log directory exists
+        try
+        {
+            if (!Directory.Exists(logPath))
+                Directory.CreateDirectory(logPath);
+        }
+        catch
+        {
+            logPath = FilePath.GetAbsolutePath("");
+        }
+
+        try
+        {
+            Logger.FileWriter.SetPath(logPath);
+            Logger.FileWriter.SetLoggingFileCount(MaxLogFiles);
+        }
+        catch
+        {
+            // ignored
+        }
+    }
+
+    public static bool OwinLoaded { get; private set; }
+
+    public static ReadonlyAuthenticationOptions AuthenticationOptions { get; }
+
+    private static T CreateInstance<T>(params object[] args)
+    {
+        Type type = typeof(T);
+        object instance = type.Assembly.CreateInstance(type.FullName!, false, BindingFlags.Instance | BindingFlags.NonPublic, null, args, null, null);
+        return (T)instance;
+    }
+
+    private static void SetupTempPath()
+    {
+        const string DynamicAssembliesFolderName = "DynamicAssemblies";
+        string assemblyDirectory = null;
+
+        try
+        {
+            // Setup custom temp folder so that dynamically compiled razor assemblies can be more easily managed
+            assemblyDirectory = FilePath.GetAbsolutePath(DynamicAssembliesFolderName);
+
+            if (!Directory.Exists(assemblyDirectory))
+                Directory.CreateDirectory(assemblyDirectory);
+
+            Environment.SetEnvironmentVariable("TEMP", assemblyDirectory);
+            Environment.SetEnvironmentVariable("TMP", assemblyDirectory);
+        }
+        catch (Exception ex)
+        {
+            // This is not catastrophic
+            Logger.SwallowException(ex, $"Failed to assign temp folder location to: {assemblyDirectory}");
         }
     }
 }

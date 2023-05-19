@@ -431,6 +431,11 @@ namespace OpenSEE
                     foreach (DataRow row in table.Rows)
                     {
                         D3Series series = QueryFaultDistanceData(int.Parse(row["ID"].ToString()), meter, asset);
+                        
+                        List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", eventId,series.ChartLabel).ToList();
+                        if(faultSummaries.Count >= 0 ){
+                            series.DataMarker.AddRange(from faultSummary in faultSummaries select new double[] { faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds, faultSummary.Distance});
+                        }
                         returnList.Add(series);
                     }
                 }
@@ -457,11 +462,16 @@ namespace OpenSEE
                     LegendVertical = faultCurve.Algorithm,
                     Unit = "Distance",
                     Color = GetFaultDistanceColor(faultCurve.Algorithm),
+                    DataMarker = new List<double[]>(),
                     DataPoints = dataGroup.DataSeries[0].DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList()
                 };
 
+
                 if (units == "kilometer")
+                {
                     series.DataPoints = series.DataPoints.Select(pt => new double[] { pt[0], pt[1] * 0.621371 }).ToList();
+                    series.DataMarker = series.DataMarker.Select(dm => new double[] { dm[0], dm[1] * 0.621371 }).ToList();
+                }
 
                 return series;
             }
@@ -1371,8 +1381,6 @@ namespace OpenSEE
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
                 LegendVGroup = "",
-                LegendClass = "",
-                SecondaryLegendClass = type,
                 DataPoints = new List<double[]>()
             };
 
@@ -2657,7 +2665,7 @@ namespace OpenSEE
                 {
                     item.DataMarker = new List<double[]>();
 
-                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.LegendVertical).ToList().ForEach(restrike =>
                     {
                         item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
                         item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);
@@ -2671,7 +2679,7 @@ namespace OpenSEE
                 {
                     item.DataMarker = new List<double[]>();
 
-                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.SecondaryLegendClass).ToList().ForEach(restrike =>
+                    restrikeTbl.QueryRecordsWhere("EventID = {0} AND PhaseID = (SELECT ID FROM PHASE WHERE Name = {1})", eventID, item.LegendVertical).ToList().ForEach(restrike =>
                     {
                         item.DataMarker.Add(item.DataPoints[restrike.InitialExtinguishSample]);
                         item.DataMarker.Add(item.DataPoints[restrike.RestrikeSample]);

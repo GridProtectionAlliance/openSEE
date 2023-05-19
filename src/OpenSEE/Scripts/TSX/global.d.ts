@@ -36,6 +36,20 @@ declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
 export namespace OpenSee {
 
+    interface iEventInfoObject {
+        MeterName: string,
+        StationName: string,
+        AssetName: string,
+        EventName: string,
+        EventDate: string,
+      }
+
+    interface iEventInfoStore {
+        eventInfo: iEventInfoObject,
+        error: boolean,
+        loading: boolean
+    }
+
     interface iOpenSeeState {
         //For Plots
         graphWidth: number,
@@ -56,6 +70,8 @@ export namespace OpenSee {
         //Not sure what this is for maybe GTC?
         breakeroperation: any,
 
+        // drawValue helps us to store boolean value(True/False) in OpenSEE which is coming from openSeeNvbar.
+        drawValue: any
     }
 
     interface IOpenSeeProps {
@@ -173,6 +189,7 @@ export namespace OpenSee {
         LegendVertical: string,
         LegendGroup: string,
         LegendVGroup: string,
+        Axis: number, 
 
         Unit: Unit,
         Color: Color,
@@ -229,28 +246,9 @@ export namespace OpenSee {
     }
 
     // Settings For Plots 
-    type Color = ("Va" | "Vc" | "Vb" | "Ia" | "Ib" | "Ic" | "Vab" | "Vbc" | "Vca" | "In" | "Ires" | "random" | "Vn" | 'freqAll' | 'freqVa' | 'freqVb' | 'freqVc' | 'Ra' | 'Xa' | 'Za' | 'Rb' | 'Xb' | 'Zb' | 'Rc' | 'Xc' | 'Zc' |
-        'Pa' | 'Qa' | 'Sa' | 'Pfa' | 'Pb' | 'Qb' | 'Sb' | 'Pfb' | 'Pc' | 'Qc' | 'Sc' | 'Pfc' | 'Pt' | 'Qt' | 'St')
-   
-    type Unit = ("Time" | "Voltage" | "Angle" | "Current" | "VoltageperSecond" | "CurrentperSecond" | "Freq" | "Impedance" | "PowerP" | "PowerQ" | "PowerS" | "PowerPf" | "TCE" | "Distance" | "Unbalance" | "THD")
+    type Color = keyof IColorCollection;
 
-    interface IUnitCollection {
-        Voltage: IUnitSetting,
-        Angle: IUnitSetting,
-        Current: IUnitSetting,
-        VoltageperSecond: IUnitSetting,
-        CurrentperSecond: IUnitSetting,
-        Freq: IUnitSetting,
-        Impedance: IUnitSetting,
-        PowerP: IUnitSetting,
-        PowerQ: IUnitSetting,
-        PowerS: IUnitSetting,
-        PowerPf: IUnitSetting,
-        TCE: IUnitSetting,
-        Distance: IUnitSetting,
-        Unbalance: IUnitSetting,
-        THD: IUnitSetting,
-    }
+    type Unit = ((keyof IUnitCollection<number>) | "Time" );
 
     interface IColorCollection {
         Va: string,
@@ -311,7 +309,7 @@ export namespace OpenSee {
     }
 
     interface ISettingsState {
-        Units: IUnitCollection,
+        Units: IUnitCollection<IUnitSetting>,
         Colors: IColorCollection,
         TimeUnit: IUnitSetting,
         SnapToPoint: boolean,
@@ -329,7 +327,8 @@ export namespace OpenSee {
 
     interface IUnitSetting {
         current: number,
-        options: Array<iUnitOptions>
+        options: Array<iUnitOptions>,
+        useAutoLimits: boolean
     }
 
     interface IDefaultTrace {
@@ -366,8 +365,7 @@ export namespace OpenSee {
         loading: LoadingState[],
         activeRequest: string[]
         activeUnits: IActiveUnits[],
-        yLimits: [number, number][],
-        autoLimits: boolean[],
+        yLimits: IUnitCollection<IAxisSettings>[],
         selectedIndixes: Array<number>[],
         cycleLimit: [number,number],
         fftLimits: [number, number],
@@ -397,24 +395,33 @@ export namespace OpenSee {
         Data: IDataState,
         Analytic: IAnalyticStore,
         Event: IEventStore,
+        EventInfo: iEventInfoStore 
     }
 
-    // for Redux to store active units (in case of Auto Unit)
-    interface IActiveUnits {
-        Voltage: number,
-        Current: number,
-        Angle: number,
-        VoltageperSecond: number,
-        CurrentperSecond: number,
-        Freq: number,
-        Impedance: number,
-        PowerP: number,
-        PowerQ: number,
-        PowerS: number,
-        PowerPf: number,
-        TCE: number,
-        Distance: number,
-        Unbalance: number,
-        THD: number,
+    interface IUnitCollection<T> {
+        Voltage: T,
+        Current: T,
+        Angle: T,
+        VoltageperSecond: T,
+        CurrentperSecond: T,
+        Freq: T,
+        Impedance: T,
+        PowerP: T,
+        PowerQ: T,
+        PowerS: T,
+        PowerPf: T,
+        TCE: T,
+        Distance: T,
+        Unbalance: T,
+        THD: T,
     }
+
+    interface IAxisSettings {
+        activeUnit: number,
+        limits: [number, number],
+        dataLimits: [number, number]
+        label: string
+    }
+    // for Redux to store active units (in case of Auto Unit)
+    interface IActiveUnits extends IUnitCollection<number> { }
 }

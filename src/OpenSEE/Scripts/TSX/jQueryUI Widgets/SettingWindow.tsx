@@ -24,34 +24,31 @@
 import * as React from 'react';
 import { uniq } from 'lodash';
 import { BlockPicker } from 'react-color';
-import { WidgetWindow } from './Common';
 import { OpenSee } from '../global';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectData, selectGraphTypes, SetTimeUnit, SetUnit } from '../store/dataSlice';
 import { selectColor, SetColor, selectUnit, selectTimeUnit, selectEventOverlay, SetSinglePlot, selectdefaultTraces, SetDefaultTrace, selectVTypeDefault, SetDefaultVType } from '../store/settingSlice';
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 interface Iprops {
-    closeCallback: () => void,
-    isOpen: boolean,
-    position: [number, number]
-    setPosition: (t: number, l: number) => void
+    //closeCallback: () => void,
+    //isOpen: boolean,
+    //position: [number, number]
+    //setPosition: (t: number, l: number) => void
 }
 
 const SettingsWidget = (props: Iprops) => {
-    const list = useSelector(selectGraphTypes);
-    const eventOverlay = useSelector(selectEventOverlay);
-    const defaultTraces = useSelector(selectdefaultTraces);
-    const defaultVtype = useSelector(selectVTypeDefault);
+    const list = useAppSelector(selectGraphTypes);
+    const eventOverlay = useAppSelector(selectEventOverlay);
+    const defaultTraces = useAppSelector(selectdefaultTraces);
+    const defaultVtype = useAppSelector(selectVTypeDefault);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
 
     
-    React.useEffect(() => {
-        if (!props.isOpen)
-            return () => { }
+   React.useEffect(() => {
 
         const handleScroll = () => {
             let offset = document.getElementById("settingScrollContainer").scrollTop;
@@ -60,11 +57,13 @@ const SettingsWidget = (props: Iprops) => {
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
         return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
     }, [props])
-  
+
+    const windowHeight = window.innerHeight
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={516} position={props.position} setPosition={props.setPosition} >
-            <div id="settingScrollContainer" style={{ width: '510px', height: '575px', zIndex: 1001, overflowY: 'scroll', overflowX: 'hidden' }}>
+        
+        <div style={{ marginTop: '10px', width: '100%', height: '100%'}}>
+            <div id="settingScrollContainer" style={{height: windowHeight <= 500 ? windowHeight - 70 : '100%', zIndex: 1001, overflowY: windowHeight <= 500 ? 'scroll' : 'hidden', overflowX: 'hidden'}}>
                 <div className="accordion" id="panelSettings">
                     <div className="card">
                         <div className="card-header" id="header-general">
@@ -77,7 +76,7 @@ const SettingsWidget = (props: Iprops) => {
 
                         <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings">
                             <div className="card-body">
-                                <div className="row">
+                                <div className="col">
                                     <div className="col" style={{ width: '100%' }}>
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" checked={eventOverlay}
@@ -86,11 +85,11 @@ const SettingsWidget = (props: Iprops) => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="row">
+                                <div className="col">
                                     <div className="col">
                                     <fieldset className="border" style={{ padding: '10px', height: '100%', display: "block", width: '100%' }}>
-                                            <legend className="w-auto" style={{ fontSize: 'large' }}>Default Traces (on Loading):</legend>
-                                        <div className="row">
+                                            <legend className="w-auto">Default Traces (on Loading):</legend>
+                                        <div className="col">
                                             <div className="col" style={{ width: '25%' }}>
                                                 <div className="form-check">
                                                         <input className="form-check-input" type="checkbox" checked={defaultTraces.W}
@@ -121,21 +120,21 @@ const SettingsWidget = (props: Iprops) => {
                                                 </div>
                                                 
                                             </div>
-                                            <div className="row">
+                                            <div className="col">
                                                 <div className="col" style={{ width: '100%', paddingTop: 10 }}>
                                                     <div className="form-check form-check-inline">
                                                         <input className="form-check-input" type="radio" checked={defaultVtype == 'L-L'} onChange={() => {
                                                             if (defaultVtype == 'L-N')
                                                                 dispatch(SetDefaultVType('L-L'))
                                                         }} />
-                                                            <label className="form-check-label" >Line to Line</label>
+                                                            <label className="form-check-label">Line to Line</label>
                                                     </div>
                                                     <div className="form-check form-check-inline">
                                                         <input className="form-check-input" type="radio" checked={defaultVtype == 'L-N'} onChange={() => {
                                                             if (defaultVtype == 'L-L')
                                                                 dispatch(SetDefaultVType('L-N'))
                                                         }}/>
-                                                        <label className="form-check-label" >Line to Neutral</label>
+                                                        <label className="form-check-label">Line to Neutral</label>
                                                     </div>
                                                  </div>      
                                             </div>
@@ -146,13 +145,11 @@ const SettingsWidget = (props: Iprops) => {
                         </div>
                     </div>
 
-                    {props.isOpen ?
-                        list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />) : null
-                    }
+                   {list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />)}
                    
                 </div>
             </div>
-        </WidgetWindow>
+       </div>
     );
 }
 
@@ -221,13 +218,13 @@ interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
 const PlotCard = (props: ICardProps) => {
 
     const SelectData = React.useMemo(selectData, []);
-    const lineData = useSelector((state) => SelectData(state, props));
+    const lineData = useAppSelector((state) => SelectData(state, props));
 
-    const colors = useSelector(selectColor);
-    const units = useSelector(selectUnit);
-    const timeUnit = useSelector(selectTimeUnit);
+    const colors = useAppSelector(selectColor);
+    const units = useAppSelector(selectUnit);
+    const timeUnit = useAppSelector(selectTimeUnit);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     let colorSettings: OpenSee.Color[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));

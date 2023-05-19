@@ -52,11 +52,15 @@ import {
 } from './store/settingSlice';
 import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic, selectAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
+import { setEventInfo } from "./store/infoSlice"
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
 import { SmallLoadingIcon } from './Graphs/ChartIcons';
+import styled from "styled-components";
+import { Application, Page, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import SettingsWidget from  './jQueryUI Widgets/SettingWindow';
 
 
 declare var homePath: string;
@@ -69,6 +73,20 @@ declare var version: string;
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
+
+const MainDiv = styled.div`
+& {
+    top: 70px;
+    position: relative;
+    width: calc(100% - ${0}px);
+    height: calc(100% - 48px);
+    overflow: hidden;
+    left: ${props => 0}px;
+}
+& svg {
+    user-select: none;
+ }`;
+
 
 class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
     history: object;
@@ -99,6 +117,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             eventData: null,
             lookup: null,
             breakeroperation: undefined,
+            drawValue: undefined,
         }
 
         let startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(this.state.eventStartTime + "Z").getTime());
@@ -130,6 +149,8 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         if (this.navigationDataHandle !== undefined)
             this.navigationDataHandle.abort();
 
+        const url = `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` + `${this.state.breakeroperation != undefined ? `&breakeroperation=${this.state.breakeroperation}` : ``}`
+
         this.eventDataHandle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` +
@@ -139,12 +160,14 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             cache: true,
             async: true
         });
-
+        
+        store.dispatch(setEventInfo({eventID: this.props.eventID, breakeroperation: this.state.breakeroperation }))
         this.eventDataHandle.then(data => {
             this.setState({
                 eventData: data
             });
-            store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
+
+        store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
 
         });
 
@@ -218,6 +241,12 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         return (n.length == 1) ? ('0' + n) : n;
     }
 
+    drawerState(data){
+        this.setState({
+            drawValue: data, 
+        });
+        return data;
+    }
     render() {
         var height = this.calculateHeights();
         var windowHeight = window.innerHeight;
@@ -228,8 +257,20 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
 
         return (
-            <div style={{ position: 'absolute', width: '100%', height: windowHeight, overflow: 'hidden' }}>
-                {/* the navigation side bar*/}
+            <Application HomePath={"/"}
+                DefaultPath=""
+                HideSideBar={true}
+                Version={version}
+                Logo={`${homePath}Images/openSEE.jpg`}
+                NavBarContent={<OpenSeeNavBar
+                    EventData={this.state.eventData}
+                    Lookup={this.state.lookup}
+                    stateSetter={this.setState}
+                    ToggleDrawer={this.drawerState}
+                />}
+                UseLegacyNavigation={true}
+            >
+                {/* the navigation side bar
                 <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
                     <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
                     <fieldset className="border" style={{ padding: '10px' }}>
@@ -303,20 +344,55 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                     <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
                         <span>Version {version}</span>
                         <br/>
-                        <span><About/></span>
+                        <span><About /> <button className="btn btn-link" onClick={() => { window.location.href = `${homePath}/Logout` }}>Log out</button></span>
                     </div>
                 </div> 
-                <div id="chartpanel" style={{ width: 'calc(100% - 300px)', height: 'inherit', position: 'relative', float: 'right', overflow: 'hidden' }}>
-                    <OpenSeeNavBar
-                        EventData={this.state.eventData} Lookup={this.state.lookup} 
-                        stateSetter={this.setState}
-                         />
-
-                    
-                    <div style={{ padding: '0', height: "calc(100% - 62px)", overflowY: 'auto' }}>
+                */}
+                <div style={{position: 'relative', height: 'calc(100% - 40px)', width: '100%'}}>
+                    <div style={{position:'relative', top: '31px'}}>
+                    <VerticalSplit>
+                        <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
+                                {this.state.eventData != undefined ?
+                                    <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
+                                        <tbody style={{ display: 'block'}}>
+                                            <tr><td style={{width: '100%'}}>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
+                                            <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
+                                            <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
+                                            <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
+                                            <tr><td>Event Date:</td><td>{this.state.eventData.EventDate}</td></tr>
+                                            {(this.state.eventData.StartTime != undefined ? <tr><td>Event Start:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
+                                            {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
+                                            {(this.state.eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.eventData.DurationPeriod}</td></tr> : null)}
+                                            {(this.state.eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{this.state.eventData.Magnitude}</td></tr> : null)}
+                                            {(this.state.eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{this.state.eventData.SagDepth}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.eventData.BreakerNumber}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
+                                            {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
+                                            <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
+                                        </tbody>
+                                    </table> :
+                                null}
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
+                            <OverlappingEventWindow />
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30}>
+                            <AnalyticOptions />
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30}>
+                            <p>Hello Tooltip</p>
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
+                            <p>Hello Tooltip w/ Delta</p>
+                        </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => {this.drawerState = func;}}>
+                                 <SettingsWidget />
+                        </SplitDrawer>
+                        <SplitSection MinWidth={100} MaxWidth={100} Width={100 }>
                         {plotData[this.props.eventID] != undefined ?
-                            <div className="card" style={{borderLeft: 0, borderRight: 0}}>
-                                <div className="card-body" style={{ padding: 0 }}>
+                        <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
+                            <div className="card-body" style={{ padding: '25px' }}>
                                     {plotData[this.props.eventID].sort(this.sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
                                         <BarChart
                                             eventId={item.EventId}
@@ -353,10 +429,11 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                                 </div>
                                 </div>)
                                     }
-                        {/* FFT Analytic */}
+                        </SplitSection>
+                    </VerticalSplit>
                     </div>
                 </div>
-            </div>
+        </Application>
         );
     }
 
@@ -401,7 +478,7 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
             store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: this.props.eventID }))
         else
             store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals))
+        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals));
     }
 
     toggleTCE() {

@@ -30,7 +30,7 @@ import * as queryString from "query-string";
 export const SettingsReducer = createSlice({
     name: 'Settings',
     initialState: {
-        Units: {} as OpenSee.IUnitCollection,
+        Units: {} as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
         SinglePlot: true as boolean,
@@ -53,7 +53,7 @@ export const SettingsReducer = createSlice({
                 state.Units = preserved.Units;
                 state.Colors = preserved.Colors;
                 state.TimeUnit = preserved.TimeUnit;
-                state.SinglePlot = preserved.SinglePlot;
+                state.SinglePlot = false;
                 state.DefaultTrace = preserved.DefaultTrace;
                 state.DefaultVType = preserved.DefaultVType;
             }
@@ -61,7 +61,7 @@ export const SettingsReducer = createSlice({
                 state.Units = defaultSettings.Units;
                 state.Colors = defaultSettings.Colors;
                 state.TimeUnit = defaultSettings.TimeUnit;
-                state.SinglePlot = defaultSettings.singlePoint;
+                state.SinglePlot = false;
                 state.DefaultTrace = defaultSettings.DefaultTrace;
                 state.DefaultVType = defaultSettings.DefaultVType;
             }
@@ -80,7 +80,7 @@ export const SettingsReducer = createSlice({
             SaveSettings(state);
         },
         SetSinglePlot: (state, action: PayloadAction<boolean>) => {
-            state.SinglePlot = action.payload;
+            state.SinglePlot = false;
             SaveSettings(state);
         },
         SetdisplayVolt: (state, action: PayloadAction<boolean>) => {
@@ -139,7 +139,7 @@ export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
     selectUnit,
     (state: OpenSee.IRootState) => state.Data.plotKeys,
     (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (state: OpenSee.IRootState) => false,
     (baseUnits, data, activeUnits, singlePlot) => {
         let result = {};
         let index = data.findIndex(item => item.DataType == key.DataType && item.EventId == key.EventId);
@@ -212,7 +212,7 @@ function SaveSettings(state: OpenSee.ISettingsState) {
             TimeUnit: {
                 current: state.TimeUnit.current
             },
-            SinglePlot: state.SinglePlot,
+            SinglePlot: false,
             DefaultTrace: state.DefaultTrace,
             DefaultVType: state.DefaultVType
         }
