@@ -89,7 +89,7 @@ const MainDiv = styled.div`
  }`;
 
  
-const OpenSee = (props: {}) => {
+const OpenSee = () => {
     const history = React.useRef<object>(createHistory());
     const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
@@ -99,23 +99,15 @@ const OpenSee = (props: {}) => {
     const [eventStartTime, setEventStartTime] = React.useState<string>("");  
     const [eventEndTime, setEventEndTime] = React.useState<string>("");
     const [resizeCount, setResizeCount] = React.useState<number>(0);
-
-    const [comparedEvents, setComparedEvents] = React.useState<number[]>([]);
-    const [overlappingEvents, setOverlappingEvents] = React.useState<OpenSee.iListObject[]>([]);
     const [graphWidth, setGraphWidth] = React.useState<number>(window.innerWidth - 300);
     const [eventData, setEventData] = React.useState<OpenSee.iPostedData>(null);
     const [lookup, setLookup] = React.useState<OpenSee.iNextBackLookup>(null);
-    const [breakeroperation, setBreakeroperation] = React.useState<any>(undefined);
+
+    // not sure what this is used for
+    const [breakeroperation, setBreakeroperation] = React.useState<string>("");
 
     const eventID = useAppSelector(state => state.Data.eventID);
-
-    
     const graphList = useAppSelector(selectListGraphs);
-    const loadVolt = useAppSelector(selectLoadVoltages);
-    const loadCurr = useAppSelector(selectLoadCurrents);
-    const loadAnalog = useAppSelector(selectLoadAnalogs);
-    const loadDigital = useAppSelector(selectLoadDigitals);
-    const loadTCE = useAppSelector(selectLoadTCE);
     const numberCompareGraphs = useAppSelector(selectNumberCompare);
     const eventGroup = useAppSelector(selecteventList);
     const displayVolt = useAppSelector(SelectdisplayVolt);
@@ -123,15 +115,12 @@ const OpenSee = (props: {}) => {
     const displayTCE = useAppSelector(SelectdisplayTCE);
     const displayDigitals = useAppSelector(SelectdisplayDigitals);
     const displayAnalogs = useAppSelector(SelectdisplayAnalogs);
-    const querystring = useAppSelector(SelectQueryString);
     const Tab = useAppSelector(SelectTab);
-    const Navigation = useAppSelector(SelectNavigation);
     const analytic = useAppSelector(selectAnalytic);
-
 
     React.useEffect(() => {
 
-        const query = queryString.parse(history['location'].search);
+        const query = queryString.parse(history.current['location'].search);
         const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
         const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
         setEventStartTime(evStart);
@@ -248,36 +237,6 @@ const OpenSee = (props: {}) => {
             overlayHandles.current.Settings(open);
     }
 
-    function tooglePlots(key: OpenSee.graphType) {
-        let display;
-        if (key == 'Voltage')
-            display = displayVolt;
-        else if (key == 'Current')
-            display = displayCur;
-        else if (key == 'Analogs')
-            display = displayAnalogs;
-        else if (key == 'Digitals')
-            display = displayDigitals;
-        else if (key == 'TripCoil')
-            display = displayTCE;
-
-        if (display)
-            store.dispatch(RemovePlot({ DataType: key, EventId: eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: key, EventId: eventID }))
-
-        if (key == 'Voltage')
-            store.dispatch(SetdisplayVolt(!displayVolt));
-        else if (key == 'Current')
-            store.dispatch(SetdisplayCur(!displayCur));
-        else if (key == 'Analogs')
-            store.dispatch(SetdisplayAnalogs(!displayAnalogs));
-        else if (key == 'Digitals')
-            store.dispatch(SetdisplayDigitals(!displayDigitals));
-        else if (key == 'TripCoil')
-            store.dispatch(SetdisplayTCE(!displayTCE));
-    
-    }
 
     const NPlots = React.useMemo(() => {
         let n = Number(displayVolt) + Number(displayCur) + Number(displayDigitals) + Number(displayTCE) + Number(displayAnalogs);
