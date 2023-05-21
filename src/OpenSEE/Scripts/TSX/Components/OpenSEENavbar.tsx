@@ -53,8 +53,7 @@ declare var eventEndTime: string;
 interface IProps {
     EventData: OpenSee.iPostedData,
     Lookup: OpenSee.iNextBackLookup,
-    stateSetter: (ob: any) => void, 
-    ToggleDrawer: (drawer: any) => void
+    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void
 }
 
 const OpenSeeNavBar = (props: IProps) => {
@@ -442,7 +441,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => {setShowSettings(!showSettings); props.ToggleDrawer(!showSettings);}}>
+                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => {setShowSettings(!showSettings); props.ToggleDrawer('Settings',!showSettings);}}>
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                             </button>
                             <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'} Theme={'dark'}>
