@@ -50,54 +50,7 @@ export namespace OpenSee {
         loading: boolean
     }
 
-    interface iOpenSeeState {
-        //For Plots
-        graphWidth: number,
-        
-
-        //For Event Navigation
-        eventData: iPostedData,
-        lookup: iNextBackLookup,
-        
-
-        eventStartTime: string,
-        eventEndTime: string,
-
-        // For Event Compare Logic
-        overlappingEvents: Array<iListObject>,
-        comparedEvents: Array<number>,
-
-        //Not sure what this is for maybe GTC?
-        breakeroperation: any,
-
-        // drawValue helps us to store boolean value(True/False) in OpenSEE which is coming from openSeeNvbar.
-        drawValue: any
-    }
-
-    interface IOpenSeeProps {
-        eventID: number,
-        url: string,
-        graphList: IGraphProps[],
-
-        loadVolt: boolean,
-        loadCurr: boolean,
-        loadAnalog: boolean,
-        loadDigital: boolean,
-        loadTCE: boolean,
-
-        numberCompareGraphs: number,
-        eventGroup: iListObject[],
-
-        displayVolt: boolean,
-        displayCur: boolean,
-        displayTCE: boolean,
-        displayDigitals: boolean,
-        displayAnalogs: boolean,
-        Tab: Tab,
-        Navigation: EventNavigation,
-        querystring: string,
-        analytic: Analytic,
-    }
+    
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')
 
@@ -424,4 +377,10 @@ export namespace OpenSee {
     }
     // for Redux to store active units (in case of Auto Unit)
     interface IActiveUnits extends IUnitCollection<number> { }
+
+    interface IOverlayHandlers {
+        Settings: (state: boolean) => void,
+    }
+
+    type OverlayDrawers = 'Settings'|'Info'|'Tooltip'|'Phasor'
 }

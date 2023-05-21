@@ -61,6 +61,7 @@ import { SmallLoadingIcon } from './Graphs/ChartIcons';
 import styled from "styled-components";
 import { Application, Page, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 import SettingsWidget from  './jQueryUI Widgets/SettingWindow';
+import { useAppDispatch, useAppSelector } from './hooks';
 
 
 declare var homePath: string;
@@ -87,140 +88,145 @@ const MainDiv = styled.div`
     user-select: none;
  }`;
 
+ 
+const OpenSee = (props: {}) => {
+    const history = React.useRef<object>(createHistory());
+    const dispatch = useAppDispatch();
+    const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
+        Settings: () => { }
+    });
 
-class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSeeState>{
-    history: object;
-    historyHandle: any;
-    resizeHandle: any;
+    const [eventStartTime, setEventStartTime] = React.useState<string>("");  
+    const [eventEndTime, setEventEndTime] = React.useState<string>("");
+    const [resizeCount, setResizeCount] = React.useState<number>(0);
 
-    overlappingEventHandle: JQuery.jqXHR;
-    eventDataHandle: JQuery.jqXHR;
-    navigationDataHandle: JQuery.jqXHR;
+    const [comparedEvents, setComparedEvents] = React.useState<number[]>([]);
+    const [overlappingEvents, setOverlappingEvents] = React.useState<OpenSee.iListObject[]>([]);
+    const [graphWidth, setGraphWidth] = React.useState<number>(window.innerWidth - 300);
+    const [eventData, setEventData] = React.useState<OpenSee.iPostedData>(null);
+    const [lookup, setLookup] = React.useState<OpenSee.iNextBackLookup>(null);
+    const [breakeroperation, setBreakeroperation] = React.useState<any>(undefined);
+
+    const eventID = useAppSelector(state => state.Data.eventID);
+
+    
+    const graphList = useAppSelector(selectListGraphs);
+    const loadVolt = useAppSelector(selectLoadVoltages);
+    const loadCurr = useAppSelector(selectLoadCurrents);
+    const loadAnalog = useAppSelector(selectLoadAnalogs);
+    const loadDigital = useAppSelector(selectLoadDigitals);
+    const loadTCE = useAppSelector(selectLoadTCE);
+    const numberCompareGraphs = useAppSelector(selectNumberCompare);
+    const eventGroup = useAppSelector(selecteventList);
+    const displayVolt = useAppSelector(SelectdisplayVolt);
+    const displayCur = useAppSelector(SelectdisplayCur);
+    const displayTCE = useAppSelector(SelectdisplayTCE);
+    const displayDigitals = useAppSelector(SelectdisplayDigitals);
+    const displayAnalogs = useAppSelector(SelectdisplayAnalogs);
+    const querystring = useAppSelector(SelectQueryString);
+    const Tab = useAppSelector(SelectTab);
+    const Navigation = useAppSelector(SelectNavigation);
+    const analytic = useAppSelector(selectAnalytic);
 
 
-    constructor(props) {
-        super(props);
-        
-        this.history = createHistory();
+    React.useEffect(() => {
 
-        let query = queryString.parse(this.history['location'].search);
-       
-        this.state = {
-            
-            eventStartTime: (query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime),
-            eventEndTime: (query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime),
-            comparedEvents: [],
-            overlappingEvents: [],
-           
+        const query = queryString.parse(history['location'].search);
+        const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
+        const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
+        setEventStartTime(evStart);
+        setEventEndTime(evEnd);
 
-            graphWidth: window.innerWidth - 300,
-            eventData: null,
-            lookup: null,
-            breakeroperation: undefined,
-            drawValue: undefined,
-        }
+        const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
+        const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
-        let startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(this.state.eventStartTime + "Z").getTime());
-        let endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(this.state.eventEndTime + "Z").getTime());
+        dispatch(SetTimeLimit({ start: startTime, end: endTime }));
 
-        store.dispatch(SetTimeLimit({ start: startTime, end: endTime}));
-       
-        store.dispatch(updatedURL({ query: this.history['location'].search, initial: true }));
+        dispatch(updatedURL({ query: history.current['location'].search, initial: true }));
 
-        this.history['listen']((location, action) => {
+        history.current['listen']((location, action) => {
             // If Query changed then we update states....
             // Note that enabled and selected states that depend on loading state are not dealt with in here
-            store.dispatch(updatedURL({ query: location.search, initial: false }));
-            });
-       
-    }
-
-    componentDidMount() {
-        window.addEventListener("resize", this.handleScreenSizeChange.bind(this));
-
-        store.dispatch(LoadOverlappingEvents())
-        this.getEventData();
-    }
-
-    getEventData() {
-        if (this.eventDataHandle !== undefined)
-            this.eventDataHandle.abort();
-
-        if (this.navigationDataHandle !== undefined)
-            this.navigationDataHandle.abort();
-
-        const url = `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` + `${this.state.breakeroperation != undefined ? `&breakeroperation=${this.state.breakeroperation}` : ``}`
-
-        this.eventDataHandle = $.ajax({
-            type: "GET",
-            url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${this.props.eventID}` +
-                `${this.state.breakeroperation != undefined ? `&breakeroperation=${this.state.breakeroperation}` : ``}`,
-            contentType: "application/json; charset=utf-8",
-            dataType: 'json',
-            cache: true,
-            async: true
+            dispatch(updatedURL({ query: location.search, initial: false }));
         });
-        
-        store.dispatch(setEventInfo({eventID: this.props.eventID, breakeroperation: this.state.breakeroperation }))
-        this.eventDataHandle.then(data => {
-            this.setState({
-                eventData: data
-            });
+    }, []);
 
-        store.dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
 
-        });
+    React.useEffect(() => {
+        window.addEventListener("resize", () => { setResizeCount(x => x + 1) });
 
-        this.navigationDataHandle = $.ajax({
-            type: "GET",
-            url: `${homePath}api/OpenSEE/GetNavData?eventId=${this.props.eventID}`,
-            contentType: "application/json; charset=utf-8",
-            dataType: 'json',
-            cache: true,
-            async: true
-        });
+        dispatch(LoadOverlappingEvents())
+        getEventData();
 
-        this.navigationDataHandle.then(data => {
-            this.setState({
-                lookup: data
-            });
-        });
-    }
+        return () => { $(window).off('resize'); }
+    }, [])
 
-    componentDidUpdate(prevProps: OpenSee.IOpenSeeProps, oldstate: OpenSee.iOpenSeeState) {
-        if (prevProps.eventID != this.props.eventID)
-            this.getEventData();
-        if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Analytic')
-            store.dispatch(SetAnalytic('none'));
-        if (prevProps.Tab != this.props.Tab && this.props.Tab == 'Analytic' && this.props.analytic == 'none')
-            store.dispatch(SetAnalytic('FirstDerivative'));
-        if (prevProps.Tab != this.props.Tab && prevProps.Tab == 'Compare')
-            store.dispatch(ClearOverlappingEvent());
-        if (prevProps.querystring != this.props.querystring) {
-            clearTimeout(this.historyHandle);
-            this.historyHandle = setTimeout(() => this.history['push'](this.history['location'].pathname + '?' + this.props.querystring), 1000);
-        }
-    }
+    React.useEffect(() => {
+        if (resizeCount == 0)
+            return;
 
-    componentWillUnmount() {
-        $(window).off('resize');
-    }
-
-    componentDidCatch(error, info) {
-        console.log(error);
-        console.log(info);
-    }
- 
-    handleScreenSizeChange() {
-        clearTimeout(this.resizeHandle);
-        this.resizeHandle = setTimeout(() => {
-            this.setState({
-                graphWidth: window.innerWidth - 300,
-            });
+        const handle = setTimeout(() => {
+            setGraphWidth(window.innerWidth - 300);
         }, 500);
+        return () => { clearTimeout(handle); }
+     }, [resizeCount]);
+
+    React.useEffect(() => {
+        const [handle1, handle2] = getEventData();
+
+        return () => {
+            if (handle1 != null && handle1.abort != null) handle1.abort();
+            if (handle2 != null && handle2.abort != null) handle2.abort();
+        }
+    }, [eventID])
+
+    React.useEffect(() => {
+        if (Tab == 'Analytic' && analytic == 'none')
+            dispatch(SetAnalytic('FirstDerivative'));
+
+        if (Tab == 'Analytic')
+            return () => { dispatch(SetAnalytic('none')); };
+
+        if (Tab == 'Compare')
+            return () => { dispatch(ClearOverlappingEvent()); };
+    }, [Tab]);
+
+    function getEventData() {
+
+      const eventDataHandle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${eventID}` +
+                `${breakeroperation != undefined ? `&breakeroperation=${breakeroperation}` : ``}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
+
+        dispatch(setEventInfo({ eventID: eventID, breakeroperation: breakeroperation }))
+
+        eventDataHandle.then(data => {
+            setEventData(data);
+            dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
+        });
+
+         const navigationDataHandle = $.ajax({
+            type: "GET",
+            url: `${homePath}api/OpenSEE/GetNavData?eventId=${eventID}`,
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            cache: true,
+            async: true
+        });
+
+        navigationDataHandle.then(data => {
+            setLookup(data);
+        });
+
+        return [eventDataHandle, navigationDataHandle];
     }
 
-    sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
+    function sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
         if (item1.DataType == item2.DataType)
             return 0
 
@@ -237,141 +243,98 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
         return (item1 > item2 ? 1 : -1);
     }
 
-    pad(n) {
-        return (n.length == 1) ? ('0' + n) : n;
+    function ToogleDrawer(drawer: OpenSee.OverlayDrawers, open: boolean) {
+        if (drawer == 'Settings')
+            overlayHandles.current.Settings(open);
     }
 
-    drawerState(data){
-        this.setState({
-            drawValue: data, 
-        });
-        return data;
+    function tooglePlots(key: OpenSee.graphType) {
+        let display;
+        if (key == 'Voltage')
+            display = displayVolt;
+        else if (key == 'Current')
+            display = displayCur;
+        else if (key == 'Analogs')
+            display = displayAnalogs;
+        else if (key == 'Digitals')
+            display = displayDigitals;
+        else if (key == 'TripCoil')
+            display = displayTCE;
+
+        if (display)
+            store.dispatch(RemovePlot({ DataType: key, EventId: eventID }))
+        else
+            store.dispatch(AddPlot({ DataType: key, EventId: eventID }))
+
+        if (key == 'Voltage')
+            store.dispatch(SetdisplayVolt(!displayVolt));
+        else if (key == 'Current')
+            store.dispatch(SetdisplayCur(!displayCur));
+        else if (key == 'Analogs')
+            store.dispatch(SetdisplayAnalogs(!displayAnalogs));
+        else if (key == 'Digitals')
+            store.dispatch(SetdisplayDigitals(!displayDigitals));
+        else if (key == 'TripCoil')
+            store.dispatch(SetdisplayTCE(!displayTCE));
+    
     }
-    render() {
-        var height = this.calculateHeights();
-        var windowHeight = window.innerHeight;
 
-        let plotData = groupBy(this.props.graphList, "EventId");
-        const evtStartTime = new Date(this.state.eventStartTime + 'Z');
-        const startDateString = this.pad((evtStartTime.getUTCMonth() + 1).toString()) + '%2F' + this.pad(evtStartTime.getUTCDate().toString()) + '%2F' + this.pad(evtStartTime.getUTCFullYear().toString());
-        const startTimeString = this.pad(evtStartTime.getUTCHours().toString()) + '%3A' + this.pad(evtStartTime.getUTCMinutes().toString()) + '%3A' + this.pad(evtStartTime.getUTCSeconds().toString()) + '.' + this.pad(evtStartTime.getUTCMilliseconds().toString());
+    const NPlots = React.useMemo(() => {
+        let n = Number(displayVolt) + Number(displayCur) + Number(displayDigitals) + Number(displayTCE) + Number(displayAnalogs);
+        if (Tab == "Analytic")
+            n = n + 1;
+        else if (Tab == "Compare")
+            n = n * (numberCompareGraphs + 1);
+        return n;
+    }, [displayVolt, displayCur, displayDigitals, displayTCE, displayAnalogs, Tab, numberCompareGraphs ]);
 
-        return (
-            <Application HomePath={"/"}
-                DefaultPath=""
-                HideSideBar={true}
-                Version={version}
-                Logo={`${homePath}Images/openSEE.jpg`}
-                NavBarContent={<OpenSeeNavBar
-                    EventData={this.state.eventData}
-                    Lookup={this.state.lookup}
-                    stateSetter={this.setState}
-                    ToggleDrawer={this.drawerState}
-                />}
-                UseLegacyNavigation={true}
-            >
-                {/* the navigation side bar
-                <div style={{ width: 300, height: windowHeight, backgroundColor: '#eeeeee', position: 'relative', float: 'left', overflow: 'hidden' }}>
-                    <a href="https://www.gridprotectionalliance.org"><img style={{ width: 280, margin: 10 }} src={`${homePath}Images/2-Line - 500.png`}/></a>
-                    <fieldset className="border" style={{ padding: '10px' }}>
-                        <legend className="w-auto" style={{ fontSize: 'large' }}>Waveform Views:</legend>
-                        <div className="form-check form-check-inline">
-                            {this.props.loadVolt ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleVoltage()} checked={this.props.displayVolt} />}
-                            <label className="form-check-label">Voltage</label>
-                        </div>
-                        <div className="form-check form-check-inline">
-                            {this.props.loadCurr ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleCurrent()} checked={this.props.displayCur} />}
-                            <label className="form-check-label">Current</label>
-                        </div>
-                        <div className="form-check form-check-inline">
-                            {this.props.loadAnalog ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleAnalogs()} checked={this.props.displayAnalogs} />}
-                            <label className="form-check-label">Analogs</label>
-                        </div>
-                        <div className="form-check form-check-inline">
-                            {this.props.loadDigital ? <SmallLoadingIcon /> : <input className="form-check-input" type="checkbox" onChange={() => this.toggleDigitals()} checked={this.props.displayDigitals} />}
-                            <label className="form-check-label">Digitals</label>
-                        </div>
-                        <div className="form-check form-check-inline">
-                            {this.props.loadTCE ? <SmallLoadingIcon /> : < input className="form-check-input" type="checkbox" onChange={() => this.toggleTCE()} checked={this.props.displayTCE} />}
-                            <label className="form-check-label">Trip Coil E.</label>
-                        </div>
-                    </fieldset>
+    const GraphHeight = (window.innerHeight - 100 - 30) / Math.min(NPlots, 3);
 
-                    <br />
+    const plotData = React.useMemo(() => groupBy(graphList, "EventId"), [graphList]);
 
-                    <ul className="nav nav-tabs" id="myTab" role="tablist">
-                        <li className="nav-item">
-                            <a className={"nav-link" + (this.props.Tab == "Info" ? " active" : '')} id="home-tab" data-toggle="tab" href="#info" role="tab" aria-controls="info" aria-selected="true" onClick={(obj: any) => store.dispatch(SetTab("Info"))} >Info</a>
-                        </li>
-                        <li className="nav-item">
-                            <a className={"nav-link" + (this.props.Tab == "Compare" ? " active" : '')} id="profile-tab" data-toggle="tab" href="#compare" role="tab" aria-controls="compare" aria-selected="false" onClick={(obj: any) => store.dispatch(SetTab("Compare"))} >Compare</a>
-                        </li>
-                        <li className="nav-item">
-                            <a className={"nav-link" + (this.props.Tab == "Analytic" ? " active" : '')} id="contact-tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="false" onClick={(obj: any) => store.dispatch(SetTab("Analytic"))} >Analytics</a>
-                        </li>
-                    </ul>
-                    <div className="tab-content" id="myTabContent" style={{ maxHeight: windowHeight - 325, display: 'block', overflowY: 'auto' }}>
-                        <div className={"tab-pane fade" + (this.props.Tab == "Info" ? " show active" : '')} id="info" role="tabpanel" aria-labelledby="home-tab">
-                            {this.state.eventData != undefined ?
-                                <table className="table">
-                                    <tbody style={{ display: 'block' }}>
-                                        <tr><td>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
-                                        <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
-                                        <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
-                                        <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
-                                        <tr><td>Record Start:</td><td>{this.state.eventData.EventDate}</td></tr>
-                                        {(this.state.eventData.StartTime != undefined ? <tr><td>Inception Time:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
-                                        {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
-                                        {(this.state.eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.eventData.DurationPeriod}</td></tr> : null)}
-                                        {(this.state.eventData.Magnitude != undefined ? <tr><td>Fault Current Magnitude:</td><td>{this.state.eventData.Magnitude}</td></tr> : null)}
-                                        {(this.state.eventData.SagDepth != undefined ? <tr><td>Sag Magnitude:</td><td>{this.state.eventData.SagDepth}</td></tr> : null)}
-                                        {(this.state.eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.eventData.BreakerNumber}</td></tr> : null)}
-                                        {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
-                                        {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
-                                        {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
-                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open('https://pqvis.gridprotectionalliance.org/SEBrowser/EventSearch?date=' + startDateString + '&time=' + startTimeString + '&windowSize=12&timeWindowUnits=3') }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
-                                    </tbody>
-                                </table> :
-                            null}
-                        </div>
-                        <div className={"tab-pane fade" + (this.props.Tab == "Compare" ? " show active" : '')} id="compare" role="tabpanel" aria-labelledby="profile-tab">
-                            <OverlappingEventWindow />
-                        </div>
-                        <div className={"tab-pane fade" + (this.props.Tab == "Analytic" ? " show active" : '')} id="analysis" role="tabpanel" aria-labelledby="contact-tab">
-                            <AnalyticOptions />
-                        </div>
-                    </div>
-                    <div style={{width: '100%', textAlign: 'center', position: 'absolute', bottom: 20}}>
-                        <span>Version {version}</span>
-                        <br/>
-                        <span><About /> <button className="btn btn-link" onClick={() => { window.location.href = `${homePath}/Logout` }}>Log out</button></span>
-                    </div>
-                </div> 
-                */}
-                <div style={{position: 'relative', height: 'calc(100% - 40px)', width: '100%'}}>
-                    <div style={{position:'relative', top: '31px'}}>
+    const evtStartTime = new Date(eventStartTime + 'Z');
+
+    return (
+        <Application HomePath={"/"}
+            DefaultPath=""
+            HideSideBar={true}
+            Version={version}
+            Logo={`${homePath}Images/openSEE.jpg`}
+            NavBarContent={<OpenSeeNavBar
+                EventData={eventData}
+                Lookup={lookup}
+                ToggleDrawer={ToogleDrawer}
+            />}
+            UseLegacyNavigation={true}
+        ><div style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
+                <div style={{ position: 'relative', top: '31px' }}>
                     <VerticalSplit>
                         <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
-                                {this.state.eventData != undefined ?
-                                    <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
-                                        <tbody style={{ display: 'block'}}>
-                                            <tr><td style={{width: '100%'}}>Meter:</td><td>{this.state.eventData.MeterName}</td></tr>
-                                            <tr><td>Station:</td><td>{this.state.eventData.StationName}</td></tr>
-                                            <tr><td>Asset:</td><td>{this.state.eventData.AssetName}</td></tr>
-                                            <tr><td>Event Type:</td><td>{(this.state.eventData.EventName != 'Fault' ? this.state.eventData.EventName : <a href="#" title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + this.props.eventID, this.props.eventID + "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}>Fault</a>)}</td></tr>
-                                            <tr><td>Event Date:</td><td>{this.state.eventData.EventDate}</td></tr>
-                                            {(this.state.eventData.StartTime != undefined ? <tr><td>Event Start:</td><td>{this.state.eventData.StartTime}</td></tr> : null)}
-                                            {(this.state.eventData.Phase != undefined ? <tr><td>Phase:</td><td>{this.state.eventData.Phase}</td></tr> : null)}
-                                            {(this.state.eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{this.state.eventData.DurationPeriod}</td></tr> : null)}
-                                            {(this.state.eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{this.state.eventData.Magnitude}</td></tr> : null)}
-                                            {(this.state.eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{this.state.eventData.SagDepth}</td></tr> : null)}
-                                            {(this.state.eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{this.state.eventData.BreakerNumber}</td></tr> : null)}
-                                            {(this.state.eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{this.state.eventData.BreakerTiming}</td></tr> : null)}
-                                            {(this.state.eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{this.state.eventData.BreakerSpeed}</td></tr> : null)}
-                                            {(this.state.eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{this.state.eventData.BreakerOperation}</td></tr> : null)}
-                                            <tr><td><button className="btn btn-link" onClick={(e) => { window.open(this.state.eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + this.props.eventID) }}>Edit</button></td><td>{(userIsAdmin ? <OpenSEENoteModal eventId={this.props.eventID} /> : null)}</td></tr>
-                                        </tbody>
-                                    </table> :
+                            {eventData != undefined ?
+                                <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
+                                    <tbody style={{ display: 'block' }}>
+                                        <tr><td style={{ width: '100%' }}>Meter:</td><td>{eventData.MeterName}</td></tr>
+                                        <tr><td>Station:</td><td>{eventData.StationName}</td></tr>
+                                        <tr><td>Asset:</td><td>{eventData.AssetName}</td></tr>
+                                        <tr><td>Event Type:</td><td>{(eventData.EventName != 'Fault' ? eventData.EventName : <a href="#"
+                                            title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + eventID, eventID +
+                                                "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}
+                                        >Fault</a>)}</td></tr>
+                                        <tr><td>Event Date:</td><td>{eventData.EventDate}</td></tr>
+                                        {(eventData.StartTime != undefined ? <tr><td>Event Start:</td><td>{eventData.StartTime}</td></tr> : null)}
+                                        {(eventData.Phase != undefined ? <tr><td>Phase:</td><td>{eventData.Phase}</td></tr> : null)}
+                                        {(eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{eventData.DurationPeriod}</td></tr> : null)}
+                                        {(eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{eventData.Magnitude}</td></tr> : null)}
+                                        {(eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{eventData.SagDepth}</td></tr> : null)}
+                                        {(eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{eventData.BreakerNumber}</td></tr> : null)}
+                                        {(eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{eventData.BreakerTiming}</td></tr> : null)}
+                                        {(eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{eventData.BreakerSpeed}</td></tr> : null)}
+                                        {(eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{eventData.BreakerOperation}</td></tr> : null)}
+                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open(eventData.xdaInstance + '/Workbench/Event.cshtml?EventID='
+                                        + eventID) }}>Edit</button></td>
+                                            <td>{(userIsAdmin ? <OpenSEENoteModal eventId={eventID} /> : null)}</td></tr>
+                                    </tbody>
+                                </table> :
                                 null}
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
@@ -386,140 +349,59 @@ class OpenSEEHome extends React.Component<OpenSee.IOpenSeeProps, OpenSee.iOpenSe
                         <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip w/ Delta</p>
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => {this.drawerState = func;}}>
-                                 <SettingsWidget />
+                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }}>
+                            <SettingsWidget />
                         </SplitDrawer>
-                        <SplitSection MinWidth={100} MaxWidth={100} Width={100 }>
-                        {plotData[this.props.eventID] != undefined ?
-                        <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
-                            <div className="card-body" style={{ padding: '25px' }}>
-                                    {plotData[this.props.eventID].sort(this.sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
-                                        <BarChart
-                                            eventId={item.EventId}
-                                            width={this.state.graphWidth}
-                                            eventStartTime={evtStartTime.getTime()}
-                                            height={this.calculateHeights()}
-                                            timeLabel={"Harmonic"}
-                                            type={item.DataType}
-                                        /> : <LineChart
-                                            key={idx}
-                                        eventId={item.EventId}
-                                            width={this.state.graphWidth}
-                                            eventStartTime={evtStartTime.getTime()}
-                                        height={this.calculateHeights()}
-                                        timeLabel={"Time"}
-                                        type={item.DataType}
-                                    />))}
-                                </div>
-                            </div> : null }
+                        <SplitSection MinWidth={100} MaxWidth={100} Width={100}>
+                            {plotData[eventID] != undefined ?
+                                <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
+                                    <div className="card-body" style={{ padding: '25px' }}>
+                                        {plotData[eventID].sort(sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
+                                            <BarChart
+                                                eventId={item.EventId}
+                                                width={graphWidth}
+                                                eventStartTime={evtStartTime.getTime()}
+                                                height={GraphHeight}
+                                                timeLabel={"Harmonic"}
+                                                type={item.DataType}
+                                            /> : <LineChart
+                                                key={idx}
+                                                eventId={item.EventId}
+                                                width={graphWidth}
+                                                eventStartTime={evtStartTime.getTime()}
+                                                height={GraphHeight}
+                                                timeLabel={"Time"}
+                                                type={item.DataType}
+                                            />))}
+                                    </div>
+                                </div> : null}
 
-                        {Object.keys(plotData).filter(item => parseInt(item) != this.props.eventID).map(key => <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
+                            {Object.keys(plotData).filter(item => parseInt(item) != eventID).map(key => <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
                                 <div className="card-header">{
-                                    (this.props.eventGroup.find(item => item.value == parseInt(key)) != undefined ? this.props.eventGroup.find(item => item.value == parseInt(key)).label : '')
+                                    (eventGroup.find(item => item.value == parseInt(key)) != undefined ? eventGroup.find(item => item.value == parseInt(key)).label : '')
                                 }</div>
                                 <div className="card-body" style={{ padding: 0 }}>
-                                {plotData[key].sort(this.sortGraph).map(item => < LineChart
+                                    {plotData[key].sort(sortGraph).map(item => < LineChart
                                         eventId={item.EventId}
-                                    width={this.state.graphWidth}
-                                    eventStartTime={evtStartTime.getTime()}
-                                        height={this.calculateHeights()}
+                                        width={graphWidth}
+                                        eventStartTime={evtStartTime.getTime()}
+                                        height={GraphHeight}
                                         timeLabel={"Time"}
                                         type={item.DataType}
-                                    />) }
+                                    />)}
                                 </div>
-                                </div>)
-                                    }
+                            </div>)
+                            }
                         </SplitSection>
                     </VerticalSplit>
-                    </div>
                 </div>
-        </Application>
-        );
-    }
-
-    calculateHeights() {
-        // Fit up to 3 onto the page after that we will add scrollBars
-        let nPlots = Number(this.props.displayVolt) + Number(this.props.displayCur) + Number(this.props.displayDigitals) + Number(this.props.displayTCE) + Number(this.props.displayAnalogs);
-
-        if (this.props.Tab == "Analytic")
-            nPlots = nPlots + 1;
-        else if (this.props.Tab == "Compare")
-            nPlots = nPlots * (this.props.numberCompareGraphs + 1);
-
-        return (window.innerHeight - 100 - 30) / Math.min(nPlots, 3);
-    }
-
-    toggleVoltage() {
-        if (this.props.displayVolt)
-            store.dispatch(RemovePlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: "Voltage", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayVolt( !this.props.displayVolt));
-    }
-
-    toggleCurrent() {
-        if (this.props.displayCur)
-            store.dispatch(RemovePlot({ DataType: "Current", EventId: this.props.eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: "Current", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayCur( !this.props.displayCur ));
-    }
-
-    toggleAnalogs() {
-        if (this.props.displayAnalogs)
-            store.dispatch(RemovePlot({ DataType: 'Analogs', EventId: this.props.eventID}))
-        else
-            store.dispatch(AddPlot({ DataType: "Analogs", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayAnalogs( !this.props.displayAnalogs ));
-    }
-
-    toggleDigitals() {
-        if (this.props.displayDigitals)
-            store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: this.props.eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: "Digitals", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayDigitals( !this.props.displayDigitals));
-    }
-
-    toggleTCE() {
-        if (this.props.displayTCE)
-            store.dispatch(RemovePlot({ DataType: 'TripCoil', EventId: this.props.eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: this.props.eventID }))
-        store.dispatch(SetdisplayTCE( !this.props.displayTCE ));
-    }
-    
+            </div>
+        </Application>);
 
 }
 
-
-const mapStatesToProps = function (state: OpenSee.IRootState) {
-    return {
-        eventID: state.Data.eventID,
-        url: "",
-        graphList: selectListGraphs(state),
-        loadVolt: selectLoadVoltages(state),
-        loadCurr: selectLoadCurrents(state),
-        loadAnalog: selectLoadAnalogs(state),
-        loadDigital: selectLoadDigitals(state),
-        loadTCE: selectLoadTCE(state),
-        numberCompareGraphs: selectNumberCompare(state),
-        eventGroup: selecteventList(state),
-        displayVolt: SelectdisplayVolt(state),
-        displayCur: SelectdisplayCur(state),
-        displayTCE: SelectdisplayTCE(state),
-        displayDigitals: SelectdisplayDigitals(state),
-        displayAnalogs: SelectdisplayAnalogs(state),
-        querystring: SelectQueryString(state),
-        Tab: SelectTab(state),
-        Navigation: SelectNavigation(state),
-        analytic: selectAnalytic(state)
-    }
-}
-
-export const OpenSEE = connect(mapStatesToProps)(OpenSEEHome)
 
 
 store.dispatch(LoadSettings());
-ReactDOM.render(<Provider store={store}><OpenSEE /></Provider>, document.getElementById('DockCharts'));
+ReactDOM.render(<Provider store={store}><OpenSee /></Provider>, document.getElementById('DockCharts'));
 
