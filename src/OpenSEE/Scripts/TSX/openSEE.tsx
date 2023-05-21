@@ -33,63 +33,38 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import store from './store/store';
-
 import { OpenSee } from './global';
 import createHistory from "history/createBrowserHistory"
 import * as queryString from "query-string";
-import { isEqual, groupBy } from "lodash";
-import { connect } from 'react-redux';
-
-import About from './Components/About';
+import { groupBy } from "lodash";
 import OpenSEENoteModal from './Components/OpenSEENoteModal';
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
 import {
-    LoadSettings, SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
-    SelectNavigation,
-    SelectQueryString, SelectTab, SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt, SetTab
+    LoadSettings, SelectdisplayAnalogs, SelectdisplayCur,
+    SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
+        SelectTab
 } from './store/settingSlice';
-import { AddPlot, SetTimeLimit, RemovePlot, selectListGraphs, selectLoadVoltages, selectLoadCurrents, selectLoadAnalogs, selectLoadDigitals, selectLoadTCE, SetAnalytic, selectAnalytic } from './store/dataSlice';
+import { SetTimeLimit,  selectListGraphs, SetAnalytic, selectAnalytic } from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import { setEventInfo } from "./store/infoSlice"
 import OverlappingEventWindow from './Components/MultiselectWindow';
 import BarChart from './Graphs/BarChartBase';
 import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
-import { SmallLoadingIcon } from './Graphs/ChartIcons';
-import styled from "styled-components";
-import { Application, Page, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 import SettingsWidget from  './jQueryUI Widgets/SettingWindow';
 import { useAppDispatch, useAppSelector } from './hooks';
 
 
 declare var homePath: string;
 declare var userIsAdmin: boolean;
-declare var userID: boolean;
-declare var eventID: number;
-declare var eventStartTime: string;
-declare var eventEndTime: string;
 declare var version: string;
 
-declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
-
-const MainDiv = styled.div`
-& {
-    top: 70px;
-    position: relative;
-    width: calc(100% - ${0}px);
-    height: calc(100% - 48px);
-    overflow: hidden;
-    left: ${props => 0}px;
-}
-& svg {
-    user-select: none;
- }`;
-
  
-const OpenSee = () => {
+const OpenSeeHome = () => {
     const history = React.useRef<object>(createHistory());
     const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
@@ -308,7 +283,10 @@ const OpenSee = () => {
                         <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
                             <p>Hello Tooltip w/ Delta</p>
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }}>
+                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30}
+                            GetOverride={(func) => { overlayHandles.current.Settings = func; }}
+                            ShowClosed={false}
+                        >
                             <SettingsWidget />
                         </SplitDrawer>
                         <SplitSection MinWidth={100} MaxWidth={100} Width={100}>
@@ -362,5 +340,5 @@ const OpenSee = () => {
 
 
 store.dispatch(LoadSettings());
-ReactDOM.render(<Provider store={store}><OpenSee /></Provider>, document.getElementById('DockCharts'));
+ReactDOM.render(<Provider store={store}><OpenSeeHome /></Provider>, document.getElementById('DockCharts'));
 
