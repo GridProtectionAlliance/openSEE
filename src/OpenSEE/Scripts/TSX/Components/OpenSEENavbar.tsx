@@ -58,21 +58,8 @@ interface IProps {
 
 const OpenSeeNavBar = (props: IProps) => {
 
-    //const ToolTipDeltaWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipDeltaWidget" */ '../jQueryUI Widgets/TooltipWithDelta'));
-    //const ToolTipWidget = React.lazy(() => import(/* webpackChunkName: "ToolTipWidget" */ '../jQueryUI Widgets/Tooltip'));
-    //const TimeCorrelatedSagsWidget = React.lazy(() => import(/* webpackChunkName: "TimeCorrelatedSagsWidget" */ '../jQueryUI Widgets/TimeCorrelatedSags'));
-    //const PointWidget = React.lazy(() => import(/* webpackChunkName: "PointWidget" */ '../jQueryUI Widgets/AccumulatedPoints'));
-    //const PolarChartWidget = React.lazy(() => import(/* webpackChunkName: "PolarChartWidget" */ '../jQueryUI Widgets/PolarChart'));
-    //const ScalarStatsWidget = React.lazy(() => import(/* webpackChunkName: "ScalarStatsWidget" */ '../jQueryUI Widgets/ScalarStats'));
-    //const LightningDataWidget = React.lazy(() => import(/* webpackChunkName: "LightningDataWidget" */ '../jQueryUI Widgets/LightningData'));
-    //const SettingsWidget = React.lazy(() => import(/* webpackChunkName: "SettingsWidget" */ '../jQueryUI Widgets/SettingWindow'));
-    //const FFTTable = React.lazy(() => import(/* webpackChunkName: "FFTTable" */ '../jQueryUI Widgets/FFTTable'));
-    //const HarmonicStatsWidget = React.lazy(() => import(/* webpackChunkName: "HarmonicStatsWidget" */ '../jQueryUI Widgets/HarmonicStats'));
-    //const AboutWindow = React.lazy(() => import(/* webpackChunkName: "About"*/ './About'));
-    
     const dispatch = useAppDispatch()
     const mouseMode = useAppSelector(selectMouseMode);
-    const zoomMode = useAppSelector(selectZoomMode);
     const eventId = useAppSelector(selectEventID);
     const analytic = useAppSelector(selectAnalytic);
     const navigation = useAppSelector(SelectNavigation);
@@ -112,51 +99,42 @@ const OpenSeeNavBar = (props: IProps) => {
     const [positionCorrelatedSags, setPositionCorrelatedSags] = React.useState<[number, number]>([0, 0]);
     const [positionLightning, setPositionLightning] = React.useState<[number, number]>([0, 0]);
     const [positionFFTTable, setPositionFFTTable] = React.useState<[number, number]>([0, 0]);
-    const [positionSettings, setPositionSettings] = React.useState<[number, number]>([0, 0]);
 
     const [hover, setHover] = React.useState<('None'|'Waveform'|'Show Points'|'Polar Chart'|'Stat'|'Sags'|'Lightning'|'Export'|'Tooltip'|'Clock'|'Zoom Mode'|'Pan'|'FFT'|'Reset Zoom'| 'Settings'| 'NavLeft' | 'NavRight'| 'Help'| 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception')>('None')
     
     const {eventInfo} = useAppSelector(state => state.EventInfo)
 
-    const toggleVoltage = () => {
-        if (showVolts)
-            store.dispatch(RemovePlot({ DataType: "Voltage", EventId: eventId }))
+    function tooglePlots(key: OpenSee.graphType) {
+        let display;
+        if (key == 'Voltage')
+            display = showVolts;
+        else if (key == 'Current')
+            display = showCurr;
+        else if (key == 'Analogs')
+            display = showAnalog;
+        else if (key == 'Digitals')
+            display = showDigitals;
+        else if (key == 'TripCoil')
+            display = showTCE;
+
+        if (display)
+            store.dispatch(RemovePlot({ DataType: key, EventId: eventID }))
         else
-            store.dispatch(AddPlot({ DataType: "Voltage", EventId: eventId }))
-        store.dispatch(SetdisplayVolt( !showVolts));
+            store.dispatch(AddPlot({ DataType: key, EventId: eventID }))
+
+        if (key == 'Voltage')
+            store.dispatch(SetdisplayVolt(!display));
+        else if (key == 'Current')
+            store.dispatch(SetdisplayCur(!display));
+        else if (key == 'Analogs')
+            store.dispatch(SetdisplayAnalogs(!display));
+        else if (key == 'Digitals')
+            store.dispatch(SetdisplayDigitals(!display));
+        else if (key == 'TripCoil')
+            store.dispatch(SetdisplayTCE(!display));
+
     }
 
-    const toggleCurrent = () => {
-        if (showCurr)
-            store.dispatch(RemovePlot({ DataType: "Current", EventId: eventId }))
-        else
-            store.dispatch(AddPlot({ DataType: "Current", EventId: eventId }))
-        store.dispatch(SetdisplayCur( !showCurr));
-    }
-
-    const toggleAnalogs = () => {
-        if (showAnalog)
-            store.dispatch(RemovePlot({ DataType: 'Analogs', EventId: eventId}))
-        else
-            store.dispatch(AddPlot({ DataType: "Analogs", EventId: eventId }))
-        store.dispatch(SetdisplayAnalogs( !showAnalog));
-    }
-    
-    const toggleDigitals = () => {
-        if (showDigitals)
-            store.dispatch(RemovePlot({ DataType: 'Digitals', EventId: eventId}))
-        else
-            store.dispatch(AddPlot({ DataType: "Digitals", EventId: eventId}))
-        store.dispatch(SetdisplayDigitals( !showDigitals))
-    }
-
-    const toggleTCE = () => {
-        if (showTCE)
-            store.dispatch(RemovePlot({ DataType: 'TripCoil', EventId: eventId }))
-        else
-            store.dispatch(AddPlot({ DataType: "TripCoil", EventId: eventId }))
-        store.dispatch(SetdisplayTCE( !showTCE));
-    }
 
     React.useEffect(() => {
         if (showPoints) {
@@ -250,34 +228,8 @@ const OpenSeeNavBar = (props: IProps) => {
                     </ul>
 
                     <ul className="navbar-nav mr-auto navbar-expand ml-auto">
-                        {/*<li className="nav-item dropdown" style={{ width: '150px' }}>
-                        <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Data Tools</a>
-                        <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a className="dropdown-item" onClick={() => setShowPoints(!showPoints) }>{(showPoints ? 'Close Points' : 'Show Points')}</a>
-                            <a className="dropdown-item" onClick={() => setShowToolTip(!showToolTip) }>{(showToolTip ? 'Close Tooltip' : 'Show Tooltip')}</a>
-                            <a className="dropdown-item" onClick={() => setShowToolTipDelta(!showToolTipDelta)}>{(showToolTipDelta ? 'Close Tooltip w/ Delta' : 'Show Tooltip w/ Delta')} </a>
-                            <a className="dropdown-item" onClick={() => setShowPolar(!showPolar)}>{(showPolar ? 'Close Phasor' : 'Show Phasor')}</a>
-                            <a className="dropdown-item" onClick={() => setShowScalarStats(!showScalarStats) }>{(showScalarStats ? 'Close Stats' : 'Show Stats')}</a>
-                            <a className="dropdown-item" onClick={() => setShowCorrelatedSags(!showCorrelatedSags)}>{(showCorrelatedSags ? 'Close Correlated Sags' : 'Show Correlated Sags')}</a>
-                            <a className="dropdown-item" onClick={() => setShowLightning(!showLightning)} >{(showLightning ? 'Close Lightning Data' : 'Show Lightning Data')}</a>
-                            {props.EventData != undefined ? 
-                                <>
-                                    {(props.EventData.EventName == "Snapshot" ? <a className="dropdown-item" onClick={() => setShowHarmonicStats(!showHarmonicStats) }>{(showHarmonicStats ? 'Hide Harmonics' : 'Show Harmonics')}</a> : null)}
-                            </> : null
-                            }
-                            {analytic == 'FFT' && tab == 'Analytic' ? <a className="dropdown-item" onClick={() => setShowFFTTable(!showFFTTable)}>{(showFFTTable ? 'Close FFT Table' : 'Show FFT Table')}</a> : null}
-                            <div className="dropdown-divider"></div>
-                            {analytic == 'FFT' && tab == 'Analytic' ? <a className="dropdown-item" onClick={() => { exportData('fft') }}>Export FFT</a> : null}
-                            <a className="dropdown-item" onClick={() => { exportData('csv') }}>Export CSV</a>
-                            <a className="dropdown-item" onClick={() => { exportData('pqds') }}>Export PQDS</a>
-
-                        </div>
-                    </li>*/}
-
                         <li className="nav-item" style={{ width: (analytic == 'FFT' ? 'calc(100% - 954px)' : 'calc(100% - 909px)'), textAlign: 'center' }}>
-
                         </li>
-
                         <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')} onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'} data-toggle="dropdown" data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
@@ -285,24 +237,24 @@ const OpenSeeNavBar = (props: IProps) => {
                             <div className= "dropdown-menu" style={{ maxHeight: window.innerHeight * 0.75, overflowY: 'auto', padding: '10 5', position: 'absolute', backgroundColor: '#fff', boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)', zIndex: 401, minWidth: '100%' }}>
                             <table className="table" style={{ margin: 0 }}>
                                 <tbody>
-                                    <tr>
-                                        <td><input className="form-check-input " style={{ margin: 0 }} name="voltage" type="checkbox" onChange={() => toggleVoltage()} checked={showVolts}/></td>
+                                        <tr>
+                                            <td><input className="form-check-input " style={{ margin: 0 }} name="voltage" type="checkbox" onChange={() => tooglePlots('Voltage')} checked={showVolts} /></td>
                                         <td><label className="form-check-label">Voltage</label></td> 
                                     </tr>
-                                    <tr>
-                                        <td><input className="form-check-input" style={{ margin: 0 }} name="current" type="checkbox" onChange={() => toggleCurrent()} checked={showCurr}/></td>
+                                        <tr>
+                                            <td><input className="form-check-input" style={{ margin: 0 }} name="current" type="checkbox" onChange={() => tooglePlots('Current')} checked={showCurr} /></td>
                                         <td><label className="form-check-label">Current</label></td>
                                     </tr>
-                                    <tr>
-                                        <td><input className="form-check-input"  style={{ margin: 0 }} name="analog" type="checkbox" onChange={() => toggleAnalogs()} checked={showAnalog}/></td>
+                                        <tr>
+                                            <td><input className="form-check-input" style={{ margin: 0 }} name="analog" type="checkbox" onChange={() => tooglePlots('Analogs')} checked={showAnalog} /></td>
                                         <td><label className="form-check-label">Analogs</label></td>
                                     </tr>
-                                    <tr>
-                                        <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => toggleDigitals()} checked={showDigitals}/></td>
+                                        <tr>
+                                            <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => tooglePlots('Digitals')} checked={showDigitals} /></td>
                                         <td><label className="form-check-label">Digitals</label></td>
                                     </tr>
-                                    <tr>
-                                        <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => toggleTCE()} checked={showTCE}/></td>
+                                        <tr>
+                                            <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => tooglePlots('TripCoil')} checked={showTCE} /></td>
                                         <td><label className="form-check-label">Trip Coil E.</label></td>
                                     </tr>
                                 </tbody>
