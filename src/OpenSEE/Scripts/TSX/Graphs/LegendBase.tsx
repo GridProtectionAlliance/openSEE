@@ -29,6 +29,7 @@ import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
 import { selectColor } from "../store/settingSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
+import { MultiCheckBoxSelect, StylableSelect } from "@gpa-gemstone/react-forms";
 
 const hrow = 26;
 
@@ -39,8 +40,9 @@ interface iProps {
 }
 
 interface ICategory {
-    enabled: boolean,
-    label: string,
+    Value: number;
+    Text: string;
+    Selected: boolean 
 }
 
 interface ILegendGrid {
@@ -88,13 +90,13 @@ const Legend = (props: iProps) => {
         let grid: Array<ILegendGrid> = [];
 
         data.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
-            let index = categories.findIndex(category => category.label === item.LegendGroup);
+            let index = categories.findIndex(category => category.Text === item.LegendGroup);
             if (index === -1) {
-                categories.push({ label: item.LegendGroup, enabled: false });
-                index = categories.findIndex(category => category.label === item.LegendGroup);
+                categories.push({ Value: 0, Text: item.LegendGroup, Selected: false });
+                index = categories.findIndex(category => category.Text === item.LegendGroup);
             }
             if (enabled[dataIndex])
-                categories[index].enabled = true;
+                categories[index].Selected = true;
             index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical && g.category == item.LegendVGroup);
             if (index === -1) {
                 grid.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup })
@@ -110,10 +112,10 @@ const Legend = (props: iProps) => {
         });
 
         if (categories.length == 1)
-            categories[0].enabled = true
+            categories[0].Selected = true
         else if (categories.length > 1) {
-            if (!categories.some(item => item.enabled))
-                categories[0].enabled = true
+            if (!categories.some(item => item.Selected))
+                categories[0].Selected = true
         }
 
         setGrid(groupBy(grid, item => (item.vLabel + item.category)));
@@ -213,23 +215,23 @@ const Legend = (props: iProps) => {
 
         setCategories((current) => {
             const tmp = cloneDeep(current);
-            tmp[index].enabled = !tmp[index].enabled;
+            tmp[index].Selected = !tmp[index].Selected;
 
             // Also Disable or enable associated Traces and corresponding Grid entries....
             let traces: Array<number> = [];
 
-            if (tmp[index].enabled)
+            if (tmp[index].Selected)
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.label) && data.enabled)
-                        traces = traces.concat(data.traces.get(item.label));
+                    if (data.traces.has(item.Text) && data.enabled)
+                        traces = traces.concat(data.traces.get(item.Text));
                 }));
             else
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.label))
-                        traces = traces.concat(data.traces.get(item.label));
+                    if (data.traces.has(item.Text))
+                        traces = traces.concat(data.traces.get(item.Text));
                 }));
 
-            dispatch(EnableTrace({ trace: traces, enabled: tmp[index].enabled, key: dataKey }));
+            dispatch(EnableTrace({ trace: traces, enabled: tmp[index].Selected, key: dataKey }));
 
             return tmp;
         });
@@ -278,7 +280,7 @@ const Legend = (props: iProps) => {
                     if (row.enabled) {
                         row.enabled = false;
                         categories.forEach((cat) => {
-                            updates.push(...row.traces.get(cat.label));
+                            updates.push(...row.traces.get(cat.Text));
                         });
                     }
                 });
@@ -288,8 +290,8 @@ const Legend = (props: iProps) => {
                 grid.get(group).forEach(row => {
                     row.enabled = true;
                     categories.forEach((cat) => {
-                        if (cat.enabled)
-                            updates.push(...row.traces.get(cat.label));
+                        if (cat.Selected)
+                            updates.push(...row.traces.get(cat.Text));
                     });
 
                 });
@@ -305,7 +307,7 @@ const Legend = (props: iProps) => {
                         if (item.enabled && item.hLabel == group) {
                             item.enabled = false;
                             categories.forEach((cat) => {
-                                updates.push(...item.traces.get(cat.label));
+                                updates.push(...item.traces.get(cat.Text));
                             });
                         }
                     })
@@ -317,8 +319,8 @@ const Legend = (props: iProps) => {
                         if (item.hLabel == group) {
                             item.enabled = true;
                             categories.forEach((cat) => {
-                                if (cat.enabled)
-                                    updates.push(...item.traces.get(cat.label));
+                                if (cat.Selected)
+                                    updates.push(...item.traces.get(cat.Text));
                             });
                         }
                     })
@@ -330,27 +332,23 @@ const Legend = (props: iProps) => {
 
     }
     const isScroll = (props.height - 97) < (verticalHeader.length * (2 + hrow));
+
     return (
-        <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.type + "-" + props.eventId}> {/* fix eventID*/}
-        <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px", overflowY: "hidden" }} >
-            <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
-                <div className="btn-group" style={{ width: '100%' }}>
-
-                    {(categories.length > 1 ?
-                        <button onClick={() => setShowCategories(!showCategories)} type="button" style={{ width: '25px', borderRadius: 0 }} className="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
-                            <span className="sr-only">Toggle Dropdown</span>
-                        </button> : null)}
-                    <button style={{ width: '100%', borderRadius: 0, textOverflow: 'ellipsis', maxWidth: (categories.length > 1 ? '175px' : '200px'), overflow: 'hidden', whiteSpace: 'nowrap' }} className="btn btn-secondary btn-sm active" type="button">
-                        {categories.filter(item => item.enabled).map(item => item.label).join(", ")}
-                    </button>
-
-                    <div className={"dropdown-menu " + (showCategories ? "show" : "")} style={{ marginTop: 0, maxWidth: '196px' }} onMouseLeave={() => { setShowCategories(false) }}>
-                        {(categories.filter(item => item.label.trim() !== "").length === 0 ? props.type
-                            : categories.map((item, index) => <Category key={index} label={item.label} enabled={item.enabled} onclick={() => changeCategory(index, item)} />)
-                        )}
+        <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.type + "-" + props.eventId}> 
+        <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px"}} >
+                <div className="form-group" style={ {color: undefined}}>
+                        <MultiCheckBoxSelect
+                            Options={categories}
+                            OnChange={(options) => {
+                                options.forEach((o) => {
+                                    const i = categories.findIndex((c) => c.Text == o.Text);
+                                    changeCategory(i, categories[i])
+                                })
+                            }}
+                            Label={""}
+                        />
                     </div>
-                </div>
-
+                <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
                 <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: (isScroll ? wScroll : 0) }}>
                     <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }}></div>
                     {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}/>)}
@@ -361,7 +359,7 @@ const Legend = (props: iProps) => {
                         {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
                     </div> : null)}
                 <div style={{ width: (verticalHeader.length > 1 ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                    {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.enabled).map(item => item.label)} key={index} label={value[0]} data={grid.get(value[0] + value[1]).sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
+                    {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.Selected).map(item => item.Text)} key={index} label={value[0]} data={grid.get(value[0] + value[1]).sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
                     </div>
                 </div>
         </div>
