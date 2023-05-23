@@ -317,8 +317,9 @@ export namespace OpenSee {
         enabled: Array<boolean>[],
         loading: LoadingState[],
         activeRequest: string[]
-        activeUnits: IActiveUnits[],
         yLimits: IUnitCollection<IAxisSettings>[],
+        isZoomed: boolean[],
+
         selectedIndixes: Array<number>[],
         cycleLimit: [number,number],
         fftLimits: [number, number],
@@ -371,8 +372,9 @@ export namespace OpenSee {
 
     interface IAxisSettings {
         activeUnit: number,
-        limits: [number, number],
-        dataLimits: [number, number]
+        manuallimits: [number, number],
+        dataLimits: [number, number],
+        zoomedLimits: [number, number],
         label: string
     }
     // for Redux to store active units (in case of Auto Unit)
