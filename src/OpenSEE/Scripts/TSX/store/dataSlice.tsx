@@ -31,6 +31,14 @@ declare var eventID: number;
 
 
 interface IExtendedKey extends OpenSee.IGraphProps { key?: string }
+const defaultLimits = {
+    activeUnit: 0,
+    dataLimits: [0, 1],
+    label: '',
+    manuallimits: [0, 1],
+    zoomedLimits: [0, 1],
+} as OpenSee.IAxisSettings;
+
 // #region [ Thunks ]
 
 //Thunk to Create Plot
@@ -104,15 +112,32 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
     }
 
     state.Data.plotKeys
-        .forEach((graph) => {
-            thunkAPI.dispatch(DataReducer.actions.UpdateYLimit({ key: { DataType: graph.DataType, EventId: graph.EventId }, baseUnits: state.Settings.Units }));
-        });
+        .forEach((graph, index) => {
+            const RelevantAxis = _.uniq(state.Data.data[index].map((s) => s.Unit));
+
+            RelevantAxis.forEach((axis) => {
+
+                const axisSetting: OpenSee.IAxisSettings = state.Data.yLimits[index][axis];
+                if (state.Settings.Units[axis].useAutoLimits)
+                    thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.dataLimits, Plotindex: index }));
+                else
+                    thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.manuallimits, Plotindex: index }));
+            })
+        })
     return Promise.resolve();
 })
 
 // Thunk to Set YLimits
 export const SetYLimits = createAsyncThunk('Data/SetYLimits', (arg: { min: number, max: number, key: any }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateYLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }));
+    let state = (thunkAPI.getState() as OpenSee.IRootState);
+    let index = state.Data.plotKeys.findIndex(item => item == arg.key);
+    
+    const RelevantAxis = _.uniq(state.Data.data[index].map((s) => s.Unit));
+
+    RelevantAxis.forEach((axis) => {
+        const axisSetting: OpenSee.IAxisSettings = state.Data.yLimits[index][axis];
+        thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.dataLimits, Plotindex: index, type: 'zoom' }));
+    });
 
     return Promise.resolve();
 })
@@ -209,10 +234,10 @@ export const DataReducer = createSlice({
         selectedIndixes: [] as number[][],
         plotKeys: [] as OpenSee.IGraphProps[],
         data: [] as Array<OpenSee.iD3DataSeries>[],
+        isZoomed: [] as boolean[],
         activeRequest: [] as string[],
         enabled: [] as Array<boolean>[],
         loading: [] as OpenSee.LoadingState[],
-        activeUnits: [] as OpenSee.IActiveUnits[],
         yLimits: [] as OpenSee.IUnitCollection<OpenSee.IAxisSettings>[],
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0/60.0]
@@ -225,7 +250,7 @@ export const DataReducer = createSlice({
                 state.data.splice(index, 1);
                 state.enabled.splice(index, 1);
                 state.loading.splice(index, 1);
-                state.activeUnits.splice(index, 1);
+                state.isZoomed.splice(index, 1);
                 state.yLimits.splice(index, 1);
                 state.selectedIndixes.splice(index, 1);
                 state.activeRequest.splice(index, 1);
@@ -258,37 +283,34 @@ export const DataReducer = createSlice({
             state.data.push([]);
             state.enabled.push([]);
             state.loading.push('Idle');
-            state.activeUnits.push({
-                Voltage: 0, Current: 0, Angle: 0, VoltageperSecond: 0, CurrentperSecond: 0, Freq: 0, Impedance: 0,
-                PowerP: 0, PowerQ: 0, PowerS: 0, PowerPf: 0, TCE: 0, Distance: 0, Unbalance: 0, THD: 0,
-            });
+            state.isZoomed.push(false);
             state.yLimits.push({
-                Voltage: {
-                    activeUnit: 0,
-                    dataLimits: [0, 1],
-                    label: '',
-                    limits: [0, 1]
-                },
-                Current: null,
-                Angle: null,
-                VoltageperSecond: null,
-                CurrentperSecond: null,
-                Freq: null,
-                Impedance: null,
-                PowerP: null,
-                PowerQ: null,
-                PowerS: null,
-                PowerPf: null,
-                TCE: null,
-                Distance: null,
-                Unbalance: null,
-                THD: null,
+                Voltage: defaultLimits,
+                Current: defaultLimits,
+                Angle: defaultLimits,
+                VoltageperSecond: defaultLimits,
+                CurrentperSecond: defaultLimits,
+                Freq: defaultLimits,
+                Impedance: defaultLimits,
+                PowerP: defaultLimits,
+                PowerQ: defaultLimits,
+                PowerS: defaultLimits,
+                PowerPf: defaultLimits,
+                TCE: defaultLimits,
+                Distance: defaultLimits,
+                Unbalance: defaultLimits,
+                THD: defaultLimits
             });
             state.selectedIndixes.push([]);
             state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
             return state;
         },
-        AppendData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L'|'L-N' }>) => {
+        AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
+            key: OpenSee.IGraphProps,
+            data: Array<OpenSee.iD3DataSeries>,
+            baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
+            requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L' | 'L-N'
+        }>) => {
             let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
 
             if (state.activeRequest[index] != action.payload.requestID)
@@ -300,19 +322,29 @@ export const DataReducer = createSlice({
             
             state.enabled[index] = [...state.enabled[index], ...extendEnabled]
 
-            state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
 
             if (state.plotKeys[index].DataType == 'FFT')
                 state.fftLimits = [Math.min(...state.data[index].map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...state.data[index].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
 
-            const autoLimits = true;
-            if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (index && state.plotKeys[index].DataType == 'FFT')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            const RelevantAxis = _.uniq(action.payload.data.map((s) => s.Unit));
 
+            RelevantAxis.forEach((axis) => {
+                const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+
+                const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
+                if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                    axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
+                        state.data[index].filter((item, i) => state.enabled[index][i]));
+                else if (index && state.plotKeys[index].DataType == 'FFT')
+                    axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+                else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
+                    axisSetting.dataLimits =recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+
+                updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
+
+                state.yLimits[index][axis] = axisSetting;
+
+            });
            
             return state
         },
@@ -338,13 +370,18 @@ export const DataReducer = createSlice({
             state.startTime = action.payload.start;
             state.endTime = action.payload.end;
 
-            //Update All Units and limits
-            const autoLimits = true;
             state.plotKeys 
                 .forEach((graph, index) => {
-                    state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
-                    if (autoLimits && state.plotKeys[index].DataType != 'FFT')
-                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
+                    RelevantAxis.forEach((axis) => {
+                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
+                        if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                            axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
+                                state.data[index].filter((item, i) => state.enabled[index][i]));
+                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
+
+                      })
                 });
             return state;
 
@@ -355,14 +392,18 @@ export const DataReducer = createSlice({
 
             state.fftLimits = [action.payload.start, action.payload.end];
 
-            //Update All Units and limits
-            const autoLimits = true;
+            //Update All Y Units and limits
             state.plotKeys
                 .forEach((graph, index) => {
-                    if (autoLimits && state.plotKeys[index].DataType == 'FFT') {
-                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.fftLimits[0], state.fftLimits[1]);
-                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                    }
+                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
+                    RelevantAxis.forEach((axis) => {
+                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
+                        if (autoLimits && state.plotKeys[index].DataType == 'FFT') 
+                            axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
+
+                    })
                 });
             return state;
 
@@ -373,14 +414,17 @@ export const DataReducer = createSlice({
 
             state.cycleLimit = [action.payload.start, action.payload.end];
 
-            const autoLimits = true;
-            //Update All Units and limits
+            //Update All Y Units and limits
             state.plotKeys
                 .forEach((graph, index) => {
-                    if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave') {
-                        state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.cycleLimit[0], state.cycleLimit[1]);
-                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                    }
+                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
+                    RelevantAxis.forEach((axis) => {
+                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
+                        if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
+                            axisSetting.dataLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
+                    })
                 });
             return state;
 
@@ -410,51 +454,20 @@ export const DataReducer = createSlice({
             else
                 state.enabled[index] = dat;
 
-            let yLimits: [number, number] = [0, 0];
-            let adjustLimits = true;
-            const autoLimits = true;
-            // If we enabled some trace we only need to update if it's actually exceeding current Limits....
-            if (autoLimits && action.payload.enabled && state.plotKeys[index].DataType != 'FFT') {
-                adjustLimits = false;
-                let start = state.startTime;
-                let end = state.endTime;
-                if (state.plotKeys[index].DataType == 'OverlappingWave') {
-                    start = state.cycleLimit[0];
-                    end = state.cycleLimit[1];
-                }
-                let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
+            const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
+            RelevantAxis.forEach((axis) => {
+                const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+                const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
+                if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                    axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
+                        state.data[index].filter((item, i) => state.enabled[index][i]));
+                else if (index && state.plotKeys[index].DataType == 'FFT')
+                    axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+                else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
+                    axisSetting.dataLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
 
-                if (dLim[0] < state.yLimits[index].Voltage.limits[0])
-                    state.yLimits[index].Voltage.limits[0] = dLim[0];
-                if (dLim[1] > state.yLimits[index].Voltage.limits[1])
-                    state.yLimits[index].Voltage.limits[1] = dLim[1];
-            }
-            // If we disabled some traces and they are just inside the limits we don't have to recompute limits
-            else if (autoLimits && state.plotKeys[index].DataType != 'FFT') {
-                let start = state.startTime;
-                let end = state.endTime;
-                if (state.plotKeys[index].DataType == 'OverlappingWave') {
-                    start = state.cycleLimit[0];
-                    end = state.cycleLimit[1];
-                }
-
-                let dLim = recomputeYLimits(start, end, action.payload.trace.filter(i => i < state.data[index].length).map(i => state.data[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                if (dLim[0] > state.yLimits[index].Voltage.limits[0] && dLim[1] < state.yLimits[index][1])
-                    adjustLimits = false;
-            }
-
-            if (autoLimits && adjustLimits) {
-
-                if (state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                    yLimits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                else if (state.plotKeys[index].DataType == 'OverlappingWave')
-                    yLimits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-                else
-                    yLimits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-
-                if (yLimits[0] != state.yLimits[index].Voltage.limits[0] || yLimits[1] != state.yLimits[index].Voltage.limits[1])
-                    state.yLimits[index].Voltage.limits = yLimits;
-            }
+                updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
+            })
             return state
         },
         SetHover: (state: OpenSee.IDataState, action: PayloadAction<{ t: number, y: number }>) => {
@@ -485,44 +498,38 @@ export const DataReducer = createSlice({
         SetZoomMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.ZoomMode>) => {
             state.zoomMode = action.payload
         },
-        UpdateYLimit: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, min?: number, max?: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
-            /*
-            if (action.payload.min != undefined)
-                state.autoLimits[index] = false;
-            else
-                state.autoLimits[index] = true;
-                */
-            const autoLimits = true;
-            if (!autoLimits)
-                state.yLimits[index].Voltage.limits = [action.payload.min, action.payload.max];
-
-            state.activeUnits[index] = updateUnits(action.payload.baseUnits, state.data[index], state.startTime, state.endTime);
-
-            if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (autoLimits && state.plotKeys[index].DataType == 'FFT')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-            else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
-                state.yLimits[index].Voltage.limits = recomputeYLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload.baseUnits, state.activeUnits[index]);
-        },
         ClearSelectPoints: (state: OpenSee.IDataState) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
         },
         RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].splice(action.payload, 1));
         },
+        SetCurrentYLimits: (state: OpenSee.IDataState, action: PayloadAction<{ Plotindex: number, axis: OpenSee.Unit, limits: [number, number], type?: ('manual'|'zoom'|'reset')  }>) => {
+            state.yLimits[action.payload.Plotindex][action.payload.axis].zoomedLimits = action.payload.limits;
+            if (action.payload.type !== undefined && action.payload.type == 'manual')
+                (state.yLimits[action.payload.Plotindex][action.payload.axis] as OpenSee.IAxisSettings).manuallimits = action.payload.limits;
+            if (action.payload.type !== undefined && action.payload.type == 'zoom')
+                state.isZoomed[action.payload.Plotindex] = true;
+        },
         UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IUnitCollection<OpenSee.IUnitSetting>>) => {
             //Update All Units and limits
-            const autoLimits = true;
             state.plotKeys
                 .forEach((graph, index) => {
-                    state.activeUnits[index] = updateUnits(action.payload, state.data[index], state.startTime, state.endTime);
-                    if (autoLimits && state.plotKeys[index].DataType != 'FFT')
-                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.startTime, state.endTime, state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
-                    else if (autoLimits)
-                        state.yLimits[index].Voltage.limits = recomputeYLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]), action.payload, state.activeUnits[index]);
-                });
+                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
+                    RelevantAxis.forEach((axis) => {
+                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
+                        const isPU = (getCurrentUnits(action.payload)[axis] as OpenSee.iUnitOptions).short == 'pu';
+                        if (isPU && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
+                            axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
+                                state.data[index].filter((item, i) => state.enabled[index][i]));
+                        else if (isPU && state.plotKeys[index].DataType == 'FFT')
+                            axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+                        else if (isPU && state.plotKeys[index].DataType == 'OverlappingWave')
+                            axisSetting.dataLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+
+                        updateActiveUnits(action.payload, axisSetting, axis);
+                    });
+                 });
             return state;
         },
     },
@@ -618,14 +625,13 @@ export const selectYLimits = (key: OpenSee.IGraphProps) => {
         (state: OpenSee.IRootState) => state.Data.yLimits,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (state: OpenSee.IRootState) => true,
         (state: OpenSee.IRootState) => state.Settings.Tab,
-        (data: OpenSee.IUnitCollection<OpenSee.IAxisSettings>[], plotKeys: OpenSee.IGraphProps[], single: boolean, autoLimits, tab: OpenSee.Tab) => {
+        (data: OpenSee.IUnitCollection<OpenSee.IAxisSettings>[], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab) => {
             let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single && autoLimits && tab == 'Compare')
-                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType).map((item) => item.Voltage.limits))
+            if (single && tab == 'Compare')
+                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType).map((item) => item.Voltage.dataLimits))
 
-            return data[index].Voltage.limits;
+            return data[index];
         });
 
 }
@@ -666,8 +672,7 @@ export const selectGraphTypes = createSelector((state: OpenSee.IRootState) => st
 
 // For tooltip
 export const selectHoverPoints = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (baseUnit, eventID, hover, data, keys, enabled, activeUnits) => {
+    (baseUnit, eventID, hover, data, keys, enabled) => {
         let result: OpenSee.IPoint[] = [];
 
         data.forEach((item, index) => {
@@ -678,11 +683,13 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
             let dataIndex = getIndex(hover[0], item[0].DataPoints);
             if (isNaN(dataIndex))
                 return;
+
+            const activeUnits = getCurrentUnits(baseUnit);
             result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
                 dataIndex = getIndex(hover[0],d.DataPoints);
                 return {
                     Color: d.Color,
-                    Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
+                    Unit: baseUnit[d.Unit].options[activeUnits[d.Unit]],
                     Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
                     Name: GetDisplayName(d, keys[index].DataType),
                     BaseValue: d.BaseValue,
@@ -695,9 +702,10 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
 
 // for Tooltip with Delta
 export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.selectedIndixes, (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (baseUnit, eventID, hover, data, keys, enabled, selectedData, activeUnits) => {
+    (state: OpenSee.IRootState) => state.Data.selectedIndixes,
+    (baseUnit, eventID, hover, data, keys, enabled, selectedData) => {
         let result: OpenSee.IPoint[] = [];
+        const activeUnits = getCurrentUnits(baseUnit);
         data.forEach((item, index) => {
             if (keys[index].EventId != eventID)
                 return;
@@ -725,10 +733,9 @@ export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, 
 
 // For vector
 export const selectVPhases = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (baseUnit, eventID, hover, data, keys, enabled, activeUnits) => {
+    (baseUnit, eventID, hover, data, keys, enabled) => {
         let index = keys.findIndex(item => item.DataType == 'Voltage' && item.EventId == eventID);
-
+        const activeUnits = getCurrentUnits(baseUnit);
         if (index == -1)
             return [];
         let asset = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendGroup));
@@ -779,10 +786,9 @@ export const selectVPhases = createSelector(selectUnit, selectEventID, selectHov
 
 })
 export const selectIPhases = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (baseUnit, eventID, hover, data, keys, enabled, activeUnits) => {
+    (baseUnit, eventID, hover, data, keys, enabled) => {
         let index = keys.findIndex(item => item.DataType == 'Current' && item.EventId == eventID);
-
+        const activeUnits = getCurrentUnits(baseUnit);
         if (index == -1)
             return [];
         let asset = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendGroup));
@@ -816,8 +822,8 @@ export const selectIPhases = createSelector(selectUnit, selectEventID, selectHov
                 let mag = (pointIndex > (magnitudeChannel.DataPoints.length - 1) ? NaN : magnitudeChannel.DataPoints[pointIndex][1]);
                 result.push({
                     Color: phaseChannel.Color,
-                    Unit: baseUnit.Current.options[activeUnits[index].Current],
-                    PhaseUnit: baseUnit.Angle.options[activeUnits[index].Angle],
+                    Unit: baseUnit.Current.options[activeUnits.Current],
+                    PhaseUnit: baseUnit.Angle.options[activeUnits.Angle],
                     Phase: p,
                     Asset: a,
                     Magnitude: mag,
@@ -834,10 +840,10 @@ export const selectIPhases = createSelector(selectUnit, selectEventID, selectHov
 
 // For Accumulated Point widget
 export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.selectedIndixes,
-    (state: OpenSee.IRootState) => state.Data.activeUnits, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (baseUnit, eventID, data, selectedData, activeUnits, keys, enabled) => {
+    (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
+    (baseUnit, eventID, data, selectedData, keys, enabled) => {
         let result: OpenSee.IPointCollection[] = [];
-        
+        const activeUnits = getCurrentUnits(baseUnit);
         data.forEach((item, index) => {
             if (keys[index].EventId != eventID)
                 return;
@@ -1346,7 +1352,7 @@ function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenS
 // #region [ Helper Functions ]
 
 //This Function Recomputes y Limits based on X limits for all states
-function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3DataSeries>, baseUnit: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, activeUnits: OpenSee.IActiveUnits): [number, number] {
+function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSeries[]): [number, number] {
 
     let limitedData = data.map((item, index) => {
         let dataPoints = item.DataPoints;
@@ -1356,16 +1362,14 @@ function recomputeYLimits(start: number, end: number, data: Array<OpenSee.iD3Dat
         let indexStart = getIndex(start, dataPoints);
         let indexEnd = getIndex(end, dataPoints);
 
-        let factor = baseUnit[item.Unit].options[activeUnits[item.Unit]].factor;
-
-        factor = (baseUnit[item.Unit].options[activeUnits[item.Unit]].short == 'pu' ? 1.0 / item.BaseValue : factor);
         let dt = dataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
-        return [Math.min(...dt) * factor, Math.max(...dt) * factor];
+        return [Math.min(...dt), Math.max(...dt)];
         
     });
 
     let yMin = Math.min(...limitedData.map(item => item[0]));
     let yMax = Math.max(...limitedData.map(item => item[1]));
+
     const pad = (yMax - yMin) / 20;
     return [yMin - pad, yMax + pad];
     
@@ -1390,53 +1394,43 @@ function getIndex(t: number, data: Array<[number, number]>): number {
 }
 
 //function that Updates the Current Units if they are on auto
-function updateUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, data: Array<OpenSee.iD3DataSeries>, startTime: number, endTime: number): OpenSee.IActiveUnits  {
-    let result = mapUnits(baseUnits);
-    let relevantUnits = _.uniq(data.map(item => item.Unit));
+function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
+    axis: OpenSee.IAxisSettings, unit: OpenSee.Unit) {
+    let currentUnits = getCurrentUnits(baseUnits);
+   
+    if (baseUnits[unit].options[currentUnits[unit]].short != 'auto')
+        return;
 
-    relevantUnits.forEach(unit => {
-        if (baseUnits[unit].options[result[unit]].short != 'auto')
-            return;
+    let min = axis.dataLimits[0];
+    let max = axis.dataLimits[1];
 
-        let relevantData = data.filter(d => d.Unit == unit).map(d => {
-            let startIndex = getIndex(startTime, d.DataPoints);
-            let endIndex = getIndex(endTime, d.DataPoints);
-            return d.DataPoints.slice(startIndex, endIndex);
-        })
-        let min = Math.min(...relevantData.map(d => Math.min(...d.map(p => p[1]))));
-        let max = Math.max(...relevantData.map(d => Math.max(...d.map(p => p[1]))));
+    let autoFactor = 0.000001
+    if (Math.max(max, min) < 1)
+        autoFactor = 1000
+    else if (Math.max(max, min) < 1000)
+        autoFactor = 1
+    else if (Math.max(max, min) < 1000000)
+        autoFactor = 0.001
 
-        let autoFactor = 0.000001
-        if (Math.max(max, min) < 1)
-            autoFactor = 1000
-        else if (Math.max(max, min) < 1000)
+    //Logic to move on to next if We can not find that Factor
+    if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
+        axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
+    else {
+        //Unable to find Factor try moving one down/up
+        if (autoFactor < 1)
+            autoFactor = autoFactor * 1000
+        else
             autoFactor = 1
-        else if (Math.max(max, min) < 1000000)
-            autoFactor = 0.001
 
-        //Logic to move on to next if We can not find that Factor
         if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-            result[unit] = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
-        else {
-            //Unable to find Factor try moving one down/up
-            if (autoFactor < 1)
-                autoFactor = autoFactor * 1000
-            else
-                autoFactor = 1
-
-            if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-                result[unit] = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
-            else
-                result[unit] = baseUnits[unit].options.findIndex(item => item.factor != 0)
-        }
-
-    })
-
-    return result;
+            axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
+        else
+            axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor != 0)
+    }
 }
 
 // function returns current units as IActiveUnits
-function mapUnits(units: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IActiveUnits {
+function getCurrentUnits(units: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IActiveUnits {
     let result = {};
     Object.keys(units).forEach(key => { result[key] = units[key].current });
     return result as OpenSee.IActiveUnits; 
