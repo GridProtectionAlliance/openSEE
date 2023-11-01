@@ -27,6 +27,10 @@ import {  selectActiveUnit, selectUnit } from './settingSlice';
 import { LoadOverlappingEvents } from './eventSlice';
 import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
 import { AddRequest, AppendRequest, CancelAnalytics } from './RequestHandler';
+import { emptygraph, getData, getDetailedData } from './GraphLogic';
+import { dispatch } from 'd3';
+import { RootState } from './store';
+import { plot } from 'jquery';
 declare var eventID: number;
 
 
@@ -41,36 +45,44 @@ const defaultLimits = {
 
 // #region [ Thunks ]
 
-//Thunk to Create Plot
-export const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    AppendRequest(arg, getDetailedData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic))
+//Thunk to Get Detailed Data
+/*
+const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    AppendRequest(arg, getDetailedData(arg, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (d,t) => { thunkAPI.dispatch(DataReducer.actions.AppendData()) }))
     return Promise.resolve();
 });
+*/
 
+// Thunk To Add New Plot
 export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.DataType && item.key.EventId == arg.EventId)
 
-    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...arg, key: thunkAPI.requestId }));
-
-    let index = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.findIndex(item => item.DataType == arg.DataType && item.EventId == arg.EventId)
-
-    if ((thunkAPI.getState() as OpenSee.IRootState).Data.loading[index] != 'Idle')
+    if (plot.loading != 'Loading')
         return;
 
-    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: arg, state: 'Loading' }));
-
-    let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-    AddRequest(arg, handles);
-    return await Promise.all(handles);
+    // Adding Data to the Plot
+    //let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (d) => {  });
+    //AddRequest(arg, handles);
+    //return await Promise.all(handles);
 })
 
-//Thunk to Add Data
-const AddData = createAsyncThunk('Data/addData', (arg: { key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], requestID: string, secondary: boolean }, thunkAPI) => {
+// Thunk to set Analytic
+export const UpdateAnalyticPlot = createAsyncThunk<Promise<any>, { analyticStore: OpenSee.IAnalyticStore, eventID: number }, {}>('Data/updateAnalyticPlot',
+    async (arg: { analyticStore: OpenSee.IAnalyticStore, eventID: number }, thunkAPI) => {
 
-    thunkAPI.dispatch(DataReducer.actions.AppendData({ ...arg, defaultTraces: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultTrace, defaultV: (thunkAPI.getState() as OpenSee.IRootState).Settings.DefaultVType, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, requestID: arg.requestID }))
+        const state = (thunkAPI.getState() as RootState);
+        const plot = state.Data.Plots.find(item => item.key.DataType == arg.analyticStore.Analytic);
+        if (plot === null || plot.loading != 'Loading')
+            return Promise.resolve(); 
 
-    return Promise.resolve();
+        return Promise.resolve(); 
+        //let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
+    //AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId }, handles)
+
+    //return Promise.all(handles);
 })
 
+/*
 //Thunk to update Time Limits
 export const SetTimeLimit = createAsyncThunk('Data/setTimeLimit', (arg: { start: number, end: number }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
@@ -90,7 +102,6 @@ export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start:
     return Promise.resolve();
 })
 
-
 //Thunk to Enable or Disable Trace
 export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, singlePlot: (thunkAPI.getState() as OpenSee.IRootState).Settings.SinglePlot }))
@@ -103,21 +114,22 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
 
     // FFT Limits get updated base on values not eventTime
     let state = (thunkAPI.getState() as OpenSee.IRootState);
-    let fftIndex = state.Data.plotKeys.findIndex(item => item.DataType == 'FFT');
-    if (fftIndex > -1) {
-        let start = Math.min(...state.Data.data[fftIndex].map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
-        let end = Math.max(...state.Data.data[fftIndex].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
+    let plot = state.Data.Plots.find(item => item.key.DataType == 'FFT');
+
+    if (plot != null) {
+        let start = Math.min(...plot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
+        let end = Math.max(...plot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
 
         thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end, baseUnits: state.Settings.Units }));
     }
 
-    state.Data.plotKeys
+    state.Data.Plots
         .forEach((graph, index) => {
-            const RelevantAxis = _.uniq(state.Data.data[index].map((s) => s.Unit));
+            const RelevantAxis = _.uniq(graph.data.map((s) => s.Unit));
 
             RelevantAxis.forEach((axis) => {
 
-                const axisSetting: OpenSee.IAxisSettings = state.Data.yLimits[index][axis];
+                const axisSetting: OpenSee.IAxisSettings = graph.yLimits[axis];
                 if (state.Settings.Units[axis].useAutoLimits)
                     thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.dataLimits, Plotindex: index }));
                 else
@@ -130,12 +142,12 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
 // Thunk to Set YLimits
 export const SetYLimits = createAsyncThunk('Data/SetYLimits', (arg: { min: number, max: number, key: any }, thunkAPI) => {
     let state = (thunkAPI.getState() as OpenSee.IRootState);
-    let index = state.Data.plotKeys.findIndex(item => item == arg.key);
-    
-    const RelevantAxis = _.uniq(state.Data.data[index].map((s) => s.Unit));
+    let plot = state.Data.Plots.find(item => item.key == arg.key);
+
+    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
 
     RelevantAxis.forEach((axis) => {
-        const axisSetting: OpenSee.IAxisSettings = state.Data.yLimits[index][axis];
+        const axisSetting: OpenSee.IAxisSettings = plot.yLimits[axis];
         thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.dataLimits, Plotindex: index, type: 'zoom' }));
     });
 
@@ -145,7 +157,7 @@ export const SetYLimits = createAsyncThunk('Data/SetYLimits', (arg: { min: numbe
 //Thunk to set EventID
 export const SetEventID = createAsyncThunk('Data/setEventID', (arg: number, thunkAPI) => {
 
-    let oldData = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys
+    let oldData = (thunkAPI.getState() as OpenSee.IRootState).Data.Plots.map(p => p.key);
     let oldTypes = oldData.map(item => item.DataType);
     oldData.forEach(item => thunkAPI.dispatch(DataReducer.actions.RemovePlot(item)));
     thunkAPI.dispatch(DataReducer.actions.UpdateEventId(arg))
@@ -154,8 +166,9 @@ export const SetEventID = createAsyncThunk('Data/setEventID', (arg: number, thun
     thunkAPI.dispatch(LoadOverlappingEvents())
 
     return Promise.resolve();
-})
+})*/
 
+/*
 // Thunk to Update time Units
 export const SetTimeUnit = createAsyncThunk('Data/SetTimeUnit', (arg: number, thunkAPI) => {
 
@@ -171,54 +184,30 @@ export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Un
     thunkAPI.dispatch(UpdateActiveUnits(unit));
 })
 
-// Thunk to set Analytic
-export const SetAnalytic = createAsyncThunk<Promise<any>, OpenSee.Analytic, {}>('Data/setAnalytic', (arg: OpenSee.Analytic, thunkAPI) => {
 
-    
-    // Remove any old Analytic
-    let eventId = (thunkAPI.getState() as OpenSee.IRootState).Data.eventID
-    let oldData = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.filter(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
-    oldData.forEach(item => thunkAPI.dispatch(DataReducer.actions.RemovePlot(item)));
-
-    thunkAPI.dispatch(DataReducer.actions.UpdateAnalytic(arg));
-    CancelAnalytics();
-    if (arg == 'none')
-        return Promise.resolve();
-
-    //Add current Analytic
-    thunkAPI.dispatch(DataReducer.actions.AddKey({ DataType: arg as OpenSee.graphType, EventId: eventId, key: thunkAPI.requestId }));
-    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: { DataType: arg as OpenSee.graphType, EventId: eventId }, state: 'Loading' }));
-
-    
-    let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-    AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId },handles)
-
-    return Promise.all(handles);
-})
 
 //Thunk to Update Plot
 export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, thunkAPI) => {
 
    
-    let index = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys.findIndex(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
-    if (index == -1)
+    let plot = (thunkAPI.getState() as OpenSee.IRootState).Data.Plots.find(item => item.key.DataType != 'Voltage' &&
+        item.key.DataType != 'Current' && item.key.DataType != 'Analogs' && item.key.DataType != 'Digitals' && item.key.DataType != 'TripCoil');
+    if (plot == null)
         return;
-    let key = (thunkAPI.getState() as OpenSee.IRootState).Data.plotKeys[index];
-
     //Remove existing Data
-    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...key, key: thunkAPI.requestId }));
+    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...plot.key, key: thunkAPI.requestId }));
 
-    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: key, state: 'Loading' }));
+    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: plot.key, state: 'Loading' }));
 
     CancelAnalytics();
-    let handles = getData(key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId );
-    AddRequest(key, handles)
+    let handles = getData(plot.key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
+    AddRequest(plot.key, handles)
 
     return await Promise.all(handles);
 })
 // #endregion
 
-
+*/
 
 
 export const DataReducer = createSlice({
@@ -231,131 +220,54 @@ export const DataReducer = createSlice({
         zoomMode: 'x' as OpenSee.ZoomMode,
         eventID: eventID as number,
         Analytic: 'none' as OpenSee.Analytic,
-        selectedIndixes: [] as number[][],
-        plotKeys: [] as OpenSee.IGraphProps[],
-        data: [] as Array<OpenSee.iD3DataSeries>[],
-        isZoomed: [] as boolean[],
-        activeRequest: [] as string[],
-        enabled: [] as Array<boolean>[],
-        loading: [] as OpenSee.LoadingState[],
-        yLimits: [] as OpenSee.IUnitCollection<OpenSee.IAxisSettings>[],
+        Plots: [] as OpenSee.IGraphstate[],
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0/60.0]
     } as OpenSee.IDataState,
-    reducers: {
+    reducers: {        
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId)
+            Cancel
+            const index = state.Plots.findIndex(item => item.key.DataType == action.payload.DataType
+                && item.key.EventId == action.payload.EventId)
             if (index > -1) {
-                state.plotKeys.splice(index, 1);
-                state.data.splice(index, 1);
-                state.enabled.splice(index, 1);
-                state.loading.splice(index, 1);
-                state.isZoomed.splice(index, 1);
-                state.yLimits.splice(index, 1);
-                state.selectedIndixes.splice(index, 1);
-                state.activeRequest.splice(index, 1);
+                state.Plots.splice(index, 1);
             }
         },
-        UpdateEventId: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
-            state.eventID = action.payload;
-        },
-        SetLoading: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, state: OpenSee.LoadingState }>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId);
-
-            state.loading[index] = action.payload.state;
-            return state;
-        },
-        UpdateAnalytic: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.Analytic>) => {
-            state.Analytic = action.payload;
-            return state;
-        },
-        AddKey: (state: OpenSee.IDataState, action: PayloadAction<IExtendedKey>) => {
-
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.DataType && item.EventId == action.payload.EventId)
-            if (index > -1) {
-                state.data[index] = [];
-                state.selectedIndixes[index] = [];
-                state.activeRequest[index] = (action.payload.key == null ? '' : action.payload.key);
-                return state;
-            }
-
-            state.plotKeys.push(action.payload);
-            state.data.push([]);
-            state.enabled.push([]);
-            state.loading.push('Idle');
-            state.isZoomed.push(false);
-            state.yLimits.push({
-                Voltage: defaultLimits,
-                Current: defaultLimits,
-                Angle: defaultLimits,
-                VoltageperSecond: defaultLimits,
-                CurrentperSecond: defaultLimits,
-                Freq: defaultLimits,
-                Impedance: defaultLimits,
-                PowerP: defaultLimits,
-                PowerQ: defaultLimits,
-                PowerS: defaultLimits,
-                PowerPf: defaultLimits,
-                TCE: defaultLimits,
-                Distance: defaultLimits,
-                Unbalance: defaultLimits,
-                THD: defaultLimits
-            });
-            state.selectedIndixes.push([]);
-            state.activeRequest.push((action.payload.key == null ? '' : action.payload.key));
-            return state;
-        },
+        /*
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
             key: OpenSee.IGraphProps,
             data: Array<OpenSee.iD3DataSeries>,
             baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
             requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L' | 'L-N'
         }>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
+            let plot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
 
-            if (state.activeRequest[index] != action.payload.requestID)
+            if (plot.activeRequest != action.payload.requestID)
                 return state;
 
-            state.data[index] = [...state.data[index], ...action.payload.data]
+            plot.data.push(...action.payload.data);
 
             let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV,action.payload.data);
             
-            state.enabled[index] = [...state.enabled[index], ...extendEnabled]
+            plot.enabled.push(...extendEnabled);
 
+            updateAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
+            updateFFTAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
+            updatedCycleAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
 
-            if (state.plotKeys[index].DataType == 'FFT')
-                state.fftLimits = [Math.min(...state.data[index].map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...state.data[index].map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
+            if (plot.key.DataType == 'FFT')
+                state.fftLimits = [Math.min(...plot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...plot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
 
-            const RelevantAxis = _.uniq(action.payload.data.map((s) => s.Unit));
-
-            RelevantAxis.forEach((axis) => {
-                const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
-
-                const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
-                if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                    axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
-                        state.data[index].filter((item, i) => state.enabled[index][i]));
-                else if (index && state.plotKeys[index].DataType == 'FFT')
-                    axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
-                else if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
-                    axisSetting.dataLimits =recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
-
-                updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
-
-                state.yLimits[index][axis] = axisSetting;
-
-            });
-           
             return state
         },
         ReplaceData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.payload.key.DataType && item.EventId == action.payload.key.EventId)
-            if (index == -1)
+            let plot = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
+            if (plot == null)
                 return state;
             let updated = [];
 
             action.payload.data.forEach(d => {
-                let dIndex = state.data[index].findIndex((od,di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
+                let dIndex = plot.data.findIndex((od,di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
                 if (dIndex == -1)
                     return
                 updated.push(dIndex);
@@ -370,18 +282,9 @@ export const DataReducer = createSlice({
             state.startTime = action.payload.start;
             state.endTime = action.payload.end;
 
-            state.plotKeys 
+            state.Plots 
                 .forEach((graph, index) => {
-                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
-                    RelevantAxis.forEach((axis) => {
-                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
-                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
-                        if (autoLimits && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                            axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
-                                state.data[index].filter((item, i) => state.enabled[index][i]));
-                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
-
-                      })
+                    updateAutoLimits(graph, state.startTime, state.endTime, action.payload.baseUnits);
                 });
             return state;
 
@@ -393,17 +296,9 @@ export const DataReducer = createSlice({
             state.fftLimits = [action.payload.start, action.payload.end];
 
             //Update All Y Units and limits
-            state.plotKeys
+            state.Plots
                 .forEach((graph, index) => {
-                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
-                    RelevantAxis.forEach((axis) => {
-                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
-                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
-                        if (autoLimits && state.plotKeys[index].DataType == 'FFT') 
-                            axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
-                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
-
-                    })
+                    updateFFTAutoLimits(graph, state.fftLimits[0], state.fftLimits[1], action.payload.baseUnits);
                 });
             return state;
 
@@ -415,16 +310,9 @@ export const DataReducer = createSlice({
             state.cycleLimit = [action.payload.start, action.payload.end];
 
             //Update All Y Units and limits
-            state.plotKeys
+            state.Plots
                 .forEach((graph, index) => {
-                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
-                    RelevantAxis.forEach((axis) => {
-                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
-                        const autoLimits = !state.isZoomed[index] && action.payload.baseUnits[axis].useAutoLimits;
-                        if (autoLimits && state.plotKeys[index].DataType == 'OverlappingWave')
-                            axisSetting.dataLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
-                        updateActiveUnits(action.payload.baseUnits, axisSetting, axis);
-                    })
+                    updatedCycleAutoLimits(graph, state.cycleLimit[0], state.cycleLimit[1], action.payload.baseUnits);
                 });
             return state;
 
@@ -531,21 +419,56 @@ export const DataReducer = createSlice({
                     });
                  });
             return state;
-        },
+        }, */
     },
     extraReducers: (builder) => {
-
         builder.addCase(AddPlot.pending, (state, action) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.meta.arg.DataType && item.EventId == action.meta.arg.EventId)
-            if (index > -1)
-                state.loading[index] = 'Loading'
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == action.meta.arg.EventId);
+            if (plot == null)
+                plot = _.cloneDeep(emptygraph);
+            plot.key = action.meta.arg;
+            plot.loading = 'Loading';
             return state
         });
         builder.addCase(AddPlot.fulfilled, (state, action) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == action.meta.arg.DataType && item.EventId == action.meta.arg.EventId)
-            state.loading[index] = 'Idle'
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == action.meta.arg.EventId);
+            plot.loading = 'Idle'
             return state
         });
+        builder.addCase(UpdateAnalyticPlot.pending, (state, action) => {
+            CancelAnalytics();
+
+            const nonAnalytics = ["Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'] as OpenSee.graphType[];
+            const index = state.Plots.findIndex(p => nonAnalytics.includes(p.key.DataType));
+
+            if (index == -1 && action.meta.arg.analyticStore.Analytic !== 'none') {
+                const plot = _.cloneDeep(emptygraph);
+                plot.key = {
+                    DataType: action.meta.arg.analyticStore.Analytic,
+                    EventId: action.meta.arg.eventID,
+                    NoCompress: true,
+                };
+                plot.loading = 'Loading';
+                state.Plots.push(plot);
+            }
+            if (index > -1 && action.meta.arg.analyticStore.Analytic === 'none') {
+                state.Plots = state.Plots.filter(p => nonAnalytics.includes(p.key.DataType))
+            }
+            if (index > -1 && action.meta.arg.analyticStore.Analytic !== 'none') {
+                state.Plots[index] = _.cloneDeep(emptygraph);
+                state.Plots[index].key = {
+                    DataType: action.meta.arg.analyticStore.Analytic,
+                    EventId: action.meta.arg.eventID,
+                    NoCompress: true,
+                };
+                state.Plots[index].loading = 'Loading';
+            }
+
+            return state;
+
+        });
+
+        /*
         builder.addCase(SetAnalytic.fulfilled, (state, action) => {
             let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg as OpenSee.graphType))
             state.loading[index] = 'Idle';
@@ -566,19 +489,43 @@ export const DataReducer = createSlice({
             state.loading[index] = 'Idle';
 
             return state
-        });
+        }); */
 
     }
 
 });
 
 
-export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
+// export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion
 
 // #region [ Individual Selectors ]
+
+// Returns a List of keys for Plots that should be displayed.
+export const selectListGraphs = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (state: RootState) => state.EventInfo.EventID,
+    (state: RootState) => state.Settings.SinglePlot,
+    (plots, eventId, singlePlot) => {
+        if (singlePlot)
+            return plots.filter(item => item.key.EventId == eventId).map(p => p.key);
+        return plots.map(p => p.key);
+    })
+
+export const selectDisplayed = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (plots) => ({
+        Voltage: plots.some(p => p.key.DataType == 'Voltage'),
+        Current: plots.some(p => p.key.DataType == 'Current'),
+        TripCoil: plots.some(p => p.key.DataType == 'TripCoil'),
+        Analogs: plots.some(p => p.key.DataType == 'Analogs'),
+        Digitals: plots.some(p => p.key.DataType == 'Digitals')
+    })
+)
+
+/*
 export const selectData = () =>
     createSelector(
         (state: OpenSee.IRootState) => state.Data.data,
@@ -653,16 +600,6 @@ export const selectEventID = (state: OpenSee.IRootState) => state.Data.eventID
 export const selectAnalytic = (state: OpenSee.IRootState) => state.Data.Analytic;
 
 
-export const selectListGraphs = createSelector(
-    (state: OpenSee.IRootState) => state.Data.plotKeys,
-    (state: OpenSee.IRootState) => state.Data.eventID,
-    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-    (state: OpenSee.IRootState) => state.Settings.Tab,
-    (keys, eventId, singlePlot, tab) => {
-        if (singlePlot || tab != 'Compare')
-        return keys.filter(item => item.EventId == eventId);
-    return keys;
-})
 
 //For SettingsWindow
 export const selectGraphTypes = createSelector((state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.eventID, (keys, eventId) => {
@@ -942,410 +879,45 @@ export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state
 
 // #region [ Async Functions ]
 
-//This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
-function getData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore, requestID: string): Array<JQuery.jqXHR<any>> {
-    let result = [];
-    switch (key.DataType) {
+function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
 
-        case ('Current'):
-        case ('Voltage'):
-            let handlePOW = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
-                    `&type=${key.DataType}` +
-                    `&dataType=Time`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            let handleFreq = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
-                    `&type=${key.DataType}` +
-                    `&dataType=Freq`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
+    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
 
-            handlePOW.then((data) => dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })));
-            handleFreq.then((data) => dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: true })));
-            Promise.all([handlePOW, handleFreq]).then(() => dispatch(InitiateDetailed(key)));
+    RelevantAxis.forEach((axis) => {
+        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
+        if (!autoLimits || plot.key.DataType == 'FFT' || plot.key.DataType == 'OverlappingWave')
+            return;
+        plot.yLimits[axis].dataLimits = recomputeDataLimits(startTime, endTime,
+            plot.data.filter((item, i) => plot.enabled[i]));
+        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
+    });
 
-            result.push(handlePOW);
-            result.push(handleFreq);
-            break;
-        case ('Analogs'):
-            let breakerAnalogsDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetAnalogsData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-
-            breakerAnalogsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(breakerAnalogsDataHandle);
-            break;
-        case ('Digitals'):
-            let breakerDigitalsDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetBreakerData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-
-            breakerDigitalsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(breakerDigitalsDataHandle);
-            break;
-        case ('TripCoil'):
-            let waveformTCEDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
-                    `&type=TripCoilCurrent` +
-                    `&dataType=Time`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-
-            waveformTCEDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false})) })
-            result.push(waveformTCEDataHandle);
-            break;
-        case ('FirstDerivative'):
-            let derivativeDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetFirstDerivativeData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            derivativeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(derivativeDataHandle);
-            break
-        case ('ClippedWaveforms'):
-            let clippedWaveformDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetClippedWaveformsData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            clippedWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(clippedWaveformDataHandle);
-            break
-        case ('Frequency'):
-            let freqencyAnalyticDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetFrequencyData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            freqencyAnalyticDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(freqencyAnalyticDataHandle);
-            break
-        case ('HighPassFilter'):
-            let highPassFilterDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetHighPassFilterData?eventId=${key.EventId}` +
-                    `&filter=${options.HPFOrder}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            highPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(highPassFilterDataHandle);
-            break
-        case ('LowPassFilter'):
-            let lowPassFilterDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetLowPassFilterData?eventId=${key.EventId}` +
-                    `&filter=${options.LPFOrder}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            lowPassFilterDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(lowPassFilterDataHandle);
-            break
-
-        case ('Impedance'):
-            let impedanceDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetImpedanceData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-
-            impedanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(impedanceDataHandle);
-            break
-        case ('Power'):
-            let powerDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetPowerData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            powerDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(powerDataHandle);
-            break
-        case ('MissingVoltage'):
-            let missingVoltageDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetMissingVoltageData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            missingVoltageDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(missingVoltageDataHandle);
-            break
-        case ('OverlappingWave'):
-            let overlappingWaveformDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetOverlappingWaveformData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-
-            overlappingWaveformDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(overlappingWaveformDataHandle);
-            break
-        case ('Rectifier'):
-            let rectifierDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetRectifierData?eventId=${key.EventId}` +
-                    `&Trc=${options.Trc}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            rectifierDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(rectifierDataHandle);
-            break
-        case ('RapidVoltage'):
-            let rapidVoltageChangeDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetRapidVoltageChangeData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            rapidVoltageChangeDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(rapidVoltageChangeDataHandle);
-            break
-        case ('RemoveCurrent'):
-            let removeCurrentDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetRemoveCurrentData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            removeCurrentDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(removeCurrentDataHandle);
-            break
-        case ('Harmonic'):
-            let specifiedHarmonicDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetSpecifiedHarmonicData?eventId=${key.EventId}` +
-                    `&specifiedHarmonic=${options.Harmonic}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            specifiedHarmonicDataHandle.then((data) => {
-                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
-                dispatch(InitiateDetailed(key));
-            })
-            result.push(specifiedHarmonicDataHandle);
-            break
-        case ('SymetricComp'):
-            let symmetricalComponentsDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetSymmetricalComponentsData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            symmetricalComponentsDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(symmetricalComponentsDataHandle);
-            break
-        case ('THD'):
-            let thdDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            thdDataHandle.then((data) => {
-                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
-                dispatch(InitiateDetailed(key));
-            })
-            result.push(thdDataHandle);
-            break
-        case ('Unbalance'):
-            let unbalanceDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetUnbalanceData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            unbalanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(unbalanceDataHandle);
-            break
-        case ('FaultDistance'):
-            let faultDistanceDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetFaultDistanceData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            faultDistanceDataHandle.then((data) => { dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false })) })
-            result.push(faultDistanceDataHandle);
-            break
-        case ('Restrike'):
-            let breakerRestrikeDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetBreakerRestrikeData?eventId=${key.EventId}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            breakerRestrikeDataHandle.then((data) => {
-                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
-                dispatch(InitiateDetailed(key));
-            })
-            result.push(breakerRestrikeDataHandle);
-            break
-        case ('FFT'):
-            let fftAnalyticDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetFFTData?eventId=${key.EventId}&cycles=${options.FFTCycles}&startDate=${options.FFTStartTime}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            fftAnalyticDataHandle.then((data) => {
-                dispatch(AddData({ key: key, data: data.Data, requestID: requestID, secondary: false }));
-                dispatch(InitiateDetailed(key))
-            })
-            result.push(fftAnalyticDataHandle);
-            break
-        default:
-            return []
-            break;
-    }
-
-
-    return result;
 }
 
-function getDetailedData(key: OpenSee.IGraphProps, dispatch: any, options: OpenSee.IAnalyticStore): Array<JQuery.jqXHR<any>> {
-    let result = [];
+function updateFFTAutoLimits(plot: OpenSee.IGraphstate, start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
+    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
 
-    switch (key.DataType) {
-        case ('Current'):
-        case ('Voltage'):
-            let handlePOW = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
-                    `&type=${key.DataType}` +
-                    `&dataType=Time` +
-                    (key.NoCompress ? `&dbgNocompress=1` : ``),
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            let handleFreq = $.ajax({
-                type: "GET",
-                url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
-                    `&type=${key.DataType}` +
-                    `&dataType=Freq` +
-                    (key.NoCompress ? `&dbgNocompress=1` : ``),
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
+    RelevantAxis.forEach((axis) => {
+        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
+        if (!autoLimits || plot.key.DataType != 'FFT')
+            return;
+        plot.yLimits[axis].dataLimits = recomputeDataLimits(start, end,
+            plot.data.filter((item, i) => plot.enabled[i]));
+        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
+    });
+}
 
-            handlePOW.then((data) => dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data })));
-            handleFreq.then((data) => dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data })));
+function updatedCycleAutoLimits(plot: OpenSee.IGraphstate, start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
+    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
 
-            result.push(handlePOW);
-            result.push(handleFreq);
-            break;
-
-        case ('THD'):
-            let thdDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}&fullRes=1`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            thdDataHandle.then((data) => {
-                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
-            })
-            result.push(thdDataHandle);
-            break;
-
-        case ('Harmonic'):
-            let specifiedHarmonicDataHandle = $.ajax({
-                type: "GET",
-                url: `${homePath}api/Analytic/GetSpecifiedHarmonicData?eventId=${key.EventId}&fullRes=1` +
-                    `&specifiedHarmonic=${options.Harmonic}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: 'json',
-                cache: true,
-                async: true
-            });
-            specifiedHarmonicDataHandle.then((data) => {
-                dispatch(DataReducer.actions.ReplaceData({ key: key, data: data.Data }));
-            })
-            result.push(specifiedHarmonicDataHandle);
-            break;
-
-        default:
-            return [];
-    }
-
-    return result;
+    RelevantAxis.forEach((axis) => {
+        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
+        if (!autoLimits || plot.key.DataType != 'OverlappingWave')
+            return;
+        plot.yLimits[axis].dataLimits = recomputeDataLimits(start, end,
+            plot.data.filter((item, i) => plot.enabled[i]));
+        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
+    });
 }
 // #endregion
 
@@ -1376,22 +948,7 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
 }
 
 
-//function that finds the index of a corrsponding t
-function getIndex(t: number, data: Array<[number, number]>): number {
-    if (data.length < 2)
-        return NaN;
-    let dP = data[1][0] - data[0][0];
 
-    if (t < data[0][0])
-        return 0;
-
-    if (t > data[data.length - 1][0])
-        return (data.length - 1);
-    let deltaT = t - data[0][0];
-
-    return Math.floor(deltaT / dP);
-
-}
 
 //function that Updates the Current Units if they are on auto
 function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
@@ -1532,4 +1089,4 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
     return data.map(item => false);
 }
 
-// #endregion`
+// #endregion` */

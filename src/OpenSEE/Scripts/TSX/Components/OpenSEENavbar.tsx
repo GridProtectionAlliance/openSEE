@@ -24,10 +24,22 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { clone } from 'lodash';
-import { useSelector } from 'react-redux'
 import store from '../store/store';
-import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, selectZoomMode, selectEventID, selectAnalytic, selectFFTLimits, selectLoadVoltages, AddPlot, RemovePlot } from '../store/dataSlice';
-import { SelectdisplayAnalogs, SelectdisplayCur, SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt, SelectNavigation, SelectTab, SetNavigation, SetdisplayVolt, SetdisplayCur, SetdisplayAnalogs, SetdisplayDigitals, SetdisplayTCE } from '../store/settingSlice';
+import {
+    selectMouseMode,
+    SetMouseMode,
+    ResetZoom,
+    SetZoomMode,
+    selectZoomMode,
+    selectEventID,
+    selectAnalytic,
+    selectFFTLimits,
+    selectLoadVoltages, AddPlot, RemovePlot
+} from '../store/dataSlice';
+import {
+    SelectNavigation, SelectTab, SetNavigation, SetdisplayVolt, SetdisplayCur, SetdisplayAnalogs, SetdisplayDigitals, SetdisplayTCE
+} from '../store/settingSlice';
+import { selectDisplayed } from '../store/dataSlice';
 import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
 import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, Pan, FFT, Reset, Square, ValueRect, TimeRect, Settings, Help, ShowPoints, CorrelatedSags } from '../Graphs/ChartIcons';
 import { ToolTip } from '@gpa-gemstone/react-interactive';
@@ -64,11 +76,7 @@ const OpenSeeNavBar = (props: IProps) => {
     const analytic = useAppSelector(selectAnalytic);
     const navigation = useAppSelector(SelectNavigation);
 
-    const showVolts = useAppSelector(SelectdisplayVolt);
-    const showCurr = useAppSelector(SelectdisplayCur);
-    const showDigitals = useAppSelector(SelectdisplayDigitals);
-    const showAnalog = useAppSelector(SelectdisplayAnalogs);
-    const showTCE = useAppSelector(SelectdisplayTCE);
+    const showPlots = useAppSelector(selectDisplayed);
     const tab = useAppSelector(SelectTab);
 
     const harmonic = useAppSelector(selectHarmonic);
@@ -107,32 +115,20 @@ const OpenSeeNavBar = (props: IProps) => {
     function tooglePlots(key: OpenSee.graphType) {
         let display;
         if (key == 'Voltage')
-            display = showVolts;
+            display = showPlots.Voltage;
         else if (key == 'Current')
-            display = showCurr;
+            display = showPlots.Current;
         else if (key == 'Analogs')
-            display = showAnalog;
+            display = showPlots.Analogs;
         else if (key == 'Digitals')
-            display = showDigitals;
+            display = showPlots.Digitals;
         else if (key == 'TripCoil')
-            display = showTCE;
+            display = showPlots.TripCoil;
 
         if (display)
             store.dispatch(RemovePlot({ DataType: key, EventId: eventID }))
         else
             store.dispatch(AddPlot({ DataType: key, EventId: eventID }))
-
-        if (key == 'Voltage')
-            store.dispatch(SetdisplayVolt(!display));
-        else if (key == 'Current')
-            store.dispatch(SetdisplayCur(!display));
-        else if (key == 'Analogs')
-            store.dispatch(SetdisplayAnalogs(!display));
-        else if (key == 'Digitals')
-            store.dispatch(SetdisplayDigitals(!display));
-        else if (key == 'TripCoil')
-            store.dispatch(SetdisplayTCE(!display));
-
     }
 
 
@@ -168,11 +164,11 @@ const OpenSeeNavBar = (props: IProps) => {
 
     function exportData(type) {
         window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
-            `${showVolts != undefined ? `&displayVolt=${showVolts}` : ``}` +
-            `${showCurr != undefined ? `&displayCur=${showCurr}` : ``}` +
-            `${showTCE != undefined ? `&displayTCE=${showTCE}` : ``}` +
-            `${showDigitals != undefined ? `&breakerdigitals=${showDigitals}` : ``}` +
-            `${showAnalog != undefined ? `&displayAnalogs=${showAnalog}` : ``}` +
+            `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
+            `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
+            `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
+            `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
+            `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
             `${tab == 'Analytic' && analytic != 'FFT' ? `&displayAnalytics=${analytic}` : ``}` +
             `${tab == 'Analytic' && analytic == 'LowPassFilter' ? `&filterOrder=${lpf}` : ``}` +
             `${tab == 'Analytic' && analytic == 'HighPassFilter' ? `&filterOrder=${hpf}` : ``}` +
@@ -231,31 +227,85 @@ const OpenSeeNavBar = (props: IProps) => {
                         <li className="nav-item" style={{ width: (analytic == 'FFT' ? 'calc(100% - 954px)' : 'calc(100% - 909px)'), textAlign: 'center' }}>
                         </li>
                         <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
-                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Waveform')} onMouseLeave={() => setHover('None')} data-tooltip={'waveform-btn'} data-toggle="dropdown" data-placement="bottom">
-                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
+                            <button type="button"
+                                className="btn btn-primary"
+                                style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                                disabled={mouseMode != 'zoom' && mouseMode != 'pan'}
+                                onMouseEnter={() => setHover('Waveform')}
+                                onMouseLeave={() => setHover('None')}
+                                data-tooltip={'waveform-btn'}
+                                data-toggle="dropdown" data-placement="bottom">
+                                <i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
-                            <div className= "dropdown-menu" style={{ maxHeight: window.innerHeight * 0.75, overflowY: 'auto', padding: '10 5', position: 'absolute', backgroundColor: '#fff', boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)', zIndex: 401, minWidth: '100%' }}>
+                            <div className="dropdown-menu"
+                                style={{
+                                    maxHeight: window.innerHeight * 0.75,
+                                    overflowY: 'auto',
+                                    padding: '10 5',
+                                    position: 'absolute',
+                                    backgroundColor: '#fff',
+                                    boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)',
+                                    zIndex: 401,
+                                    minWidth: '100%'
+                                }}>
                             <table className="table" style={{ margin: 0 }}>
                                 <tbody>
                                         <tr>
-                                            <td><input className="form-check-input " style={{ margin: 0 }} name="voltage" type="checkbox" onChange={() => tooglePlots('Voltage')} checked={showVolts} /></td>
-                                        <td><label className="form-check-label">Voltage</label></td> 
+                                            <td>
+                                                <input className="form-check-input"
+                                                style={{ margin: 0 }}
+                                                type="checkbox" onChange={() => tooglePlots('Voltage')}
+                                                checked={showPlots.Voltage} />
+                                            </td>
+                                            <td>
+                                                <label className="form-check-label">Voltage</label>
+                                            </td> 
                                     </tr>
                                         <tr>
-                                            <td><input className="form-check-input" style={{ margin: 0 }} name="current" type="checkbox" onChange={() => tooglePlots('Current')} checked={showCurr} /></td>
-                                        <td><label className="form-check-label">Current</label></td>
+                                            <td>
+                                                <input className="form-check-input"
+                                                    style={{ margin: 0 }}
+                                                    type="checkbox"
+                                                    onChange={() => tooglePlots('Current')}
+                                                    checked={showPlots.Current} />
+                                            </td>
+                                            <td>
+                                                <label className="form-check-label">Current</label>
+                                            </td>
                                     </tr>
                                         <tr>
-                                            <td><input className="form-check-input" style={{ margin: 0 }} name="analog" type="checkbox" onChange={() => tooglePlots('Analogs')} checked={showAnalog} /></td>
+                                            <td>
+                                                <input className="form-check-input"
+                                                    style={{ margin: 0 }}
+                                                    type="checkbox"
+                                                    onChange={() => tooglePlots('Analogs')}
+                                                    checked={showPlots.Analogs} />
+                                            </td>
                                         <td><label className="form-check-label">Analogs</label></td>
                                     </tr>
                                         <tr>
-                                            <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => tooglePlots('Digitals')} checked={showDigitals} /></td>
-                                        <td><label className="form-check-label">Digitals</label></td>
+                                            <td>
+                                                <input className="form-check-input"
+                                                    style={{ margin: 0 }}
+                                                    type="checkbox"
+                                                    onChange={() => tooglePlots('Digitals')}
+                                                    checked={showPlots.Digitals} />
+                                            </td>
+                                            <td>
+                                                <label className="form-check-label">Digitals</label>
+                                            </td>
                                     </tr>
                                         <tr>
-                                            <td><input className="form-check-input" style={{ margin: 0 }} name="digitals" type="checkbox" onChange={() => tooglePlots('TripCoil')} checked={showTCE} /></td>
-                                        <td><label className="form-check-label">Trip Coil E.</label></td>
+                                            <td>
+                                                <input className="form-check-input"
+                                                    style={{ margin: 0 }}
+                                                    name="digitals"
+                                                    onChange={() => tooglePlots('TripCoil')}
+                                                    checked={showPlots.TripCoil} />
+                                            </td>
+                                            <td>
+                                                <label className="form-check-label">Trip Coil E.</label>
+                                            </td>
                                     </tr>
                                 </tbody>
                             </table>

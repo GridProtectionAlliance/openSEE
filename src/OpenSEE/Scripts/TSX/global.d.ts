@@ -36,18 +36,20 @@ declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
 export namespace OpenSee {
 
-    interface iEventInfoObject {
+    interface IEventInfo {
         MeterName: string,
         StationName: string,
         AssetName: string,
         EventName: string,
         EventDate: string,
+        
       }
 
-    interface iEventInfoStore {
-        eventInfo: iEventInfoObject,
-        error: boolean,
-        loading: boolean
+    interface IEventStore {
+        EventInfo: IEventInfo,
+        State: LoadingState,
+        EventID: number,
+        Navigation: EventNavigation
     }
 
     
@@ -129,9 +131,6 @@ export namespace OpenSee {
 
     type Tab = ("Info" | "Compare" | "Analytic")
 
-    interface iAnalyticParamters { harmonic: number, order: number, tRC: number, fftWindow: number }
-
-
     type MouseMode = ("zoom" | "select" | 'pan'| 'none' | 'fftMove')
     type ZoomMode = ("x" | "y" | 'xy')
 
@@ -155,47 +154,6 @@ export namespace OpenSee {
         DataPoints: Array<[number, number]>,
         DataMarker: Array<[number, number]>,
         LineType?: ('-'|':')
-    }
-
-    interface IPoint {
-        Color: Color,
-        Name: string,
-        Value: number,
-        Unit: iUnitOptions,
-        PrevValue?: number,
-        BaseValue: number,
-        Time: number,
-    }
-
-    interface IVector {
-        Color: Color,
-        Unit: iUnitOptions,
-        Phase: string,
-        Magnitude: number,
-        Angle: number,
-        Asset: string,
-        PhaseUnit: iUnitOptions,
-        BaseValue: number,
-    }
-
-    interface IFFTSeries {
-        Color: Color,
-        Unit: iUnitOptions,
-        Phase: string,
-        Magnitude: number[],
-        Angle: number[],
-        Frequency: number [],
-        Asset: string,
-        PhaseUnit: iUnitOptions,
-        BaseValue: number,
-    }
-
-    interface IPointCollection {
-        Group: string,
-        Name: string,
-        Unit: iUnitOptions,
-        Value: Array<[number, number]>,
-        BaseValue: number
     }
 
     // Settings For Plots 
@@ -265,17 +223,19 @@ export namespace OpenSee {
         Units: IUnitCollection<IUnitSetting>,
         Colors: IColorCollection,
         TimeUnit: IUnitSetting,
-        SnapToPoint: boolean,
         SinglePlot: boolean,
-        displayVolt: boolean,
-        displayCur: boolean,
-        displayTCE: boolean,
-        displayDigitals: boolean,
-        displayAnalogs: boolean,
-        Tab: Tab,
-        Navigation: EventNavigation,
         DefaultTrace: IDefaultTrace,
         DefaultVType: 'L-L'| 'L-N',
+    }
+
+
+    interface IGraphstate {
+        key: OpenSee.IGraphProps,
+        data: OpenSee.iD3DataSeries[],
+        loading: LoadingState,
+        yLimits: IUnitCollection<IAxisSettings>,
+        isZoomed: boolean,
+        selectedIndixes: number[],
     }
 
     interface IUnitSetting {
@@ -290,6 +250,7 @@ export namespace OpenSee {
         Pk: boolean,
         Ph: boolean
     }
+
     interface iUnitOptions {
         label: string,
         short: string,
@@ -309,23 +270,10 @@ export namespace OpenSee {
         hover:  [number,number],
         mouseMode: OpenSee.MouseMode,
         zoomMode: OpenSee.ZoomMode,
-        eventID: number,
-        Analytic: Analytic,
-
-        plotKeys: OpenSee.IGraphProps[],
-        data: Array<OpenSee.iD3DataSeries>[],
-        enabled: Array<boolean>[],
-        loading: LoadingState[],
-        activeRequest: string[]
-        yLimits: IUnitCollection<IAxisSettings>[],
-        isZoomed: boolean[],
-
-        selectedIndixes: Array<number>[],
-        cycleLimit: [number,number],
-        fftLimits: [number, number],
+        Plots: OpenSee.IGraphstate[],
     }
 
-    type LoadingState = ('Idle' | 'Loading' | 'Partial');
+    type LoadingState = ('Idle' | 'Loading' | 'Partial' | 'Error' | 'Uninitiated');
 
     interface IAnalyticStore {
         Harmonic: number,
@@ -334,22 +282,15 @@ export namespace OpenSee {
         Trc: number,
         FFTCycles: number,
         FFTStartTime: number,
+        Analytic: Analytic,       
     }
 
-    interface IEventStore {
+    interface IOverlappingEventsStore {
         EventList: Array<number>,
         Selected: Array<boolean>,
         Label: Array<string>,
         Group: Array<string>,
         loadingOverlappingEvents: boolean
-    }
-    //Redux Root State
-    interface IRootState {
-        Settings: ISettingsState,
-        Data: IDataState,
-        Analytic: IAnalyticStore,
-        Event: IEventStore,
-        EventInfo: iEventInfoStore 
     }
 
     interface IUnitCollection<T> {
@@ -377,12 +318,52 @@ export namespace OpenSee {
         zoomedLimits: [number, number],
         label: string
     }
-    // for Redux to store active units (in case of Auto Unit)
-    interface IActiveUnits extends IUnitCollection<number> { }
 
     interface IOverlayHandlers {
         Settings: (state: boolean) => void,
     }
 
-    type OverlayDrawers = 'Settings'|'Info'|'Tooltip'|'Phasor'
+    type OverlayDrawers = 'Settings' | 'Info' | 'Tooltip' | 'Phasor'
+
+    interface IPoint {
+        Color: Color,
+        Name: string,
+        Value: number,
+        Unit: iUnitOptions,
+        PrevValue?: number,
+        BaseValue: number,
+        Time: number,
+    }
+
+    interface IVector {
+        Color: Color,
+        Unit: iUnitOptions,
+        Phase: string,
+        Magnitude: number,
+        Angle: number,
+        Asset: string,
+        PhaseUnit: iUnitOptions,
+        BaseValue: number,
+    }
+
+    interface IFFTSeries {
+        Color: Color,
+        Unit: iUnitOptions,
+        Phase: string,
+        Magnitude: number[],
+        Angle: number[],
+        Frequency: number[],
+        Asset: string,
+        PhaseUnit: iUnitOptions,
+        BaseValue: number,
+    }
+
+    interface IPointCollection {
+        Group: string,
+        Name: string,
+        Unit: iUnitOptions,
+        Value: Array<[number, number]>,
+        BaseValue: number
+    }
+
 }

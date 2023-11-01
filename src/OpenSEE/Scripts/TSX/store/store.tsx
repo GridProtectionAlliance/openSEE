@@ -30,19 +30,13 @@ import EventInfoReducer from './infoSlice'
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>
 
-const store = configureStore({
-    reducer: {
-        Settings: SettingsReducer,
-        Data: DataReducer,
-        Analytic: AnalyticReducer,
-        Event: EventReducer,
-        EventInfo: EventInfoReducer,
-    },
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-            serializableCheck: false,
-            immutableCheck: false
-        }),
-});
+const reducer = {
+    Settings: SettingsReducer,
+    Data: DataReducer,
+    Analytic: AnalyticReducer,
+    OverlappingEvents: EventReducer,
+    EventInfo: EventInfoReducer,
+}
+const store = configureStore({ reducer } );
 
 export default store;

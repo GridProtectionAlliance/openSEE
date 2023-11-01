@@ -26,6 +26,8 @@ import _ from 'lodash';
 import { defaultSettings } from '../defaults';
 import { createSelector } from 'reselect';
 import * as queryString from "query-string";
+import { RootState } from './store';
+import { selectAnalyticOptions } from './analyticSlice';
 
 export const SettingsReducer = createSlice({
     name: 'Settings',
@@ -33,17 +35,8 @@ export const SettingsReducer = createSlice({
         Units: {} as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
-        SinglePlot: true as boolean,
-        displayVolt: true as boolean,
-        displayCur: true as boolean,
-        displayTCE: false as boolean,
-        displayDigitals: false as boolean,
-        displayAnalogs: false as boolean,
-        Tab: 'Info' as OpenSee.Tab,
-        Navigation: 'system' as OpenSee.EventNavigation,
         DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
         DefaultVType: "L-L",
-
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
@@ -83,26 +76,8 @@ export const SettingsReducer = createSlice({
             state.SinglePlot = false;
             SaveSettings(state);
         },
-        SetdisplayVolt: (state, action: PayloadAction<boolean>) => {
-            state.displayVolt = action.payload;
-        },
-        SetdisplayCur: (state, action: PayloadAction<boolean>) => {
-            state.displayCur = action.payload;
-        }, 
-        SetdisplayTCE: (state, action: PayloadAction<boolean>) => {
-            state.displayTCE = action.payload;
-        }, 
-        SetdisplayDigitals: (state, action: PayloadAction<boolean>) => {
-            state.displayDigitals = action.payload;
-        },
-        SetdisplayAnalogs: (state, action: PayloadAction<boolean>) => {
-            state.displayAnalogs = action.payload;
-        },
         SetTab: (state, action: PayloadAction<OpenSee.Tab>) => {
             state.Tab = action.payload;
-        },
-        SetNavigation: (state, action: PayloadAction<OpenSee.EventNavigation>) => {
-            state.Navigation = action.payload;
         },
         SetDefaultTrace: (state, action: PayloadAction<OpenSee.IDefaultTrace>) => {
             state.DefaultTrace = action.payload;
@@ -114,91 +89,98 @@ export const SettingsReducer = createSlice({
         }
     },
     extraReducers: (builder) => {
-
-
     }
 
 });
 
-export const { LoadSettings, SetColor, SetUnit, SetTimeUnit, SetSinglePlot,
-    SetdisplayAnalogs, SetdisplayCur, SetdisplayDigitals, SetdisplayTCE, SetdisplayVolt,
-    SetNavigation, SetTab, SetDefaultTrace, SetDefaultVType
+export const {
+    LoadSettings, SetColor, SetUnit,
+    SetTimeUnit, SetSinglePlot,
+    SetTab, SetDefaultTrace, SetDefaultVType
 } = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
 // #endregion
 
 // #region [ Selectors ]
-export const selectColor = (state: OpenSee.IRootState) => state.Settings.Colors;
-export const selectUnit = (state: OpenSee.IRootState) => state.Settings.Units;
+export const selectColor = (state: RootState) => state.Settings.Colors;
+export const selectUnit = (state: RootState) => state.Settings.Units;
 
-export const selectdefaultTraces = (state: OpenSee.IRootState) => state.Settings.DefaultTrace;
-export const selectVTypeDefault = (state: OpenSee.IRootState) => state.Settings.DefaultVType;
+export const selectDefaultTraces = (state: RootState) => state.Settings.DefaultTrace;
+export const selectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
 
-export const selectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
-    selectUnit,
-    (state: OpenSee.IRootState) => state.Data.plotKeys,
-    (state: OpenSee.IRootState) => state.Data.activeUnits,
-    (state: OpenSee.IRootState) => false,
-    (baseUnits, data, activeUnits, singlePlot) => {
-        let result = {};
-        let index = data.findIndex(item => item.DataType == key.DataType && item.EventId == key.EventId);
-        if (index == -1)
-            return null;
+export const selectTimeUnit = (state: RootState) => state.Settings.TimeUnit;
+export const selectEventOverlay = (state: RootState) => state.Settings.SinglePlot
 
-        if (!singlePlot)
-            Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[activeUnits[index][u]]);
-        else {
-            let actives = activeUnits.filter((v, i) => data[i].DataType == key.DataType);
-            Object.keys(baseUnits).forEach(u => result[u] = baseUnits[u].options[CombineUnits(actives.map(i => i[u]), baseUnits[u])]);
-        }
-           
-        return result
-    }
-);
-
-
-export const selectTimeUnit = (state: OpenSee.IRootState) => state.Settings.TimeUnit;
-export const selectEventOverlay = (state: OpenSee.IRootState) => state.Settings.SinglePlot
-export const SelectdisplayVolt = (state: OpenSee.IRootState) => state.Settings.displayVolt
-export const SelectdisplayCur = (state: OpenSee.IRootState) => state.Settings.displayCur
-export const SelectdisplayTCE = (state: OpenSee.IRootState) => state.Settings.displayTCE
-export const SelectdisplayDigitals = (state: OpenSee.IRootState) => state.Settings.displayDigitals
-export const SelectdisplayAnalogs = (state: OpenSee.IRootState) => state.Settings.displayAnalogs
-
-export const SelectTab = (state: OpenSee.IRootState) => state.Settings.Tab;
-export const SelectNavigation = (state: OpenSee.IRootState) => state.Settings.Navigation;
-
-const SelectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
-    SelectTab, SelectNavigation,
-    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs, tab, navigation) => {
+const selectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
+    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs) => {
         let obj = {
             displayVolt: displayVolt, displayCur: displayCur, displayTCE: displayTCE, displayDigitals: displayDigitals, displayAnalogs: displayAnalogs,
-            Tab: tab, Navigation: navigation
         };
         return queryString.stringify(obj, { encode: false });
     });
 
-const SelectDataQuery = createSelector(
-    (state: OpenSee.IRootState) => state.Data.startTime,
-    (state: OpenSee.IRootState) => state.Data.endTime,
-    (state: OpenSee.IRootState) => state.Data.eventID,
-    (state: OpenSee.IRootState) => state.Data.mouseMode,
-    (state: OpenSee.IRootState) => state.Data.zoomMode,
-    (state: OpenSee.IRootState) => state.Data.Analytic,
-    SelectTab,
-    (startTime, endTime, eventID, mouseMode, zoomMode, Analytic, tab) => {
+const selectDataQuery = createSelector(
+    (state: RootState) => state.Data.startTime,
+    (state: RootState) => state.Data.endTime,
+    (state: RootState) => state.Data.mouseMode,
+    (state: RootState) => state.Data.zoomMode,
+    (startTime, endTime, mouseMode, zoomMode) => {
         let obj = {
-            startTime: startTime, endTime: endTime, eventID: eventID, mouseMode: mouseMode, zoomMode: zoomMode
+            startTime: startTime,
+            endTime: endTime,
+            mouseMode: mouseMode,
+            zoomMode: zoomMode
         };
-        if (tab == 'Analytic')
-            obj['Analytic'] = Analytic;
+      
 
         return queryString.stringify(obj, { encode: false });
     });
 
-export const SelectQueryString = createSelector(SelectSettingQuery, SelectDataQuery, (settingsQuery, dataQuery) => {
-    return settingsQuery + '&' + dataQuery;
+const selectEventQuery = createSelector(
+    (state: RootState) => state.EventInfo.EventID,
+    (state: RootState) => state.EventInfo.Navigation,
+    (evtID, navigation) => {
+        let obj = {
+            eventID: evtID,
+            Navigation: navigation
+        };
+        return queryString.stringify(obj, { encode: false });
+    });
+
+const selectAnalyticQuery = createSelector(
+    (state: RootState) => state.Analytic.Analytic,
+    (state: RootState) => state.Analytic.LPFOrder,
+    (state: RootState) => state.Analytic.HPFOrder,
+    (state: RootState) => state.Analytic.Harmonic,
+    (state: RootState) => state.Analytic.Trc,
+    (state: RootState) => state.Analytic.FFTCycles,
+    (state: RootState) => state.Analytic.FFTStartTime,
+    (analytic, lpf,hpf,harmonic, trc, fftCycle, fftStart) => {
+        let obj = {};
+        if (analytic !== 'none')
+            obj['Analytic'] = analytic;
+        if (analytic == 'LowPassFilter')
+            obj['LPF'] = lpf;
+        if (analytic == 'HighPassFilter')
+            obj['HPF'] = hpf;
+        if (analytic == 'Harmonic')
+            obj['Harmonic'] = harmonic;
+        if (analytic == 'Rectifier')
+            obj['Trc'] = trc;
+        if (analytic == 'FFT') {
+            obj['fftCycle'] = fftCycle
+            obj['fftStart'] = fftStart
+        }
+
+        return queryString.stringify(obj, { encode: false });
+    });
+
+export const selectQueryString = createSelector(
+    selectSettingQuery, selectDataQuery, selectEventQuery,
+    selectAnalyticQuery,
+    (settingsQuery, dataQuery, eventQuery, analyticQuery) => {
+        return settingsQuery + '&' + dataQuery + '&' + eventQuery + '&' + analyticQuery;
 })
 
 // #endregion
@@ -264,14 +246,3 @@ function GetSettings(): OpenSee.ISettingsState {
 }
 // #endregion
 
-// #region [Helper Functions ]
-function CombineUnits(units: number[], baseUnit: OpenSee.IUnitSetting): number {
-    if (baseUnit.options[baseUnit.current] == undefined || baseUnit.options[baseUnit.current].short != 'auto')
-        return units[0];
-    // In that case we pick that with the smallest Factor
-    let f = Math.min(...units.map(b => baseUnit.options[b]).filter(u => u.short != 'auto' && u.short != 'pu' && u.short != 'pu/s').map(u => u.factor));
-
-    return units.find(b => baseUnit.options[b].factor == f);
-}
-
-// #endregion
