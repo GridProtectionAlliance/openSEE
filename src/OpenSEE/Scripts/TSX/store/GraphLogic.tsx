@@ -35,7 +35,6 @@ const defaultLimits = {
 export const emptygraph: OpenSee.IGraphstate = {
     key: null,
     data: [],
-    enabled: [] as boolean[],
     loading: 'Idle',
     isZoomed: false,
     yLimits: {

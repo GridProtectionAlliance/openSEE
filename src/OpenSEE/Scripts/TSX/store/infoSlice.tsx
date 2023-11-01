@@ -2,12 +2,11 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import { OpenSee } from '../global';
 declare var homePath: string;
 
-export const selectEventInfo = (state) => state?.EventInfo?.eventInfo
-
-export const setEventInfo = createAsyncThunk("eventInfo/setEventInfo", async (urlData: { eventID: number, breakeroperation: string }, thunkAPI) => {
-  const data = await $.ajax({
+export const SetEventInfo = createAsyncThunk("eventInfo/setEventInfo", async (arg: { breakeroperation: string }, thunkAPI) => {
+    const eventID = ((thunkAPI.getState() as any).EventInfo as OpenSee.IEventStore).EventID;
+    const data = await $.ajax({
       type: "GET",
-      url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${urlData.eventID}${urlData.breakeroperation != undefined ? "&breakeroperation=" + urlData.breakeroperation : ""}`,
+        url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${eventID}${arg.breakeroperation != undefined ? "&breakeroperation=" + arg.breakeroperation : ""}`,
       dataType: 'json',
       cache: true,
       async: true
@@ -15,39 +14,40 @@ export const setEventInfo = createAsyncThunk("eventInfo/setEventInfo", async (ur
   return data
 })
 
-
 const eventInfoSlice = createSlice({
   name: "eventInfo",
   initialState: {
-    eventInfo: {
+    EventInfo: {
       MeterName: "",
       StationName: "",
       AssetName: "",
       EventName: "",
       EventDate: "",
-    },
-    error: false ,
-    loading: false 
-  } as OpenSee.iEventInfoStore,
+      },
+      State: 'Idle',
+      EventID: 0,
+      Navigation: 'system' 
+  } as OpenSee.IEventStore,
   reducers: {
 
   },
   extraReducers: (builder) => {
-    builder.addCase(setEventInfo.pending, (state, action) => {
-      state.loading = true
+      builder.addCase(SetEventInfo.pending, (state, action) => {
+          state.State = 'Loading'
     });
     
-    builder.addCase(setEventInfo.rejected, (state, action) => {
-      state.loading = false
-      state.error = true
+    builder.addCase(SetEventInfo.rejected, (state, action) => {
+          state.State = 'Error'
     });
 
-    builder.addCase(setEventInfo.fulfilled, (state, action) => {
-      state.eventInfo = action.payload
-      state.loading = false
-      state.error = false
+    builder.addCase(SetEventInfo.fulfilled, (state, action) => {
+      state.EventInfo = action.payload
+      state.State = 'Idle'
     })
   }
 })
+
+
+export const SelectEventInfo = (state) => state?.EventInfo?.eventInfo
 
 export default eventInfoSlice.reducer

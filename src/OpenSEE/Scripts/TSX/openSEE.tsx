@@ -46,7 +46,10 @@ import {
     SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
         SelectTab
 } from './store/settingSlice';
-import { SetTimeLimit,  selectListGraphs, SetAnalytic, selectAnalytic } from './store/dataSlice';
+import {
+    SetTimeLimit, selectListGraphs,
+    SetAnalytic, selectAnalytic
+} from './store/dataSlice';
 import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
 import { setEventInfo } from "./store/infoSlice"
 import OverlappingEventWindow from './Components/MultiselectWindow';
@@ -78,10 +81,8 @@ const OpenSeeHome = () => {
     const [eventData, setEventData] = React.useState<OpenSee.iPostedData>(null);
     const [lookup, setLookup] = React.useState<OpenSee.iNextBackLookup>(null);
 
-    // not sure what this is used for
-    const [breakeroperation, setBreakeroperation] = React.useState<string>("");
-
     const eventID = useAppSelector(state => state.Data.eventID);
+
     const graphList = useAppSelector(selectListGraphs);
     const numberCompareGraphs = useAppSelector(selectNumberCompare);
     const eventGroup = useAppSelector(selecteventList);

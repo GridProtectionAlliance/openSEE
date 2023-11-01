@@ -25,35 +25,47 @@ import { OpenSee } from '../global';
 import _ from 'lodash';
 import { createSelector } from 'reselect'
 import { UpdateAnalyticPlot } from './dataSlice';
+import { RootState } from './store';
 
+interface IAnalyticSettings {
+    Harmonic?: number,
+    LPFOrder?: number,
+    HPFOrder?: number,
+    Trc?: number,
+    FFTCycles?: number,
+}
 // #region [ Thunks ]
-// Because this needs to dispatch the GetData from dataSlice all of these are Thunks
-export const SetHarmonic = createAsyncThunk('Analytic/SetHarmonic', (arg: number, thunkAPI) => {
-    thunkAPI.dispatch(AnalyticReducer.actions.updateHarmonic(arg));
-    thunkAPI.dispatch(UpdateAnalyticPlot());
-    return Promise.resolve();
+
+export const SetAnalytic = createAsyncThunk('Analytic/SetAnalytic',
+    async (arg: OpenSee.Analytic, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+    return thunkAPI.dispatch(UpdateAnalyticPlot(
+        {
+            eventID: state.EventInfo.EventID,
+            analyticStore: state.Analytic
+        }));
 })
 
-export const SetHPF = createAsyncThunk('Analytic/SetHPF', (arg: number, thunkAPI) => {
-    thunkAPI.dispatch(AnalyticReducer.actions.updateHPF(arg));
-    thunkAPI.dispatch(UpdateAnalyticPlot());
-    return Promise.resolve();
-})
-export const SetLPF = createAsyncThunk('Analytic/SetLPF', (arg: number, thunkAPI) => {
-    thunkAPI.dispatch(AnalyticReducer.actions.updateLPF(arg));
-    thunkAPI.dispatch(UpdateAnalyticPlot());
-    return Promise.resolve();
-})
-export const SetTrc = createAsyncThunk('Analytic/SetTrc', (arg: number, thunkAPI) => {
-    thunkAPI.dispatch(AnalyticReducer.actions.updateTrc(arg));
-    thunkAPI.dispatch(UpdateAnalyticPlot());
-    return Promise.resolve();
+export const SetAnalyticSettings = createAsyncThunk('Analytic/SetAnalyticSettings',
+    async (arg: IAnalyticSettings, thunkAPI) => {
+        const state = thunkAPI.getState() as RootState;
+        return thunkAPI.dispatch(UpdateAnalyticPlot(
+            {
+                eventID: state.EventInfo.EventID,
+                analyticStore: state.Analytic
+            }));
 })
 
-export const SetFFTWindow = createAsyncThunk('Analytic/SetFFTWindow', (arg: { startTime: number, cycle: number }, thunkAPI) => {
-    thunkAPI.dispatch(AnalyticReducer.actions.updateFFTWindow(arg));
-    thunkAPI.dispatch(UpdateAnalyticPlot());
-    return Promise.resolve();
+export const SetFFTWindow = createAsyncThunk('Analytic/SetFFTWindow',
+    async (arg: { startTime: number, cycle: number }, thunkAPI) => {
+        const state = thunkAPI.getState() as RootState;
+        if (state.Analytic.Analytic === 'FFT')
+            return thunkAPI.dispatch(UpdateAnalyticPlot(
+                {
+                    eventID: state.EventInfo.EventID,
+                  analyticStore: state.Analytic
+                }));
+        return Promise.resolve();
 })
 
 // #endregion
@@ -67,35 +79,30 @@ export const AnalyticReducer = createSlice({
         Trc: 500,
         FFTCycles: 1,
         FFTStartTime: 0,
+        Analytic: 'none'
     } as OpenSee.IAnalyticStore,
-    reducers: {
-        updateHarmonic: (state, action: PayloadAction<number>) => {
-            state.Harmonic = action.payload;
-            return state;
-        },
-        updateLPF: (state, action: PayloadAction<number>) => {
-            state.LPFOrder = action.payload;
-            return state;
-        },
-        updateHPF: (state, action: PayloadAction<number>) => {
-            state.HPFOrder = action.payload;
-            return state;
-        },
-        updateTrc: (state, action: PayloadAction<number>) => {
-            state.Trc = action.payload;
-            return state;
-        },
-        updateFFTWindow: (state, action: PayloadAction<{ startTime: number, cycle: number }>) => {
-            state.FFTStartTime = action.payload.startTime;
-            state.FFTCycles = action.payload.cycle;
-            return state;
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
-
-
+        builder.addCase(SetAnalytic.pending, (state, action) => {
+            state.Analytic = action.meta.arg;
+        });
+        builder.addCase(SetAnalyticSettings.pending, (state, action) => {
+            if (action.meta.arg.Harmonic !== undefined)
+                state.Harmonic = action.meta.arg.Harmonic;
+            if (action.meta.arg.HPFOrder !== undefined)
+                state.HPFOrder = action.meta.arg.HPFOrder;
+            if (action.meta.arg.LPFOrder !== undefined)
+                state.LPFOrder = action.meta.arg.LPFOrder;
+            if (action.meta.arg.Trc !== undefined)
+                state.Trc = action.meta.arg.Trc;
+            if (action.meta.arg.FFTCycles !== undefined)
+                state.FFTCycles = action.meta.arg.FFTCycles;
+        }); 
+        builder.addCase(SetFFTWindow.pending, (state, action) => {
+            state.FFTCycles = action.meta.arg.cycle;
+            state.FFTStartTime = action.meta.arg.startTime;
+        });
     }
-
 });
 
 export const { } = AnalyticReducer.actions;
@@ -104,26 +111,26 @@ export default AnalyticReducer.reducer;
 // #endregion
 
 // #region [ Selectors ]
-export const selectHarmonic = (state: OpenSee.IRootState) => state.Analytic.Harmonic;
-export const selectTRC = (state: OpenSee.IRootState) => state.Analytic.Trc;
-export const selectLPF = (state: OpenSee.IRootState) => state.Analytic.LPFOrder;
-export const selectHPF = (state: OpenSee.IRootState) => state.Analytic.HPFOrder;
-export const selectCycles = (state: OpenSee.IRootState) => state.Analytic.FFTCycles;
-export const selectFFTWindow = createSelector((state: OpenSee.IRootState) => state.Analytic.FFTCycles, (state: OpenSee.IRootState) => state.Analytic.FFTStartTime,
-    (cycle, startTime) => {
-        return [startTime, startTime + (cycle * 1 / 60.0 * 1000.0)] as [number, number]
-    });
+export const selectHarmonic = (state: RootState) => state.Analytic.Harmonic;
+export const selectTRC = (state: RootState) => state.Analytic.Trc;
+export const selectLPF = (state: RootState) => state.Analytic.LPFOrder;
+export const selectHPF = (state: RootState) => state.Analytic.HPFOrder;
+export const selectCycles = (state: RootState) => state.Analytic.FFTCycles;
 
-export const selectShowFFTWindow = createSelector((state: OpenSee.IRootState) => state.Data.Analytic, (analytic) => analytic == "FFT");
+export const selectFFTWindow = createSelector(
+    (state: RootState) => state.Analytic.FFTCycles,
+    (state: RootState) => state.Analytic.FFTStartTime,
+    (cycle, startTime) => ([startTime, startTime + (cycle * 1 / 60.0 * 1000.0)] as [number, number])
+    );
 
 export const selectAnalyticOptions = (key: OpenSee.graphType) => {
     return createSelector(
-        (state: OpenSee.IRootState) => state.Analytic.Harmonic,
-        (state: OpenSee.IRootState) => state.Analytic.LPFOrder,
-        (state: OpenSee.IRootState) => state.Analytic.HPFOrder,
-        (state: OpenSee.IRootState) => state.Analytic.Trc,
-        (state: OpenSee.IRootState) => state.Analytic.FFTStartTime,
-        (state: OpenSee.IRootState) => state.Analytic.FFTCycles,
+        (state: RootState) => state.Analytic.Harmonic,
+        (state: RootState) => state.Analytic.LPFOrder,
+        (state: RootState) => state.Analytic.HPFOrder,
+        (state: RootState) => state.Analytic.Trc,
+        (state: RootState) => state.Analytic.FFTStartTime,
+        (state: RootState) => state.Analytic.FFTCycles,
         (harmonic, lpf, hpf, Trc, fftStart, fftCycle) => {
             if (key == 'LowPassFilter')
                 return [lpf];
