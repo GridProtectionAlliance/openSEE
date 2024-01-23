@@ -339,14 +339,31 @@ const OpenSeeHome = () => {
                                     (eventGroup.find(item => item.value == parseInt(key)) != undefined ? eventGroup.find(item => item.value == parseInt(key)).label : '')
                                 }</div>
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {plotData[key].sort(sortGraph).map(item => < LineChart
+                                                {graphList[key].sort(sortGraph).map(item => (
+                                                    item.DataType !== 'FFT' ?
+                                                        <LineChart
+                                                            key={item.DataType + item.EventId}
                                         eventId={item.EventId}
-                                        width={graphWidth}
+                                                            width={plotWidth}
                                         eventStartTime={evtStartTime.getTime()}
                                         height={GraphHeight}
                                         timeLabel={"Time"}
                                         type={item.DataType}
-                                    />)}
+                                                            showToolTip={openDrawers.ToolTipDelta}
+                                                        /> :
+                                                        <BarChart
+                                                            key={item.DataType + item.EventId}
+                                                            eventId={item.EventId}
+                                                            width={plotWidth}
+                                                            eventStartTime={evtStartTime.getTime()}
+                                                            height={GraphHeight}
+                                                            timeLabel={"Harmonic"}
+                                                            type={item.DataType}
+                                                        />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>)
                             }
