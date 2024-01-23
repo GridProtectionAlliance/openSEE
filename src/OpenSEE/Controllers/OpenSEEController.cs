@@ -649,11 +649,17 @@ namespace OpenSEE
 	                DISTINCT
 	                Meter.Name as MeterName,
 	                Asset.AssetName,
-	                Event.ID as EventID
+	                Event.ID as EventID,
+                    Event.StartTime,
+                    EventType.Name as EventType
                 FROM
-	                Event JOIN
-	                Meter ON Meter.ID = Event.MeterID JOIN
+	                Event
+                    JOIN
+	                Meter ON Meter.ID = Event.MeterID
+                    JOIN
 	                Asset ON Asset.ID = Event.AssetID
+                    JOIN
+                    EventType ON EventType.ID = Event.EventTypeID 
                 WHERE
 	                Event.ID != {0} AND  
 	                Event.StartTime <= {2} AND
