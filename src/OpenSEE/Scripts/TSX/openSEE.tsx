@@ -311,6 +311,26 @@ const OpenSeeHome = () => {
                                                 timeLabel={"Time"}
                                                 type={item.DataType}
                                             />))}
+                                                <div className="card-header">
+                                                    <div className="row">
+                                                        <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                            <span style={{ textAlign: 'center' }}>Meter:</span><br />
+                                                            {eventList.find(item => item.EventID == parseInt(key)).MeterName}
+                                                        </div>
+                                                        <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                            <span style={{ textAlign: 'center' }}>Asset:</span><br />
+                                                            {eventList.find(item => item.EventID == parseInt(key)).AssetName}
+                                                        </div>
+                                                        <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                            <span style={{ textAlign: 'center' }}>Type:</span><br />
+                                                            {eventList.find(item => item.EventID == parseInt(key)).EventType}
+                                                        </div>
+                                                        <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                            <span style={{ textAlign: 'center' }}>Inception:</span><br />
+                                                            {moment(eventList.find(item => item.EventID == parseInt(key)).StartTime).format('YYYY-MM-DD HH:mm:ss')}
+                                                        </div>
+
+                                                    </div>
                                     </div>
                                 </div> : null}
 
