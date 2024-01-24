@@ -749,7 +749,41 @@ export const selectCycleEnd = (state: OpenSee.IRootState) => state.Data.cycleLim
 
 export const selectEventID = (state: OpenSee.IRootState) => state.Data.eventID
 export const selectAnalytic = (state: OpenSee.IRootState) => state.Data.Analytic;
+export const selectIsManual = (key: OpenSee.IGraphProps) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (plots) => {
+        let plot = plots.find(p => p.key.DataType === key.DataType && p.key.EventId === key.EventId);
+        let result = {};
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(key => {
+                result[key] = plot.yLimits[key].isManual;
+            })
+            return result as OpenSee.IUnitCollection<boolean>;
+        }
 
+    }
+);
+
+export const selectIsOverlappingManual = (graphType: OpenSee.graphType) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (plots, evtID) => {
+        let overlappingPlots = plots.filter(p => p.key.DataType === graphType && p.key.EventId !== evtID);
+        let result = {};
+        if (overlappingPlots.length > 0) {
+            overlappingPlots.forEach(plot => {
+                let units = {}
+                Object.keys(plot.yLimits).forEach(key => {
+                    units[key] = plot.yLimits[key].isManual;
+                })
+                result[plot.key.DataType] = units as OpenSee.IUnitCollection<boolean>
+            })
+
+            return result;
+        }
+
+    }
+);
 
 
 //For SettingsWindow
