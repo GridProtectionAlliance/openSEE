@@ -744,6 +744,23 @@ export const selectOverlappingYLimits = (graphType: OpenSee.graphType) => {
             }
 
         });
+}
+
+export const selectLoading = (key: OpenSee.IGraphProps) => {
+    return (state: OpenSee.IRootState) => {
+        const plot = state.Data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        if (plot)
+            return plot.loading
+    };
+};
+
+export const selectZoomed = (key: OpenSee.IGraphProps) => {
+    return (state: OpenSee.IRootState) => {
+        const plot = state.Data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        if (plot)
+            return plot.isZoomed;
+    };
+};
 
 }
 
