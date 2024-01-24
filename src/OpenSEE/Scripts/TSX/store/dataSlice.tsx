@@ -1077,14 +1077,26 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
     if (type == 'RapidVoltage') 
         return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
     
+    if (type == 'Rectifier')
+        return data.map(item => item.LegendHorizontal === 'V')
+
     if (type == 'SymetricComp') 
         return data.map(item => (item.LegendVertical == 'Pos'))
     
+    if (type == 'THD')
+        return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
+
     if (type == 'Unbalance') 
-        return data.map(item => (item.LegendVertical == 'S1/S2'))
+        return data.map(item => (item.LegendVertical == 'S2/S1'))
     
     if (type == 'FFT') 
         return data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
+
+    if (type == 'Harmonic')
+        return data.map(item => (item.LegendHorizontal == 'Mag'))
+
+    if (type == 'RemoveCurrent')
+        return data.map(item => (item.LegendHorizontal == 'Pre'))
 
     return data.map(item => false);
 }

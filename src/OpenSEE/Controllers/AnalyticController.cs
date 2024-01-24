@@ -2543,7 +2543,7 @@ namespace OpenSEE
                 LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                LegendHorizontal = "Ang",
+                LegendHorizontal = "Ph",
                 LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
