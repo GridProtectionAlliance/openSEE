@@ -25,150 +25,238 @@
 
 import * as React from 'react';
 import { OpenSee } from '../global';
-import { selectAnalytic, SetAnalytic } from '../store/dataSlice';
-import { selectHarmonic, SetHarmonic, selectHPF, selectLPF, SetHPF, SetLPF, selectTRC, SetTrc, selectCycles, selectFFTWindow, SetFFTWindow } from '../store/analyticSlice';
+import { SelectHarmonic,SelectHPF, SelectLPF, SelectTRC, SelectCycles, UpdateAnalytic, SelectAnalytics } from '../store/analyticSlice';
+import { selectGraphTypes, RemovePlot, AddPlot, selectPlotTypes, SelectEventIDs } from '../store/dataSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
+import { BtnDropdown } from "@gpa-gemstone/react-interactive"
+import { Select } from "@gpa-gemstone/react-forms"
+import * as _ from 'lodash'
+import { ToInt } from '../store/queryThunk'
+import { plotLabels } from '../defaults'
 
-declare var cycles: number;
-declare var samplesPerCycle: number;
-
-
-interface IProps {}
-
-const AnalyticOptions = (props: IProps) => {
+const AnalyticOptions = () => {
     const dispatch = useAppDispatch();
-    const analytic = useAppSelector(selectAnalytic)
-    const harmonic = useAppSelector(selectHarmonic)
-    const hpf = useAppSelector(selectHPF)
-    const lpf = useAppSelector(selectLPF)
-    const trc = useAppSelector(selectTRC)
-    const cycles = useAppSelector(selectCycles);
-    const FFTWindow = useAppSelector(selectFFTWindow);
+    const harmonic = useAppSelector(SelectHarmonic)
+    const graphTypes = useAppSelector(selectGraphTypes)
+    const hpf = useAppSelector(SelectHPF)
+    const lpf = useAppSelector(SelectLPF)
+    const trc = useAppSelector(SelectTRC)
+    const cycles = useAppSelector(SelectCycles);
+    const analytics = useAppSelector(SelectAnalytics);
+    const plotTypes = useAppSelector(selectPlotTypes); 
 
-    function ChangeAnalytic(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetAnalytic(val));
-    }
-    function ChangeHarmonic(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetHarmonic(parseInt(val)));
-    }
-    function ChangeHPF(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetHPF(parseInt(val)));
-    }
-    function ChangeLPF(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetLPF(parseInt(val)));
-    }
-    function ChangeTRC(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetTrc(parseInt(val)));
-    }
-    function ChangeCycles(event) {
-        let val = event.target.value as OpenSee.Analytic;
-        dispatch(SetFFTWindow({ cycle: parseInt(val), startTime: FFTWindow[0] }));
+    const eventIDs = useAppSelector(SelectEventIDs)
+
+
+    const analyticDefaults = [
+        { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FaultDistance', EventId: id } }))), DataType: 'FaultDistance' },
+        { Label: 'FFT', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FFT', EventId: id } }))), DataType: 'FFT' },
+        { Label: 'First Derivative', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FirstDerivative', EventId: id } }))), DataType: "FirstDerivative" },
+        { Label: 'Fix Clipped Waveforms', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'ClippedWaveforms', EventId: id } }))), DataType: 'ClippedWaveforms' },
+        { Label: 'Frequency', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Frequency', EventId: id } }))), DataType: 'Frequency' },
+        { Label: 'High Pass', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'HighPassFilter', EventId: id } }))), DataType: 'HighPassFilter' },
+        { Label: 'Impedance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Impedance', EventId: id } }))), DataType: 'Impedance' },
+        { Label: 'Low Pass', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'LowPassFilter', EventId: id } }))), DataType: 'LowPassFilter' },
+        { Label: 'Missing Voltage', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'MissingVoltage', EventId: id } }))), DataType: 'MissingVoltage' },
+        { Label: 'Overlapping Waveform', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'OverlappingWave', EventId: id } }))), DataType: 'OverlappingWave' },
+        { Label: 'Power', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Power', EventId: id } }))), DataType: 'Power' },
+        { Label: 'Rapid Voltage Change', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'RapidVoltage', EventId: id } }))), DataType: 'RapidVoltage' },
+        { Label: 'Rectifier Output', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Rectifier', EventId: id } }))), DataType: 'Rectifier' },
+        { Label: 'Remove Current', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'RemoveCurrent', EventId: id } }))), DataType: 'RemoveCurrent' },
+        { Label: 'Specified Harmonic', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Harmonic', EventId: id } }))), DataType: 'Harmonic' },
+        { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'SymetricComp', EventId: id } }))), DataType: 'SymetricComp' },
+        { Label: 'THD', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'THD', EventId: id } }))), DataType: 'THD' },
+        { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Unbalance', EventId: id } }))), DataType: 'Unbalance' }
+    ];
+
+
+
+    const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(analyticDefaults)
+
+
+    const options = {
+        harmonic: [
+            { Label: '1', Value: '1' },
+            { Label: '2', Value: '2' },
+            { Label: '3', Value: '3' },
+            { Label: '4', Value: '4' },
+            { Label: '5', Value: '5' },
+        ],
+        order: [
+            { Label: '1', Value: '1' },
+            { Label: '2', Value: '2' },
+            { Label: '3', Value: '3' },
+        ],
+        trc: [
+            { Label: '100', Value: '100' },
+            { Label: '200', Value: '200' },
+            { Label: '500', Value: '500' },
+        ],
+        cycles: [
+            { Label: '1', Value: '1' },
+            { Label: '2', Value: '2' },
+            { Label: '3', Value: '3' },
+            { Label: '4', Value: '4' },
+            { Label: '5', Value: '5' },
+            { Label: '6', Value: '6' },
+            { Label: '7', Value: '7' },
+            { Label: '8', Value: '8' },
+            { Label: '9', Value: '9' },
+            { Label: '10', Value: '10' },
+            { Label: '11', Value: '11' },
+            { Label: '12', Value: '12' },
+            { Label: '13', Value: '13' },
+            { Label: '14', Value: '14' },
+            { Label: '15', Value: '15' },
+        ]
     }
 
-    return <div style={{ marginTop: '10px', width: '100%', height: '100%' }}>
-        <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%' }}>
-            <select onChange={(ev) => ChangeAnalytic(ev)} value={analytic} >
-                <option value={'FaultDistance'}> Fault Distance </option>
-                <option value={'FFT'}> FFT </option>
-                <option value={'FirstDerivative'}> First Derivative </option>
-                <option value={'ClippedWaveforms'}> Fix Clipped Waveforms </option>
-                <option value={'Frequency'}> Frequency </option>
-                <option value={'HighPassFilter'}> High Pass </option>
-                <option value={'Impedance'}> Impedance </option>
-                <option value={'LowPassFilter'}> Low Pass </option>
-                <option value={'MissingVoltage'}> Missing Voltage </option>
-                <option value={'OverlappingWave'}> Overlapping Waveform </option>
-                <option value={'Power'}> Power </option>
-                <option value={'RapidVoltage'}> Rapid Voltage Change</option>
-                <option value={'Rectifier'}>Rectifier Output </option>
-                <option value={'RemoveCurrent'}> Remove Current </option>
-                <option value={'Harmonic'}> Specified Harmonic </option>
-                <option value={'SymetricComp'}> Symmetrical Components </option>
-                <option value={'THD'}> THD</option>
-                <option value={'Unbalance'}> Unbalance </option>
-                {/*<option value={'Restrike'}> Breaker Restrike </option>*/}
-               
-            </select>
-        </form>
-        {analytic == "Harmonic" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li>
-                    <label> Harmonic: <select value={harmonic.toString()} onChange={(ev) => ChangeHarmonic(ev)}>
-                        <option value='1'>1</option>
-                        <option value='2'>2</option>
-                        <option value='3'>3</option>
-                        <option value='4'>4</option>
-                        <option value='5'>5</option>
-                    </select></label>
-                </li>
-            </ul>
-        </form> : null}
+    React.useEffect(() => {
+        const currentPlots = _.uniq(plotTypes)
 
-        {analytic == "HighPassFilter" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li>
-                    <label> Order: <select value={hpf.toString()} onChange={(ev) => ChangeHPF(ev)}>
-                        <option value='1'>1</option>
-                        <option value='2'>2</option>
-                        <option value='3'>3</option>
-                    </select></label>
-                </li>
-            </ul>
-        </form> : null}
-        {analytic == "LowPassFilter" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li>
-                    <label> Order: <select value={lpf.toString()} onChange={(ev) => ChangeLPF(ev)}>
-                        <option value='1'>1</option>
-                        <option value='2'>2</option>
-                        <option value='3'>3</option>
-                    </select></label>
-                </li>
-            </ul>
-        </form> : null}
-        {analytic == "Rectifier" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li>
-                    <label> RC Time Const. (ms): <select value={trc.toString()} onChange={(ev) => ChangeTRC(ev)}>
-                        <option value='0'>0</option>
-                        <option value='100'>100</option>
-                        <option value='200'>200</option>
-                        <option value='500'>500</option>
-                    </select></label>
-                </li>
-            </ul>
-        </form> : null}
-        {analytic == "FFT" ? < form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', padding: '10px', width: '90%', height: '100%', overflow: 'auto', marginLeft: '5%', marginRight: '5%', marginTop: '5%' }}>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li>
-                    <label> Cycles: <select value={cycles.toString()} onChange={(ev) => ChangeCycles(ev)}>
-                        <option value='1'>1</option>
-                        <option value='2'>2</option>
-                        <option value='3'>3</option>
-                        <option value='4'>4</option>
-                        <option value='5'>5</option>
-                        <option value='6'>6</option>
-                        <option value='7'>7</option>
-                        <option value='8'>8</option>
-                        <option value='9'>9</option>
-                        <option value='10'>10</option>
-                        <option value='11'>11</option>
-                        <option value='12'>12</option>
-                        <option value='13'>13</option>
-                        <option value='14'>14</option>
-                        <option value='15'>15</option>
-                    </select></label>
-                </li>
-            </ul>
-        </form> : null}
-    </div>
-} 
+        const filteredAnalyticBtns = analyticDefaults.filter(btn => !currentPlots.includes(btn.DataType as OpenSee.graphType));
+
+        setAnalyticBtns(filteredAnalyticBtns)
+    }, [plotTypes])
+
+
+
+    //nonanalytic plots & plots that need parameters
+    const dynamicPlots = ["Harmonic", "HighPassFilter", "LowPassFilter", "Rectifier", "FFT", "Voltage", "Current", "Analogs", 'Digitals', 'TripCoil']
+
+    return (
+        <>
+            <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
+                <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', height: '100%', width: '100%', overflowY: 'auto', padding: '10px', marginTop: 0 }}>
+                    <div style={{marginBottom: '20px'}}>
+                    <BtnDropdown // why is this refreshing the page??
+                        Label={analyticBtns[0].Label}
+                        Callback={() => false}
+                        Options={analyticBtns}
+                        />
+                    </div>
+                    {graphTypes.some(type => type.DataType === "Harmonic") && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>Harmonic</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end">
+                                        <Select
+                                            Record={{ harmonic }}
+                                            Field={'harmonic'}
+                                            Options={options.harmonic}
+                                            Setter={(harmonic) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic.harmonic) }, key: {DataType: "Harmonic", EventId: id} })))}
+                                            Label={"Harmonic:"}
+                                        />
+                                    </div>
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "Harmonic" })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    )}
+                    {graphTypes.some(type => type.DataType === "HighPassFilter") && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>High Pass Filter</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end">
+                                        <Select
+                                            Record={{ hpf }}
+                                            Field={'hpf'}
+                                            Options={options.order}
+                                            Setter={(hpf) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, HPFOrder: ToInt(hpf.hpf) }, key: { DataType: "HighPassFilter" , EventId: id} })))}
+                                            Label={"Order:"}
+                                        />
+                                    </div>
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "HighPassFilter" })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    )}
+                    {graphTypes.some(type => type.DataType === "LowPassFilter") && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>Low Pass Filter</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end">
+                                        <Select
+                                            Record={{ lpf }}
+                                            Field={'lpf'}
+                                            Options={options.order}
+                                            Setter={(lpf) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, LPFOrder: ToInt(lpf.lpf) }, key: { DataType: "LowPassFilter", EventId: id } }))) }
+                                            Label={"Order:"}
+                                        />
+                                    </div>
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "LowPassFilter" })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    )}
+                    {graphTypes.some(type => type.DataType === "Rectifier") && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end">
+                                        <Select
+                                            Record={{ trc }}
+                                            Field={'trc'}
+                                            Options={options.trc}
+                                            Setter={(trc) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, Trc: ToInt(trc.trc) }, key: { DataType: "Rectifier", EventId: id } }))) }
+                                            Label={"RC Time Const. (ms):"}
+                                        />
+                                    </div>
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "Rectifier" })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    )}
+                    {graphTypes.some(type => type.DataType === "FFT") && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end">
+                                        <Select
+                                            Record={{ cycles }}
+                                            Field={'cycles'}
+                                            Options={options.cycles}
+                                            Setter={(cycles) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, FFTCycles: ToInt(cycles.cycles) }, key: { DataType: "FFT" , EventId: id}  }))) }
+                                            Label={"Length(Cycles):"}
+                                        />
+                                    </div>
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "FFT" })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    )}
+                    {graphTypes.map(key => !dynamicPlots.includes(key.DataType) && (
+                        <div className="form-row">
+                            <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>{plotLabels[key.DataType]}</legend>
+                                <div className="row">
+                                    <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: key.DataType })))}>Remove</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    ))}
+                </form>
+            </div>
+        </>
+    );
+}
 
 
 export default AnalyticOptions;
-
