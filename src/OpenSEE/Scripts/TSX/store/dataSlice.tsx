@@ -300,30 +300,43 @@ export const DataReducer = createSlice({
         },
         /*
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
-            key: OpenSee.IGraphProps,
-            data: Array<OpenSee.iD3DataSeries>,
-            baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
-            requestID: string, defaultTraces: OpenSee.IDefaultTrace, defaultV: 'L-L' | 'L-N'
+            key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
+            defaultTraces: OpenSee.IDefaultTrace, defaultV: OpenSee.IDefaultVType,
+            eventID: number
         }>) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
+            let currentPlot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
 
-            if (plot.activeRequest != action.payload.requestID)
-                return state;
+            if (currentPlot) {
+                const isDuplicate = currentPlot.data.some(data => data.EventID === action.payload.eventID)
+                if (isDuplicate)
+                    return state
 
-            plot.data.push(...action.payload.data);
+                const orignalLength = currentPlot.data.length
+                //update plot with settings from local storage
+                loadSettings(currentPlot)
 
-            let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV,action.payload.data);
+                currentPlot.data.push(...action.payload.data);
+                const newLength = currentPlot.data.length
             
-            plot.enabled.push(...extendEnabled);
+                let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV, currentPlot.data);
 
-            updateAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
-            updateFFTAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
-            updatedCycleAutoLimits(plot, state.startTime, state.endTime, action.payload.baseUnits);
+                for (let i = orignalLength; i < newLength; i++) {
+                    currentPlot.data[i].Enabled = extendEnabled[i];
+                    currentPlot.data[i].EventID = action.payload.eventID
+                }
 
-            if (plot.key.DataType == 'FFT')
-                state.fftLimits = [Math.min(...plot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...plot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
+
+                if (currentPlot.key.DataType === 'FFT') {
+                    state.fftLimits = [Math.min(...currentPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...currentPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
+                    updateAutoLimits(currentPlot, state.fftLimits[0], state.fftLimits[1]);
+                } else if (currentPlot.key.DataType === 'OverlappingWave')
+                    updateAutoLimits(currentPlot, state.cycleLimit[0], state.cycleLimit[1]);
+                else
+                    updateAutoLimits(currentPlot, state.startTime, state.endTime);
+            }
 
             return state
+
         },
         ReplaceData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
             let plot = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
