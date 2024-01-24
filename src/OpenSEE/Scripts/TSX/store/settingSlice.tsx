@@ -211,15 +211,26 @@ export const SelectQueryString = createSelector(
         }
 );
 
-        return queryString.stringify(obj, { encode: false });
-    });
 
-export const selectQueryString = createSelector(
-    selectSettingQuery, selectDataQuery, selectEventQuery,
-    selectAnalyticQuery,
-    (settingsQuery, dataQuery, eventQuery, analyticQuery) => {
-        return settingsQuery + '&' + dataQuery + '&' + eventQuery + '&' + analyticQuery;
+export const SelectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
+    (state: OpenSee.IRootState) => state.Data,
+    (state) => {
+        const baseUnits = defaultSettings.Units
+        let result = {};
+        const plot = state.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
+        if (!plot)
+            return null
+
+        Object.keys(baseUnits).forEach(unit => {
+            if (plot.yLimits[unit])
+                result[unit] = baseUnits[unit].options[plot.yLimits[unit].current]
 })
+
+        return result
+    }
+
+);
+
 
 // #endregion
 
