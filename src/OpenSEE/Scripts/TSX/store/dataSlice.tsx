@@ -793,27 +793,29 @@ export const selectGraphTypes = createSelector((state: OpenSee.IRootState) => st
 });
 
 // For tooltip
-export const selectHoverPoints = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (baseUnit, eventID, hover, data, keys, enabled) => {
+export const selectHoverPoints = (hover: [number, number]) => createSelector(
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.Data,
+    (eventID, state) => {
         let result: OpenSee.IPoint[] = [];
 
-        data.forEach((item, index) => {
-            if (keys[index].EventId != eventID)
-                return;
-            if (item.length == 0)
-                return;
-            let dataIndex = getIndex(hover[0], item[0].DataPoints);
+        let filteredPlots = state.Plots.filter(plot => plot.key.EventId === eventID)
+
+        filteredPlots.forEach(plot => {
+            if (plot.data.length === 0) return;
+
+            let dataIndex = getIndex(hover[0], plot.data[0].DataPoints);
             if (isNaN(dataIndex))
                 return;
 
-            const activeUnits = getCurrentUnits(baseUnit);
-            result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
-                dataIndex = getIndex(hover[0],d.DataPoints);
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
+                dataIndex = getIndex(hover[0], d.DataPoints);
                 return {
                     Color: d.Color,
-                    Unit: baseUnit[d.Unit].options[activeUnits[d.Unit]],
+                    Unit: defaultSettings.Units[d.Unit].options[plot.yLimits[d.Unit].current],
                     Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
-                    Name: GetDisplayName(d, keys[index].DataType),
+                    Name: GetDisplayName(d, plot.key.DataType),
                     BaseValue: d.BaseValue,
                     Time: 0,
                 }
@@ -822,30 +824,33 @@ export const selectHoverPoints = createSelector(selectUnit, selectEventID, selec
     return result;
 });
 
-// for Tooltip with Delta
-export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.selectedIndixes,
-    (baseUnit, eventID, hover, data, keys, enabled, selectedData) => {
+
+export const selectDeltaHoverPoints = (hover: [number, number]) => createSelector(
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.Data,
+    (eventID, state) => {
         let result: OpenSee.IPoint[] = [];
-        const activeUnits = getCurrentUnits(baseUnit);
-        data.forEach((item, index) => {
-            if (keys[index].EventId != eventID)
-                return;
-            if (item.length == 0)
-                return;
-            let dataIndex = getIndex(hover[0], item[0].DataPoints);
+
+        let filteredPlots = state.Plots.filter(plot => plot.key.EventId === eventID)
+
+        filteredPlots.forEach(plot => {
+            const selectedData = plot.selectedIndixes;
+            if (plot.data.length === 0) return;
+
+            let dataIndex = getIndex(hover[0], plot.data[0].DataPoints);
             if (isNaN(dataIndex))
                 return;
-            result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
                 dataIndex = getIndex(hover[0], d.DataPoints);
                 return {
                     Color: d.Color,
-                    Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
-                    Value: (dataIndex > (d.DataPoints.length -1 ) ? NaN : d.DataPoints[dataIndex][1]),
-                    Name: GetDisplayName(d, keys[index].DataType),
-                    PrevValue: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][1]) : NaN),
+                    Unit: defaultSettings.Units[d.Unit].options[plot.yLimits[d.Unit].current],
+                    Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
+                    Name: GetDisplayName(d, plot.key.DataType),
+                    PrevValue: (selectedData.length > 0 ? ((selectedData[selectedData.length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[selectedData.length - 1]][1]) : NaN),
                     BaseValue: d.BaseValue,
-                    Time: (selectedData[index].length > 0 ? ((selectedData[index][selectedData[index].length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[index][selectedData[index].length - 1]][0]) : NaN),
+                    Time: (selectedData.length > 0 ? ((selectedData[selectedData.length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[selectedData.length - 1]][0]) : NaN),
                 }
 
             }))
