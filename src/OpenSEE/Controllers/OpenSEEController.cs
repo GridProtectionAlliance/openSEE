@@ -36,6 +36,7 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
+using GSF.Console;
 using GSF.Data;
 using GSF.Data.Model;
 using GSF.Web;
@@ -813,171 +814,25 @@ namespace OpenSEE
         #endregion
 
         #region [ Note Management ]
-        [Route("GetNotes"),HttpGet]
-        public DataTable GetNotes()
+        [Route("GetPQBrowser"), HttpGet]
+        public IHttpActionResult GetPQBrowser()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventId"]);
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
-                const string SQL = "SELECT * FROM EventNote WHERE EventID = {0}";
+                string pqBrowserURl = connection.ExecuteScalar<string>(@"
+                SELECT 
+	                Value 
+                FROM 
+	                [SystemCenter.Setting]
+                WHERE
+                    Name = 'PQBrowser.Url'
+                ");
+                return Ok(pqBrowserURl);
 
-                DataTable dataTable = connection.RetrieveData(SQL, eventID);
-                return dataTable;
+
             }
-
 
         }
-
-        public class FormData
-        {
-            public int? ID { get; set; }
-            public int EventID { get; set; }
-            public string Note { get; set; }
-        }
-
-        public class FormDataMultiNote
-        {
-            public int? ID { get; set; }
-            public int[] EventIDs { get; set; }
-            public string Note { get; set; }
-            public string UserAccount {get; set;}
-            public DateTime Timestamp { get; set; }
-        }
-
-
-        [Route("AddNote"),HttpPost]
-        public IHttpActionResult AddNote(FormData note)
-        {
-            if (!User.IsInRole("Administrator"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
-            try
-            {
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-                {
-                    EventNote record = new EventNote()
-                    {
-                        EventID = note.EventID,
-                        Note = note.Note,
-                        UserAccount = User.Identity.Name,
-                        Timestamp = DateTime.Now
-                    };
-
-                    TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
-                    eventNoteTable.AddNewRecord(record);
-
-                    return Ok(record);
-                }
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(ex);
-            }
-        }
-
-        [Route("AddMultiNote"),HttpPost]
-        public IHttpActionResult AddMultiNote(FormDataMultiNote note)
-        {
-            if (!User.IsInRole("Administrator"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
-            try
-            {
-                DateTime now = DateTime.Now;
-
-                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
-                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
-                List<EventNote> records = new List<EventNote>();
-
-                foreach (int eventId in note.EventIDs)
-                {
-                    EventNote record = new EventNote()
-                    {
-                        EventID = eventId,
-                        Note = note.Note,
-                        UserAccount = User.Identity.Name,
-                        Timestamp = now
-                    };
-
-                    eventNoteTable.AddNewRecord(record);
-                    records.Add(record);
-                }
-
-                return Ok(records);
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(ex);
-            }
-        }
-
-        [Route("DeleteNote"),HttpDelete]
-        public IHttpActionResult DeleteNote(FormData note)
-        {
-            if (!User.IsInRole("Administrator"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
-            try
-            {
-                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
-                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
-                EventNote record = eventNoteTable.QueryRecordWhere("ID = {0}", note.ID);
-                eventNoteTable.DeleteRecord(record);
-                return Ok(record);
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(ex);
-            }
-        }
-
-        [Route("DeleteMultiNote"),HttpDelete]
-        public IHttpActionResult DeleteMultiNote(FormDataMultiNote note)
-        {
-            if (!User.IsInRole("Administrator"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
-            try
-            {
-                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
-                connection.ExecuteNonQuery(@"
-                        DELETE FROM EventNote WHERE Note = {0} AND UserAccount = {1} AND Timestamp = {2}
-                    ", note.Note, note.UserAccount, note.Timestamp);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(ex);
-            }
-        }
-
-        [Route("UpdateNote"),HttpPatch]
-        public IHttpActionResult UpdateNote(FormData note)
-        {
-            if (!User.IsInRole("Administrator"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
-            try
-            {
-                using AdoDataConnection connection = new AdoDataConnection("dbOpenXDA");
-                TableOperations<EventNote> eventNoteTable = new TableOperations<EventNote>(connection);
-
-                EventNote record = eventNoteTable.QueryRecordWhere("ID = {0}", note.ID);
-                record.Note = note.Note;
-                record.UserAccount = User.Identity.Name;
-                record.Timestamp = DateTime.Now;
-
-                eventNoteTable.UpdateRecord(record);
-
-                return Ok(record);
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError(ex);
-            }
-        }
-
         #endregion
 
         #endregion

@@ -244,33 +244,8 @@ const OpenSeeHome = () => {
         ><div style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
                 <div style={{ position: 'relative', top: '31px' }}>
                     <VerticalSplit>
-                        <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30}>
-                            {eventData != undefined ?
-                                <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
-                                    <tbody style={{ display: 'block' }}>
-                                        <tr><td style={{ width: '100%' }}>Meter:</td><td>{eventData.MeterName}</td></tr>
-                                        <tr><td>Station:</td><td>{eventData.StationName}</td></tr>
-                                        <tr><td>Asset:</td><td>{eventData.AssetName}</td></tr>
-                                        <tr><td>Event Type:</td><td>{(eventData.EventName != 'Fault' ? eventData.EventName : <a href="#"
-                                            title="Click for fault details" onClick={() => window.open("./FaultSpecifics.aspx?eventid=" + eventID, eventID +
-                                                "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}
-                                        >Fault</a>)}</td></tr>
-                                        <tr><td>Event Date:</td><td>{eventData.EventDate}</td></tr>
-                                        {(eventData.StartTime != undefined ? <tr><td>Event Start:</td><td>{eventData.StartTime}</td></tr> : null)}
-                                        {(eventData.Phase != undefined ? <tr><td>Phase:</td><td>{eventData.Phase}</td></tr> : null)}
-                                        {(eventData.DurationPeriod != undefined ? <tr><td>Duration:</td><td>{eventData.DurationPeriod}</td></tr> : null)}
-                                        {(eventData.Magnitude != undefined ? <tr><td>Magnitude:</td><td>{eventData.Magnitude}</td></tr> : null)}
-                                        {(eventData.SagDepth != undefined ? <tr><td>Sag Depth:</td><td>{eventData.SagDepth}</td></tr> : null)}
-                                        {(eventData.BreakerNumber != undefined ? <tr><td>Breaker:</td><td>{eventData.BreakerNumber}</td></tr> : null)}
-                                        {(eventData.BreakerTiming != undefined ? <tr><td>Timing:</td><td>{eventData.BreakerTiming}</td></tr> : null)}
-                                        {(eventData.BreakerSpeed != undefined ? <tr><td>Speed:</td><td>{eventData.BreakerSpeed}</td></tr> : null)}
-                                        {(eventData.BreakerOperation != undefined ? <tr><td>Operation:</td><td>{eventData.BreakerOperation}</td></tr> : null)}
-                                        <tr><td><button className="btn btn-link" onClick={(e) => { window.open(eventData.xdaInstance + '/Workbench/Event.cshtml?EventID='
-                                        + eventID) }}>Edit</button></td>
-                                            <td>{(userIsAdmin ? <OpenSEENoteModal eventId={eventID} /> : null)}</td></tr>
-                                    </tbody>
-                                </table> :
-                                null}
+                            <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
+                                <EventInfo />
                         </SplitDrawer>
                         <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
                             <OverlappingEventWindow />
