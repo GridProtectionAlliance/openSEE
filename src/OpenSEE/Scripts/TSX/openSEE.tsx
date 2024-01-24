@@ -1,4 +1,4 @@
-﻿ //******************************************************************************************************
+﻿//******************************************************************************************************
 //  openSEE.tsx - Gbtc
 //
 //  Copyright © 2018, Grid Protection Alliance.  All Rights Reserved.
@@ -24,8 +24,6 @@
 //******************************************************************************************************
 
 // To-DO:
-// # Add Analytic Parameters and Selected Events to Query
-// # Fix Pop up windows
 // # Fix Dowload.ash to include Analytics
 //
 
@@ -34,8 +32,6 @@ import moment from 'moment'
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import store from './store/store';
-import { OpenSee } from './global';
 import createHistory from "history/createBrowserHistory"
 
 import * as queryString from "query-string";
@@ -77,7 +73,7 @@ declare var version: string;
 declare var eventID: number;
 
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
- 
+
 const OpenSeeHome = () => {
     const divRef = React.useRef<any>(null);
     const plotRef = React.useRef(null);
@@ -109,23 +105,23 @@ const OpenSeeHome = () => {
     })
 
     const [resizeCount, setResizeCount] = React.useState<number>(0);
-    const [graphWidth, setGraphWidth] = React.useState<number>(window.innerWidth - 300);
-    const [eventData, setEventData] = React.useState<OpenSee.iPostedData>(null);
-    const [lookup, setLookup] = React.useState<OpenSee.iNextBackLookup>(null);
 
     const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
 
-    const graphList = useAppSelector(selectListGraphs);
-    const numberCompareGraphs = useAppSelector(selectNumberCompare);
-    const eventGroup = useAppSelector(selecteventList);
-    const displayVolt = useAppSelector(SelectdisplayVolt);
-    const displayCur = useAppSelector(SelectdisplayCur);
-    const displayTCE = useAppSelector(SelectdisplayTCE);
-    const displayDigitals = useAppSelector(SelectdisplayDigitals);
-    const displayAnalogs = useAppSelector(SelectdisplayAnalogs);
-    const Tab = useAppSelector(SelectTab);
-    const analytic = useAppSelector(selectAnalytic);
+    const eventInfo = useAppSelector(SelectEventInfo);
 
+    const graphList = useAppSelector(selectListGraphs);
+    const plotKeys = useAppSelector(SelectPlotKeys);
+
+    const eventList = useAppSelector(SelectEventList);
+
+
+    const showPlots = useAppSelector(selectDisplayed);
+    const cycles = useAppSelector(SelectCycles);
+    const analytics = useAppSelector(SelectAnalytics);
+
+    const fftTime = useAppSelector(selectFFTLimits);
+    const query = useAppSelector(SelectQueryString);
 
     const [currentHeight, setCurrentHeight] = React.useState<number>(0);
 
@@ -172,8 +168,15 @@ const OpenSeeHome = () => {
         return () => { $(window).off('resize'); }
     }, [])
 
+    //Effect to update EventID
     React.useEffect(() => {
-        window.addEventListener("resize", () => { setResizeCount(x => x + 1) });
+        if (eventID && !isNaN(eventID) && eventID !== 0) {
+            dispatch(SetEventID(eventID)) //this is probably not eneded double check
+            dispatch(SetEventInfo({ breakeroperation: ""/*not really sure what breakeroperation is..*/ }))
+            dispatch(SetLookupInfo({}))
+            dispatch(LoadOverlappingEvents()) //this is probably not need either since we set this in queryParams.. 
+        }
+    }, [eventID]);
 
 
     //Effect to push updatedQueryParams
@@ -185,8 +188,6 @@ const OpenSeeHome = () => {
         return () => clearTimeout(timeoutId);
     }, [query]);
 
-        return () => { $(window).off('resize'); }
-    }, [])
 
     React.useEffect(() => {
         if (resizeCount == 0)
@@ -196,62 +197,7 @@ const OpenSeeHome = () => {
             setPlotWidth(window.innerWidth - 300);
         }, 100);
         return () => { clearTimeout(handle); }
-     }, [resizeCount]);
-
-    React.useEffect(() => {
-        const [handle1, handle2] = getEventData();
-
-        return () => {
-            if (handle1 != null && handle1.abort != null) handle1.abort();
-            if (handle2 != null && handle2.abort != null) handle2.abort();
-        }
-    }, [eventID])
-
-    React.useEffect(() => {
-        if (Tab == 'Analytic' && analytic == 'none')
-            dispatch(SetAnalytic('FirstDerivative'));
-
-        if (Tab == 'Analytic')
-            return () => { dispatch(SetAnalytic('none')); };
-
-        if (Tab == 'Compare')
-            return () => { dispatch(ClearOverlappingEvent()); };
-    }, [Tab]);
-
-    function getEventData() {
-
-      const eventDataHandle = $.ajax({
-            type: "GET",
-            url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${eventID}` +
-                `${breakeroperation != undefined ? `&breakeroperation=${breakeroperation}` : ``}`,
-            contentType: "application/json; charset=utf-8",
-            dataType: 'json',
-            cache: true,
-            async: true
-        });
-
-        dispatch(setEventInfo({ eventID: eventID, breakeroperation: breakeroperation }))
-
-        eventDataHandle.then(data => {
-            setEventData(data);
-            dispatch(SetFFTWindow({ cycle: 1, startTime: new Date(eventStartTime + "Z").getTime() }))
-        });
-
-         const navigationDataHandle = $.ajax({
-            type: "GET",
-            url: `${homePath}api/OpenSEE/GetNavData?eventId=${eventID}`,
-            contentType: "application/json; charset=utf-8",
-            dataType: 'json',
-            cache: true,
-            async: true
-        });
-
-        navigationDataHandle.then(data => {
-            setLookup(data);
-        });
-
-        return [eventDataHandle, navigationDataHandle];
-    }
+    }, [resizeCount]);
 
     function sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
         if (item1.DataType == item2.DataType)
@@ -274,60 +220,63 @@ const OpenSeeHome = () => {
         overlayHandles.current[drawer](open);
     }
 
+    const handleDrawerChange = (drawerName: keyof OpenSee.Drawers, isOpen: boolean) => {
+        setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
+    };
 
-    const NPlots = React.useMemo(() => {
-        let n = Number(displayVolt) + Number(displayCur) + Number(displayDigitals) + Number(displayTCE) + Number(displayAnalogs);
-        if (Tab == "Analytic")
-            n = n + 1;
-        else if (Tab == "Compare")
-            n = n * (numberCompareGraphs + 1);
-        return n;
-    }, [displayVolt, displayCur, displayDigitals, displayTCE, displayAnalogs, Tab, numberCompareGraphs ]);
+    function exportData(type) {
+        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventID}` +
+            `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
+            `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
+            `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
+            `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
+            `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
+            `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
+            `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
+            `&Meter=${eventInfo.MeterName}` +
+            `&EventType=${eventInfo.MeterName}`
+        );
+    }
 
-    const GraphHeight = (window.innerHeight - 100 - 30) / Math.min(NPlots, 3);
 
-    const plotData = React.useMemo(() => groupBy(graphList, "EventId"), [graphList]);
-
+    const GraphHeight = (window.innerHeight - 130) / Math.min(plotKeys.length, 3);
     const evtStartTime = new Date(eventStartTime + 'Z');
 
     return (
-        <Application HomePath={"/"}
-            DefaultPath=""
+        <Application
+            HomePath={""}
+            DefaultPath={""}
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar
-                EventData={eventData}
-                Lookup={lookup}
-                ToggleDrawer={ToogleDrawer}
-            />}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToogleDrawer} />}
             UseLegacyNavigation={true}
         ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
                 <div className="d-flex flex-column h-100 w-100" style={{ position: 'relative', top: '31px' }}>
                     <HoverProvider>
-                    <VerticalSplit>
+                        <VerticalSplit>
                             <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                                 <EventInfo />
-                        </SplitDrawer>
+                            </SplitDrawer>
                             <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                            <OverlappingEventWindow />
-                        </SplitDrawer>
+                                <OverlappingEventWindow />
+                            </SplitDrawer>
 
                             <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                            <AnalyticOptions />
-                        </SplitDrawer>
+                                <AnalyticOptions />
+                            </SplitDrawer>
 
                             <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
                                 <ToolTipWidget />
-                        </SplitDrawer>
+                            </SplitDrawer>
                             <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
                                 <ToolTipDeltaWidget />
-                        </SplitDrawer>
+                            </SplitDrawer>
 
                             <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("Settings", item)} >
-                            <SettingsWidget />
-                        </SplitDrawer>
+                                <SettingsWidget />
+                            </SplitDrawer>
 
                             <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
@@ -358,21 +307,33 @@ const OpenSeeHome = () => {
 
                             <SplitSection MinWidth={100} MaxWidth={100} Width={75}>
                                 <div ref={plotRef} style={{ overflowY: 'auto', maxHeight: currentHeight, width: '100%' }}>
-                                                eventId={item.EventId}
+                                    {graphList[eventID] != undefined ?
+                                        graphList[eventID].sort(sortGraph).map(item => (
+                                            item.DataType !== 'FFT' ?
+                                                <LineChart
+                                                    key={item.DataType + item.EventId}
+                                                    eventId={item.EventId}
                                                     width={plotWidth}
-                                                eventStartTime={evtStartTime.getTime()}
-                                                height={GraphHeight}
-                                                timeLabel={"Harmonic"}
-                                                type={item.DataType}
-                                            /> : <LineChart
-                                                key={idx}
-                                                eventId={item.EventId}
+                                                    eventStartTime={evtStartTime.getTime()}
+                                                    height={GraphHeight}
+                                                    timeLabel={"Time"}
+                                                    type={item.DataType}
+                                                    showToolTip={openDrawers.ToolTipDelta}
+                                                /> :
+                                                <BarChart
+                                                    key={item.DataType + item.EventId}
+                                                    eventId={item.EventId}
                                                     width={plotWidth}
-                                                eventStartTime={evtStartTime.getTime()}
-                                                height={GraphHeight}
-                                                timeLabel={"Time"}
-                                                type={item.DataType}
-                                            />))}
+                                                    eventStartTime={evtStartTime.getTime()}
+                                                    height={GraphHeight}
+                                                    timeLabel={"Harmonic"}
+                                                    type={item.DataType}
+                                                />
+                                        ))
+                                        : null}
+                                    {Object.keys(graphList).filter(item => parseInt(item) !== eventID).map(key =>
+                                        <div className="card">
+                                            {eventList.find(item => item.EventID == parseInt(key)) !== undefined ?
                                                 <div className="card-header">
                                                     <div className="row">
                                                         <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
@@ -393,24 +354,21 @@ const OpenSeeHome = () => {
                                                         </div>
 
                                                     </div>
-                                    </div>
-                                </div> : null}
+                                                </div>
 
-                            {Object.keys(plotData).filter(item => parseInt(item) != eventID).map(key => <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
-                                <div className="card-header">{
-                                    (eventGroup.find(item => item.value == parseInt(key)) != undefined ? eventGroup.find(item => item.value == parseInt(key)).label : '')
-                                }</div>
-                                <div className="card-body" style={{ padding: 0 }}>
+                                                : null
+                                            }
+                                            <div className="card-body" style={{ padding: 0 }}>
                                                 {graphList[key].sort(sortGraph).map(item => (
                                                     item.DataType !== 'FFT' ?
                                                         <LineChart
                                                             key={item.DataType + item.EventId}
-                                        eventId={item.EventId}
+                                                            eventId={item.EventId}
                                                             width={plotWidth}
-                                        eventStartTime={evtStartTime.getTime()}
-                                        height={GraphHeight}
-                                        timeLabel={"Time"}
-                                        type={item.DataType}
+                                                            eventStartTime={evtStartTime.getTime()}
+                                                            height={GraphHeight}
+                                                            timeLabel={"Time"}
+                                                            type={item.DataType}
                                                             showToolTip={openDrawers.ToolTipDelta}
                                                         /> :
                                                         <BarChart
@@ -427,18 +385,17 @@ const OpenSeeHome = () => {
                                         </div>
                                     )}
                                 </div>
-                            </div>)
-                            }
-                        </SplitSection>
-                    </VerticalSplit>
+                            </SplitSection>
+                        </VerticalSplit>
+                    </HoverProvider>
                 </div>
             </div>
         </Application>);
 
 }
 
-
-
+//Load Settings for settings Slice
 store.dispatch(LoadSettings());
+
 ReactDOM.render(<Provider store={store}><OpenSeeHome /></Provider>, document.getElementById('DockCharts'));
 
