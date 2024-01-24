@@ -109,69 +109,90 @@ export const selectUnit = (state: RootState) => state.Settings.Units;
 export const selectDefaultTraces = (state: RootState) => state.Settings.DefaultTrace;
 export const selectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
 
-export const selectTimeUnit = (state: RootState) => state.Settings.TimeUnit;
-export const selectEventOverlay = (state: RootState) => state.Settings.SinglePlot
+export const SelectEnabledPlots = createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (state: OpenSee.IRootState) => SelectAllPlotKeys(state),
+    (Plots, plotKeys) => {
+        let enabledPlots: OpenSee.PlotQuery[] = [];
 
-const selectSettingQuery = createSelector(SelectdisplayVolt, SelectdisplayCur, SelectdisplayTCE, SelectdisplayDigitals, SelectdisplayAnalogs,
-    (displayVolt, displayCur, displayTCE, displayDigitals, displayAnalogs) => {
-        let obj = {
-            displayVolt: displayVolt, displayCur: displayCur, displayTCE: displayTCE, displayDigitals: displayDigitals, displayAnalogs: displayAnalogs,
-        };
-        return queryString.stringify(obj, { encode: false });
+        if (plotKeys.length > 0)
+            plotKeys.forEach(key => {
+                const matchingPlot = Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId); 
+
+                if (matchingPlot) {
+                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                    let yLimits = {}
+
+                    Object.keys(matchingPlot.yLimits).forEach(key => {
+                        if (enabledUnits.includes(key as OpenSee.Unit))
+                            yLimits[key] = { ...matchingPlot.yLimits[key], autoUnit: matchingPlot.yLimits[key as OpenSee.Unit].isAuto };
+                    })
+
+                    enabledPlots.push({
+                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
+                        isZoomed: matchingPlot.isZoomed,
+                        key: matchingPlot.key
     });
+                }
+            });
 
-const selectDataQuery = createSelector(
-    (state: RootState) => state.Data.startTime,
-    (state: RootState) => state.Data.endTime,
-    (state: RootState) => state.Data.mouseMode,
-    (state: RootState) => state.Data.zoomMode,
-    (startTime, endTime, mouseMode, zoomMode) => {
-        let obj = {
-            startTime: startTime,
-            endTime: endTime,
-            mouseMode: mouseMode,
-            zoomMode: zoomMode
-        };
+        return enabledPlots;
+    }
+);
       
 
-        return queryString.stringify(obj, { encode: false });
-    });
+export const SelectQueryString = createSelector(
+    (state: OpenSee.IRootState) => state.Data,
+    (state: OpenSee.IRootState) => state.Analytic,
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.OverlappingEvents,
+    (state: OpenSee.IRootState) => SelectAllPlotKeys(state),
+    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (data, analyticInfo, evtID, overLappingEvents, plotKeys, singlePlot) => {
+        let plotQuery: OpenSee.PlotQuery[] = [];
+        if(plotKeys.length > 0)
+            plotKeys.forEach(key => {
+                const matchingPlot = data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId); 
 
-const selectEventQuery = createSelector(
-    (state: RootState) => state.EventInfo.EventID,
-    (state: RootState) => state.EventInfo.Navigation,
-    (evtID, navigation) => {
-        let obj = {
+                if (matchingPlot) {
+                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                    let yLimits = {}
+
+                    Object.keys(matchingPlot.yLimits).forEach(key => {
+                        if (enabledUnits.includes(key as OpenSee.Unit))
+                            yLimits[key] = { ...matchingPlot.yLimits[key], autoUnit: matchingPlot.yLimits[key as OpenSee.Unit].isAuto };
+                    })
+
+                    plotQuery.push({
+                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
+                        isZoomed: matchingPlot.isZoomed,
+                        key: matchingPlot.key
+    });
+                }
+            });
+
+        const queryObj = {
             eventID: evtID,
-            Navigation: navigation
-        };
-        return queryString.stringify(obj, { encode: false });
-    });
-
-const selectAnalyticQuery = createSelector(
-    (state: RootState) => state.Analytic.Analytic,
-    (state: RootState) => state.Analytic.LPFOrder,
-    (state: RootState) => state.Analytic.HPFOrder,
-    (state: RootState) => state.Analytic.Harmonic,
-    (state: RootState) => state.Analytic.Trc,
-    (state: RootState) => state.Analytic.FFTCycles,
-    (state: RootState) => state.Analytic.FFTStartTime,
-    (analytic, lpf,hpf,harmonic, trc, fftCycle, fftStart) => {
-        let obj = {};
-        if (analytic !== 'none')
-            obj['Analytic'] = analytic;
-        if (analytic == 'LowPassFilter')
-            obj['LPF'] = lpf;
-        if (analytic == 'HighPassFilter')
-            obj['HPF'] = hpf;
-        if (analytic == 'Harmonic')
-            obj['Harmonic'] = harmonic;
-        if (analytic == 'Rectifier')
-            obj['Trc'] = trc;
-        if (analytic == 'FFT') {
-            obj['fftCycle'] = fftCycle
-            obj['fftStart'] = fftStart
+            startTime: data.startTime,
+            endTime: data.endTime,
+            Trc: analyticInfo.Trc,
+            HPFOrder: analyticInfo.HPFOrder,
+            LPFOrder: analyticInfo.LPFOrder,
+            FFTCycles: analyticInfo.FFTCycles,
+            FFTStartTime: analyticInfo.FFTStartTime,
+            Harmonic: analyticInfo.Harmonic,
+            plots: JSON.stringify(plotQuery),
+            overlappingInfo: JSON.stringify(overLappingEvents.EventList),
+            singlePlot: singlePlot
         }
+
+        const query = queryString.stringify(queryObj)
+
+        return query
+        }
+);
 
         return queryString.stringify(obj, { encode: false });
     });
