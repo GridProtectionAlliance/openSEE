@@ -796,112 +796,101 @@ export const selectDeltaHoverPoints = createSelector(selectUnit, selectEventID, 
     return result;
 });
 
+
+
 // For vector
-export const selectVPhases = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (baseUnit, eventID, hover, data, keys, enabled) => {
-        let index = keys.findIndex(item => item.DataType == 'Voltage' && item.EventId == eventID);
-        const activeUnits = getCurrentUnits(baseUnit);
-        if (index == -1)
-            return [];
-        let asset = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendGroup));
-        let phase = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendVertical));
+export const selectVPhases = (hover: [number, number]) => createSelector(
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.Data,
+    (eventID, state) => {
 
-        if (data[index].length == 0)
-            return []
+        let plot = state.Plots.find(plot => plot.key.DataType == 'Voltage' && plot.key.EventId == eventID);
+        if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph')) return [];
 
+        const activeUnits = plot.yLimits;
 
-        if (data[index].find(item => item.LegendHorizontal == 'Ph') == undefined)
-            return [];
+        let asset = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendGroup));
+        let phase = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendVertical));
 
-        let pointIndex = getIndex(hover[0], data[index].find(item => item.LegendHorizontal == 'Ph').DataPoints);
-        if (isNaN(pointIndex))
-            return [];
+        let phaseData = plot.data.find(item => item.LegendHorizontal == 'Ph');
+        let pointIndex = phaseData ? getIndex(hover[0], phaseData.DataPoints) : -1;
 
-        let result: OpenSee.IVector[] = [];
-
-        asset.forEach(a => {
-            phase.forEach(p => {
-                if (!data[index].some((item, i) => (item.LegendGroup == a && item.LegendVertical == p && enabled[index][i])))
-                    return
-
-                let d = data[index].filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
-                let phaseChannel = d.find(item => item.LegendHorizontal == 'Ph');
-                let magnitudeChannel = d.find(item => item.LegendHorizontal == 'Pk');
-
-                if (phaseChannel == undefined || magnitudeChannel == undefined)
-                    return;
-
-                let phase = (pointIndex > (phaseChannel.DataPoints.length - 1) ? NaN : phaseChannel.DataPoints[pointIndex][1]);
-                let mag = (pointIndex > (magnitudeChannel.DataPoints.length -1)? NaN : magnitudeChannel.DataPoints[pointIndex][1]);
-                result.push({
-                    Color: phaseChannel.Color,
-                    Unit: baseUnit.Voltage.options[activeUnits[index].Voltage],
-                    PhaseUnit: baseUnit.Angle.options[activeUnits[index].Angle],
-                    Phase: p,
-                    Asset: a,
-                    Magnitude: mag,
-                    Angle: phase,
-                    BaseValue: magnitudeChannel.BaseValue
-                });
-
-            })
-        })
-
-        return result;
-
-})
-export const selectIPhases = createSelector(selectUnit, selectEventID, selectHover, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (baseUnit, eventID, hover, data, keys, enabled) => {
-        let index = keys.findIndex(item => item.DataType == 'Current' && item.EventId == eventID);
-        const activeUnits = getCurrentUnits(baseUnit);
-        if (index == -1)
-            return [];
-        let asset = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendGroup));
-        let phase = uniq(data[index].filter((item, i) => enabled[index][i]).map(item => item.LegendVertical));
-
-        if (data[index].length == 0)
-            return []
-
-        if (data[index].find(item => item.LegendHorizontal == 'Ph') == undefined)
-            return [];
-
-        let pointIndex = getIndex(hover[0], data[index].find(item => item.LegendHorizontal == 'Ph').DataPoints);
-        if (isNaN(pointIndex))
+        if (isNaN(pointIndex) || pointIndex < 0)
             return [];
 
         let result: OpenSee.IVector[] = [];
 
         asset.forEach(a => {
             phase.forEach(p => {
-                if (!data[index].some((item, i) => (item.LegendGroup == a && item.LegendVertical == p && enabled[index][i])))
-                    return
+                let phaseChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Ph');
+                let magnitudeChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Pk');
 
-                let d = data[index].filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
-                let phaseChannel = d.find(item => item.LegendHorizontal == 'Ph');
-                let magnitudeChannel = d.find(item => item.LegendHorizontal == 'Pk');
+                if (phaseChannel && magnitudeChannel) {
+                    let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
+                    let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
 
-                if (phaseChannel == undefined || magnitudeChannel == undefined)
-                    return;
-
-                let phase = (pointIndex > (phaseChannel.DataPoints.length - 1) ? NaN : phaseChannel.DataPoints[pointIndex][1]);
-                let mag = (pointIndex > (magnitudeChannel.DataPoints.length - 1) ? NaN : magnitudeChannel.DataPoints[pointIndex][1]);
                 result.push({
                     Color: phaseChannel.Color,
-                    Unit: baseUnit.Current.options[activeUnits.Current],
-                    PhaseUnit: baseUnit.Angle.options[activeUnits.Angle],
+                        Unit: defaultSettings.Units.Voltage.options[activeUnits["Voltage"].current],
+                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
                     Phase: p,
                     Asset: a,
-                    Magnitude: mag,
-                    Angle: phase,
+                        Magnitude: magValue,
+                        Angle: phaseValue,
                     BaseValue: magnitudeChannel.BaseValue
                 });
-
-            })
-        })
+                }
+            });
+        });
 
         return result;
+    }
+);
 
-    })
+
+export const selectIPhases = (hover: [number, number]) => createSelector(
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.Data,
+    (eventID, state) => {
+        let plot = state.Plots.find(p => p.key.DataType == 'Current' && p.key.EventId == eventID);
+        if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph')) return [];
+
+        const activeUnits = plot.yLimits;
+        let asset = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendGroup));
+        let phase = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendVertical));
+
+
+        let pointIndex = getIndex(hover[0], plot.data.find(item => item.LegendHorizontal == 'Ph').DataPoints);
+        if (isNaN(pointIndex)) return [];
+
+        let result: OpenSee.IVector[] = [];
+
+        asset.forEach(a => {
+            phase.forEach(p => {
+                let phaseChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Ph');
+                let magnitudeChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Pk');
+
+                if (phaseChannel && magnitudeChannel) {
+                    let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
+                    let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
+
+                result.push({
+                    Color: phaseChannel.Color,
+                        Unit: defaultSettings.Units.Current.options[activeUnits["Current"].current],
+                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
+                    Phase: p,
+                    Asset: a,
+                        Magnitude: magValue,
+                        Angle: phaseValue,
+                    BaseValue: magnitudeChannel.BaseValue
+                });
+                }
+            });
+        });
+
+        return result;
+    }
+);
 
 // For Accumulated Point widget
 export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.selectedIndixes,
