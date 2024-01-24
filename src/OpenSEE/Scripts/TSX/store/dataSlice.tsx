@@ -131,60 +131,52 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
     return await Promise.all(handles);
 })
 
-/*
+
 //Thunk to update Time Limits
 export const SetTimeLimit = createAsyncThunk('Data/setTimeLimit', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg }))
     return Promise.resolve();
 })
 
 //Thunk to update Cycle Limits
 export const SetCycleLimit = createAsyncThunk('Data/SetCycleLimit', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.updatecycleLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    thunkAPI.dispatch(DataReducer.actions.UpdateCycleLimits({ ...arg }))
     return Promise.resolve();
 })
 
 
 //Thunk to update FFT Limits
 export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }))
+    thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ ...arg }))
     return Promise.resolve();
 })
 
+
 //Thunk to Enable or Disable Trace
 export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units, singlePlot: (thunkAPI.getState() as OpenSee.IRootState).Settings.SinglePlot }))
+    thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg }))
     return Promise.resolve();
 });
 
+
 //Thunk to Reset Zoom
 export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg, baseUnits: (thunkAPI.getState() as OpenSee.IRootState).Settings.Units }));
+    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg }));
 
     // FFT Limits get updated base on values not eventTime
     let state = (thunkAPI.getState() as OpenSee.IRootState);
-    let plot = state.Data.Plots.find(item => item.key.DataType == 'FFT');
+    let fftPlot = state.Data.Plots.find(item => item.key.DataType == 'FFT');
 
-    if (plot != null) {
-        let start = Math.min(...plot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
-        let end = Math.max(...plot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
+    if (fftPlot != null) {
+        let start = Math.min(...fftPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
+        let end = Math.max(...fftPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
 
-        thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end, baseUnits: state.Settings.Units }));
+        thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end }));
     }
 
-    state.Data.Plots
-        .forEach((graph, index) => {
-            const RelevantAxis = _.uniq(graph.data.map((s) => s.Unit));
-
-            RelevantAxis.forEach((axis) => {
-
-                const axisSetting: OpenSee.IAxisSettings = graph.yLimits[axis];
-                if (state.Settings.Units[axis].useAutoLimits)
-                    thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.dataLimits, Plotindex: index }));
-                else
-                    thunkAPI.dispatch(DataReducer.actions.SetCurrentYLimits({ axis: axis, limits: axisSetting.manuallimits, Plotindex: index }));
+    state.Data.Plots.forEach(graph => {
+        thunkAPI.dispatch(DataReducer.actions.ResetZoom({ key: graph.key }));
             })
-        })
     return Promise.resolve();
 })
 
@@ -224,38 +216,12 @@ export const SetTimeUnit = createAsyncThunk('Data/SetTimeUnit', (arg: number, th
     thunkAPI.dispatch(UpdateActiveUnits(unit));
 })
 
-export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Unit, value: number }, thunkAPI) => {
-
-    thunkAPI.dispatch(SetUnitSetting(arg));
-    let unit = (thunkAPI.getState() as OpenSee.IRootState).Settings.Units;
-    thunkAPI.dispatch(UpdateActiveUnits(unit));
+export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }, thunkAPI) => {
+    thunkAPI.dispatch(UpdateActiveUnits({ unit: arg.unit, value: arg.value, auto: arg.auto, key: arg.key }));
 })
 
 
-
-//Thunk to Update Plot
-export const UpdateAnalyticPlot = createAsyncThunk('Data/updatePlot', async (_, thunkAPI) => {
-
-   
-    let plot = (thunkAPI.getState() as OpenSee.IRootState).Data.Plots.find(item => item.key.DataType != 'Voltage' &&
-        item.key.DataType != 'Current' && item.key.DataType != 'Analogs' && item.key.DataType != 'Digitals' && item.key.DataType != 'TripCoil');
-    if (plot == null)
-        return;
-    //Remove existing Data
-    thunkAPI.dispatch(DataReducer.actions.AddKey({ ...plot.key, key: thunkAPI.requestId }));
-
-    thunkAPI.dispatch(DataReducer.actions.SetLoading({ key: plot.key, state: 'Loading' }));
-
-    CancelAnalytics();
-    let handles = getData(plot.key, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-    AddRequest(plot.key, handles)
-
-    return await Promise.all(handles);
-})
 // #endregion
-
-*/
-
 
 export const DataReducer = createSlice({
     name: 'Data',
