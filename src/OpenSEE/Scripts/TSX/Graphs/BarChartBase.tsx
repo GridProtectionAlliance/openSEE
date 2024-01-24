@@ -210,11 +210,26 @@ const BarChart = (props: iProps) => {
 
     });
 
-    interface BarSeries {
-        unit: OpenSee.Unit,
-        data: [number, number],
-        color: OpenSee.Color,
-        base: number
+    function createLineGen(unit = null, base = null) {
+        let factor = 1.0
+
+        // Calculate factor if unit and base are provided
+        if (unit && base && activeUnit[unit]) {
+            factor = activeUnit[unit].factor;
+            if (factor === undefined)  //p.u case
+                factor = 1.0 / base
+        }
+
+        return d3.line()
+            .x(d => xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0)
+            .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
+            .defined(d => {
+                let tx = !isNaN(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0));
+                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                tx = tx && isFinite(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0));
+                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                return tx && ty;
+            });
     }
 
     // This Function needs to be called whenever Data is Added
