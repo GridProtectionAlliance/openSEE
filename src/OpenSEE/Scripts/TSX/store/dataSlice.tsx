@@ -22,16 +22,12 @@
 //******************************************************************************************************
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _, { add, uniq } from 'lodash';
-import {  selectActiveUnit, selectUnit } from './settingSlice';
-import { LoadOverlappingEvents } from './eventSlice';
-import { SetTimeUnit as SetTimeUnitSetting, SetUnit as SetUnitSetting } from './settingSlice';
+import * as _ from 'lodash';
+import { SetTimeUnit as SetTimeUnitSetting, plotTypes } from './settingSlice';
 import { AddRequest, AppendRequest, CancelAnalytics } from './RequestHandler';
 import { emptygraph, getData, getDetailedData } from './GraphLogic';
-import { dispatch } from 'd3';
 import { RootState } from './store';
-import { plot } from 'jquery';
-declare var eventID: number;
+import { defaultSettings } from '../defaults';
 
 
 declare var eventID: number;
@@ -291,9 +287,9 @@ export const DataReducer = createSlice({
         cycleLimit: [0, 1000.0/60.0]
     } as OpenSee.IDataState,
     reducers: {        
-        RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
-            Cancel
-            const index = state.Plots.findIndex(item => item.key.DataType == action.payload.DataType
+        RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
+            state.Plots.splice(action.payload, 1);
+        },
         RemoveData: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
             const plot = state.Plots.find(item => item.key.DataType == action.payload.DataType && item.key.EventId == action.payload.EventId)
             if (plot)
