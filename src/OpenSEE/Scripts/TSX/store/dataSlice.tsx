@@ -660,10 +660,16 @@ export const selectData = () =>
     createSelector(
         (state: OpenSee.IRootState) => state.Data.data,
         (state: OpenSee.IRootState) => state.Data.plotKeys,
+export const selectData = (key: OpenSee.IGraphProps) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (state: OpenSee.IRootState) => state.Settings.Tab,
-        (_, type: OpenSee.IGraphProps) => type,
-        FilterData
+    (plots, singlePlot) => {
+        let plot = plots.find(item => item.key.DataType === key.DataType && item.key.EventId === key.EventId);
+        let overlappingPlot = plots.find(item => item.key.DataType === key.DataType && item.key.EventId === -1)
+        if (singlePlot)
+            return overlappingPlot ? overlappingPlot.data : null
+        return plot ? plot.data : null;
+    }
     );
 
 const FilterData = (data: OpenSee.iD3DataSeries[][], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab, type: OpenSee.IGraphProps) => {
