@@ -550,11 +550,23 @@ export const DataReducer = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(AddPlot.pending, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == action.meta.arg.EventId);
-            if (plot == null)
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
+
+            if (plot == null) {
                 plot = _.cloneDeep(emptygraph);
-            plot.key = action.meta.arg;
+                state.Plots.push(plot)
+            }
+
+            plot.key = action.meta.arg.key;
             plot.loading = 'Loading';
+
+            if (action.meta.arg.yLimits)
+                Object.keys(action.meta.arg.yLimits).forEach(unit => {
+                    plot.yLimits[unit] = action.meta.arg.yLimits[unit]
+                })
+            if (action.meta.arg.isZoomed !== undefined)
+                plot.isZoomed = action.meta.arg.isZoomed
+
             return state
         });
         builder.addCase(AddPlot.fulfilled, (state, action) => {
