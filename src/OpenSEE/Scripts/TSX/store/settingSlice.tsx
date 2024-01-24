@@ -54,7 +54,7 @@ export const SettingsReducer = createSlice({
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
         DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
-        DefaultVType: "L-L",
+        DefaultVType: { LL: true, LN: false },
         SinglePlot: true as boolean,
         Navigation: 'system'
     } as OpenSee.ISettingsState,
@@ -98,10 +98,9 @@ export const SettingsReducer = createSlice({
             state.DefaultTrace = action.payload;
             saveSettings(state);
         },
-        SetDefaultVType: (state, action: PayloadAction<'L-L' | 'L-N'>) => {
+        SetDefaultVType: (state, action: PayloadAction<OpenSee.IDefaultVType>) => {
             state.DefaultVType = action.payload;
-            SaveSettings(state);
-        }
+            saveSettings(state);
     },
         SetNavigation: (state, action: PayloadAction<OpenSee.EventNavigation>) => {
             state.Navigation = action.payload;
@@ -121,6 +120,7 @@ export default SettingsReducer.reducer;
 // #region [ Selectors ]
 export const selectColor = (state: RootState) => state.Settings.Colors;
 export const selectUnit = (state: RootState) => state.Settings.Units;
+export const SelectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
 
 export const selectDefaultTraces = (state: RootState) => state.Settings.DefaultTrace;
 export const selectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
