@@ -955,25 +955,28 @@ export const selectIPhases = (hover: [number, number]) => createSelector(
 );
 
 // For Accumulated Point widget
-export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (state: OpenSee.IRootState) => state.Data.data, (state: OpenSee.IRootState) => state.Data.selectedIndixes,
-    (state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.enabled,
-    (baseUnit, eventID, data, selectedData, keys, enabled) => {
+export const selectSelectedPoints = createSelector(
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (state: OpenSee.IRootState) => state.Data,
+    (eventID, state) => {
         let result: OpenSee.IPointCollection[] = [];
-        const activeUnits = getCurrentUnits(baseUnit);
-        data.forEach((item, index) => {
-            if (keys[index].EventId != eventID)
-                return;
-            if (keys[index].DataType != 'Voltage' && keys[index].DataType != 'Current')
-                return;
-            if (item.length == 0)
-                return;
-            result = result.concat(...item.filter((d, i) => enabled[index][i]).map(d => {
+
+        state.Plots.forEach(plot => {
+            if (plot.key.EventId != eventID) return;
+            if (plot.key.DataType != 'Voltage' && plot.key.DataType != 'Current') return;
+            if (plot.data.length == 0) return;
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
+                const unitType = d?.Unit;
+                const unitOptions = defaultSettings.Units[unitType]?.options ?? {};
+
                 return {
                     Group: d.LegendGroup,
-                    Name: (keys[index].DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical +' ' + d.LegendHorizontal,
-                    Unit: baseUnit[d.Unit].options[activeUnits[index][d.Unit]],
-                    Value: selectedData[index].map(j => d.DataPoints[j]),
-                    BaseValue: d.BaseValue
+                    Name: (plot.key.DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical + ' ' + d.LegendHorizontal,
+                    Unit: unitOptions[plot.yLimits[unitType].current],
+                    Value: plot.selectedIndixes.map(j => d.DataPoints[j]),
+                    BaseValue: d.BaseValue,
+                    Color: d.Color
                 }
 
             }))
