@@ -120,11 +120,26 @@ export const AddSingleOverlappingPlot = createAsyncThunk('Data/addOverlappingPlo
 
     return await Promise.resolve();
 })
-        return Promise.resolve(); 
-        //let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
-    //AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId }, handles)
 
-    //return Promise.all(handles);
+// Thunk To Refetch Data for Analytic Plots
+export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', async (arg: { key: OpenSee.IGraphProps }, thunkAPI) => {
+    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
+    const state = (thunkAPI.getState() as OpenSee.IRootState)
+
+    if (plot === null) {
+        return Promise.resolve(); 
+    }
+
+    thunkAPI.dispatch(DataReducer.actions.RemoveData(arg.key))
+
+    // Adding Data to the Plot
+    let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
+    let handles = getData(arg.key, analyticOptions, data => {
+        thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: plot.key.EventId })); //not really sure what requestID and secondary is...
+    });
+
+    AddRequest(arg.key, handles);
+    return await Promise.all(handles);
 })
 
 /*
@@ -273,9 +288,11 @@ export const DataReducer = createSlice({
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
             Cancel
             const index = state.Plots.findIndex(item => item.key.DataType == action.payload.DataType
-                && item.key.EventId == action.payload.EventId)
-            if (index > -1) {
-                state.Plots.splice(index, 1);
+        RemoveData: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
+            const plot = state.Plots.find(item => item.key.DataType == action.payload.DataType && item.key.EventId == action.payload.EventId)
+            if (plot)
+                plot.data = [];
+        },
             }
         },
         /*
@@ -481,50 +498,15 @@ export const DataReducer = createSlice({
             return state
         });
         builder.addCase(UpdateAnalyticPlot.pending, (state, action) => {
-            CancelAnalytics();
-
-            const nonAnalytics = ["Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'] as OpenSee.graphType[];
-            const index = state.Plots.findIndex(p => nonAnalytics.includes(p.key.DataType));
-
-            if (index == -1 && action.meta.arg.analyticStore.Analytic !== 'none') {
-                const plot = _.cloneDeep(emptygraph);
-                plot.key = {
-                    DataType: action.meta.arg.analyticStore.Analytic,
-                    EventId: action.meta.arg.eventID,
-                    NoCompress: true,
-                };
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
+            if (plot)
                 plot.loading = 'Loading';
-                state.Plots.push(plot);
-            }
-            if (index > -1 && action.meta.arg.analyticStore.Analytic === 'none') {
-                state.Plots = state.Plots.filter(p => nonAnalytics.includes(p.key.DataType))
-            }
-            if (index > -1 && action.meta.arg.analyticStore.Analytic !== 'none') {
-                state.Plots[index] = _.cloneDeep(emptygraph);
-                state.Plots[index].key = {
-                    DataType: action.meta.arg.analyticStore.Analytic,
-                    EventId: action.meta.arg.eventID,
-                    NoCompress: true,
-                };
-                state.Plots[index].loading = 'Loading';
-            }
-
-            return state;
-
-        });
-
-        /*
-        builder.addCase(SetAnalytic.fulfilled, (state, action) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg as OpenSee.graphType))
-            state.loading[index] = 'Idle';
-
             return state
         });
-
-        builder.addCase(AddData.fulfilled, (state, action) => {
-            let index = state.plotKeys.findIndex(item => item.DataType == (action.meta.arg.key.DataType as OpenSee.graphType) && item.EventId == action.meta.arg.key.EventId)
-            state.loading[index] = 'Partial';
-
+        builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
+            if (plot)
+                plot.loading = 'Idle';
             return state
         });
         builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
