@@ -1009,6 +1009,28 @@ function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime:
         updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
     });
 
+export function getPrimaryAxis(key: OpenSee.IGraphProps) {
+    if (key.DataType === "Voltage")
+        return "Voltage" as OpenSee.Unit
+    else if (key.DataType === "Current")
+        return "Current" as OpenSee.Unit
+    else if (key.DataType === "FirstDerivative")
+        return "VoltageperSecond" //make sure this is correct 
+    else if (key.DataType === "Unbalance")
+        return "Unbalance"
+    else if (key.DataType === "THD")
+        return "THD"
+    else if (key.DataType === "RemoveCurrent")
+        return "Current"
+    else if (key.DataType === "Power")
+        return "PowerP"
+    else if (key.DataType === "Impedance")
+        return "Impedance"
+    else if (key.DataType === "Frequency")
+        return "Freq"
+    else
+        return "Voltage" as OpenSee.Unit
+
 }
 
 function updateFFTAutoLimits(plot: OpenSee.IGraphstate, start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
