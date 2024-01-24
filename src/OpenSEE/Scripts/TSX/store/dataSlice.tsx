@@ -637,11 +637,11 @@ export const selectListGraphs = createSelector(
 export const SelectOverlappingEvents = (graphType: OpenSee.graphType) => createSelector(
     (state: RootState) => state.Data.Plots,
     (state: RootState) => state.EventInfo.EventID,
-    (state: RootState) => state.Settings.SinglePlot,
-    (plots, eventId, singlePlot) => {
-        if (singlePlot)
-            return plots.filter(item => item.key.EventId == eventId).map(p => p.key);
-        return plots.map(p => p.key);
+    (plots, evtID) => {
+        const filteredPlots = plots.filter(plot => plot.key.EventId !== evtID && plot.key.EventId !== -1 && plot.key.DataType === graphType).map(plot => plot.key)
+        //order by eventID because we groupBy eventID in openSEE.tsx
+        const sortedPlots = _.orderBy(filteredPlots, "EventId", "desc")
+        return sortedPlots;
     })
 
 export const selectDisplayed = createSelector(
