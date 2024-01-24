@@ -1195,12 +1195,6 @@ function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>
     }
 }
 
-// function returns current units as IActiveUnits
-function getCurrentUnits(units: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IActiveUnits {
-    let result = {};
-    Object.keys(units).forEach(key => { result[key] = units[key].current });
-    return result as OpenSee.IActiveUnits; 
-}
 
 // Functioon that gets a Tooltip Display Name
 function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
@@ -1222,17 +1216,6 @@ function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
 
 }
 
-// Function to Combine and resolve issues with Limits if single Plot is selected
-function CombineLimits(limits: [number, number][]): [number,number] {
-    let ymin = limits[0][0];
-    let ymax = limits[0][1];
-
-    ymin = Math.min(...limits.map(item => item[0]).filter(pt => isFinite(pt) && !isNaN(pt)));
-    ymax = Math.max(...limits.map(item => item[1]).filter(pt => isFinite(pt) && !isNaN(pt)));
-    
-
-    return [ymin, ymax];
-}
 
 // Function to get Default Enabled Traces
 function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, defaultVoltage: 'L-L'|'L-N', data: OpenSee.iD3DataSeries[]): boolean[] {
