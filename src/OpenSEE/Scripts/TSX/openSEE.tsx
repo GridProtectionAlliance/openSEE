@@ -29,41 +29,52 @@
 // # Fix Dowload.ash to include Analytics
 //
 
+import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import moment from 'moment'
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import store from './store/store';
 import { OpenSee } from './global';
 import createHistory from "history/createBrowserHistory"
+
 import * as queryString from "query-string";
-import { groupBy } from "lodash";
-import OpenSEENoteModal from './Components/OpenSEENoteModal';
+import * as _ from "lodash";
+
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
-import {
-    LoadSettings, SelectdisplayAnalogs, SelectdisplayCur,
-    SelectdisplayDigitals, SelectdisplayTCE, SelectdisplayVolt,
-        SelectTab
-} from './store/settingSlice';
-import {
-    SetTimeLimit, selectListGraphs,
-    SetAnalytic, selectAnalytic
-} from './store/dataSlice';
-import { LoadOverlappingEvents, selectNumberCompare, ClearOverlappingEvent, selecteventList } from './store/eventSlice';
-import { setEventInfo } from "./store/infoSlice"
-import OverlappingEventWindow from './Components/MultiselectWindow';
+
+import store from './store/store';
+import { OpenSee } from './global';
+
+import { LoadSettings, SelectQueryString } from './store/settingSlice';
+import { SelectCycles, UpdateAnalytic, SelectAnalytics } from './store/analyticSlice';
+import { SetTimeLimit, selectDisplayed, selectFFTLimits, selectListGraphs, SelectPlotKeys } from './store/dataSlice';
+import { SetEventInfo, SetEventID, SelectEventInfo, SetLookupInfo } from './store/eventInfoSlice'
+import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
+
+import OverlappingEventWindow from './Components/OverlappingEvents';
 import BarChart from './Graphs/BarChartBase';
-import { SetFFTWindow } from './store/analyticSlice';
 import { updatedURL } from './store/queryThunk';
-import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
-import SettingsWidget from  './jQueryUI Widgets/SettingWindow';
 import { useAppDispatch, useAppSelector } from './hooks';
 
+import SettingsWidget from './jQueryUI Widgets/SettingWindow';
+import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
+import PhasorChartWidget from './jQueryUI Widgets/PhasorChart';
+import ToolTipWidget from './jQueryUI Widgets/Tooltip';
+import ToolTipDeltaWidget from './jQueryUI Widgets/TooltipWithDelta';
+import ScalarStatsWidget from './jQueryUI Widgets/ScalarStats';
+import TimeCorrelatedSagsWidget from './jQueryUI Widgets/TimeCorrelatedSags';
+import LightningDataWidget from './jQueryUI Widgets/LightningData';
+import FFTTable from './jQueryUI Widgets/FFTTable';
+import EventInfo from './jQueryUI Widgets/EventInfo';
+
+import HoverProvider from './Context/HoverProvider'
 
 declare var homePath: string;
-declare var userIsAdmin: boolean;
 declare var version: string;
+declare var eventID: number;
 
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
  
