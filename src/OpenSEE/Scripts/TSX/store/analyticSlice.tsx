@@ -27,13 +27,6 @@ import { createSelector } from 'reselect'
 import { UpdateAnalyticPlot } from './dataSlice';
 import { RootState } from './store';
 
-interface IAnalyticSettings {
-    Harmonic?: number,
-    LPFOrder?: number,
-    HPFOrder?: number,
-    Trc?: number,
-    FFTCycles?: number,
-}
 // #region [ Thunks ]
 
 export const UpdateAnalytic = createAsyncThunk('Analytic/updateAnalytic', async (arg: { settings: OpenSee.IAnalyticStore, key?: OpenSee.IGraphProps }, thunkAPI) => {
