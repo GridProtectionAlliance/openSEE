@@ -696,12 +696,26 @@ export const selectEnabled = () =>
     FilterEnabled
 );
 
-const FilterEnabled = (data: boolean[][], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab, key: OpenSee.IGraphProps) => {
-    let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-    if (single && tab == 'Compare')
-        return data[index].concat(...data.filter((item, i) => plotKeys[i].DataType == key.DataType && key.EventId != plotKeys[i].EventId))
-    return data[index];
-};
+export const SelectYLimits = (key: OpenSee.IGraphProps) => {
+    return createSelector(
+        (state: OpenSee.IRootState) => state.Data,
+        (data: OpenSee.IDataState) => {
+            const plot = data.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
+            let result = {}
+            if (plot) {
+                Object.keys(plot.yLimits).forEach(unit => {
+                    if (plot.isZoomed)
+                        result[unit] = plot.yLimits[unit].zoomedLimits
+                    else if (plot.yLimits[unit].isManual && plot.yLimits[unit].manualLimits)
+                        result[unit] = plot.yLimits[unit].manualLimits
+                    else
+                        result[unit] = plot.yLimits[unit].dataLimits
+                })
+            }
+
+            return result as OpenSee.IUnitCollection<[number, number]>;
+        });
+}
 
 export const selectYLimits = (key: OpenSee.IGraphProps) => {
     return createSelector(
