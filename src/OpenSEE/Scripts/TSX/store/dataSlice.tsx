@@ -216,21 +216,6 @@ export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: {
     return Promise.resolve();
 })
 
-//Thunk to set EventID
-export const SetEventID = createAsyncThunk('Data/setEventID', (arg: number, thunkAPI) => {
-
-    let oldData = (thunkAPI.getState() as OpenSee.IRootState).Data.Plots.map(p => p.key);
-    let oldTypes = oldData.map(item => item.DataType);
-    oldData.forEach(item => thunkAPI.dispatch(DataReducer.actions.RemovePlot(item)));
-    thunkAPI.dispatch(DataReducer.actions.UpdateEventId(arg))
-    oldTypes.forEach(item => thunkAPI.dispatch(AddPlot({ DataType: item, EventId: arg })))
-
-    thunkAPI.dispatch(LoadOverlappingEvents())
-
-    return Promise.resolve();
-})*/
-
-/*
 // Thunk to Update time Units
 export const SetTimeUnit = createAsyncThunk('Data/SetTimeUnit', (arg: number, thunkAPI) => {
 
