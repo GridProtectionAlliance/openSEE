@@ -19,11 +19,14 @@
 //  05/11/2018 - Billy Ernest
 //       Generated original version of source code.
 //
+//  01/24/2024 - Preston Crawford
+//       Fix Remove point button / refactor table layout
+//
 //******************************************************************************************************
 import * as React from 'react';
-import { WidgetWindow } from './Common';
-import { useSelector, useDispatch } from 'react-redux';
 import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
+import { SelectColor } from '../store/settingSlice'
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 interface Iprops {
     closeCallback: () => void,
@@ -32,69 +35,99 @@ interface Iprops {
     setPosition: (t: number, l: number) => void
 }
 
-const PointWidget = (props: Iprops) => {
-    const points = useSelector(selectSelectedPoints);
-    const startTime = useSelector(selectStartTime);
-    const dispatch = useDispatch();
-
+const PointWidget = () => {
+    const points = useAppSelector(selectSelectedPoints);
+    const startTime = useAppSelector(selectStartTime);
+    const dispatch = useAppDispatch();
+    const colors = useAppSelector(SelectColor);
     const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
 
-    let data: Array<JSX.Element> = (points.length > 0 && props.isOpen ? points[0].Value.map((p, i) => <tr key={i} onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null) }}>
-        <td>
-            <span>
-                {(p[0] - startTime).toFixed(7)} sec<br />{((p[0] - startTime) * 60.0).toFixed(2)} cycles
-            </span>
-        </td>
-        <td>
-            <span>
-                {i == 0 ? 'N/A' : <> {(points[0].Value[i - 1][0] - p[0]).toFixed(4)} sec<br /> {((points[0].Value[i - 1][0] - p[0]) * 60.0).toFixed(2)} cycles) </>}
-            </span>
-        </td>
-        {points.map((pt, j) => <>
-            <td key={j + '-1'}>
-                <span>
-                    {(pt.Value[i][1] * (pt.Unit.short == 'pu' || pt.Unit.short == 'pu/s' ? 1.0 / pt.BaseValue : pt.Unit.factor)).toFixed(2)} ({pt.Unit.short})
-                </span>
-            </td>
-            <td key={j + '-2'}>
-                <span>
-                    {i == 0 ? 'N/A' : ((pt.Value[i - 1][1] - pt.Value[i][1]) * (pt.Unit.short == 'pu' || pt.Unit.short == 'pu/s' ? 1.0 / pt.BaseValue : pt.Unit.factor)).toFixed(4)} ({pt.Unit.short})
-                </span>
-            </td>
-        </>)}        
-    </tr> ): [])
+    const flexRef = React.useRef(null);
+    const firstCellRef = React.useRef(null);
+    const secondCellRef = React.useRef(null);
+    const [flexSize, setFlexSize] = React.useState<{ width: number, height: number }>({ width: 0, height: 0 });
+    const [leftPosition, setLeftPosition] = React.useState({ secondCell: 0, thirdCell: 0 });
+
+
+    React.useLayoutEffect(() => {
+        const firstCellWidth = firstCellRef.current ? firstCellRef.current.offsetWidth : 0;
+        const secondCellWidth = secondCellRef.current ? secondCellRef.current.offsetWidth : 0;
+
+        setLeftPosition({ secondCell: firstCellWidth, thirdCell: firstCellWidth + secondCellWidth });
+    }, [points]);
+
+    React.useLayoutEffect(() => {
+        if (flexRef.current)
+            setFlexSize({ width: flexRef.current.offsetWidth, height: flexRef.current.offsetHeight });
+
+    }, []);
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={500} position={props.position} setPosition={props.setPosition}>
-            <table className="table table-bordered table-hover" style={{ overflowX: 'scroll', marginBottom: 0, width: 494, display: 'block' }}>
-                <thead>
-                    <tr>
-                        {props.isOpen ?
-                            <>
-                                <td colSpan={2} style={{ minWidth: 240, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}> </td>
-                                {points.map((p, i) => <td style={{ minWidth: 240, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} colSpan={2} key={i}><span>{p.Group}<br />{p.Name}</span> </td>)}
-                            </>: null}
-                    </tr>
-                    <tr>
-                        <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} ><span>Value</span> </td>
-                        <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} ><span>Delta</span> </td>
-                        {points.map((p, i) => <React.Fragment key={i}>
-                            <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}><span>Value</span> </td>
-                            <td style={{ minWidth: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}><span>Delta</span> </td>
-                        </React.Fragment>)}
-                    </tr>
-                </thead>
-                <tbody>
-                    {props.isOpen ? data : null}
-                </tbody>
-            </table>
+        <>
+            <div className="d-flex flex-column" ref={flexRef} style={{ height: '100%', width: '100%', padding: '10px' }}>
+                <div style={{ height: '95%', width: '100%', maxWidth: flexSize.width, overflowX: 'auto', overflowY: 'auto', }}>
+                    <table className="table table-bordered" style={{ height: '100%', marginBottom: 0, width: "100%" }}>
+                        <thead style={{ position: 'sticky', top: 0, zIndex: 200 }} >
+                            <tr>
+                                <td ref={firstCellRef} className="dot" style={{ backgroundColor: 'white', width: 12, position: 'sticky', left: 0, zIndex: 100 }}>
+                                    <b>&nbsp;&nbsp;&nbsp;</b>
+                                </td>
+                                <td ref={secondCellRef} style={{ width: 120, position: 'sticky', left: leftPosition.secondCell, zIndex: 100, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
+                                    <b>Time</b>
+                                </td>
+                                <td style={{ position: 'sticky', left: leftPosition.thirdCell, top: 0, zIndex: 200, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
+                                    <b>Value</b>
+                                    <hr style={{ width: '100%' }} />
+                                    <b>Delta</b>
+                                </td>
+                                {points[0]?.Value?.map((p, i) => (
+                                    <td key={i} style={{ maxHeight: 100, backgroundColor: (selectedIndex == i ? 'yellow' : 'white'), zIndex: 100, textAlign: 'center', verticalAlign: 'middle' }}>
+                                        <span>
+                                            {(p[0] - startTime).toFixed(7)} sec<hr />{((p[0] - startTime) * 60.0).toFixed(2)} cycles
+                                        </span>
+                                    </td>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {points.map((point, pointIndex) => (
+                                <tr key={pointIndex} style={{ maxWidth: flexSize.width }}>
+                                    <td ref={firstCellRef} className="dot" style={{ backgroundColor: colors[point.Color], width: 12, position: 'sticky', left: 0, zIndex: 100 }}>
+                                        <b>&nbsp;&nbsp;&nbsp;</b>
+                                    </td>
+                                    <td ref={secondCellRef} style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, position: 'sticky', left: leftPosition.secondCell, zIndex: 100, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
+                                        <b>{point.Group}</b>
+                                    </td>
+                                    <td style={{ position: 'sticky', left: leftPosition.thirdCell, top: 0, zIndex: 200, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
+                                        <b>Value</b>
+                                        <hr style={{ width: '100%' }} />
+                                        <b>Delta</b>
+                                    </td>
+                                    {point.Value.map((p, i) => (
+                                        <td key={i} onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : null), textAlign: 'center', verticalAlign: 'middle' }}>
+                                            <span>
+                                                {(p[1] * (point.Unit?.factor === undefined ? 1.0 / point.BaseValue : point.Unit?.factor)).toFixed(2)} {point?.Unit?.short}
+                                            </span>
+                                            <hr style={{ width: '100%' }} />
+                                            <span>
+                                                {i === 0 ? 'N/A' :
+                                                    ((point.Value[i - 1][1] - p[1]) * (point.Unit?.factor === undefined ? 1.0 / point.BaseValue : point.Unit?.factor)).toFixed(4)} {point?.Unit?.short}
+                                            </span>
+                                        </td>
+                                    ))}
+                                </tr>
 
-            <div style={{ margin: '5px', textAlign: 'right' }}>
-                <input className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex != -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
-                <input className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
-                <input className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-        </WidgetWindow>
+                <div style={{ height: '5%' }}>
+                    <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
+                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
+                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
+                </div>
+            </div>
+        </>
     );
 
 }
