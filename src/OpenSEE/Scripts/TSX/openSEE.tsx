@@ -105,34 +105,41 @@ const OpenSeeHome = () => {
     const Tab = useAppSelector(SelectTab);
     const analytic = useAppSelector(selectAnalytic);
 
+    //Effect to handle queryParams
     React.useEffect(() => {
-
         const query = queryString.parse(history.current['location'].search);
+
         const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
         const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
-        setEventStartTime(evStart);
-        setEventEndTime(evEnd);
-
         const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
         dispatch(SetTimeLimit({ start: startTime, end: endTime }));
+        dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: startTime } }));
 
         dispatch(updatedURL({ query: history.current['location'].search, initial: true }));
 
-        history.current['listen']((location, action) => {
+        history.current['listen'](location => {
             // If Query changed then we update states....
             // Note that enabled and selected states that depend on loading state are not dealt with in here
             dispatch(updatedURL({ query: location.search, initial: false }));
         });
+
     }, []);
 
 
     React.useEffect(() => {
         window.addEventListener("resize", () => { setResizeCount(x => x + 1) });
 
-        dispatch(LoadOverlappingEvents())
-        getEventData();
+
+    //Effect to push updatedQueryParams
+    React.useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            history.current['push'](`?${query}`);
+        }, 1000); //might be able to redduce this
+
+        return () => clearTimeout(timeoutId);
+    }, [query]);
 
         return () => { $(window).off('resize'); }
     }, [])
