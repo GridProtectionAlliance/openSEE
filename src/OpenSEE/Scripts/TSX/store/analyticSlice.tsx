@@ -20,19 +20,19 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { createSelector } from 'reselect'
-import { UpdateAnalyticPlot } from './dataSlice';
 import { RootState } from './store';
+import { UpdateAnalyticPlot } from './dataSlice'
 
 // #region [ Thunks ]
 
 export const UpdateAnalytic = createAsyncThunk('Analytic/updateAnalytic', async (arg: { settings: OpenSee.IAnalyticStore, key?: OpenSee.IGraphProps }, thunkAPI) => {
     if(arg.key)
         thunkAPI.dispatch(UpdateAnalyticPlot({ key: arg.key }));
-        return Promise.resolve();
+    return Promise.resolve();
 })
 
 // #endregion
@@ -45,8 +45,7 @@ export const AnalyticReducer = createSlice({
         HPFOrder: 2,
         Trc: 500,
         FFTCycles: 1,
-        FFTStartTime: 0,
-        Analytic: 'none'
+        FFTStartTime: 0
     } as OpenSee.IAnalyticStore,
     reducers: {},
     extraReducers: (builder) => {
@@ -73,19 +72,21 @@ export default AnalyticReducer.reducer;
 // #endregion
 
 // #region [ Selectors ]
-export const selectHarmonic = (state: RootState) => state.Analytic.Harmonic;
-export const selectTRC = (state: RootState) => state.Analytic.Trc;
-export const selectLPF = (state: RootState) => state.Analytic.LPFOrder;
-export const selectHPF = (state: RootState) => state.Analytic.HPFOrder;
-export const selectCycles = (state: RootState) => state.Analytic.FFTCycles;
+export const SelectHarmonic = (state: RootState) => state.Analytic.Harmonic;
+export const SelectTRC = (state: RootState) => state.Analytic.Trc;
+export const SelectLPF = (state: RootState) => state.Analytic.LPFOrder;
+export const SelectHPF = (state: RootState) => state.Analytic.HPFOrder;
+export const SelectCycles = (state: RootState) => state.Analytic.FFTCycles;
+export const SelectAnalytics = (state: RootState) => state.Analytic;
 
-export const selectFFTWindow = createSelector(
+
+export const SelectFFTWindow = createSelector(
     (state: RootState) => state.Analytic.FFTCycles,
     (state: RootState) => state.Analytic.FFTStartTime,
     (cycle, startTime) => ([startTime, startTime + (cycle * 1 / 60.0 * 1000.0)] as [number, number])
-    );
+);
 
-export const selectAnalyticOptions = (key: OpenSee.graphType) => {
+export const SelectAnalyticOptions = (key: OpenSee.graphType) => {
     return createSelector(
         (state: RootState) => state.Analytic.Harmonic,
         (state: RootState) => state.Analytic.LPFOrder,
@@ -110,6 +111,3 @@ export const selectAnalyticOptions = (key: OpenSee.graphType) => {
 
 // #endregion
 
-// #region [ Async Functions ]
-
-// #endregion
