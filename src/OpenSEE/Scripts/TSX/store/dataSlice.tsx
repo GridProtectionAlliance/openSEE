@@ -717,18 +717,32 @@ export const SelectYLimits = (key: OpenSee.IGraphProps) => {
         });
 }
 
-export const selectYLimits = (key: OpenSee.IGraphProps) => {
+export const selectOverlappingYLimits = (graphType: OpenSee.graphType) => {
     return createSelector(
-        (state: OpenSee.IRootState) => state.Data.yLimits,
-        (state: OpenSee.IRootState) => state.Data.plotKeys,
-        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-        (state: OpenSee.IRootState) => state.Settings.Tab,
-        (data: OpenSee.IUnitCollection<OpenSee.IAxisSettings>[], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab) => {
-            let index = plotKeys.findIndex((item => item.DataType == key.DataType && item.EventId == key.EventId));
-            if (single && tab == 'Compare')
-                return CombineLimits(data.filter((item, i) => plotKeys[i].DataType == key.DataType).map((item) => item.Voltage.dataLimits))
+        (state: OpenSee.IRootState) => state.Data.Plots,
+        (state: OpenSee.IRootState) => state.EventInfo.EventID,
+        (plots, evtID) => {
+            let overlappingPlots = plots.filter(plot => plot.key.EventId !== evtID && plot.key.DataType === graphType)
 
-            return data[index];
+            let result = {};
+            if (overlappingPlots.length > 0) {
+                overlappingPlots.forEach(plot => {
+                    let yLimits = {}
+                    Object.keys(plot.yLimits).forEach(key => {
+                        if (plot.isZoomed)
+                            yLimits[key] = plot.yLimits[key].zoomedLimits;
+                        else if (plot.yLimits[key].isManual && plot.yLimits[key].manualLimits)
+                            yLimits[key] = plot.yLimits[key].manualLimits
+                        else
+                            yLimits[key] = plot.yLimits[key].dataLimits
+
+                    })
+                    result[plot.key.DataType] = yLimits
+                })
+
+                return result;
+            }
+
         });
 
 }
