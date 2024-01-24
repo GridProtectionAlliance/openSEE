@@ -984,28 +984,24 @@ export const selectSelectedPoints = createSelector(selectUnit, selectEventID, (s
 
 
 // For FFT Table
-export const selectFFTData = createSelector((state: OpenSee.IRootState) => FilterData(state.Data.data, state.Data.plotKeys, state.Settings.SinglePlot, state.Settings.Tab, { DataType: 'FFT', EventId: state.Data.eventID }),
-    (state: OpenSee.IRootState) => selectActiveUnit({ DataType: 'FFT', EventId: state.Data.eventID })(state),
-    (data, activeUnits) => {
+export const selectFFTData = createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots.find(plot => plot.key.DataType === "FFT" && plot.key.EventId === state.EventInfo.EventID),
+    (fftPlot) => {
+        if (fftPlot?.data == null) return [];
+        const activeUnits = defaultSettings.Units
+        let asset = _.uniq(fftPlot.data.map(item => item.LegendGroup));
+        let phase = _.uniq(fftPlot.data.map(item => item.LegendVertical));
         
-        if (data == null)
-            return [];
-
-        let asset = uniq(data.map(item => item.LegendGroup));
-        let phase = uniq(data.map(item => item.LegendVertical));
-
-        if (data.length == 0)
-            return []
-
+        if (fftPlot.data.length == 0) return []
 
         let result: OpenSee.IFFTSeries[] = [];
 
         asset.forEach(a => {
             phase.forEach(p => {
-                if (!data.some((item, i) => (item.LegendGroup == a && item.LegendVertical == p)))
+                if (!fftPlot.data.some((item, i) => (item.LegendGroup == a && item.LegendVertical == p)))
                     return
 
-                let d = data.filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
+                let d = fftPlot.data.filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
                 let phaseChannel = d.find(item => item.LegendHorizontal == 'Ang');
                 let magnitudeChannel = d.find(item => item.LegendHorizontal == 'Mag');
 
@@ -1014,14 +1010,14 @@ export const selectFFTData = createSelector((state: OpenSee.IRootState) => Filte
 
                 result.push({
                     Color: phaseChannel.Color,
-                    Unit: activeUnits[magnitudeChannel.Unit],
-                    PhaseUnit: activeUnits['Angle'],
+                    Unit: activeUnits[magnitudeChannel.Unit].options[fftPlot.yLimits[magnitudeChannel.Unit].current],
+                    PhaseUnit: activeUnits["Angle"].options[fftPlot.yLimits["Angle"].current],
                     Phase: p,
                     Asset: a,
                     Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
                     Angle: phaseChannel.DataPoints.map(item => item[1]),
                     BaseValue: magnitudeChannel.BaseValue,
-                    Frequency: magnitudeChannel.DataPoints.map(item => item[0]*60.0),
+                    Frequency: magnitudeChannel.DataPoints.map(item => item[0] * 60.0),
                 });
 
             })
