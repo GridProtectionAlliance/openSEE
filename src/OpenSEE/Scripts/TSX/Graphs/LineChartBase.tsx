@@ -293,22 +293,28 @@ const LineChart = (props: iProps) => {
             .x(function (d) { return 0 })
             .y(function (d) { return 0 })
            
+    function createLineGen(unit = null, base = null) {
+        let factor = 1.0
 
-        if (xScaleRef.current != undefined && yScaleRef.current != undefined)
-            lineGen = d3.line()
-                .x(function (d) { return xScaleRef.current(d[0])})
-                .y(function (d) { return yScaleRef.current(d[1])})
-                .defined(function (d) {
-                    let tx = !isNaN(parseFloat(xScaleRef.current(d[0])));
-                    let ty = !isNaN(parseFloat(yScaleRef.current(d[1])));
-                    tx = tx && isFinite(parseFloat(xScaleRef.current(d[0])));
-                    ty = ty && isFinite(parseFloat(yScaleRef.current(d[1])));
-                    return tx && ty
-                })
+        // Calculate factor if unit and base are provided
+        if (unit && base && activeUnit?.[unit]) {
+            factor = activeUnit?.[unit].factor;
+            if (factor === undefined)  //p.u case
+                factor = 1.0 / base
+        }
 
-        let lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
+        return d3.line()
+            .x(d => xScaleRef.current ? xScaleRef.current(d[0]) : 0)
+            .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
+            .defined(d => {
+                let tx = !isNaN(parseFloat(xScaleRef.current ? xScaleRef.current(d[0]) : 0));
+                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                tx = tx && isFinite(parseFloat(xScaleRef.current ? xScaleRef.current(d[0]) : 0));
+                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                return tx && ty;
+            });
+    }
 
-        lines.enter().append("path").classed("Line", true)
             
             .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))

@@ -100,7 +100,7 @@ export const defaultSettings = {
         Voltage: {
             current: 0, options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliVolt", short: "mV", factor: 1000 },
                 { label: "Volt", short: "V", factor: 1 },
                 { label: "kiloVolt", short: "kV", factor: 0.001 },
@@ -118,7 +118,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 },
@@ -129,7 +129,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u./s", factor: 0 },
+                { label: "Per Unit", short: "p.u./s", factor: undefined },
                 { label: "milliVolts per sec", short: "mV/s", factor: 1000 },
                 { label: "Volt per sec", short: "V/s", factor: 1 },
                 { label: "kiloVolts per sec", short: "kV/s", factor: 0.001 },
@@ -141,7 +141,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u./s", factor: 0 },
+                { label: "Per Unit", short: "p.u./s", factor: undefined },
                 { label: "milliAmps per sec", short: "mA/s", factor: 1000 },
                 { label: "Amps per sec", short: "A/s", factor: 1 },
                 { label: "kiloAmps per sec", short: "kA/s", factor: 0.001 },
@@ -153,7 +153,7 @@ export const defaultSettings = {
             current:0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliHertz", short: "mHz", factor: 1000 },
                 { label: "Hertz", short: "Hz", factor: 1 },
                 { label: "kiloHertz", short: "kHz", factor: 0.001 } 
@@ -164,7 +164,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliOhms", short: "mOhm", factor: 1000 },
                 { label: "Ohms", short: "Ohm", factor: 1 },
                 { label: "kiloOhms", short: "kOhm", factor: 0.001 },
@@ -175,7 +175,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Watt", short: "W", factor: 1000000 },
                 { label: "Kilo Watt", short: "kW", factor: 1000 },
                 { label: "Mega Watt", short: "MW", factor: 1 }
@@ -186,7 +186,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
                 { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
                 { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 }
@@ -197,7 +197,7 @@ export const defaultSettings = {
             current: 0,
             options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Volt-Amps", short: "VA", factor: 1000000 },
                 { label: "Kilo Volt-Amps", short: "kVA", factor: 1000 },
                 { label: "Mega Volt-Amps", short: "MVA", factor: 1 }
@@ -217,6 +217,7 @@ export const defaultSettings = {
             options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: 0 },
+                { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 }
