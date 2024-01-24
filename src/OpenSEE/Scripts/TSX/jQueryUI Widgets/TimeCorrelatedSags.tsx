@@ -22,77 +22,150 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { WidgetWindow } from './Common';
-
+import { ConfigTable } from '@gpa-gemstone/react-interactive';
+import { ReactTable } from '@gpa-gemstone/react-table'
 
 interface Iprops {
-    closeCallback: () => void,
     exportCallback: () => void,
-    eventId: number,
-    isOpen: boolean,
-    position: [number, number],
-    setPosition: (t: number, l: number) => void
+}
+
+interface ICorrelatedSags {
+    AssetName: string,
+    EventID: number,
+    EventType: "Other"
+    MeterName: string,
+    SagDurationCycles: string,
+    SagDurationMilliseconds: string,
+    SagMagnitudePercent: string,
+    StartTime: string,
 }
 
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
-    const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
+    const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>(null);
 
-    
     React.useEffect(() => {
         let handle = getData();
 
         return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props.eventId])
-
-    const rowStyle = { paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }
+    }, [props])
 
     function getData(): JQuery.jqXHR {
 
         let handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetTimeCorrelatedSags?eventId=${props.eventId}`,
+            url: `${homePath}api/OpenSEE/GetTimeCorrelatedSags?eventId=${eventID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
             async: true
         });
 
-
-        handle.done((d) => {
-            setTblData(d.map(row =>
-                <tr style={{ display: 'table', tableLayout: 'fixed', background: (row.EventID == props.eventId? 'lightyellow' : 'default') }} key={row.EventID}>
-                    <td style={{ width: 60, ...rowStyle }} ><a id="eventLink" target="_blank" href={'./?eventid=' + row.EventID}><div style={{ width: '100%', height: '100%' }}>{row.EventID}</div></a></td>
-                    <td style={{ width: 80, ...rowStyle }} >{row.EventType}</td>
-                    <td style={{ width: 80, ...rowStyle }} >{row.SagMagnitudePercent}%</td>
-                    <td style={{ width: 200, ...rowStyle }}>{row.SagDurationMilliseconds} ms ({row.SagDurationCycles} cycles)</td>
-                    <td style={{ width: 220, ...rowStyle }}>{row.StartTime}</td>
-                    <td style={{ width: 200, ...rowStyle }}>{row.MeterName}</td>
-                    <td style={{ width: 300, ...rowStyle }}>{row.AssetName}</td>
-                </tr>))
+        handle.done(d => {
+            setSagsData(d as ICorrelatedSags[])
         });
-                
+
         return handle;
     }
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={550} width={996} position={props.position} setPosition={props.setPosition}>
-            <table className="table" style={{ fontSize: 'small', marginBottom: 0 }}>
-                <thead style={{ display: 'table', tableLayout: 'fixed', marginBottom: 0 }}>
-                    <tr>
-                        <th style={{ width: 60, ...rowStyle }}>Event ID</th>
-                        <th style={{ width: 80, ...rowStyle }}>Event Type</th>
-                        <th style={{ width: 80, ...rowStyle }}>Magnitude</th>
-                        <th style={{ width: 200, ...rowStyle }}>Duration</th>
-                        <th style={{ width: 220, ...rowStyle }}>Start Time</th>
-                        <th style={{ width: 200, ...rowStyle }}>Meter Name</th>
-                        <th style={{ width: 300, ...rowStyle }}>Asset Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button className='btn btn-primary' onClick={() => props.exportCallback()}>Export(csv)</button></th>
-                    </tr>
-                </thead>
-                <tbody style={{ maxHeight: 500, overflowY: 'auto', display: 'block' }}>
-                    {tblData}
-                </tbody>
-            </table>
-        </WidgetWindow>
+        <>
+            {sagsData ? //need to add a columnn for the export button..
+                <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
+                    <ConfigTable.Table<ICorrelatedSags>
+                        LocalStorageKey={"OpenSee.Correlated.TableCols"}
+                        TableClass={"table table-hover"}
+                        Data={sagsData}
+                        KeySelector={(item) => item.EventID.toString()}
+                        OnSort={() => true}
+                        SortKey={"EventID"}
+                        TbodyStyle={{ overflowY: 'scroll', maxHeight: '100vh', height: '100%' }}
+                        RowStyle={{width: '100%'}}
+                        TableStyle={{ height: '100%', width: '100%', margin: '3%' }}
+                        Ascending={false}
+                    >
+                        <ConfigTable.Configurable Key={'EventID'} Label={'Event ID'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'EventID'}
+                                AllowSort={true}
+                                Field={'EventID'}
+                                Content={({ item }) => (
+                                    <a id="eventLink" target="_blank" href={`./?eventid=${item.EventID}`}>
+                                        <div style={{ width: '100%', height: '100%' }}>{item.EventID}</div>
+                                    </a>
+                                )}
+                            >
+                                Event ID
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'AssetName'} Label={'Asset Name'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'AssetName'}
+                                AllowSort={true}
+                                Field={'AssetName'}>
+                                Asset Name
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'EventType'} Label={'Event Type'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'EventType'}
+                                AllowSort={true}
+                                Field={'EventType'}>
+                                Event Type
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'MeterName'} Label={'MeterName'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'MeterName'}
+                                AllowSort={true}
+                                Field={'MeterName'}>
+                                Meter Name
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'SagDurationCycles'} Label={'Sag Duration Cycles'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'SagDurationCycles'}
+                                AllowSort={true}
+                                Field={'SagDurationCycles'}>
+                                Sag Duration Cycles
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'SagDurationMilliseconds'} Label={'Sag Duration Milliseconds'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'SagDurationMilliseconds'}
+                                AllowSort={true}
+                                Field={'SagDurationMilliseconds'}>
+                                Sag Duration Milliseconds
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'SagMagnitudePercent'} Label={'Magnitude'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'SagMagnitudePercent'}
+                                AllowSort={true}
+                                Field={'SagMagnitudePercent'}>
+                                Sag Magnitude Percent
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                        <ConfigTable.Configurable Key={'StartTime'} Label={'Start Time'} Default={true}>
+                            <ReactTable.Column<ICorrelatedSags>
+                                Key={'StartTime'}
+                                AllowSort={true}
+                                Field={'StartTime'}>
+                                Start Time
+                            </ReactTable.Column>
+                        </ConfigTable.Configurable>
+
+                    </ConfigTable.Table>
+                </div>
+
+                : null}
+        </>
     );
 
 }
