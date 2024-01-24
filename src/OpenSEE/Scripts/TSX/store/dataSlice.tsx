@@ -54,27 +54,72 @@ const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: O
 */
 
 // Thunk To Add New Plot
-export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.DataType && item.key.EventId == arg.EventId)
+export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean }, thunkAPI) => {
+    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
+    const state = (thunkAPI.getState() as OpenSee.IRootState)
+    const singlePlot = state.Settings.SinglePlot
 
-    if (plot.loading != 'Loading')
-        return;
+    if (plot === null || plot.loading !== 'Loading') {
+        return Promise.resolve();
+    }
 
     // Adding Data to the Plot
-    //let handles = getData(arg, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (d) => {  });
-    //AddRequest(arg, handles);
-    //return await Promise.all(handles);
+    let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
+
+    let handles = getData(arg.key, analyticOptions, async data => {
+        await thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: arg.key.EventId }));
+
+        const updatedState = (thunkAPI.getState() as OpenSee.IRootState);
+        const updatedPlot = updatedState.Data.Plots.find(item => item.key.DataType === arg.key.DataType && item.key.EventId === arg.key.EventId);
+        const singleOverlappingPlot = updatedState.Data.Plots.find(item => item.key.DataType === arg.key.DataType && item.key.EventId === -1)
+
+
+        //Only dispatch to the overlapping single plot after the first call to AppendData finishes and if it exists
+        if (singlePlot) {
+            if (singleOverlappingPlot)
+                thunkAPI.dispatch(DataReducer.actions.AppendData({ key: { EventId: -1, DataType: arg.key.DataType }, data: _.cloneDeep(updatedPlot.data), defaultTraces: updatedState.Settings.DefaultTrace, defaultV: updatedState.Settings.DefaultVType, eventID: arg.key.EventId }));
+            else
+                thunkAPI.dispatch(AddSingleOverlappingPlot(arg.key));
+        }
+
+    });
+
+    AddRequest(arg.key, handles);
+    return await Promise.all(handles);
 })
 
-// Thunk to set Analytic
-export const UpdateAnalyticPlot = createAsyncThunk<Promise<any>, { analyticStore: OpenSee.IAnalyticStore, eventID: number }, {}>('Data/updateAnalyticPlot',
-    async (arg: { analyticStore: OpenSee.IAnalyticStore, eventID: number }, thunkAPI) => {
+// Thunk To Remove Plot
+export const RemovePlot = createAsyncThunk('Data/removePlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    const state = (thunkAPI.getState() as OpenSee.IRootState)
+    const singlePlot = state.Settings.SinglePlot
+    const plotIndex = state.Data.Plots.findIndex(item => item.key.DataType == arg.DataType && item.key.EventId == arg.EventId)
+    const plotData = state.Data.Plots[plotIndex].data
 
-        const state = (thunkAPI.getState() as RootState);
-        const plot = state.Data.Plots.find(item => item.key.DataType == arg.analyticStore.Analytic);
-        if (plot === null || plot.loading != 'Loading')
+    if (plotIndex > -1) {
+        thunkAPI.dispatch(DataReducer.actions.RemovePlot(plotIndex))
+
+        //Remove data from the overlapping single plot if enabled
+        if (singlePlot)
+            thunkAPI.dispatch(DataReducer.actions.RemoveOverlappingData({ key: arg, data: _.cloneDeep(plotData) }))
+    }
+
+    return await Promise.resolve();
+})
+
+// Thunk To Add New Single Overlapping Plot
+export const AddSingleOverlappingPlot = createAsyncThunk('Data/addOverlappingPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    const state = (thunkAPI.getState() as OpenSee.IRootState)
+    const singleOverlappingPlot = state.Data.Plots.find(plot => plot.key.DataType === arg.DataType && plot.key.EventId === -1)
+    const currentPlot = state.Data.Plots.find(plot => plot.key.DataType === arg.DataType && plot.key.EventId === arg.EventId)
+
+    if (singleOverlappingPlot === null || singleOverlappingPlot.loading !== 'Loading')
             return Promise.resolve(); 
 
+    // Adding Data with matching datatypes
+    thunkAPI.dispatch(DataReducer.actions.AppendData({ key: { EventId: -1, DataType: currentPlot.key.DataType }, data: _.cloneDeep(currentPlot.data), defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: currentPlot.key.EventId })); //not really sure what requestID and secondary is...
+
+    return await Promise.resolve();
+})
         return Promise.resolve(); 
         //let handles = getData({ DataType: arg as OpenSee.graphType, EventId: eventId }, thunkAPI.dispatch, (thunkAPI.getState() as OpenSee.IRootState).Analytic, thunkAPI.requestId);
     //AddRequest({ DataType: arg as OpenSee.graphType, EventId: eventId }, handles)
@@ -482,15 +527,27 @@ export const DataReducer = createSlice({
 
             return state
         });
+        builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
 
-        builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
-            let index = state.plotKeys.findIndex(item => item.DataType != 'Voltage' && item.DataType != 'Current' && item.DataType != 'Analogs' && item.DataType != 'Digitals' && item.DataType != 'TripCoil');
+            if (plot == null) {
+                plot = _.cloneDeep(emptygraph);
+                state.Plots.push(plot)
+            }
 
-            state.loading[index] = 'Idle';
+            plot.key = { EventId: -1, DataType: action.meta.arg.DataType };
+            plot.loading = 'Loading';
+
 
             return state
-        }); */
+        });
+        builder.addCase(AddSingleOverlappingPlot.fulfilled, (state, action) => {
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
+            if (plot)
+                plot.loading = 'Idle';
 
+            return state
+        });
     }
 
 });
@@ -505,6 +562,20 @@ export default DataReducer.reducer;
 
 // Returns a List of keys for Plots that should be displayed.
 export const selectListGraphs = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (state: RootState) => state.Settings.SinglePlot,
+    (plots, singlePlot) => {
+
+        if (singlePlot) {
+            const keys = plots.filter(item => item.key.EventId == -1).map(p => p.key);
+            return _.groupBy(keys, "EventId");
+        }
+
+        const keys = plots.map(p => p.key)
+        return _.groupBy(keys, "EventId");
+    })
+
+export const SelectOverlappingEvents = (graphType: OpenSee.graphType) => createSelector(
     (state: RootState) => state.Data.Plots,
     (state: RootState) => state.EventInfo.EventID,
     (state: RootState) => state.Settings.SinglePlot,
