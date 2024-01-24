@@ -20,9 +20,9 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { defaultSettings } from '../defaults';
 import { createSelector } from 'reselect';
 import * as queryString from "query-string";
@@ -55,67 +55,65 @@ export const SettingsReducer = createSlice({
         TimeUnit: {} as OpenSee.IUnitSetting,
         DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
         DefaultVType: "L-L",
+        SinglePlot: true as boolean,
+        Navigation: 'system'
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
-            let preserved = GetSettings();
-            if (preserved != undefined)
-            {
-                state.Units = preserved.Units;
-                state.Colors = preserved.Colors;
-                state.TimeUnit = preserved.TimeUnit;
-                state.SinglePlot = false;
-                state.DefaultTrace = preserved.DefaultTrace;
-                state.DefaultVType = preserved.DefaultVType;
+            let preserved = getSettings();
+
+            if (preserved) {
+                state.Colors = preserved.Colors === undefined ? defaultSettings.Colors : preserved.Colors
+                state.TimeUnit = preserved.TimeUnit === undefined ? defaultSettings.TimeUnit : preserved.TimeUnit;
+                state.DefaultTrace = preserved.DefaultTrace === undefined ? defaultSettings.DefaultTrace : preserved.DefaultTrace;
+                state.DefaultVType = preserved.DefaultVType === undefined ? defaultSettings.DefaultVType : preserved.DefaultVType;
+                state.Navigation = preserved.Navigation === undefined ? defaultSettings.Navigation: preserved.Navigation;
+                state.SinglePlot = preserved.SinglePlot === undefined ? defaultSettings.SinglePlot : preserved.SinglePlot;
             }
             else {
-                state.Units = defaultSettings.Units;
                 state.Colors = defaultSettings.Colors;
                 state.TimeUnit = defaultSettings.TimeUnit;
                 state.SinglePlot = false;
                 state.DefaultTrace = defaultSettings.DefaultTrace;
                 state.DefaultVType = defaultSettings.DefaultVType;
+                state.Navigation = "system";
             }
+
             return state
         },
         SetColor: (state, action: PayloadAction<{ color: OpenSee.Color, value: string }>) => {
             state.Colors[action.payload.color] = action.payload.value
-            SaveSettings(state);
+            saveSettings(state);
         },
-        SetUnit: (state, action: PayloadAction<{ unit: OpenSee.Unit, value: number }>) => {
-            state.Units[action.payload.unit].current = action.payload.value
-            SaveSettings(state);
-        },
-        SetTimeUnit: (state, action: PayloadAction<number>) => {
-            state.TimeUnit.current = action.payload
-            SaveSettings(state);
+        SetTimeUnit: (state, action: PayloadAction<{ index: number, auto: boolean }>) => {
+            state.TimeUnit.current = action.payload.index
+            state.TimeUnit.autoUnit = action.payload.auto
+            saveSettings(state);
         },
         SetSinglePlot: (state, action: PayloadAction<boolean>) => {
-            state.SinglePlot = false;
-            SaveSettings(state);
-        },
-        SetTab: (state, action: PayloadAction<OpenSee.Tab>) => {
-            state.Tab = action.payload;
+            state.SinglePlot = action.payload;
+            saveSettings(state);
         },
         SetDefaultTrace: (state, action: PayloadAction<OpenSee.IDefaultTrace>) => {
             state.DefaultTrace = action.payload;
-            SaveSettings(state);
+            saveSettings(state);
         },
         SetDefaultVType: (state, action: PayloadAction<'L-L' | 'L-N'>) => {
             state.DefaultVType = action.payload;
             SaveSettings(state);
         }
     },
+        SetNavigation: (state, action: PayloadAction<OpenSee.EventNavigation>) => {
+            state.Navigation = action.payload;
+            saveSettings(state);
+        },
+    },
     extraReducers: (builder) => {
     }
 
 });
 
-export const {
-    LoadSettings, SetColor, SetUnit,
-    SetTimeUnit, SetSinglePlot,
-    SetTab, SetDefaultTrace, SetDefaultVType
-} = SettingsReducer.actions;
+export const { LoadSettings, SetColor, SetTimeUnit, SetDefaultTrace, SetDefaultVType, SetSinglePlot, SetNavigation } = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
 // #endregion
@@ -225,17 +223,18 @@ export const selectQueryString = createSelector(
 // #endregion
 
 // #region [ Async Functions ]
-function SaveSettings(state: OpenSee.ISettingsState) {
+function saveSettings(state: OpenSee.ISettingsState) {
+    const currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
+    const units = currentSettings?.Units
     try {
         let saveState = {
-            Units: state.Units,
+            Units: units,
             Colors: state.Colors,
-            TimeUnit: {
-                current: state.TimeUnit.current
-            },
-            SinglePlot: false,
+            TimeUnit: state.TimeUnit,
             DefaultTrace: state.DefaultTrace,
-            DefaultVType: state.DefaultVType
+            DefaultVType: state.DefaultVType,
+            Navigation: state.Navigation,
+            SinglePlot: state.SinglePlot
         }
         const serializedState = JSON.stringify(saveState);
         localStorage.setItem('openSee.Settings', serializedState);
@@ -243,42 +242,41 @@ function SaveSettings(state: OpenSee.ISettingsState) {
         // ignore write errors
     }
 }
-function GetSettings(): OpenSee.ISettingsState {
+
+function getSettings(): OpenSee.ISettingsState {
     try {
         const serializedState = localStorage.getItem('openSee.Settings');
         if (serializedState === null) {
             return undefined;
         }
+
         // overwrite options if new options are available
-        let state: OpenSee.ISettingsState = JSON.parse(serializedState);
-
-        // For Unit (Time and regular) only grab current Unit
-        Object.keys(defaultSettings.Units).forEach((key) => {
-            const unitValid =
-                state.Units[key] != undefined &&
-                state.Units[key].current >= 0 &&
-                state.Units[key].current < defaultSettings.Units[key].options.length;
-
-            state.Units[key] = { ...defaultSettings.Units[key], current: unitValid ? state.Units[key].current : defaultSettings.Units[key].current };
-        });
+        let storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
 
         const timeUnitValid =
-            state.TimeUnit != undefined &&
-            state.TimeUnit.current >= 0 &&
-            state.TimeUnit.current < defaultSettings.TimeUnit.options.length;
+            storageState.TimeUnit !== undefined &&
+            storageState.TimeUnit.current >= 0 &&
+            storageState.TimeUnit.current < defaultSettings.TimeUnit.options.length;
 
-        state.TimeUnit = { ...defaultSettings.TimeUnit, current: timeUnitValid ? state.TimeUnit.current : defaultSettings.TimeUnit.current };
+        storageState.TimeUnit = { ...defaultSettings.TimeUnit, current: timeUnitValid ? storageState.TimeUnit.current : defaultSettings.TimeUnit.current };
 
         Object.keys(defaultSettings.Colors).forEach((key) => {
-            if (state.Colors[key] == undefined)
-                state.Colors[key] = defaultSettings.Colors[key];
+            if (storageState.Colors[key] === undefined)
+                storageState.Colors[key] = defaultSettings.Colors[key];
         });
 
-        if (state.DefaultTrace == undefined)
-            state.DefaultTrace = defaultSettings.DefaultTrace
-        if (state.DefaultVType == undefined)
-            state.DefaultVType = defaultSettings.DefaultVType as "L-L" | 'L-N';
-        return state;
+        if (storageState.DefaultTrace === undefined)
+            storageState.DefaultTrace = defaultSettings.DefaultTrace
+
+        if (storageState.DefaultVType === undefined)
+            storageState.DefaultVType = defaultSettings.DefaultVType;
+
+        if (storageState.SinglePlot === undefined)
+            storageState.SinglePlot = defaultSettings.SinglePlot
+
+        if (storageState.Navigation === undefined)
+            storageState.Navigation = defaultSettings.Navigation;
+        return storageState;
     } catch (err) {
         return undefined;
     }
