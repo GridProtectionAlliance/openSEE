@@ -473,27 +473,35 @@ export const DataReducer = createSlice({
                 curPlot.isZoomed = true;
             }
         },
-        UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IUnitCollection<OpenSee.IUnitSetting>>) => {
-            //Update All Units and limits
-            state.plotKeys
-                .forEach((graph, index) => {
-                    const RelevantAxis = _.uniq(state.data[index].map((s) => s.Unit));
-                    RelevantAxis.forEach((axis) => {
-                        const axisSetting: OpenSee.IAxisSettings = state.yLimits[index][axis];
-                        const isPU = (getCurrentUnits(action.payload)[axis] as OpenSee.iUnitOptions).short == 'pu';
-                        if (isPU && state.plotKeys[index].DataType != 'FFT' && state.plotKeys[index].DataType != 'OverlappingWave')
-                            axisSetting.dataLimits = recomputeDataLimits(state.startTime, state.endTime,
-                                state.data[index].filter((item, i) => state.enabled[index][i]));
-                        else if (isPU && state.plotKeys[index].DataType == 'FFT')
-                            axisSetting.dataLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], state.data[index].filter((item, i) => state.enabled[index][i]));
-                        else if (isPU && state.plotKeys[index].DataType == 'OverlappingWave')
-                            axisSetting.dataLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], state.data[index].filter((item, i) => state.enabled[index][i]));
+        SetManualLimits: (state: OpenSee.IDataState, action: PayloadAction<{
+            limits: [number, number],
+            key: OpenSee.IGraphProps,
+            axis: OpenSee.Unit,
+            auto: boolean 
+            factor?: number
+        }>) => {
+            const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
+            if (curPlot) {
+                curPlot.yLimits[action.payload.axis].isManual = true;
 
-                        updateActiveUnits(action.payload, axisSetting, axis);
-                    });
-                 });
-            return state;
-        }, */
+                if (curPlot.isZoomed) //cover case of user zooming first then manually editing those..
+                    curPlot.yLimits[action.payload.axis].zoomedLimits = action.payload.limits;
+
+                curPlot.yLimits[action.payload.axis].manualLimits = action.payload.limits;
+
+                if (action.payload.auto) {
+                    let revelantData = curPlot.data.filter(data => data.Enabled && data.Unit === action.payload.axis)
+
+                    let index = updateActiveUnits(curPlot.yLimits, action.payload.axis, revelantData, state.startTime, state.endTime, action.payload.limits);
+                    if (index) {
+                        curPlot.yLimits[action.payload.axis] = index;
+                        let newManualLimits = [action.payload.limits[0] * action.payload.factor, action.payload.limits[1] * action.payload.factor]
+                        curPlot.yLimits[action.payload.axis].manualLimits = newManualLimits;
+
+                    }
+                }
+
+            }
     },
     extraReducers: (builder) => {
         builder.addCase(AddPlot.pending, (state, action) => {
