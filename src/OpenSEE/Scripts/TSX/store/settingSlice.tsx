@@ -118,12 +118,13 @@ export default SettingsReducer.reducer;
 // #endregion
 
 // #region [ Selectors ]
-export const selectColor = (state: RootState) => state.Settings.Colors;
-export const selectUnit = (state: RootState) => state.Settings.Units;
+export const SelectColor = (state: RootState) => state.Settings.Colors;
+export const SelectDefaultTraces = (state: RootState) => state.Settings.DefaultTrace;
 export const SelectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
+export const SelectTimeUnit = (state: RootState) => state.Settings.TimeUnit;
+export const SelectSinglePlot = (state: RootState) => state.Settings.SinglePlot;
+export const SelectNavigation = (state: RootState) => state.Settings.Navigation;
 
-export const selectDefaultTraces = (state: RootState) => state.Settings.DefaultTrace;
-export const selectVTypeDefault = (state: RootState) => state.Settings.DefaultVType;
 
 export const SelectEnabledPlots = createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
