@@ -79,20 +79,41 @@ declare var eventID: number;
 const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
  
 const OpenSeeHome = () => {
+    const divRef = React.useRef<any>(null);
+    const plotRef = React.useRef(null);
     const history = React.useRef<object>(createHistory());
     const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
-        Settings: () => { }
+        Settings: () => { },
+        AccumulatedPoints: () => { },
+        PolarChart: () => { },
+        ScalarStats: () => { },
+        CorrelatedSags: () => { },
+        Lightning: () => { },
+        FFTTable: () => { }
     });
 
-    const [eventStartTime, setEventStartTime] = React.useState<string>("");  
-    const [eventEndTime, setEventEndTime] = React.useState<string>("");
+    const [openDrawers, setOpenDrawers] = React.useState<OpenSee.Drawers>({
+        Settings: false,
+        AccumulatedPoints: false,
+        PolarChart: false,
+        ScalarStats: false,
+        CorrelatedSags: false,
+        Lightning: false,
+        FFTTable: false,
+        Info: false,
+        Compare: false,
+        Analytics: false,
+        ToolTip: false,
+        ToolTipDelta: false,
+    })
+
     const [resizeCount, setResizeCount] = React.useState<number>(0);
     const [graphWidth, setGraphWidth] = React.useState<number>(window.innerWidth - 300);
     const [eventData, setEventData] = React.useState<OpenSee.iPostedData>(null);
     const [lookup, setLookup] = React.useState<OpenSee.iNextBackLookup>(null);
 
-    const eventID = useAppSelector(state => state.Data.eventID);
+    const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
 
     const graphList = useAppSelector(selectListGraphs);
     const numberCompareGraphs = useAppSelector(selectNumberCompare);
@@ -104,6 +125,23 @@ const OpenSeeHome = () => {
     const displayAnalogs = useAppSelector(SelectdisplayAnalogs);
     const Tab = useAppSelector(SelectTab);
     const analytic = useAppSelector(selectAnalytic);
+
+
+    const [currentHeight, setCurrentHeight] = React.useState<number>(0);
+
+    React.useLayoutEffect(() => {
+        setCurrentHeight(divRef.current.offsetHeight ?? 0);
+    })
+
+    //Effect to update width when a drawer opens
+    React.useLayoutEffect(() => {
+        setTimeout(() => {
+            if (plotRef.current) {
+                setPlotWidth(plotRef.current.offsetWidth);
+            }
+        }, 500);
+    }, [graphList, openDrawers]);
+
 
     //Effect to handle queryParams
     React.useEffect(() => {
@@ -127,6 +165,12 @@ const OpenSeeHome = () => {
 
     }, []);
 
+    React.useEffect(() => {
+        window.addEventListener("resize", () => {
+            setResizeCount(x => x + 1)
+        });
+        return () => { $(window).off('resize'); }
+    }, [])
 
     React.useEffect(() => {
         window.addEventListener("resize", () => { setResizeCount(x => x + 1) });
@@ -149,8 +193,8 @@ const OpenSeeHome = () => {
             return;
 
         const handle = setTimeout(() => {
-            setGraphWidth(window.innerWidth - 300);
-        }, 500);
+            setPlotWidth(window.innerWidth - 300);
+        }, 100);
         return () => { clearTimeout(handle); }
      }, [resizeCount]);
 
@@ -227,8 +271,7 @@ const OpenSeeHome = () => {
     }
 
     function ToogleDrawer(drawer: OpenSee.OverlayDrawers, open: boolean) {
-        if (drawer == 'Settings')
-            overlayHandles.current.Settings(open);
+        overlayHandles.current[drawer](open);
     }
 
 
@@ -259,38 +302,64 @@ const OpenSeeHome = () => {
                 ToggleDrawer={ToogleDrawer}
             />}
             UseLegacyNavigation={true}
-        ><div style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
-                <div style={{ position: 'relative', top: '31px' }}>
+        ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
+                <div className="d-flex flex-column h-100 w-100" style={{ position: 'relative', top: '31px' }}>
+                    <HoverProvider>
                     <VerticalSplit>
                             <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                                 <EventInfo />
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30}>
+                            <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
                             <OverlappingEventWindow />
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30}>
+
+                            <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
                             <AnalyticOptions />
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30}>
-                            <p>Hello Tooltip</p>
+
+                            <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
+                                <ToolTipWidget />
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30}>
-                            <p>Hello Tooltip w/ Delta</p>
+                            <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
+                                <ToolTipDeltaWidget />
                         </SplitDrawer>
-                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30}
-                            GetOverride={(func) => { overlayHandles.current.Settings = func; }}
-                            ShowClosed={false}
-                        >
+
+                            <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("Settings", item)} >
                             <SettingsWidget />
                         </SplitDrawer>
-                        <SplitSection MinWidth={100} MaxWidth={100} Width={100}>
-                            {plotData[eventID] != undefined ?
-                                <div className="card" style={{ borderLeft: 0, borderRight: 0 }}>
-                                    <div className="card-body" style={{ padding: '25px' }}>
-                                        {plotData[eventID].sort(sortGraph).map((item, idx) => (item.DataType == 'FFT' ?
-                                            <BarChart
+
+                            <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
+                                <PointWidget />
+                            </SplitDrawer>
+
+                            <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
+                                <ScalarStatsWidget exportCallback={() => exportData('stats')} />
+                            </SplitDrawer>
+                            <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
+                                <TimeCorrelatedSagsWidget exportCallback={() => exportData('correlatedsags')} />
+                            </SplitDrawer>
+                            <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("Lightning", item)}>
+                                <LightningDataWidget />
+                            </SplitDrawer>
+                            <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("FFTTable", item)}>
+                                <FFTTable />
+                            </SplitDrawer>
+
+                            <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("PolarChart", item)}>
+                                <PhasorChartWidget />
+                            </SplitDrawer>
+
+                            <SplitSection MinWidth={100} MaxWidth={100} Width={75}>
+                                <div ref={plotRef} style={{ overflowY: 'auto', maxHeight: currentHeight, width: '100%' }}>
                                                 eventId={item.EventId}
-                                                width={graphWidth}
+                                                    width={plotWidth}
                                                 eventStartTime={evtStartTime.getTime()}
                                                 height={GraphHeight}
                                                 timeLabel={"Harmonic"}
@@ -298,7 +367,7 @@ const OpenSeeHome = () => {
                                             /> : <LineChart
                                                 key={idx}
                                                 eventId={item.EventId}
-                                                width={graphWidth}
+                                                    width={plotWidth}
                                                 eventStartTime={evtStartTime.getTime()}
                                                 height={GraphHeight}
                                                 timeLabel={"Time"}
