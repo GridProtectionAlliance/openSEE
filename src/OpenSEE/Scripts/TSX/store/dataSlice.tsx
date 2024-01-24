@@ -34,14 +34,7 @@ import { plot } from 'jquery';
 declare var eventID: number;
 
 
-interface IExtendedKey extends OpenSee.IGraphProps { key?: string }
-const defaultLimits = {
-    activeUnit: 0,
-    dataLimits: [0, 1],
-    label: '',
-    manuallimits: [0, 1],
-    zoomedLimits: [0, 1],
-} as OpenSee.IAxisSettings;
+declare var eventID: number;
 
 // #region [ Thunks ]
 
