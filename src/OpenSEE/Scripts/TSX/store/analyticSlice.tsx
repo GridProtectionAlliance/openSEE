@@ -79,6 +79,13 @@ export const SelectHPF = (state: RootState) => state.Analytic.HPFOrder;
 export const SelectCycles = (state: RootState) => state.Analytic.FFTCycles;
 export const SelectAnalytics = (state: RootState) => state.Analytic;
 
+export const SelectShowFFTWindow = (state: RootState) => {
+    const fftPlot = state.Data.Plots.find(plot => plot.key.DataType === "FFT")
+    if (fftPlot)
+        return true
+    else
+        return false
+}
 
 export const SelectFFTWindow = createSelector(
     (state: RootState) => state.Analytic.FFTCycles,
