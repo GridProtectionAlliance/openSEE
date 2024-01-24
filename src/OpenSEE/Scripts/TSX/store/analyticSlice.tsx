@@ -36,35 +36,9 @@ interface IAnalyticSettings {
 }
 // #region [ Thunks ]
 
-export const SetAnalytic = createAsyncThunk('Analytic/SetAnalytic',
-    async (arg: OpenSee.Analytic, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    return thunkAPI.dispatch(UpdateAnalyticPlot(
-        {
-            eventID: state.EventInfo.EventID,
-            analyticStore: state.Analytic
-        }));
-})
-
-export const SetAnalyticSettings = createAsyncThunk('Analytic/SetAnalyticSettings',
-    async (arg: IAnalyticSettings, thunkAPI) => {
-        const state = thunkAPI.getState() as RootState;
-        return thunkAPI.dispatch(UpdateAnalyticPlot(
-            {
-                eventID: state.EventInfo.EventID,
-                analyticStore: state.Analytic
-            }));
-})
-
-export const SetFFTWindow = createAsyncThunk('Analytic/SetFFTWindow',
-    async (arg: { startTime: number, cycle: number }, thunkAPI) => {
-        const state = thunkAPI.getState() as RootState;
-        if (state.Analytic.Analytic === 'FFT')
-            return thunkAPI.dispatch(UpdateAnalyticPlot(
-                {
-                    eventID: state.EventInfo.EventID,
-                  analyticStore: state.Analytic
-                }));
+export const UpdateAnalytic = createAsyncThunk('Analytic/updateAnalytic', async (arg: { settings: OpenSee.IAnalyticStore, key?: OpenSee.IGraphProps }, thunkAPI) => {
+    if(arg.key)
+        thunkAPI.dispatch(UpdateAnalyticPlot({ key: arg.key }));
         return Promise.resolve();
 })
 
@@ -83,29 +57,24 @@ export const AnalyticReducer = createSlice({
     } as OpenSee.IAnalyticStore,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(SetAnalytic.pending, (state, action) => {
-            state.Analytic = action.meta.arg;
-        });
-        builder.addCase(SetAnalyticSettings.pending, (state, action) => {
-            if (action.meta.arg.Harmonic !== undefined)
-                state.Harmonic = action.meta.arg.Harmonic;
-            if (action.meta.arg.HPFOrder !== undefined)
-                state.HPFOrder = action.meta.arg.HPFOrder;
-            if (action.meta.arg.LPFOrder !== undefined)
-                state.LPFOrder = action.meta.arg.LPFOrder;
-            if (action.meta.arg.Trc !== undefined)
-                state.Trc = action.meta.arg.Trc;
-            if (action.meta.arg.FFTCycles !== undefined)
-                state.FFTCycles = action.meta.arg.FFTCycles;
-        }); 
-        builder.addCase(SetFFTWindow.pending, (state, action) => {
-            state.FFTCycles = action.meta.arg.cycle;
-            state.FFTStartTime = action.meta.arg.startTime;
+        builder.addCase(UpdateAnalytic.pending, (state, action) => {
+            if (action.meta.arg.settings.Harmonic !== undefined)
+                state.Harmonic = action.meta.arg.settings.Harmonic;
+            if (action.meta.arg.settings.HPFOrder !== undefined)
+                state.HPFOrder = action.meta.arg.settings.HPFOrder;
+            if (action.meta.arg.settings.LPFOrder !== undefined)
+                state.LPFOrder = action.meta.arg.settings.LPFOrder;
+            if (action.meta.arg.settings.Trc !== undefined)
+                state.Trc = action.meta.arg.settings.Trc;
+            if (action.meta.arg.settings.FFTCycles !== undefined)
+                state.FFTCycles = action.meta.arg.settings.FFTCycles;
+            if (action.meta.arg.settings.FFTStartTime !== undefined)
+                state.FFTStartTime = action.meta.arg.settings.FFTStartTime;
         });
     }
 });
 
-export const { } = AnalyticReducer.actions;
+export const {} = AnalyticReducer.actions;
 export default AnalyticReducer.reducer;
 
 // #endregion
