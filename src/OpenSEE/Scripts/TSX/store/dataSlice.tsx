@@ -286,6 +286,16 @@ export const DataReducer = createSlice({
             if (plot)
                 plot.data = [];
         },
+        RemoveOverlappingData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[] }>) => {
+            const plot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
+            if (plot) {
+                plot.data = plot.data.filter(data => data.EventID !== action.payload.key.EventId)
+                if (plot.data.length !== 0)
+                    updateAutoLimits(plot, state.startTime, state.endTime);
+                else {
+                    const plotIndex = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
+                    state.Plots.splice(plotIndex, 1);
+            }
             }
         },
         /*
