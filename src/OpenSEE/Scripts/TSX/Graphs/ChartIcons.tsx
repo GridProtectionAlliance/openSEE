@@ -50,27 +50,32 @@ export const SmallLoadingIcon = styled.div`
 	height: 14px;
 	margin: auto;
 `;
-export const LoadingIcon = (props: {}) => {
-	return <div style={{ width: '100%', height: '100%' }} >
-		<div style={{ width: '200px', margin: 'auto' }} >
-			<Icon />
-			<p style={{ textAlign: 'center' }}>Loading...</p>
-		</div>
-	</div>
-}
 
-
-
-export const NoDataIcon = (props: {}) => {
-	return <div style={{ width: '100%', height: '100%' }} >
-		<div style={{ width: '250px', margin: 'auto' }} >
-			<div style={{ width: '5em', margin: 'auto' }}>
-				<i className="fa fa-exclamation-triangle fa-5x"></i>
+export const LoadingIcon = () => {
+	return (
+		<div className="d-flex justify-content-center align-items-center" style={{ height: '100%', width: '100%', zIndex: 9999 }}>
+			<div style={{ width: '200px' }} >
+				<Icon />
+				<p style={{ textAlign: 'center' }}>Loading...</p>
 			</div>
-			<p style={{ textAlign: 'center' }}>No Data Available</p>
 		</div>
-	</div>
+	);
 }
+
+
+export const NoDataIcon = () => {
+	return (
+		<div className="d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%', zIndex: 9999 }}>
+			<div style={{ width: '250px' }}>
+				<div style={{ width: '5em', margin: 'auto' }}>
+					<i className="fa fa-exclamation-triangle fa-5x"></i>
+				</div>
+				<p style={{ textAlign: 'center' }}>No Data Available</p>
+			</div>
+		</div>
+	);
+}
+
 
 export const WaveformViews = '👁'; 
 export const ShowPoints = '✏'; 
