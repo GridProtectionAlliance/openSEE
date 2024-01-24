@@ -1148,20 +1148,28 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
 }
 
 
-
-
-//function that Updates the Current Units if they are on auto
-function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
-    axis: OpenSee.IAxisSettings, unit: OpenSee.Unit) {
-    let currentUnits = getCurrentUnits(baseUnits);
-   
-    if (baseUnits[unit].options[currentUnits[unit]].short != 'auto')
+//function that Updates the Current Units if they are on auto 
+function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number]) {
+    if (!units[unit].isAuto)
         return;
 
-    let min = axis.dataLimits[0];
-    let max = axis.dataLimits[1];
+    let relevantData = data.filter(d => d.Unit == unit).map(d => {
+        let startIndex = getIndex(startTime, d.DataPoints);
+        let endIndex = getIndex(endTime, d.DataPoints);
+        return d.DataPoints.slice(startIndex, endIndex);
+    })
 
+
+    let min = Math.min(...relevantData.map(d => Math.min(...d.map(p => p[1]))));
+    let max = Math.max(...relevantData.map(d => Math.max(...d.map(p => p[1]))));
+   
     let autoFactor = 0.000001
+
+    if (manualLimits) { // for the case of auto unit being selected with manualLimits applied
+        min = manualLimits[0]
+        max = manualLimits[1]
+    }
+
     if (Math.max(max, min) < 1)
         autoFactor = 1000
     else if (Math.max(max, min) < 1000)
@@ -1169,9 +1177,10 @@ function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetti
     else if (Math.max(max, min) < 1000000)
         autoFactor = 0.001
 
+
     //Logic to move on to next if We can not find that Factor
-    if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-        axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
+    if (defaultSettings.Units[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
+        return defaultSettings.Units[unit].options.findIndex(item => item.factor == autoFactor)
     else {
         //Unable to find Factor try moving one down/up
         if (autoFactor < 1)
@@ -1179,10 +1188,10 @@ function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetti
         else
             autoFactor = 1
 
-        if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-            axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
+        if (defaultSettings.Units[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
+            return defaultSettings.Units[unit].options.findIndex(item => item.factor == autoFactor)
         else
-            axis.activeUnit = baseUnits[unit].options.findIndex(item => item.factor != 0)
+            return defaultSettings.Units[unit].options.findIndex(item => item.factor != 0)
     }
 }
 
