@@ -25,11 +25,12 @@ import _ from "lodash";
 import { OpenSee } from "../global";
 
 const defaultLimits = {
-    activeUnit: 0,
+    isManual: false,
     dataLimits: [0, 1],
-    label: '',
-    manuallimits: [0, 1],
+    manualLimits: [0, 1],
     zoomedLimits: [0, 1],
+    isAuto: true,
+    current: 0
 } as OpenSee.IAxisSettings;
 
 export const emptygraph: OpenSee.IGraphstate = {
@@ -55,152 +56,9 @@ export const emptygraph: OpenSee.IGraphstate = {
         THD: defaultLimits
     },
     selectedIndixes: [],
-    activeRequest: ''
 }
 
-// #region [ Utility Functions ]
 
-// Zoom Y Axis;
-export function zoomYAxis(graph: OpenSee.IGraphstate, unit: OpenSee.Unit, limits: [number, number]): OpenSee.IGraphstate {
-    graph.yLimits[unit].zoomedLimits = limits;
-    graph.isZoomed = true;
-
-    return graph;
-}
-// Add Data
-
-
-
-// Zoom X Axis
-export function zoomXAxis(graph: OpenSee.IGraphstate, limits: [number, number], baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IGraphstate {
-
-    recomputeDataLimits(limits[0], limits[1], graph);
-    Object.keys(graph.yLimits).forEach(unit => {
-        graph = updateActiveUnits(baseUnits, graph, unit as OpenSee.Unit);
-    });
-    return graph;
-}
-
-// Reset Limits
-export function resetLimits(graph: OpenSee.IGraphstate, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>, tLimit: [number, number]): OpenSee.IGraphstate {
-
-    graph.isZoomed = false;
-    
-    recomputeDataLimits(tLimit[0],tLimit[1],graph)
-    Object.keys(graph.yLimits).forEach((unit: OpenSee.Unit) => {
-        
-        if ((baseUnits[unit] as OpenSee.IUnitSetting).useAutoLimits)
-            (graph.yLimits[unit] as OpenSee.IAxisSettings).zoomedLimits = (graph.yLimits[unit] as OpenSee.IAxisSettings).dataLimits;
-        else
-            (graph.yLimits[unit] as OpenSee.IAxisSettings).zoomedLimits = (graph.yLimits[unit] as OpenSee.IAxisSettings).manuallimits;
-        updateActiveUnits(baseUnits, graph, unit);
-    });
-
-    return graph;
-}
-
-// Enable Trace
-export function toggleTrace(graph: OpenSee.IGraphstate, index: number, tLimits: [number, number], baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IGraphstate {
-
-    graph.enabled[index] = !graph.enabled[index];
-    graph = zoomXAxis(graph, tLimits, baseUnits);
-    return graph
-};
-
-// Replace Data
-
-// Change Unit
-
-
-// #region [ Internal Functions ]
-
-// Update Units if Auto
-function updateActiveUnits(baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
-    graph: OpenSee.IGraphstate, unit: OpenSee.Unit) {
-
-    let currentUnits = getCurrentUnits(baseUnits);
-
-    if (currentUnits[unit].short != 'auto')
-        return;
-
-    let min = graph.yLimits[unit].dataLimits[0];
-    let max = graph.yLimits[unit].dataLimits[1];
-
-    let autoFactor = 0.000001
-    if (Math.max(max, min) < 1)
-        autoFactor = 1000
-    else if (Math.max(max, min) < 1000)
-        autoFactor = 1
-    else if (Math.max(max, min) < 1000000)
-        autoFactor = 0.001
-
-    //Logic to move on to next if We can not find that Factor
-    if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-        graph.yLimits[unit].activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
-    else {
-        //Unable to find Factor try moving one down/up
-        if (autoFactor < 1)
-            autoFactor = autoFactor * 1000
-        else
-            autoFactor = 1
-
-        if (baseUnits[unit].options.findIndex(item => item.factor == autoFactor) >= 0)
-            graph.yLimits[unit].activeUnit = baseUnits[unit].options.findIndex(item => item.factor == autoFactor)
-        else
-            graph.yLimits[unit].activeUnit = baseUnits[unit].options.findIndex(item => item.factor != 0)
-    }
-
-    return graph;
-}
-
-// Get current Unit
-function getCurrentUnits(units: OpenSee.IUnitCollection<OpenSee.IUnitSetting>): OpenSee.IUnitCollection<OpenSee.iUnitOptions> {
-    let result = {};
-    Object.keys(units).forEach(key => { result[key] = units[key].options[units[key].current] });
-    return result as OpenSee.IUnitCollection<OpenSee.iUnitOptions>;
-}
-
-// Update data limits
-function recomputeDataLimits(start: number, end: number, plot: OpenSee.IGraphstate): OpenSee.IGraphstate {
-
-    Object.entries(_.groupBy(plot.data, d => d.Unit)).forEach(([unit, data]) => {
-
-        let limitedData = plot.data.map((item, index) => {
-            let dataPoints = item.DataPoints;
-            if (item.SmoothDataPoints.length > 0)
-                dataPoints = item.SmoothDataPoints;
-
-            let indexStart = getIndex(start, dataPoints);
-            let indexEnd = getIndex(end, dataPoints);
-
-            let dt = dataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
-            return [Math.min(...dt), Math.max(...dt)];
-
-        });
-        let yMin = Math.min(...limitedData.map(item => item[0]));
-        let yMax = Math.max(...limitedData.map(item => item[1]));
-
-        const pad = (yMax - yMin) / 20;
-        plot.yLimits[unit].dataLimits = [yMin - pad, yMax + pad];
-    });
-    return plot;
-}
-
-// Find a closest Index in a ID3DataSeries for a given T
-function getIndex(t: number, data: Array<[number, number]>): number {
-    if (data.length < 2)
-        return NaN;
-    let dP = data[1][0] - data[0][0];
-
-    if (t < data[0][0])
-        return 0;
-
-    if (t > data[data.length - 1][0])
-        return (data.length - 1);
-    let deltaT = t - data[0][0];
-
-    return Math.floor(deltaT / dP);
-}
 // #region [ Async Functions ]
 
 //This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
