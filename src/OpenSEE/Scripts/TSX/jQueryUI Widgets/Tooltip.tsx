@@ -19,48 +19,46 @@
 //  05/14/2018 - Billy Ernest
 //       Generated original version of source code.
 //
+//  05/14/2018 - Preston Crawford
+//       Updated layout
 //******************************************************************************************************
 
 import * as React from 'react';
 import moment = require('moment');
-import { WidgetWindow } from './Common';
 import { useSelector } from 'react-redux';
-import { selectHover, selectHoverPoints } from '../store/dataSlice';
-import { selectColor } from '../store/settingSlice';
+import { selectHoverPoints } from '../store/dataSlice';
+import { SelectColor } from '../store/settingSlice';
+import HoverContext from '../Context/HoverContext'
 
-interface Iprops {
-    closeCallback: () => void,
-    isOpen: boolean,
-    position: [number, number],
-    setPosition: (t: number, l: number) => void
-}
 
-const ToolTipWidget = (props: Iprops) => {
-    const hover = useSelector(selectHover);
-    const points = useSelector(selectHoverPoints);
-    const colors = useSelector(selectColor);
-   
+const ToolTipWidget = () => {
+    const hover = React.useContext(HoverContext);
+    const points = useSelector(selectHoverPoints(hover.hover));
+    const colors = useSelector(SelectColor);
+
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={350} width={256} position={props.position} setPosition={props.setPosition} >
-            <div style={{ textAlign: 'center'}} >
-                    <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
-                    <br />
-                <table className="table" style={{ maxHeight: '296px', marginBottom: 0, display: 'block', overflowY: 'scroll' }}>
-                    <tbody>
-                            {props.isOpen ? points.map((p, i) => <tr key={i}>
-                                <td className="dot" style={{ background: colors[p.Color], width: 12 }}><b>&nbsp;&nbsp;&nbsp;</b></td>
-                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'left' }}>
-                                    <b>{p.Name}</b>
-                                </td>
-                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'right' }}>
-                                    <b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
-                                </td>
-                            </tr>) : null}
-                        </tbody>
-                    </table>
-                </div>
-        </WidgetWindow>
-        )
+        <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
+            <table className="table" style={{ height: '100%', marginBottom: 0, overflowY: 'auto', margin: "3%" }}>
+                <thead>
+                    <td colSpan={3} style={{ textAlign: 'center' }}>
+                        <b>{moment(hover.hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
+                    </td>
+                </thead>
+                <tbody>
+                    {points.map((p, i) =>
+                        <tr key={i}>
+                            <td className="dot" style={{ background: colors[p.Color], width: 12 }}><b>&nbsp;&nbsp;&nbsp;</b></td>
+                            <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'left' }}>
+                                <b>{p.Name}</b>
+                            </td>
+                            <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'right' }}>
+                                <b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
+                            </td>
+                        </tr>)}
+                </tbody>
+            </table>
+        </div>
+    )
 }
 
 export default ToolTipWidget
