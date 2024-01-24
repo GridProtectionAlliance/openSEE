@@ -50,7 +50,6 @@ export const EnableSinglePlot = createAsyncThunk('Settings/enableSinglePlot', (a
 export const SettingsReducer = createSlice({
     name: 'Settings',
     initialState: {
-        Units: {} as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
         Colors: {} as OpenSee.IColorCollection,
         TimeUnit: {} as OpenSee.IUnitSetting,
         DefaultTrace: { RMS: true, Ph: false, W: false, Pk: false },
