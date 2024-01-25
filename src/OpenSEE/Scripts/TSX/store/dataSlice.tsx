@@ -181,29 +181,21 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
 
 
 // Thunk to Set Zoomed YLimits
-export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: {
-    limits: [number, number],
-    key: OpenSee.IGraphProps,
-    axis?: OpenSee.Unit
-}, thunkAPI) => {
-    let state = (thunkAPI.getState() as OpenSee.IRootState);
-    let plot = state.Data.Plots.find(plot => plot.key.DataType == arg.key.DataType && plot.key.EventId == arg.key.EventId);
-    const primaryAxis = getPrimaryAxis(arg.key)
-    let primaryLimits = [0,1]
+export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { limits: [number, number], key: OpenSee.IGraphProps}, thunkAPI) => {
+    const state = (thunkAPI.getState() as OpenSee.IRootState);
+    const plot = state.Data.Plots.find(plot => plot.key.DataType == arg.key.DataType && plot.key.EventId == arg.key.EventId);
+    const primaryAxis = getPrimaryAxis(plot.key)
+    let oldLimits: [number, number] = [0, 1]
 
-    if (plot.isZoomed)
-        primaryLimits = plot.yLimits[primaryAxis].zoomedLimits
-    else if (plot.yLimits[primaryAxis].isManual)
-        primaryLimits = plot.yLimits[primaryAxis].manualLimits
+    if (plot.yLimits[primaryAxis].isManual)
+        oldLimits = plot.yLimits[primaryAxis].manualLimits
+    else if (plot.isZoomed)
+        oldLimits = plot.yLimits[primaryAxis].zoomedLimits
     else 
-        primaryLimits = plot.yLimits[primaryAxis].dataLimits
-
-    let range = primaryLimits[1] - primaryLimits[0];
-    let lowerLimit = (arg.limits[0] - primaryLimits[0]) / range
-    let upperLimit = (arg.limits[1] - primaryLimits[1]) / range
+        oldLimits = plot.yLimits[primaryAxis].dataLimits
 
 
-    thunkAPI.dispatch(DataReducer.actions.SetZoomedLimits({ limits: arg.limits, key: arg.key, proportionalChange: [lowerLimit, upperLimit], axis: arg.axis }));
+    thunkAPI.dispatch(DataReducer.actions.SetZoomedLimits({ oldLimits: oldLimits, key: arg.key, newLimits: arg.limits} ));
     return Promise.resolve();
 })
 
@@ -234,7 +226,7 @@ export const DataReducer = createSlice({
         Analytic: 'none' as OpenSee.Analytic,
         Plots: [] as OpenSee.IGraphstate[],
         fftLimits: [0, 0],
-        cycleLimit: [0, 1000.0/60.0]
+        cycleLimit: [0, 1000.0 / 60.0],
     } as OpenSee.IDataState,
     reducers: {        
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
@@ -417,57 +409,27 @@ export const DataReducer = createSlice({
                 })
             }
         },
-        SetMouseMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.MouseMode>) => {
-            state.mouseMode = action.payload
-        },
-        SetZoomMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.ZoomMode>) => {
-            state.zoomMode = action.payload
-        },
         ClearSelectPoints: (state: OpenSee.IDataState) => {
-            state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i] = []);
+            state.Plots.forEach(plot => plot.selectedIndixes = []);
         },
         RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
-            state.selectedIndixes.forEach((_, i) => state.selectedIndixes[i].splice(action.payload, 1));
+            state.Plots.forEach(plot => plot.selectedIndixes.splice(action.payload, 1));
         },
-        SetZoomedLimits: (state: OpenSee.IDataState, action: PayloadAction<{
-            limits: [number, number],
-            key: OpenSee.IGraphProps,
-            proportionalChange: [number, number],
-            axis?: OpenSee.Unit //used for setting zoomedLimits from query
-        }>) => {
+        SetZoomedLimits: (state: OpenSee.IDataState, action: PayloadAction<{ oldLimits: [number, number], key: OpenSee.IGraphProps, newLimits: [number, number]}>) => {
             const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
-
-            if (action.payload.axis) {
-                curPlot.yLimits[action.payload.axis].zoomedLimits = action.payload.limits
-                return
-            }
-
-
-            const primaryAxis = getPrimaryAxis(action.payload.key)
             if (curPlot) {
-                const RelevantAxis = _.uniq(curPlot.data.map(s => s.Unit));
-
+                const RelevantAxis = _.uniq(curPlot.data.filter(item => item.Enabled).map(s => s.Unit));
                 RelevantAxis.forEach(axis => {
-                    let dataLimits = curPlot.yLimits[axis].dataLimits;
-                    let manualLimits = curPlot.yLimits[axis].manualLimits;
-                    let zoomedLimits = curPlot.yLimits[axis].zoomedLimits;
-                    let range;
-
-                    if (axis === primaryAxis) //dont need to scale the axis we calculated the factor from..
-                        curPlot.yLimits[axis].zoomedLimits = action.payload.limits
-
-                    else if (curPlot.yLimits[axis].isManual) {
-                        range = manualLimits[1] - manualLimits[0];
-                        curPlot.yLimits[axis].zoomedLimits = [manualLimits[0] + action.payload.proportionalChange[0] * range, manualLimits[1] + action.payload.proportionalChange[1] * range];
-                    } else if (curPlot.isZoomed) {
-                        range = zoomedLimits[1] - zoomedLimits[0];
-                        curPlot.yLimits[axis].zoomedLimits = [zoomedLimits[0] + action.payload.proportionalChange[0] * range, zoomedLimits[1] + action.payload.proportionalChange[1] * range];
-                    } else {
-                        range = dataLimits[1] - dataLimits[0];
-                        curPlot.yLimits[axis].zoomedLimits = [dataLimits[0] + action.payload.proportionalChange[0] * range, dataLimits[1] + action.payload.proportionalChange[1] * range];
-                    }
-
+                    if (axis === getPrimaryAxis(action.payload.key))
+                        curPlot.yLimits[axis].zoomedLimits = action.payload.newLimits
+                    else if (curPlot.yLimits[axis].isManual) 
+                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].manualLimits);
+                     else if (curPlot.isZoomed) 
+                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].zoomedLimits);
+                     else 
+                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].dataLimits);
                 })
+
 
                 curPlot.isZoomed = true;
             }
@@ -1140,7 +1102,20 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
     const pad = (yMax - yMin) / 20;
     return [yMin - pad, yMax + pad];
     
+function recomputeZoomedLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
+    // Calculate the proportion of the current limits relative to the old range
+    const oldRange = oldLimits[1] - oldLimits[0];
+    const lowerLimit = (newLimits[0] - oldLimits[0]) / oldRange;
+    const upperLimit = (newLimits[1] - oldLimits[0]) / oldRange;
+
+    // Apply the proportional change to the new range
+    const currentRange = currentLimits[1] - currentLimits[0];
+    const updatedLowerLimit = currentLimits[0] + lowerLimit * currentRange;
+    const updatedUpperLimit = currentLimits[0] + upperLimit * currentRange;
+
+    return [updatedLowerLimit, updatedUpperLimit];
 }
+
 
 
 //function that Updates the Current Units if they are on auto 
