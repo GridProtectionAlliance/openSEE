@@ -219,8 +219,6 @@ export const DataReducer = createSlice({
         hover: [0, 0] as number[],
         mouseMode: 'zoom' as OpenSee.MouseMode,
         zoomMode: 'x' as OpenSee.ZoomMode,
-        eventID: eventID as number,
-        Analytic: 'none' as OpenSee.Analytic,
         Plots: [] as OpenSee.IGraphstate[],
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0 / 60.0],
