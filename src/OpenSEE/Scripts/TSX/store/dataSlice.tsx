@@ -174,9 +174,8 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
         thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end }));
     }
 
-    state.Data.Plots.forEach(graph => {
-        thunkAPI.dispatch(DataReducer.actions.ResetZoom({ key: graph.key }));
-            })
+    thunkAPI.dispatch(DataReducer.actions.ResetZoom());
+
     return Promise.resolve();
 })
 
@@ -503,19 +502,15 @@ export const DataReducer = createSlice({
 
                 }
         },
-        ResetZoom: (state: OpenSee.IDataState, action: PayloadAction<{
-            key: OpenSee.IGraphProps,
-        }>) => {
-            const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
-
-            if (curPlot) {
-                curPlot.isZoomed = false;
-                const RelevantAxis = _.uniq(curPlot.data.map(s => s.Unit));
+        ResetZoom: (state: OpenSee.IDataState) => {
+            state.Plots.forEach(plot => {
+                plot.isZoomed = false;
+                const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
                 RelevantAxis.forEach(axis => {
-                    curPlot.yLimits[axis].zoomedLimits = [0, 1];
+                    plot.yLimits[axis].zoomedLimits = [0, 1];
                 })
-            }
 
+            })
         },
     },
     extraReducers: (builder) => {
