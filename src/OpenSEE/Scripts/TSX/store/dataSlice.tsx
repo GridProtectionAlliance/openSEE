@@ -250,6 +250,44 @@ export const DataReducer = createSlice({
             }
         },
         /*
+        UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
+            const curPlot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
+            const oldLimits = curPlot.yLimits[action.payload.unit].dataLimits
+
+            curPlot.yLimits[action.payload.unit].isAuto = action.payload.auto
+            curPlot.yLimits[action.payload.unit].current = action.payload.value
+
+            const axisSetting: OpenSee.IAxisSettings = curPlot.yLimits[action.payload.unit];
+            const filteredData = curPlot.data.filter(item => item.Enabled && item.Unit === action.payload.unit);
+
+            let unitIndex = updateActiveUnits(curPlot.yLimits, action.payload.unit, filteredData, state.startTime, state.endTime, null);
+
+            if (unitIndex)
+                curPlot.yLimits[action.payload.unit].current = unitIndex
+
+            if (curPlot.key.DataType != 'FFT' && curPlot.key.DataType != 'OverlappingWave') {
+                const limits = recomputeDataLimits(state.startTime, state.endTime, filteredData, curPlot.yLimits[action.payload.unit].current);
+                axisSetting.dataLimits = limits;
+                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
+                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+            }
+            else if (curPlot.key.DataType == 'FFT') {
+                const limits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], filteredData, curPlot.yLimits[action.payload.unit].current)
+                axisSetting.dataLimits = limits;
+                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
+                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+            }
+            else if (curPlot.key.DataType == 'OverlappingWave') {
+                const limits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], filteredData, curPlot.yLimits[action.payload.unit].current);
+                axisSetting.dataLimits = limits;
+                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
+                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+            }
+
+            saveSettings(state);
+
+            return state;
+        },
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
             key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
             defaultTraces: OpenSee.IDefaultTrace, defaultV: OpenSee.IDefaultVType,
@@ -1102,6 +1140,23 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
     const pad = (yMax - yMin) / 20;
     return [yMin - pad, yMax + pad];
     
+}
+
+function recomputeNonAutoLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
+    // Calculate the proportion of the current limits relative to the old range
+
+    const oldRange = oldLimits[1] - oldLimits[0]; 
+    const lowerLimit = (currentLimits[0] - oldLimits[0]) / oldRange;
+    const upperLimit = (currentLimits[1] - oldLimits[0]) / oldRange;
+
+    // Apply the proportional change to the new range
+    const newRange = newLimits[1] - newLimits[0];
+    const updatedLowerLimit = newLimits[0] + lowerLimit * newRange;
+    const updatedUpperLimit = newLimits[0] + upperLimit * newRange;
+
+    return [updatedLowerLimit, updatedUpperLimit];
+}
+
 function recomputeZoomedLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
     // Calculate the proportion of the current limits relative to the old range
     const oldRange = oldLimits[1] - oldLimits[0];
