@@ -249,7 +249,14 @@ export const DataReducer = createSlice({
             }
             }
         },
-        /*
+        SetMouseMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.MouseMode>) => {
+            state.mouseMode = action.payload
+        },
+        SetZoomMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.ZoomMode>) => {
+            state.zoomMode = action.payload
+            if (state.mouseMode !== "zoom")
+                state.mouseMode = "zoom"
+        },
         UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
             const curPlot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
             const oldLimits = curPlot.yLimits[action.payload.unit].dataLimits
