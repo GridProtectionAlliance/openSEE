@@ -131,8 +131,6 @@ const SettingsWidget = (props) => {
         return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
     }, [props])
 
-    const windowHeight = window.innerHeight
-
     return (
         <div className="d-flex flex-column" style={{ marginTop: '10px', width: '100%', height: '100%', padding: '10px' }}>
             <div id="settingScrollContainer" className=" overflow-auto" style={{ height: '100%', zIndex: 1001 }}>
@@ -289,19 +287,46 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
     
 }
 
-export const UnitSelector = (props: { label: string, setter: (result: OpenSee.IUnitSetting) => void, unit: OpenSee.IUnitSetting }) => {
+export const AxisUnitSelector = (props: { label: string, setter: (index: number) => void, unitType: OpenSee.Unit, axisSetting: OpenSee.IAxisSettings }) => {
+    let entries;
+    let buttonLabel;
+
+    entries = defaultSettings.Units[props.unitType].options.map((option, index) =>
+        <a key={"option-" + index} className="dropdown-item" onClick={() => { props.setter(index) }}> {option.label} </a>
+    )
+    if (props.axisSetting.isAuto)
+        buttonLabel = props.label + " [auto]"
+    else
+        buttonLabel = props.label + " [" + defaultSettings.Units[props.unitType].options[props.axisSetting.current].short + "]"
 
     
-    let entries = props.unit.options.map((option, index) => <a key={"option-" + index} className="dropdown-item"
-        onClick={() => {
-            props.setter({ ...props.unit, current: index })
+
+    return (
+        <div className="btn-group dropright" >
+            <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {buttonLabel}
+            </button>
+            <div className="dropdown-menu">
+                {entries}
+            </div>
+        </div>
+    );
         }
-        }> {option.label} </a>)
+
+export const TimeUnitSelector = (props: { label: string, setter: (index: number) => void, timeUnit: OpenSee.IUnitSetting }) => {
+    let entries;
+    let buttonLabel;
+
+
+    entries = defaultSettings.TimeUnit.options.map((option, index) =>
+        <a key={"option-" + index} className="dropdown-item" onClick={() => { props.setter(index) }}> {option.label} </a>
+    )
+    buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnit.current].short + "]"
 
         return (
-            <div className="btn-group dropright" style={{ margin: ' 5px 10px 5px 10px' }}>
+        <div className="btn-group dropright" >
                 <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    {props.label + " [" + props.unit.options[props.unit.current].short + "]"}
+                {buttonLabel}
                 </button>
                 <div className="dropdown-menu">
                     {entries}
