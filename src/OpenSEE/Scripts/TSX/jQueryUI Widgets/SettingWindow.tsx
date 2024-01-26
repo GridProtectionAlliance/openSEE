@@ -258,17 +258,8 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
         position: "absolute",
         zIndex: 1010,
     }
-    const cover: React.CSSProperties =
-    {
-        position: 'fixed',
-        top: '0px',
-        right: '0px',
-        bottom: '0px',
-        left: '0px',
-    }
 
-
-    function updateColor (color, event)  {
+    function updateColor(color, event) {
         props.statesetter(color.hex);
         setDisplayColorPicker(false)
     };
@@ -280,7 +271,6 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
                     <div style={{ position: 'fixed', transform: `translate(0px,-${props.scrollOffset}px)` }}>
                         <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} colors={defaultSettings.ColorSelection} />
                     </div>
-                    {/*<div style={cover} onClick={() => setDisplayColorPicker(false)} />*/}
                 </div> : null}
             </div>
         )
