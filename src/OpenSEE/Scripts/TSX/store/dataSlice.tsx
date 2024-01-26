@@ -414,23 +414,20 @@ export const DataReducer = createSlice({
                     if (curPlot.key.DataType !== 'FFT' && curPlot.key.DataType !== 'OverlappingWave') {
                         let recomputedLimits = recomputeDataLimits(state.startTime, state.endTime, relevantData, curPlot.yLimits[axis].current)
                         axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeZoomedLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
+                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
                     } else if (curPlot.key.DataType === 'FFT') {
                         const recomputedLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], relevantData, curPlot.yLimits[axis].current);
                         axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeZoomedLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
+                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
                     } else if (curPlot.key.DataType === 'OverlappingWave') {
                         const recomputedLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], relevantData, curPlot.yLimits[axis].current);
                         axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeZoomedLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
+                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
 
                     }
                     updateActiveUnits(curPlot.yLimits, axis, relevantData, state.startTime, state.endTime, null);
                 });
 
-        SetHover: (state: OpenSee.IDataState, action: PayloadAction<{ t: number, y: number }>) => {
-            state.hover = [action.payload.t, action.payload.y];
-            return state;
         },
         SelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
             if (state.mouseMode == 'none')
