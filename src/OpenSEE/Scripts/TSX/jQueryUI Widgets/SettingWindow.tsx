@@ -31,25 +31,98 @@ import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-interface Iprops {
-    //closeCallback: () => void,
-    //isOpen: boolean,
-    //position: [number, number]
-    //setPosition: (t: number, l: number) => void
+import { DatePicker, Input, CheckBox } from '@gpa-gemstone/react-forms'
+
+
+interface TimeLimit {
+    start: string,
+    end: string
 }
 
-const SettingsWidget = (props: Iprops) => {
-    const list = useAppSelector(selectGraphTypes);
-    const eventOverlay = useAppSelector(selectEventOverlay);
-    const defaultTraces = useAppSelector(selectdefaultTraces);
-    const defaultVtype = useAppSelector(selectVTypeDefault);
-
+const SettingsWidget = (props) => {
     const dispatch = useAppDispatch();
+    const list = useAppSelector(selectGraphTypes);
+    const defaultTraces = useAppSelector(SelectDefaultTraces);
+    const defaultVtype = useAppSelector(SelectVTypeDefault);
+
+    const selectStartTimeInstance = React.useMemo(() => (selectStartTime), [])
+    const selectEndTimeInstance = React.useMemo(() => (selectEndTime), [])
+
+    const startTime = useAppSelector(selectStartTimeInstance);
+    const endTime = useAppSelector(selectEndTimeInstance);
+
+    const timeUnit = useAppSelector(SelectTimeUnit);
+
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
-
+    const [formattedTime, setFormattedTime] = React.useState<TimeLimit>({ start: '', end: '' });
+    const [currentDate, setCurrentDate] = React.useState<{ start: Date, end: Date }>({ start: new Date(), end: new Date() });
+    const [valid, setValid] = React.useState<boolean>(true)
     
-   React.useEffect(() => {
+    const handleTimeUnitChange = (index: number) => {
+        let auto = defaultSettings.TimeUnit.options[index].factor === undefined ? true : false;
+        dispatch(SetTimeUnit({ index: index, auto: auto }))
+    }
 
+    const handleDateChange = (time, start: boolean) => {
+        let newDate: Date;
+        if (start)
+            newDate = new Date(startTime);
+        else
+            newDate = new Date(endTime);
+
+        if (time && time !== 'Invalid date') { 
+            let [hours, minutes, seconds] = time.split(':');
+            let milliseconds = '';
+            [seconds, milliseconds] = seconds.split('.')
+            newDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), parseInt(milliseconds))
+
+            if (start) {
+                if (newDate.getTime() < endTime) {
+                    setValid(true)
+                    setFormattedTime({ start: moment(newDate).format('HH:mm:ss.SSS'), end: moment(new Date(endTime)).format('HH:mm:ss.SSS') })
+                    setCurrentDate({ start: newDate, end: new Date(endTime) })
+                }
+                else
+                    setValid(false)
+            }
+            else {
+                if (newDate.getTime() > startTime) {
+                    setFormattedTime({ start: moment(new Date(startTime)).format('HH:mm:ss.SSS'), end: moment(newDate).format('HH:mm:ss.SSS') })
+                    setCurrentDate({ start: new Date(startTime), end: newDate })
+                    setValid(true)
+                }
+                else 
+                    setValid(false)
+            }
+
+        }
+
+    };
+
+   React.useEffect(() => {
+        const newStart = currentDate.start.getTime();
+        const newEnd = currentDate.end.getTime();
+
+        if (newStart !== startTime || newEnd !== endTime && valid ) {
+            const timeOutId = setTimeout(() => {
+                dispatch(SetTimeLimit({ start: newStart, end: newEnd }));
+            }, 1500);
+
+            return () => clearTimeout(timeOutId);
+        }
+    }, [formattedTime, currentDate, dispatch]);
+
+    React.useEffect(() => {
+        const newFormattedTime = {
+            start: moment(new Date(startTime)).format('HH:mm:ss.SSS'),
+            end: moment(new Date(endTime)).format('HH:mm:ss.SSS')
+        };
+
+        setFormattedTime(newFormattedTime);
+
+    }, [startTime, endTime]);
+
+    React.useEffect(() => {
         const handleScroll = () => {
             let offset = document.getElementById("settingScrollContainer").scrollTop;
                 setScrollOffset(offset);
@@ -61,11 +134,10 @@ const SettingsWidget = (props: Iprops) => {
     const windowHeight = window.innerHeight
 
     return (
-        
-        <div style={{ marginTop: '10px', width: '100%', height: '100%'}}>
-            <div id="settingScrollContainer" style={{height: windowHeight <= 500 ? windowHeight - 70 : '100%', zIndex: 1001, overflowY: windowHeight <= 500 ? 'scroll' : 'hidden', overflowX: 'hidden'}}>
+        <div className="d-flex flex-column" style={{ marginTop: '10px', width: '100%', height: '100%', padding: '10px' }}>
+            <div id="settingScrollContainer" className=" overflow-auto" style={{ height: '100%', zIndex: 1001 }}>
                 <div className="accordion" id="panelSettings">
-                    <div className="card">
+                    <div className="card" style={{ overflowY: 'auto', height: '100%' }}>
                         <div className="card-header" id="header-general">
                             <h2 className="mb-0">
                                 <button className="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collaps-general" aria-expanded="true" aria-controls="collaps-general">
@@ -73,79 +145,104 @@ const SettingsWidget = (props: Iprops) => {
                                 </button>
                             </h2>
                         </div>
-
-                        <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings">
-                            <div className="card-body">
-                                <div className="col">
-                                    <div className="col" style={{ width: '100%' }}>
-                                        <div className="form-check">
-                                            <input className="form-check-input" type="checkbox" checked={eventOverlay}
-                                                onChange={() => dispatch(SetSinglePlot(!eventOverlay))} />
-                                            <label className="form-check-label">Display all Events on single Graph for Compare Overlapping Events</label>
+                        <div id="collaps-general" className="collapse show" aria-labelledby="header-general" data-parent="#panelSettings" style={{ overflowY: 'auto', height: '100%' }}>
+                            <div className="card-body" style={{ overflowY: 'auto', height: '100%' }}>
+                                <fieldset className="border p-2">
+                                    <legend>Default Traces (on Loading):</legend>
+                                    <div className="form-row">
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultTraces}
+                                                Field={'W'}
+                                                Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, W: item.W }))}
+                                                Label={"WaveForm"}
+                                            />
                                         </div>
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultTraces}
+                                                Field={'Pk'}
+                                                Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, Pk: item.Pk }))}
+                                                Label={"Peak"}
+                                            />
                                     </div>
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultTraces}
+                                                Field={'RMS'}
+                                                Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, RMS: item.RMS }))}
+                                                Label={"RMS"}
+                                            />
                                 </div>
-                                <div className="col">
-                                    <div className="col">
-                                    <fieldset className="border" style={{ padding: '10px', height: '100%', display: "block", width: '100%' }}>
-                                            <legend className="w-auto">Default Traces (on Loading):</legend>
-                                        <div className="col">
-                                            <div className="col" style={{ width: '25%' }}>
-                                                <div className="form-check">
-                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.W}
-                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, W: !defaultTraces.W }))} />
-                                                    <label className="form-check-label">WaveForm</label>
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultTraces}
+                                                Field={'Ph'}
+                                                Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, Ph: item.Ph }))}
+                                                Label={"Phase"}
+                                            />
                                                 </div>
                                             </div>
-                                            <div className="col" style={{ width: '25%' }}>
-                                                <div className="form-check">
-                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.Pk}
-                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, Pk: !defaultTraces.Pk }))} />
-                                                    <label className="form-check-label">Peak</label>
+                                    <div className="form-row">
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultVtype}
+                                                Field={'LL'}
+                                                Setter={(item) => dispatch(SetDefaultVType({ ...defaultVtype, LL: item.LL }))}
+                                                Label={"Line to Line"}
+                                            />
                                                 </div>
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={defaultVtype}
+                                                Field={'LN'}
+                                                Setter={(item) => dispatch(SetDefaultVType({ ...defaultVtype, LN: item.LN }))}
+                                                Label={"Line to Neutral"}
+                                            />
                                             </div>
-                                            <div className="col" style={{ width: '25%' }}>
-                                                <div className="form-check">
-                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.RMS}
-                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, RMS: ! defaultTraces.RMS }))} />
-                                                    <label className="form-check-label">RMS</label>
                                                 </div>
+                                </fieldset>
+                                <fieldset className="border p-2">
+                                    <legend>Time:</legend>
+                                    <div className="form-row">
+                                        <div className="col-4" style={{ paddingTop: '1.875rem' }}>
+                                            {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnit={timeUnit} setter={index => handleTimeUnitChange(index)} /> : null}
                                             </div>
-                                            <div className="col" style={{ width: '25%' }}>
-                                                <div className="form-check">
-                                                        <input className="form-check-input" type="checkbox" checked={defaultTraces.Ph}
-                                                            onChange={() => dispatch(SetDefaultTrace({ ...defaultTraces, Ph: !defaultTraces.Ph }))} />
-                                                    <label className="form-check-label">Phase</label>
-                                                </div>
-                                                </div>
                                                 
+                                        <div className="col-4">
+                                            <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'start'}
+                                                Setter={(e) => {
+                                                    handleDateChange(e.start, true)
+                                                }}
+                                                Label={"Start Time"}
+                                                Accuracy={'millisecond'}
+                                                Valid={() => valid}
+                                                Type={'time'}
+                                                Feedback={"Start Time can not be greater than End Time"}
+                                            />
                                             </div>
-                                            <div className="col">
-                                                <div className="col" style={{ width: '100%', paddingTop: 10 }}>
-                                                    <div className="form-check form-check-inline">
-                                                        <input className="form-check-input" type="radio" checked={defaultVtype == 'L-L'} onChange={() => {
-                                                            if (defaultVtype == 'L-N')
-                                                                dispatch(SetDefaultVType('L-L'))
-                                                        }} />
-                                                            <label className="form-check-label">Line to Line</label>
+                                        <div className="col-4">
+                                            <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'end'}
+                                                Setter={(e) => {
+                                                    handleDateChange(e.end, false)
+                                                }}
+                                                Label={"End Time"}
+                                                Valid={() => valid}
+                                                Type={'time'}
+                                                Accuracy={'millisecond'}
+                                                Feedback={"Start Time can not be greater than End Time"}
+                                            />
                                                     </div>
-                                                    <div className="form-check form-check-inline">
-                                                        <input className="form-check-input" type="radio" checked={defaultVtype == 'L-N'} onChange={() => {
-                                                            if (defaultVtype == 'L-L')
-                                                                dispatch(SetDefaultVType('L-N'))
-                                                        }}/>
-                                                        <label className="form-check-label">Line to Neutral</label>
                                                     </div>
-                                                 </div>      
-                                            </div>
+
                                     </fieldset>
+
                                     </div>
+
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                   {list.map((item, index) => <PlotCard key={index} scrollOffset={scrollOffset} {...item} />)}
+                    {list.map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
                    
                 </div>
             </div>
