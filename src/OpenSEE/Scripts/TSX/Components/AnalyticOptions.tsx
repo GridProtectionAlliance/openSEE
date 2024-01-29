@@ -29,7 +29,7 @@ import { SelectHarmonic,SelectHPF, SelectLPF, SelectTRC, SelectCycles, UpdateAna
 import { selectGraphTypes, RemovePlot, AddPlot, selectPlotTypes, SelectEventIDs } from '../store/dataSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive"
-import { Select } from "@gpa-gemstone/react-forms"
+import { Select, Input } from "@gpa-gemstone/react-forms"
 import * as _ from 'lodash'
 import { ToInt } from '../store/queryThunk'
 import { plotLabels } from '../defaults'
@@ -44,8 +44,9 @@ const AnalyticOptions = () => {
     const cycles = useAppSelector(SelectCycles);
     const analytics = useAppSelector(SelectAnalytics);
     const plotTypes = useAppSelector(selectPlotTypes); 
-
     const eventIDs = useAppSelector(SelectEventIDs)
+
+    const [isHarmonicValid, setIsHarmonicValid] = React.useState<boolean>(true)
 
 
     const analyticDefaults = [
@@ -73,15 +74,21 @@ const AnalyticOptions = () => {
 
     const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(analyticDefaults)
 
+    const handleHarmonicChange = (harmonic: number) => {
+        if (harmonic) {
+            eventIDs.forEach(id => {
+                setTimeout(() => {
+                    dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic) }, key: { DataType: "Harmonic", EventId: id } }));
+                }, 500);
+            });
+            setIsHarmonicValid(true)
+        }
+        else 
+            setIsHarmonicValid(false)
+    }
+
 
     const options = {
-        harmonic: [
-            { Label: '1', Value: '1' },
-            { Label: '2', Value: '2' },
-            { Label: '3', Value: '3' },
-            { Label: '4', Value: '4' },
-            { Label: '5', Value: '5' },
-        ],
         order: [
             { Label: '1', Value: '1' },
             { Label: '2', Value: '2' },
@@ -121,7 +128,7 @@ const AnalyticOptions = () => {
 
 
 
-    //nonanalytic plots & plots that need parameters
+    //nonanalytic plots or analytic plots that need parameters
     const dynamicPlots = ["Harmonic", "HighPassFilter", "LowPassFilter", "Rectifier", "FFT", "Voltage", "Current", "Analogs", 'Digitals', 'TripCoil']
 
     return (
@@ -138,15 +145,16 @@ const AnalyticOptions = () => {
                     {graphTypes.some(type => type.DataType === "Harmonic") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
-                                <legend className="w-auto" style={{ fontSize: 'large' }}>Harmonic</legend>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>Specified Harmonic</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Select
+                                        <Input
                                             Record={{ harmonic }}
                                             Field={'harmonic'}
-                                            Options={options.harmonic}
-                                            Setter={(harmonic) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic.harmonic) }, key: {DataType: "Harmonic", EventId: id} })))}
+                                            Setter={(harmonic) => handleHarmonicChange(ToInt(harmonic.harmonic))}
                                             Label={"Harmonic:"}
+                                            Valid={() => isHarmonicValid}
+                                            Feedback="Harmonic value can not be empty"
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
