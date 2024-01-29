@@ -26,7 +26,7 @@ import * as React from "react";
 import { OpenSee } from '../global';
 import { cloneDeep } from "lodash";
 import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
-import { selectColor } from "../store/settingSlice";
+import { SelectColor } from "../store/settingSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
 import { MultiCheckBoxSelect, StylableSelect } from "@gpa-gemstone/react-forms";
@@ -59,13 +59,11 @@ const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.','V','I'];
 const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero','S0/S1','S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
 
 const Legend = (props: iProps) => {
-    const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId }
+    const MemoSelectData = React.useMemo(() => selectData(props.dataKey), []);
+    const MemoSelectEnabled = React.useMemo(() => selectEnabled(props.dataKey), []);
 
-    const MemoSelectData = React.useMemo(selectData, []);
-    const MemoSelectEnabled = React.useMemo(selectEnabled, []);
-
-    const data = useAppSelector((state) => MemoSelectData(state, dataKey));
-    const enabled = useAppSelector((state) => MemoSelectEnabled(state, dataKey))
+    const data = useAppSelector(MemoSelectData);
+    const enabled = useAppSelector(MemoSelectEnabled)
     const dispatch = useAppDispatch();
 
     const [categories, setCategories] = React.useState<Array<ICategory>>([]);
@@ -353,13 +351,28 @@ const Legend = (props: iProps) => {
                     <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }}></div>
                     {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}/>)}
                 </div>
-                <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101 }}>
-                {(verticalHeader.length > 1 ?
-                    <div style={{ width: ((200 - 4) / (horizontalHeader.length + 2)), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101, width: '100%' }}>
+                {(verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ?
+                    <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
                         {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
                     </div> : null)}
-                <div style={{ width: (verticalHeader.length > 1 ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                    {verticalHeader.map((value, index) => <Row dataKey={dataKey} category={value[1]} activeCategories={categories.filter(item => item.Selected).map(item => item.Text)} key={index} label={value[0]} data={grid.get(value[0] + value[1]).sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))} width={hwidth} clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
+                        <div style={{ width: (verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                            {verticalHeader.map((value, index) => {
+                                return (
+                                    <Row
+                                        dataKey={props.dataKey}
+                                        category={value[1]}
+                                        activeCategories={categories.filter(item => item.Selected).map(item => item.Text)}
+                                        key={index}
+                                        label={value[0]}
+                                        data={grid?.get(value[0] + value[1])?.sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))}
+                                        width={hwidth}
+                                        clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}
+                                        verticalHeaders={verticalHeader}
+                                        horizontalHeaders={horizontalHeader}
+                                    />
+                                );
+                            })}
                     </div>
                 </div>
         </div>
@@ -390,7 +403,10 @@ const VCategory = (props: { key: number, label: string, height: number, width: n
         </div>)
 }
 
-const Row = (props: { category: string, label: string, data: Array<ILegendGrid>, width: number, activeCategories: Array<string>, clickHeader: (group: string, type: string) => void, dataKey: OpenSee.IGraphProps }) => {
+const Row = (props: { category: string, label: string, data: Array<ILegendGrid>, width: number, activeCategories: Array<string>, clickHeader: (group: string, type: string) => void, dataKey: OpenSee.IGraphProps, horizontalHeaders, verticalHeaders }) => {
+    const hasHorizontalHeaders = props.horizontalHeaders.some(item => item)
+    const hasCategoryGroup = props.category !== '' && props.category !== null
+    const labelWidth = !hasHorizontalHeaders && !hasCategoryGroup ? '50%' : hasHorizontalHeaders && !hasCategoryGroup ? 2 * props.width : props.width
 
     function hasData(data: ILegendGrid) {
         let n = 0;
@@ -403,21 +419,21 @@ const Row = (props: { category: string, label: string, data: Array<ILegendGrid>,
     }
 
     return (
-        <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderTop: "2px solid #b2b2b2", height: hrow }}>
-            <div style={{ width: props.width, overflow: "hidden", textAlign: "center" }} key={0}>
-                <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }} onClick={() => props.clickHeader(props.label+props.category, 'vertical')}>{props.label}</span>
+        <div className="d-flex" style={{ width: "100%", backgroundColor: "rgb(204,204,204)", textAlign: "center", borderTop: "2px solid #b2b2b2", height: 'auto' }}>
+            <div style={{ width: labelWidth, textAlign: "center" }} key={0}>
+                <span style={{ fontSize: "smaller", fontWeight: "bold", wordWrap: 'break-word' }} onClick={() => props.clickHeader(props.label+props.category, 'vertical')}>{props.label}</span>
             </div>
             {props.data.map((item, index) =>
                 (hasData(item) ?
-                    <TraceButton width={props.width} data={item} activeCategory={props.activeCategories} key={index} dataKey={props.dataKey}/> :
+                <TraceButton width={!hasHorizontalHeaders && !hasCategoryGroup ? { width: '50%' } : {width: props.width}} data={item} activeCategory={props.activeCategories} key={index} dataKey={props.dataKey}/> :
                     <div key={index} style={{ width: props.width, backgroundColor: "b2b2b2", borderLeft: "2px solid #b2b2b2" }}> </div>)
             )}
         </div>
     )
 }
 
-const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: number, dataKey: OpenSee.IGraphProps }) => {
-    const colors = useAppSelector(selectColor)
+const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: React.CSSProperties, dataKey: OpenSee.IGraphProps }) => {
+    const colors = useAppSelector(SelectColor)
     const dispatch = useAppDispatch();
 
     function getColor(color: OpenSee.Color) {
@@ -438,7 +454,7 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
     }
 
     return (
-        <div style={{ width: props.width, backgroundColor: convertHex(getColor(props.data.color), (props.data.enabled ? 100 : 50)), borderLeft: "2px solid #b2b2b2" }} onClick={onClick} >
+        <div style={{ ...props.width, backgroundColor: convertHex(getColor(props.data.color), (props.data.enabled ? 100 : 50)), borderLeft: "2px solid #b2b2b2" }} onClick={onClick} >
             {(props.data.enabled ? <i className="fa fa-minus" ></i> : <i className="fa fa-plus" ></i>)}
         </div>)
 };
