@@ -196,12 +196,14 @@ export const SelectQueryString = createSelector(
             Trc: analyticInfo.Trc,
             HPFOrder: analyticInfo.HPFOrder,
             LPFOrder: analyticInfo.LPFOrder,
+            CycleLimits: data.cycleLimit as [number, number],
+            FFTLimits: data.fftLimits as [number, number],
             FFTCycles: analyticInfo.FFTCycles,
             FFTStartTime: analyticInfo.FFTStartTime,
             Harmonic: analyticInfo.Harmonic,
             plots: JSON.stringify(plotQuery),
             overlappingInfo: JSON.stringify(overLappingEvents.EventList),
-            singlePlot: singlePlot
+            singlePlot: singlePlot,
         }
 
         const query = queryString.stringify(queryObj)
