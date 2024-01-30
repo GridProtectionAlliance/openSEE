@@ -535,8 +535,16 @@ export const DataReducer = createSlice({
             return state
         });
         builder.addCase(AddPlot.fulfilled, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == action.meta.arg.EventId);
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
+            if (plot) {
             plot.loading = 'Idle'
+
+                if (action.meta.arg.fftLimits)
+                    state.fftLimits = action.meta.arg.fftLimits
+                if (action.meta.arg.fftLimits)
+                    state.cycleLimit = action.meta.arg.cycleLimits
+            }
+
             return state
         });
         builder.addCase(UpdateAnalyticPlot.pending, (state, action) => {

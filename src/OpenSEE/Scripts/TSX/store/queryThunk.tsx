@@ -26,7 +26,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
 import * as queryString from "query-string";
-import { AddPlot, SetTimeLimit} from './dataSlice';
+import { AddPlot, SetTimeLimit, SetFFTLimits, SetCycleLimit} from './dataSlice';
 import { SelectEnabledPlots, SetSinglePlot } from './settingSlice';
 import { SetEventID, SelectEventID } from './eventInfoSlice'
 import { SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
@@ -64,6 +64,8 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
 
     const isAnalyticsEqual = _.isEqual(oldAnalytics, analyticQuery)
     const isOverlappingListEqual = _.isEqual(oldOverlappingList, parsedQuery.overlappingInfo)
+    const isFFTLimitsEqual = _.isEqual([ToInt(query?.FFTLimits?.[0]), ToInt(query?.FFTLimits?.[1])], oldState.Data.fftLimits)
+    const isCycleLimitsEqual = _.isEqual([ToInt(query?.CycleLimits?.[0]), ToInt(query?.CycleLimits?.[1])], oldState.Data.cycleLimit)
 
     const noPlots = (query?.plots?.length === 0 && enabledPlots?.length === 0) || query?.plots === undefined
 
@@ -79,6 +81,7 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
     if (ToInt(query.startTime) != undefined && ToInt(query.endTime) != undefined && (oldState.Data.startTime != ToInt(query.startTime) || (oldState.Data.endTime != ToInt(query.endTime))))
         dispatch(SetTimeLimit({ start: ToInt(query.startTime), end: ToInt(query.endTime) }))
 
+    //Set Overlapping EventList
     if (!isOverlappingListEqual && query?.overlappingInfo)
         dispatch(SetOverlappingEventList(query.overlappingInfo))
 
@@ -88,8 +91,8 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
     
     // On initial load, add default plots (Voltage and Current) if there is none provided via query
     if (noPlots && arg.initial) {
-        dispatch(AddPlot({ key: { EventId: oldState.Data.eventID, DataType: "Voltage" } }));
-        dispatch(AddPlot({ key: { EventId: oldState.Data.eventID, DataType: "Current" } }));
+        dispatch(AddPlot({ key: { EventId: oldState.EventInfo.EventID, DataType: "Voltage" } }));
+        dispatch(AddPlot({ key: { EventId: oldState.EventInfo.EventID, DataType: "Current" } }));
     }
 
     //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort
@@ -101,15 +104,26 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
 
             if (plotChange && ToBool(query?.singlePlot) && ToBool(query?.singlePlot) !== undefined && plot.key.EventId === -1) {
                 const plots = query.plots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType)
-                plots.forEach(p => dispatch(AddPlot({ key: { DataType: p.key.DataType, EventId: p.key.EventId }, yLimits: !isYLimitsEqual ? plot.yLimits : undefined, isZoomed: plot.isZoomed  })))
+                plots.forEach(p => dispatch(AddPlot(
+                    {
+                        key: p.key,
+                        yLimits: !isYLimitsEqual ? plot.yLimits : undefined,
+                        isZoomed: plot.isZoomed, fftLimits: !isFFTLimitsEqual ? [ToInt(query?.FFTLimits?.[0]),ToInt(query?.FFTLimits?.[1])] : undefined,
+                        cycleLimits: !isCycleLimitsEqual ? [ToInt(query?.CycleLimits?.[0]), ToInt(query?.CycleLimits?.[1])] : undefined
+                    })))
                 return;
             }
 
             if (plotChange && plot.key.EventId !== -1) 
-               dispatch(AddPlot({ key: plot.key, yLimits: !isYLimitsEqual ? plot.yLimits : undefined, isZoomed: plot.isZoomed }));
-            
+                dispatch(AddPlot(
+                    {
+                    key: plot.key, yLimits: !isYLimitsEqual ? plot.yLimits : undefined,
+                    isZoomed: plot.isZoomed, fftLimits: !isFFTLimitsEqual ? [ToInt(query?.FFTLimits?.[0]), ToInt(query?.FFTLimits?.[1])] : undefined,
+                    cycleLimits: !isCycleLimitsEqual ? [ToInt(query?.CycleLimits?.[0]), ToInt(query?.CycleLimits?.[1])] : undefined
+                }));
         })
     }
+
 
 })
 
