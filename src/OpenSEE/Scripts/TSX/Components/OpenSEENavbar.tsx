@@ -184,59 +184,65 @@ const OpenSeeNavBar = (props: IProps) => {
 
             return (
                 <>
-                    <ul className="navbar-nav mr-auto navbar-expand ml-auto">
+            <div className="d-none d-xl-block col-xl-5">
+                <ul className="navbar-nav navbar-expand">
                         <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
                             style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
-                            <div style={{textAlign: 'center', color: 'white'}}>Meter:</div>
-                            <div style={{textAlign: 'center', color: 'white'}}> { eventInfo?.MeterName?.split(" ")[0] }</div>
-                            <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Theme={'dark'}>
-                                <p>{ eventInfo?.MeterName?.split(" ")[0] }</p>
+                        <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}> {eventInfo?.MeterName?.split(" ")[0]}</div>
+                        <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Theme={'dark'} Zindex={9999}>
+                            <p>{eventInfo?.MeterName}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('Station')} onMouseLeave={() => setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center', color: 'white'}}>Station:</div> 
-                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.StationName}</div>
-                            <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Theme={'dark'}>
+                    <li className="nav-item" onMouseEnter={() => setHover('Station')} onMouseLeave={() => setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"
+                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
+                        <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{eventInfo?.StationName}</div>
+                        <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Theme={'dark'} Zindex={9999}>
                                 <p>{eventInfo?.StationName}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('Asset')} onMouseLeave={() => setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px'  }}>
-                            <div style={{textAlign: 'center', color: 'white'}}>Asset:</div> 
-                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.AssetName?.split(" ")[0]}</div>
-                            <ToolTip Show={hover == 'Asset'} Position={'bottom'} Target={'asset'} Theme={'dark'}>
-                                <p>{eventInfo?.AssetName?.split(" ")[0]}</p>
+                    <li className="nav-item" onMouseEnter={() => setHover('Asset')} onMouseLeave={() => setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"
+                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
+                        <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{eventInfo?.AssetName?.split(" ")[0]}</div>
+                        <ToolTip Show={hover == 'Asset'} Position={'bottom'} Target={'asset'} Theme={'dark'} Zindex={9999}>
+                            <p>{eventInfo?.AssetName}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('EType')}onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px'  }}>
-                            <div style={{textAlign: 'center', color: 'white'}}>Type:</div>
-                            <div style={{textAlign: 'center', color: 'white'}}>{eventInfo?.EventName}</div>
-                            <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Theme={'dark'}>
+                    <li className="nav-item" onMouseEnter={() => setHover('EType')} onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"
+                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
+                        <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{eventInfo?.EventName}</div>
+                        <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Theme={'dark'} Zindex={9999}>
                                 <p>{eventInfo?.EventName}</p>
                             </ToolTip>
                         </li>
-                        <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"style = {{borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', padding: "0 5px", minWidth: "60px", marginRight: "10px" }}>
-                            <div style={{textAlign: 'center', color: 'white'}}>Inception: </div>
-                            <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</div>
-                            <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'}>
+                    <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"
+                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}>
+                        <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
+                        <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</div>
+                        <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'} Zindex={9999}>
                                 <p>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</p>
                             </ToolTip>
                         </li>
                     </ul>
-
-                    <ul className="navbar-nav mr-auto navbar-expand ml-auto">
+            </div>
+            <div className="col-sm-10 col-xl-6">
+                <ul className="navbar-nav navbar-expand">
                         <li className="nav-item" style={{ width: (analytic == 'FFT' ? 'calc(100% - 954px)' : 'calc(100% - 909px)'), textAlign: 'center' }}>
                         </li>
                         <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
                             <button type="button"
                                 className="btn btn-primary"
                                 style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                                disabled={mouseMode != 'zoom' && mouseMode != 'pan'}
                                 onMouseEnter={() => setHover('Waveform')}
                                 onMouseLeave={() => setHover('None')}
                                 data-tooltip={'waveform-btn'}
                                 data-toggle="dropdown" data-placement="bottom">
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
                             </button>
+
                             <div className="dropdown-menu"
                                 style={{
                                     maxHeight: window.innerHeight * 0.75,
@@ -256,9 +262,10 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Show Points')}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Show Points')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowPoints(true)}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowPoints(!showPoints); props.ToggleDrawer('AccumulatedPoints', !showPoints); }}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
                             </button>
                             <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'} Theme={'dark'}>
@@ -267,10 +274,11 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Clock')}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Clock')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
-                                data-toggle="tooltip" data-placement="bottom">
-                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{PhasorClock}</i>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowPolar(!showPolar); props.ToggleDrawer('PolarChart', !showPolar); }}>
+                            <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }} >{PhasorClock}</i>
                             </button>
                             <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'} Theme={'dark'}>
                                 <p>Phasor Chart</p>
@@ -278,19 +286,22 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Stat')}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Stat')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowScalarStats(!showScalarStats) }>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowScalarStats(!showScalarStats); props.ToggleDrawer('ScalarStats', !showScalarStats); }}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{statsIcon}</i>
                             </button>
                             <ToolTip Show={hover == 'Stat'} Position={'bottom'} Target={'stats-btn'} Theme={'dark'}>
                                 <p>Stats</p>
                             </ToolTip>
                         </li>
+
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Sags')}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Sags')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowCorrelatedSags(!showCorrelatedSags)}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowCorrelatedSags(!showCorrelatedSags); props.ToggleDrawer('CorrelatedSags', !showCorrelatedSags); }}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
                             </button>
                             <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'} Theme={'dark'}>
@@ -299,23 +310,38 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Lightning')}
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            disabled={!showFFT}
+                            onMouseEnter={() => setHover('FFTTable')}
+                            onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowFFTTable(!showFFTTable); dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !showFFTTable) }}>
+                            <i style={{ fontStyle: "normal", fontSize: "25px" }} >{FFT}</i>
+                        </button>
+                        <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'} Theme={'dark'}>
+                            <p>FFT Table</p>
+                        </ToolTip>
+                    </li>
+
+                    <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
+                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Lightning')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => setShowLightning(!showLightning)}>
-                                < i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowLightning(!showLightning); props.ToggleDrawer('Lightning', !showLightning); }}>
+                            <i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
                             </button>
                             <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'} Theme={'dark'}>
-                                <p>Lightning Datas</p>
+                            <p>Lightning Data</p>
                             </ToolTip>
                         </li>
 
                         <li className="nav-item dropdown" style={{ width: '84px', position: "relative", marginTop: "10px" }}>
-                            <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"  style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Export')}
+                        <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Export')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'export-btn'}
                                  data-placement="bottom">
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{exportBtn}</i>
                             </button>
-                            <div className="dropdown-menu" style={{position: "absolute"}}>
+                        <div className="dropdown-menu" style={{ position: "absolute" }}>
                                 <a className="dropdown-item" onClick={() => { exportData('csv') }}>
                                     Export CSV
                                 </a>
@@ -328,13 +354,15 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
 
-                        <li className="nav-item" style={{ width: '180px', position: "relative", marginTop: "10px" }}>
-                            <div className="btn-group" role="group">
-                            <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Zoom Mode')} onMouseLeave={() => setHover('None')} data-tooltip={'zoom-btn'}
+                    <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
+                        <div className="btn-group d-flex" role="group">
+                            {/*Zoom*/}
+                            <button type="button" className={"btn btn-primary" + (mouseMode == "zoom" ? " active" : "")} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: '0.195rem' }}
+                                onMouseEnter={() => setHover('Zoom Mode')} onMouseLeave={() => setHover('None')} data-tooltip={'zoom-btn'}
                                 data-placement="bottom" onClick={() => dispatch(SetMouseMode("zoom"))}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{Zoom}</i>
                             </button>
-                            <div className="dropdown-menu" style={{position: "absolute"}}>
+                            <div className="dropdown-menu" style={{ position: "absolute" }}>
                                 <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))}>
                                     <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
                                 </a>
@@ -351,7 +379,8 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>            
 
                                 {/*Pan*/}
-                                <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? "active" : "")} style={{ padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Pan')}
+                            <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
+                                onMouseEnter={() => setHover('Pan')}
                                     onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
                                     data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
                                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
@@ -360,20 +389,35 @@ const OpenSeeNavBar = (props: IProps) => {
                                     <p>Pan</p>
                                 </ToolTip>
 
-                                {/*FFT*/}
-                                <button type="button" className={"btn btn-primary " + (mouseMode == "fftMove" ? "active" : "")} onClick={() => dispatch(SetMouseMode("fftMove"))}
-                                    disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('FFT')}
-                                    onMouseLeave={() => setHover('None')} data-tooltip={'fft-btn'}
+                            { /*Select*/}
+                            <button type="button" className={"btn btn-primary" + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                                disabled={props.DisableSelect}
+                                onMouseEnter={() => setHover('Select')}
+                                onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("select"))}>
+                                <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
+                            </button>
+                            <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'} Theme={'dark'}>
+                                <p>Select</p>
+                            </ToolTip>
+
+                            {/*FFT Move*/}
+                            <button type="button" className={"btn btn-primary" + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
+                                onClick={() => dispatch(SetMouseMode("fftMove"))}
+                                disabled={!showFFT}
+                                onMouseEnter={() => setHover('FFTMove')}
+                                onMouseLeave={() => setHover('None')} data-tooltip={'fftMove-btn'}
                                     data-toggle="tooltip" data-placement="bottom">
                                     <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
                                 </button>
-                                <ToolTip Show={hover == 'FFT'} Position={'bottom'} Target={'fft-btn'} Theme={'dark'}>
-                                    <p>FFT</p>
+                            <ToolTip Show={hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'} Theme={'dark'}>
+                                <p>FFT Move</p>
                                 </ToolTip>
 
                                 {/*reset*/}
-                                <button className="btn btn-primary" style={{padding: "0.195rem"}} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
-                                <i style={{ fontStyle: "normal", fontSize: "21px"}}>{Reset}</i>
+                            <button className="btn btn-primary" style={{ padding: '0.195rem' }}
+                                onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
+                                <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                                 </button>
                                 <ToolTip Show={hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'} Theme={'dark'}>
                                     <p>Reset Zoom</p>
@@ -383,28 +427,34 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                            <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Settings')} onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => {setShowSettings(!showSettings); props.ToggleDrawer('Settings',!showSettings);}}>
+                        <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                            onMouseEnter={() => setHover('Settings')}
+                            onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
+                            onClick={() => { setShowSettings(!showSettings); props.ToggleDrawer('Settings', !showSettings); }}
+                        >
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                             </button>
                             <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'} Theme={'dark'}>
                                 <p>Settings</p>
                             </ToolTip>
                         </li>
-                        {props.Lookup != undefined ?
-                            <li className="nav-item" style={{ width: '163px', marginTop: "10px" }}>
+
+                    {/*navigation*/}
+                    {lookupInfo ?
+                        <li className="nav-item" style={{ width: '210px', marginTop: "10px", minWidth: '155px' }}>
                                 <div className="input-group mb-3">
                                     <div className="input-group-prepend">
                                     <ToolTip Show={hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'} Theme={'dark'}>
                                         <p>Navigate to Previous Event in the {navigation}</p>
-                                        {navigation === "system" && (<p style ={{textAlign: "center"}}>({(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')})</p>)}
-                                        {navigation === "station" && (<p style ={{textAlign: "center"}}>({(props.Lookup.Station.m_Item1 != null ? props.Lookup.Station.m_Item1.StartTime : '')})</p>)}
-                                        {navigation === "meter" && (<p style ={{textAlign: "center"}}>({(props.Lookup.Meter.m_Item1 != null ? props.Lookup.Meter.m_Item1.StartTime : '')})</p>)}
-                                        {navigation === "asset" && (<p style ={{textAlign: "center"}}>({(props.Lookup.System.m_Item1 != null ? props.Lookup.System.m_Item1.StartTime : '')})</p>)}
+                                        {navigation === "system" && (<p style={{ textAlign: "center" }}>({(lookupInfo.System.m_Item1 != null ? lookupInfo.System.m_Item1.StartTime : '')})</p>)}
+                                        {navigation === "station" && (<p style={{ textAlign: "center" }}>({(lookupInfo.Station.m_Item1 != null ? lookupInfo.Station.m_Item1.StartTime : '')})</p>)}
+                                        {navigation === "meter" && (<p style={{ textAlign: "center" }}>({(lookupInfo.Meter.m_Item1 != null ? lookupInfo.Meter.m_Item1.StartTime : '')})</p>)}
+                                        {navigation === "asset" && (<p style={{ textAlign: "center" }}>({(lookupInfo.System.m_Item1 != null ? lookupInfo.System.m_Item1.StartTime : '')})</p>)}
                                     </ToolTip>
-                                        {(navigation == "system" ? <a href={(props.Lookup.System.m_Item1 != null ? "?eventID=" + props.Lookup.System.m_Item1.ID + "&Navigation=system" : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (props.Lookup.System.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                                        {(navigation == "station" ? <a href={(props.Lookup.Station.m_Item1 != null ? "?eventID=" + props.Lookup.Station.m_Item1.ID + "&Navigation=station" : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (props.Lookup.Station.m_Item1 == null ? ' disabled' : '')}   onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                                        {(navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item1 != null ? "?eventID=" + props.Lookup.Meter.m_Item1.ID + "&Navigation=meter" : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (props.Lookup.Meter.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                                        {(navigation == "asset" ? <a href={(props.Lookup.Asset.m_Item1 != null ? "?eventID=" + props.Lookup.Asset.m_Item1.ID + "&Navigation=asset" : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (props.Lookup.Asset.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+                                    {(navigation == "system" ? <a href={(lookupInfo.System.m_Item1 != null ? "?eventID=" + lookupInfo.System.m_Item1.ID : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (lookupInfo.System.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+                                    {(navigation == "station" ? <a href={(lookupInfo.Station.m_Item1 != null ? "?eventID=" + lookupInfo.Station.m_Item1.ID : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (lookupInfo.Station.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+                                    {(navigation == "meter" ? <a href={(lookupInfo.Meter.m_Item1 != null ? "?eventID=" + lookupInfo.Meter.m_Item1.ID : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (lookupInfo.Meter.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+                                    {(navigation == "asset" ? <a href={(lookupInfo.Asset.m_Item1 != null ? "?eventID=" + lookupInfo.Asset.m_Item1.ID : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (lookupInfo.Asset.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
                                     </div>
                                     <select id="next-back-selection" value={navigation} onChange={(e) => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
                                         <option value="system">System</option>
@@ -415,21 +465,22 @@ const OpenSeeNavBar = (props: IProps) => {
                                     <div className="input-group-append">
                                     <ToolTip Show={hover == 'NavRight'} Position={'bottom'} Target={'next-btn'} Theme={'dark'}>
                                         <p>Navigate to Next Event in the {navigation}</p>
-                                        {navigation === "system" && (<p style ={{textAlign: "center"}}>({props.Lookup.System.m_Item2 != null ? props.Lookup.System.m_Item2.StartTime : ''})</p>)}
-                                        {navigation === "station" && (<p style ={{textAlign: "center"}}>({(props.Lookup.Station.m_Item2 != null ? props.Lookup.Station.m_Item2.StartTime : '')})</p>)}
-                                        {navigation === "meter" && (<p style ={{textAlign: "center"}}>({(props.Lookup.Meter.m_Item2 != null ? props.Lookup.Meter.m_Item2.StartTime : '')})</p>)}
-                                        {navigation === "asset" && (<p style ={{textAlign: "center"}}>({(props.Lookup.Asset.m_Item2 != null ? props.Lookup.Asset.m_Item2.StartTime : '')})</p>)}
+                                        {navigation === "system" && (<p style={{ textAlign: "center" }}>({lookupInfo.System.m_Item2 != null ? lookupInfo.System.m_Item2.StartTime : ''})</p>)}
+                                        {navigation === "station" && (<p style={{ textAlign: "center" }}>({(lookupInfo.Station.m_Item2 != null ? lookupInfo.Station.m_Item2.StartTime : '')})</p>)}
+                                        {navigation === "meter" && (<p style={{ textAlign: "center" }}>({(lookupInfo.Meter.m_Item2 != null ? lookupInfo.Meter.m_Item2.StartTime : '')})</p>)}
+                                        {navigation === "asset" && (<p style={{ textAlign: "center" }}>({(lookupInfo.Asset.m_Item2 != null ? lookupInfo.Asset.m_Item2.StartTime : '')})</p>)}
                                     </ToolTip>
-                                        {(navigation == "system" ? <a href={(props.Lookup.System.m_Item2 != null ? "?eventID=" + props.Lookup.System.m_Item2.ID + "&Navigation=system" : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (props.Lookup.System.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                                        {(navigation == "station" ? <a href={(props.Lookup.Station.m_Item2 != null ? "?eventID=" + props.Lookup.Station.m_Item2.ID + "&Navigation=station" : '#')} id="station-next" key="station-next" className={'btn btn-primary' + (props.Lookup.Station.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                                        {(navigation == "meter" ? <a href={(props.Lookup.Meter.m_Item2 != null ? "?eventID=" + props.Lookup.Meter.m_Item2.ID + "&Navigation=meter" : '#')} id="meter-next" key="meter-next" className={'btn btn-primary' + (props.Lookup.Meter.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                                        {(navigation == "asset" ? <a href={(props.Lookup.Asset.m_Item2 != null ? "?eventID=" + props.Lookup.Asset.m_Item2.ID + "&Navigation=asset" : '#')} id="line-next" key="line-next" className={'btn btn-primary' + (props.Lookup.Asset.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
+                                    {(navigation == "system" ? <a href={(lookupInfo.System.m_Item2 != null ? "?eventID=" + lookupInfo.System.m_Item2.ID : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (lookupInfo.System.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
+                                    {(navigation == "station" ? <a href={(lookupInfo.Station.m_Item2 != null ? "?eventID=" + lookupInfo.Station.m_Item2.ID : '#')} id="station-next" key="station-next" className={'btn btn-primary' + (lookupInfo.Station.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
+                                    {(navigation == "meter" ? <a href={(lookupInfo.Meter.m_Item2 != null ? "?eventID=" + lookupInfo.Meter.m_Item2.ID : '#')} id="meter-next" key="meter-next" className={'btn btn-primary' + (lookupInfo.Meter.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
+                                    {(navigation == "asset" ? <a href={(lookupInfo.Asset.m_Item2 != null ? "?eventID=" + lookupInfo.Asset.m_Item2.ID : '#')} id="line-next" key="line-next" className={'btn btn-primary' + (lookupInfo.Asset.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
                                     </div>
                                 </div>
                             </li> : null}
 
                         <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                            <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }} disabled={mouseMode != 'zoom' && mouseMode != 'pan'} onMouseEnter={() => setHover('Help')}
+                        <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }}
+                            onMouseEnter={() => setHover('Help')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
                                 data-toggle="tooltip" data-placement="bottom" onClick={() => setShowAbout(true)}>
                                 <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
@@ -439,6 +490,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
                         </li>
                     </ul>
+            </div>
                     <React.Suspense fallback={<div>Loading...</div>}>
                 {eventID ? <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventID} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} /> : null}
                 <About isOpen={showAbout} closeCallback={() => setShowAbout(false)} />
@@ -446,6 +498,7 @@ const OpenSeeNavBar = (props: IProps) => {
                     </>
             );
 
+}
 
 const PlotTable = () => {
     const showPlots = useAppSelector(selectDisplayed); 
