@@ -24,24 +24,13 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { clone } from 'lodash';
-import store from '../store/store';
-import {
-    selectMouseMode,
-    SetMouseMode,
-    ResetZoom,
-    SetZoomMode,
-    selectZoomMode,
-    selectEventID,
-    selectAnalytic,
-    selectFFTLimits,
-    selectLoadVoltages, AddPlot, RemovePlot
-} from '../store/dataSlice';
-import {
-    SelectNavigation, SelectTab, SetNavigation, SetdisplayVolt, SetdisplayCur, SetdisplayAnalogs, SetdisplayDigitals, SetdisplayTCE
-} from '../store/settingSlice';
-import { selectDisplayed } from '../store/dataSlice';
-import { selectCycles, selectHarmonic, selectHPF, selectLPF, selectTRC } from '../store/analyticSlice';
+import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, SelectEventIDs, selectFFTLimits, selectDisplayed, AddPlot, RemovePlot, SelectFFTEnabled } from '../store/dataSlice';
+import { SelectEventInfo, SelectLookupInfo } from '../store/eventInfoSlice'
+import { SelectCycles, SelectHarmonic, SelectHPF, SelectLPF, SelectTRC } from '../store/analyticSlice';
+import { SelectNavigation, SetNavigation } from '../store/settingSlice'
+
 import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, Pan, FFT, Reset, Square, ValueRect, TimeRect, Settings, Help, ShowPoints, CorrelatedSags } from '../Graphs/ChartIcons';
+import { Point } from '@gpa-gemstone/gpa-symbols'
 import { ToolTip } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
@@ -58,37 +47,35 @@ import FFTTable from '../jQueryUI Widgets/FFTTable';
 import HarmonicStatsWidget from '../jQueryUI Widgets/HarmonicStats'; 
 import About from './About'; 
 
+
 declare var homePath: string;
 declare var eventStartTime: string;
 declare var eventEndTime: string;
 
 interface IProps {
-    EventData: OpenSee.iPostedData,
-    Lookup: OpenSee.iNextBackLookup,
-    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void
+    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
+    DisableSelect: boolean
 }
 
 const OpenSeeNavBar = (props: IProps) => {
-
     const dispatch = useAppDispatch()
     const mouseMode = useAppSelector(selectMouseMode);
-    const eventId = useAppSelector(selectEventID);
-    const analytic = useAppSelector(selectAnalytic);
+    const eventInfo = useAppSelector(SelectEventInfo);
+    const lookupInfo = useAppSelector(SelectLookupInfo);
+    const showFFT = useAppSelector(SelectFFTEnabled);
+
+    const analytic = null;
+
     const navigation = useAppSelector(SelectNavigation);
-
     const showPlots = useAppSelector(selectDisplayed);
-    const tab = useAppSelector(SelectTab);
-
-    const harmonic = useAppSelector(selectHarmonic);
-    const trc = useAppSelector(selectTRC);
-    const lpf = useAppSelector(selectLPF);
-    const hpf = useAppSelector(selectHPF);
-    const cycles = useAppSelector(selectCycles);
+    const harmonic = useAppSelector(SelectHarmonic);
+    const trc = useAppSelector(SelectTRC);
+    const lpf = useAppSelector(SelectLPF);
+    const hpf = useAppSelector(SelectHPF);
+    const cycles = useAppSelector(SelectCycles);
     const fftTime = useAppSelector(selectFFTLimits);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
-    const [showToolTip, setShowToolTip] = React.useState<boolean>(false);
-    const [showToolTipDelta, setShowToolTipDelta] = React.useState<boolean>(false);
     const [showPolar, setShowPolar] = React.useState<boolean>(false);
     const [showScalarStats, setShowScalarStats] = React.useState<boolean>(false);
     const [showHarmonicStats, setShowHarmonicStats] = React.useState<boolean>(false);
@@ -98,39 +85,9 @@ const OpenSeeNavBar = (props: IProps) => {
     const [showSettings, setShowSettings] = React.useState<boolean>(false);
     const [showAbout, setShowAbout] = React.useState<boolean>(false); 
 
-    const [positionPoints, setPositionPoints] = React.useState<[number, number]>([0,0]);
-    const [positionToolTip, setPositionToolTip] = React.useState<[number, number]>([0,0]);
-    const [positionToolTipDelta, setPositionToolTipDelta] = React.useState<[number, number]>([0, 0]);
-    const [positionPolar, setPositionPolar] = React.useState<[number, number]>([0, 0]);
-    const [positionScalarStats, setPositionScalarStats] = React.useState<[number, number]>([0, 0]);
     const [positionHarmonicStats, setPositionHarmonicStats] = React.useState<[number, number]>([0, 0]);
-    const [positionCorrelatedSags, setPositionCorrelatedSags] = React.useState<[number, number]>([0, 0]);
-    const [positionLightning, setPositionLightning] = React.useState<[number, number]>([0, 0]);
-    const [positionFFTTable, setPositionFFTTable] = React.useState<[number, number]>([0, 0]);
-
-    const [hover, setHover] = React.useState<('None'|'Waveform'|'Show Points'|'Polar Chart'|'Stat'|'Sags'|'Lightning'|'Export'|'Tooltip'|'Clock'|'Zoom Mode'|'Pan'|'FFT'|'Reset Zoom'| 'Settings'| 'NavLeft' | 'NavRight'| 'Help'| 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception')>('None')
+    const [hover, setHover] = React.useState<('None' | 'Waveform' | 'Show Points' | 'Polar Chart' | 'Stat' | 'Sags' | 'Lightning' | 'Export' | 'Tooltip' | 'Clock' | 'Zoom Mode' | 'Pan' | 'FFTTable' | 'FFTMove' | 'Reset Zoom' | 'Settings' | 'NavLeft' | 'NavRight' | 'Help' | 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception' | 'Select')>('None')
     
-    const {eventInfo} = useAppSelector(state => state.EventInfo)
-
-    function tooglePlots(key: OpenSee.graphType) {
-        let display;
-        if (key == 'Voltage')
-            display = showPlots.Voltage;
-        else if (key == 'Current')
-            display = showPlots.Current;
-        else if (key == 'Analogs')
-            display = showPlots.Analogs;
-        else if (key == 'Digitals')
-            display = showPlots.Digitals;
-        else if (key == 'TripCoil')
-            display = showPlots.TripCoil;
-
-        if (display)
-            store.dispatch(RemovePlot({ DataType: key, EventId: eventID }))
-        else
-            store.dispatch(AddPlot({ DataType: key, EventId: eventID }))
-    }
-
 
     React.useEffect(() => {
         if (showPoints) {
@@ -143,24 +100,6 @@ const OpenSeeNavBar = (props: IProps) => {
         return () => { }
 
     }, [showPoints])
-
-
-    React.useEffect(() => {
-        if (showToolTipDelta) {
-            let oldMode = clone(mouseMode);
-            dispatch(SetMouseMode('select'))
-            return () => {
-                dispatch(SetMouseMode(oldMode))
-            }
-        }
-        return () => { }
-
-    }, [showToolTipDelta])
-
-    React.useEffect(() => {
-        if (mouseMode == 'fftMove' && analytic != 'FFT')
-            dispatch(SetMouseMode('zoom'));
-    },[analytic])
 
     function exportData(type) {
         window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
@@ -456,7 +395,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                     {(navigation == "meter" ? <a href={(lookupInfo.Meter.m_Item1 != null ? "?eventID=" + lookupInfo.Meter.m_Item1.ID : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (lookupInfo.Meter.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
                                     {(navigation == "asset" ? <a href={(lookupInfo.Asset.m_Item1 != null ? "?eventID=" + lookupInfo.Asset.m_Item1.ID : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (lookupInfo.Asset.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
                                     </div>
-                                    <select id="next-back-selection" value={navigation} onChange={(e) => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
+                                <select id="next-back-selection" value={navigation} onChange={e => SetNavigation(e.target.value as OpenSee.EventNavigation)}>
                                         <option value="system">System</option>
                                         <option value="station">Station</option>
                                         <option value="meter">Meter</option>
