@@ -514,6 +514,95 @@ const OpenSeeNavBar = (props: IProps) => {
                     </>
             );
 
+
+const PlotTable = () => {
+    const showPlots = useAppSelector(selectDisplayed); 
+    const eventIDs = useAppSelector(SelectEventIDs);
+    const dispatch = useAppDispatch()
+
+    function tooglePlots(type: OpenSee.graphType) {
+        let display;
+        if (type === 'Voltage')
+            display = showPlots.Voltage;
+        else if (type === 'Current')
+            display = showPlots.Current;
+        else if (type === 'Analogs')
+            display = showPlots.Analogs;
+        else if (type === 'Digitals')
+            display = showPlots.Digitals;
+        else if (type === 'TripCoil')
+            display = showPlots.TripCoil;
+
+        if (display)
+            eventIDs.forEach(id => dispatch(RemovePlot({ DataType: type, EventId: id })))
+        else
+            eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: type, EventId: id } })))
+    }
+    return (
+        <>
+            <table className="table" style={{ margin: 0 }}>
+                <tbody>
+                    <tr>
+                        <td>
+                            <input className="form-check-input"
+                                style={{ margin: 0 }}
+                                type="checkbox" onChange={() => tooglePlots('Voltage')}
+                                checked={showPlots.Voltage} />
+                        </td>
+                        <td>
+                            <label className="form-check-label">Voltage</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input className="form-check-input"
+                                style={{ margin: 0 }}
+                                type="checkbox"
+                                onChange={() => tooglePlots('Current')}
+                                checked={showPlots.Current} />
+                        </td>
+                        <td>
+                            <label className="form-check-label">Current</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input className="form-check-input"
+                                style={{ margin: 0 }}
+                                type="checkbox"
+                                onChange={() => tooglePlots('Analogs')}
+                                checked={showPlots.Analogs} />
+                        </td>
+                        <td><label className="form-check-label">Analogs</label></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input className="form-check-input"
+                                style={{ margin: 0 }}
+                                type="checkbox"
+                                onChange={() => tooglePlots('Digitals')}
+                                checked={showPlots.Digitals} />
+                        </td>
+                        <td>
+                            <label className="form-check-label">Digitals</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input className="form-check-input"
+                                style={{ margin: 0 }}
+                                type="checkbox"
+                                onChange={() => tooglePlots('TripCoil')}
+                                checked={showPlots.TripCoil} />
+                        </td>
+                        <td>
+                            <label className="form-check-label">Trip Coil E.</label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+    </>
+    )
 }
 
 export default OpenSeeNavBar;
