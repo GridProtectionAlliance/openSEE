@@ -248,67 +248,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                     zIndex: 401,
                                     minWidth: '100%'
                                 }}>
-                            <table className="table" style={{ margin: 0 }}>
-                                <tbody>
-                                        <tr>
-                                            <td>
-                                                <input className="form-check-input"
-                                                style={{ margin: 0 }}
-                                                type="checkbox" onChange={() => tooglePlots('Voltage')}
-                                                checked={showPlots.Voltage} />
-                                            </td>
-                                            <td>
-                                                <label className="form-check-label">Voltage</label>
-                                            </td> 
-                                    </tr>
-                                        <tr>
-                                            <td>
-                                                <input className="form-check-input"
-                                                    style={{ margin: 0 }}
-                                                    type="checkbox"
-                                                    onChange={() => tooglePlots('Current')}
-                                                    checked={showPlots.Current} />
-                                            </td>
-                                            <td>
-                                                <label className="form-check-label">Current</label>
-                                            </td>
-                                    </tr>
-                                        <tr>
-                                            <td>
-                                                <input className="form-check-input"
-                                                    style={{ margin: 0 }}
-                                                    type="checkbox"
-                                                    onChange={() => tooglePlots('Analogs')}
-                                                    checked={showPlots.Analogs} />
-                                            </td>
-                                        <td><label className="form-check-label">Analogs</label></td>
-                                    </tr>
-                                        <tr>
-                                            <td>
-                                                <input className="form-check-input"
-                                                    style={{ margin: 0 }}
-                                                    type="checkbox"
-                                                    onChange={() => tooglePlots('Digitals')}
-                                                    checked={showPlots.Digitals} />
-                                            </td>
-                                            <td>
-                                                <label className="form-check-label">Digitals</label>
-                                            </td>
-                                    </tr>
-                                        <tr>
-                                            <td>
-                                                <input className="form-check-input"
-                                                    style={{ margin: 0 }}
-                                                    name="digitals"
-                                                    onChange={() => tooglePlots('TripCoil')}
-                                                    checked={showPlots.TripCoil} />
-                                            </td>
-                                            <td>
-                                                <label className="form-check-label">Trip Coil E.</label>
-                                            </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <PlotTable/>
                             </div>
                             <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}> 
                                 <p>Waveform Views</p>
@@ -500,16 +440,8 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
                     </ul>
                     <React.Suspense fallback={<div>Loading...</div>}>
-                        <PointWidget closeCallback={() => setShowPoints(false)} isOpen={showPoints} position={positionPoints} setPosition={(t, l) => setPositionPoints([t, l])} />
-                        <ToolTipWidget closeCallback={() => setShowToolTip(false)} isOpen={showToolTip} position={positionToolTip} setPosition={(t, l) => setPositionToolTip([t, l])} />
-                        <ToolTipDeltaWidget closeCallback={() => setShowToolTipDelta(false)} isOpen={showToolTipDelta} position={positionToolTipDelta} setPosition={(t, l) => setPositionToolTipDelta([t, l])} />
-                        <PolarChartWidget closeCallback={() => setShowPolar(false)} isOpen={showPolar} position={positionPolar} setPosition={(t, l) => setPositionPolar([t, l])} />
-                        <ScalarStatsWidget isOpen={showScalarStats} eventId={eventId} closeCallback={() => setShowScalarStats(false)} exportCallback={() => exportData('stats')} position={positionScalarStats} setPosition={(t, l) => setPositionScalarStats([t, l])} />
-                        <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventId} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} />
-                        <TimeCorrelatedSagsWidget eventId={eventId} closeCallback={() => setShowCorrelatedSags(false)} exportCallback={() => exportData('correlatedsags')} isOpen={showCorrelatedSags} position={positionCorrelatedSags} setPosition={(t, l) => setPositionCorrelatedSags([t, l])} />
-                        <LightningDataWidget isOpen={showLightning} eventId={eventId} closeCallback={() => setShowLightning(false)} position={positionLightning} setPosition={(t, l) => setPositionLightning([t, l])} />
-                        <FFTTable isOpen={showFFTTable} closeCallback={() => setShowFFTTable(false)} position={positionFFTTable} setPosition={(t, l) => setPositionFFTTable([t, l])} />
-                        <About isOpen={showAbout} closeCallback={() => setShowAbout(false)}/>
+                {eventID ? <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventID} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} /> : null}
+                <About isOpen={showAbout} closeCallback={() => setShowAbout(false)} />
                     </React.Suspense>
                     </>
             );
