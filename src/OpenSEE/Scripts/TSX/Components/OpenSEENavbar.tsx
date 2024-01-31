@@ -35,15 +35,6 @@ import { ToolTip } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
 
-import ToolTipDeltaWidget from '../jQueryUI Widgets/TooltipWithDelta';
-import ToolTipWidget from '../jQueryUI Widgets/Tooltip'; 
-import TimeCorrelatedSagsWidget from '../jQueryUI Widgets/TimeCorrelatedSags';
-import PointWidget from '../jQueryUI Widgets/AccumulatedPoints';
-import PolarChartWidget from '../jQueryUI Widgets/PolarChart';
-import ScalarStatsWidget from '../jQueryUI Widgets/ScalarStats'; 
-import LightningDataWidget from '../jQueryUI Widgets/LightningData'; 
-import SettingsWidget from '../jQueryUI Widgets/SettingWindow'; 
-import FFTTable from '../jQueryUI Widgets/FFTTable'; 
 import HarmonicStatsWidget from '../jQueryUI Widgets/HarmonicStats'; 
 import About from './About'; 
 
@@ -119,7 +110,6 @@ const OpenSeeNavBar = (props: IProps) => {
             `&EventType=${props.EventData.EventName}`
         );
     }
-
 
             return (
                 <>
@@ -249,7 +239,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </li>
 
                         <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                        <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                        <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             disabled={!showFFT}
                             onMouseEnter={() => setHover('FFTTable')}
                             onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
@@ -329,7 +319,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </ToolTip>
 
                             { /*Select*/}
-                            <button type="button" className={"btn btn-primary" + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                            <button type="button" className={"btn btn-" + (mouseMode === "select" ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
                                 disabled={props.DisableSelect}
                                 onMouseEnter={() => setHover('Select')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
@@ -341,7 +331,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             </ToolTip>
 
                             {/*FFT Move*/}
-                            <button type="button" className={"btn btn-primary" + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
+                            <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
                                 onClick={() => dispatch(SetMouseMode("fftMove"))}
                                 disabled={!showFFT}
                                 onMouseEnter={() => setHover('FFTMove')}
