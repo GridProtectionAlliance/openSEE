@@ -228,6 +228,34 @@ export namespace OpenSee {
         faultDistDoubleEnd: string,
     }
 
+    interface IGraphCollection<T> {
+        Voltage: T,
+        Current: T,
+        Analogs: T,
+        Digitals: T,
+        TripCoil: T,
+        FirstDerivative: T,
+        ClippedWaveforms: T,
+        Frequency: T,
+        HighPassFilter: T,
+        LowPassFilter: T,
+        MissingVoltage: T,
+        OverlappingWave: T,
+        Power: T,
+        Impedance: T,
+        Rectifier: T,
+        RapidVoltage: T,
+        RemoveCurrent: T,
+        Harmonic: T,
+        SymetricComp: T,
+        THD: T,
+        Unbalance: T,
+        FaultDistance: T,
+        Restrike: T,
+        FFT: T,
+        NewAnalytic: T,
+    }
+
     interface ISettingsState {
         Colors: IColorCollection,
         TimeUnit: IUnitSetting,
