@@ -844,11 +844,25 @@ export const selectLoading = (key: OpenSee.IGraphProps) => {
     };
 };
 
-export const selectZoomed = (key: OpenSee.IGraphProps) => {
+
+export const SelectAutoUnits = (key: OpenSee.IGraphProps) => {
+    return (state: OpenSee.IRootState) => {
+        let result = {};
+        const plot = state.Data.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(unit => {
+                result[unit] = plot.yLimits[unit].isAuto
+            })
+            return result;
+        }
+
+    };
+};
+
+export const SelectAxisSettings = (key: OpenSee.IGraphProps) => {
     return (state: OpenSee.IRootState) => {
         const plot = state.Data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
-        if (plot)
-            return plot.isZoomed;
+        return plot.yLimits;
     };
 };
 
