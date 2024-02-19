@@ -43,7 +43,7 @@ const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: O
 */
 
 // Thunk To Add New Plot
-export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean }, thunkAPI) => {
+export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number] }, thunkAPI) => {
     let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
     const state = (thunkAPI.getState() as OpenSee.IRootState)
     const singlePlot = state.Settings.SinglePlot
