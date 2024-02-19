@@ -30,7 +30,7 @@ import { AddPlot, SetTimeLimit, SetFFTLimits, SetCycleLimit} from './dataSlice';
 import { SelectEnabledPlots, SetSinglePlot } from './settingSlice';
 import { SetEventID, SelectEventID } from './eventInfoSlice'
 import { SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
-import { SelectEventList, SetOverlappingEventList } from '../store/overlappingEventsSlice'
+import { SelectedOverlappingEventIds, SetOverlappingEventList } from '../store/overlappingEventsSlice'
 
 import * as _ from 'lodash'
 
@@ -51,16 +51,16 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
     const enabledPlots = SelectEnabledPlots(oldState);
     const oldEventID = SelectEventID(oldState);
     const oldAnalytics = SelectAnalytics(oldState);
-    const oldOverlappingList = SelectEventList(oldState);
+    const oldOverlappingList = SelectedOverlappingEventIds(oldState);
 
-    const analyticQuery: OpenSee.IAnalyticStore = {
+    const analyticQuery = {
         Harmonic: ToInt(query.Harmonic),
         Trc: ToInt(query.Trc), 
         LPFOrder: ToInt(query.LPFOrder),
         HPFOrder: ToInt(query.HPFOrder),
         FFTCycles: ToInt(query.FFTCycles),
         FFTStartTime: ToFloat(query.FFTStartTime)
-    }
+    } as OpenSee.IAnalyticStore
 
     const isAnalyticsEqual = _.isEqual(oldAnalytics, analyticQuery)
     const isOverlappingListEqual = _.isEqual(oldOverlappingList, parsedQuery.overlappingInfo)
@@ -78,8 +78,8 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
         dispatch(SetEventID(ToInt(query.eventID)))
 
     //Set TimeLimit
-    if (ToInt(query.startTime) != undefined && ToInt(query.endTime) != undefined && (oldState.Data.startTime != ToInt(query.startTime) || (oldState.Data.endTime != ToInt(query.endTime))))
-        dispatch(SetTimeLimit({ start: ToInt(query.startTime), end: ToInt(query.endTime) }))
+    if (ToFloat(query.startTime) != undefined && ToFloat(query.endTime) != undefined && (oldState.Data.startTime != ToFloat(query.startTime) || (oldState.Data.endTime != ToFloat(query.endTime))))
+        dispatch(SetTimeLimit({ start: ToFloat(query.startTime), end: ToFloat(query.endTime) }))
 
     //Set Overlapping EventList
     if (!isOverlappingListEqual && query?.overlappingInfo)
@@ -88,14 +88,14 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
     //Analytic Query
     if (!isAnalyticsEqual) 
         dispatch(UpdateAnalytic({settings: queryStringToNums(analyticQuery)}))
-    
+
     // On initial load, add default plots (Voltage and Current) if there is none provided via query
     if (noPlots && arg.initial) {
         dispatch(AddPlot({ key: { EventId: oldState.EventInfo.EventID, DataType: "Voltage" } }));
         dispatch(AddPlot({ key: { EventId: oldState.EventInfo.EventID, DataType: "Current" } }));
     }
 
-    //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort
+    //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort, however this would more than likely require us compressing the queryString / reducing number of plots in queryString
     else if (query?.plots?.length > 0) {
         query.plots.forEach(plot => {
             const plotChange = query.plots.length !== enabledPlots.length
