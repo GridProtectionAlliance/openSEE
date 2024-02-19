@@ -723,10 +723,6 @@ export const SelectData = (key: OpenSee.IGraphProps) => createSelector(
     }
     );
 
-const FilterData = (data: OpenSee.iD3DataSeries[][], plotKeys: OpenSee.IGraphProps[], single: boolean, tab: OpenSee.Tab, type: OpenSee.IGraphProps) => {
-    let index = plotKeys.findIndex((item => item.DataType == type.DataType && item.EventId == type.EventId));
-    if (index == -1)
-        return null;
 
     if (single && tab == 'Compare') {
         let d = data.filter((item, i) => plotKeys[i].DataType == type.DataType && type.EventId != plotKeys[i].EventId);
@@ -1242,21 +1238,23 @@ export const SelectFFTData = createSelector(
     })
 
 
-//Export Loading States:
-export const selectLoadVoltages = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Voltage' && item != 'Idle').length > 0)
-})
+export function getIndex(t: number, data: Array<[number, number]>): number {
+    if (data) {
+        if (data.length < 2)
+            return NaN;
+        let dP = data[1][0] - data[0][0];
 
-export const selectLoadCurrents = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Current' && item != 'Idle').length > 0)
-})
+        if (t < data[0][0])
+            return 0;
 
-export const selectLoadAnalogs = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Analogs' && item != 'Idle').length > 0)
-})
+        if (t > data[data.length - 1][0])
+            return (data.length - 1);
+        let deltaT = t - data[0][0];
 
-export const selectLoadDigitals = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'Digitals' && item != 'Idle').length > 0)
+        return Math.floor(deltaT / dP);
+    }
+}
+
 function applyLocalSettings(plot: OpenSee.IGraphstate) {
 
     try {
