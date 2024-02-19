@@ -435,15 +435,23 @@ export const AxisUnitSelector = (props: { label: string, setter: (index: number)
     );
         }
 
-export const TimeUnitSelector = (props: { label: string, setter: (index: number) => void, timeUnit: OpenSee.IUnitSetting }) => {
+export const TimeUnitSelector = (props: { label: string, setter: (index: number) => void, timeUnitIndex: number, overlappingWave?: boolean }) => {
     let entries;
     let buttonLabel;
 
+    if (props.overlappingWave) {
+        entries = defaultSettings.OverlappingWaveTimeUnit.options.map((option, index) =>
+            <a key={"option-" + index} className="dropdown-item" style={{cursor: 'default'}} onClick={() => { props.setter(index) }}> {option.label} </a>
+        )
+        buttonLabel = props.label + " [" + defaultSettings.OverlappingWaveTimeUnit.options[props.timeUnitIndex].short + "]"
 
+    } else {
     entries = defaultSettings.TimeUnit.options.map((option, index) =>
             <a key={"option-" + index} className="dropdown-item" style={{ cursor: 'default' }} onClick={() => { props.setter(index) }}> {option.label} </a>
     )
-    buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnit.current].short + "]"
+        buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnitIndex].short + "]"
+
+    }
 
         return (
         <div className="btn-group dropright" >
