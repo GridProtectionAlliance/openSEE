@@ -163,12 +163,6 @@ export namespace OpenSee {
         EventID: number
     }
 
-    type LineType = ('-' | ':' )
-    // Settings For Plots 
-    type Color = keyof IColorCollection;
-
-    type Unit = ((keyof IUnitCollection<number>) | "Time" );
-
     interface IColorCollection {
         Va: string,
         Vb: string,
@@ -445,7 +439,8 @@ export namespace OpenSee {
         Name: string,
         Unit: iUnitOptions,
         Value: Array<[number, number]>,
-        BaseValue: number
+        BaseValue: number,
+        Color: Color
     }
 
 }
