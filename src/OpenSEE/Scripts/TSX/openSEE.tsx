@@ -86,7 +86,8 @@ const OpenSeeHome = () => {
         ScalarStats: () => { },
         CorrelatedSags: () => { },
         Lightning: () => { },
-        FFTTable: () => { }
+        FFTTable: () => { },
+        HarmonicStats: () => { },
     });
 
     const [openDrawers, setOpenDrawers] = React.useState<OpenSee.Drawers>({
@@ -102,6 +103,7 @@ const OpenSeeHome = () => {
         Analytics: false,
         ToolTip: false,
         ToolTipDelta: false,
+        HarmonicStats: false
     })
 
     const [resizeCount, setResizeCount] = React.useState<number>(0);
@@ -308,10 +310,10 @@ const OpenSeeHome = () => {
                                 <PhasorChartWidget />
                             </SplitDrawer>
 
-                            <SplitSection MinWidth={100} MaxWidth={100} Width={75}>
-                                <div ref={plotRef} style={{ overflowY: 'auto', maxHeight: currentHeight, width: '100%' }}>
-                                    {graphList[eventID] != undefined ?
-                                        graphList[eventID].sort(sortGraph).map(item => (
+                            <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
+                                OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
+                                <HarmonicStatsWidget exportCallback={() => exportData('harmonics')} />
+                            </SplitDrawer>
                                             item.DataType !== 'FFT' ?
                                                 <LineChart
                                                     key={item.DataType + item.EventId}
