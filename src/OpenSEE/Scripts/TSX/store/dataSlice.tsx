@@ -1346,6 +1346,8 @@ export function getPrimaryAxis(key: OpenSee.IGraphProps) {
         return "Impedance"
     else if (key.DataType === "Frequency")
         return "Freq"
+    else if (key.DataType === "FaultDistance")
+        return "Distance"
     else
         return "Voltage" as OpenSee.Unit
 
