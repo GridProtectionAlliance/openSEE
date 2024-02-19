@@ -165,8 +165,8 @@ const SettingsWidget = (props) => {
                             <div className="card-body" style={{ overflowY: 'auto', height: '100%' }}>
                                 <fieldset className="border p-2">
                                     <legend>Default Traces (on Loading):</legend>
-                                    <div className="form-row">
-                                        <div className="col-auto form-check form-check-inline">
+                                    <div className="form-row" style={{marginBottom: '10px'}}>
+                                        <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
                                                 Field={'W'}
@@ -174,7 +174,7 @@ const SettingsWidget = (props) => {
                                                 Label={"WaveForm"}
                                             />
                                         </div>
-                                        <div className="col-auto form-check form-check-inline">
+                                        <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
                                                 Field={'Pk'}
@@ -182,7 +182,7 @@ const SettingsWidget = (props) => {
                                                 Label={"Peak"}
                                             />
                                     </div>
-                                        <div className="col-auto form-check form-check-inline">
+                                        <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
                                                 Field={'RMS'}
@@ -190,7 +190,7 @@ const SettingsWidget = (props) => {
                                                 Label={"RMS"}
                                             />
                                 </div>
-                                        <div className="col-auto form-check form-check-inline">
+                                        <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
                                                 Field={'Ph'}
@@ -200,32 +200,38 @@ const SettingsWidget = (props) => {
                                                 </div>
                                             </div>
                                     <div className="form-row">
-                                        <div className="col-auto form-check form-check-inline">
-                                            <CheckBox
-                                                Record={defaultVtype}
-                                                Field={'LL'}
-                                                Setter={(item) => dispatch(SetDefaultVType({ ...defaultVtype, LL: item.LL }))}
-                                                Label={"Line to Line"}
-                                            />
+                                        <div className="col-auto form-check form-check-inline mr-0">
+                                            <div className="form-check">
+                                            <input type="radio" checked={defaultVtype === 'L-L'} onChange={() => {
+                                                if (defaultVtype == 'L-N')
+                                                    dispatch(SetDefaultVType('L-L'))
+                                            }} />
+                                                <label className="form-check-label" >Line to Line</label>
                                                 </div>
-                                        <div className="col-auto form-check form-check-inline">
-                                            <CheckBox
-                                                Record={defaultVtype}
-                                                Field={'LN'}
-                                                Setter={(item) => dispatch(SetDefaultVType({ ...defaultVtype, LN: item.LN }))}
-                                                Label={"Line to Neutral"}
-                                            />
                                             </div>
+                                        <div className="col-auto form-check form-check-inline mr-0">
+                                            <div className="form-check">
+
+                                            <input type="radio" checked={defaultVtype === 'L-N'} onChange={() => {
+                                                if (defaultVtype == 'L-L')
+                                                    dispatch(SetDefaultVType('L-N'))
+                                            }} />
+                                                <label className="form-check-label" >Line to Neutral</label>
                                                 </div>
+                                        </div>
+                                    </div>
                                 </fieldset>
                                 <fieldset className="border p-2">
                                     <legend>Time:</legend>
                                     <div className="form-row">
-                                        <div className="col-4" style={{ paddingTop: '1.875rem' }}>
-                                            {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnit={timeUnit} setter={index => handleTimeUnitChange(index)} /> : null}
+                                        <div className="col-12">
+                                            {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnitIndex={timeUnit.current} setter={index => handleTimeUnitChange(index)} /> : null}
+                                        </div>
+                                    </div>
                                             </div>
-                                                
-                                        <div className="col-4">
+                                        </div> :
+                                        <div className="form-row" style={{ marginTop: '10px' }}>
+                                            <div className="col-6">
                                             <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'start'}
                                                 Setter={(e) => {
                                                     handleDateChange(e.start, true)
@@ -237,7 +243,8 @@ const SettingsWidget = (props) => {
                                                 Feedback={"Start Time can not be greater than End Time"}
                                             />
                                             </div>
-                                        <div className="col-4">
+
+                                            <div className="col-6">
                                             <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'end'}
                                                 Setter={(e) => {
                                                     handleDateChange(e.end, false)
@@ -300,7 +307,7 @@ export const AxisUnitSelector = (props: { label: string, setter: (index: number)
     let buttonLabel;
 
     entries = defaultSettings.Units[props.unitType].options.map((option, index) =>
-        <a key={"option-" + index} className="dropdown-item" onClick={() => { props.setter(index) }}> {option.label} </a>
+        <a key={"option-" + index} className="dropdown-item" style={{cursor: 'default'}} onClick={() => { props.setter(index) }}> {option.label} </a>
     )
     if (props.axisSetting.isAuto)
         buttonLabel = props.label + " [auto]"
@@ -327,7 +334,7 @@ export const TimeUnitSelector = (props: { label: string, setter: (index: number)
 
 
     entries = defaultSettings.TimeUnit.options.map((option, index) =>
-        <a key={"option-" + index} className="dropdown-item" onClick={() => { props.setter(index) }}> {option.label} </a>
+            <a key={"option-" + index} className="dropdown-item" style={{ cursor: 'default' }} onClick={() => { props.setter(index) }}> {option.label} </a>
     )
     buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnit.current].short + "]"
 
@@ -504,9 +511,7 @@ const PlotCard = (props: ICardProps) => {
         <div id={"collaps-" + props.DataType} className="collapse" aria-labelledby={"header-" + props.DataType} data-parent="#panelSettings">
             <div className="card-body">
                 {unitSettings.map(item => (
-                <div className="row">
-                    <div className="collumn" style={{ width: '100%' }}>
-                        <fieldset className="border" style={{ padding: '10px', height: '100%' }}>
+                            <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
                                 <div className="form-row" key={item}>
                                     <div className="col-6">
@@ -530,7 +535,7 @@ const PlotCard = (props: ICardProps) => {
                                                     Valid={() => valid}
                                                     Label={`${item} ` + `Min [${getLabel(item)}]`}
                                                     Type={'number'}
-                                                    Help={autoUnits[item] ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
+                                                    Help={autoUnits[item] ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
                                                     Feedback={"Minimum limit can not be greater than Maximum limit"}
                                                 />
                                             </div>
@@ -539,7 +544,7 @@ const PlotCard = (props: ICardProps) => {
                                                     Valid={() => valid}
                                                     Label={`${item} ` + `Max [${getLabel(item)}]`}
                                                     Type={'number'}
-                                                    Help={autoUnits[item] ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
+                                            Help={autoUnits[item] ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
                                                     Feedback={"Minimum limit can not be greater than Maximum limit"}
                                                 />
                                             </div>
@@ -565,7 +570,7 @@ const PlotCard = (props: ICardProps) => {
                                                 <>
                                                     <div className="form-row" style={{ marginLeft: '5px' }}>
                                                         <div className="col-6">
-                                                            <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : {min: 0, max: 1}} Field={'min'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits[item])}
+                                                            <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }} Field={'min'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits[item])}
                                                                 Valid={() => valid}
                                                                 Label={`${item} ` + `Min [${getLabel(item, key)}]`}
                                                                 Type={'number'}
@@ -593,12 +598,11 @@ const PlotCard = (props: ICardProps) => {
                 </div>
                 ))}
 
-                {colorSettings.length > 0 ? < div className="row">
-                    <div className="collumn" style={{ width: '100%' }}>
-                        <fieldset className="border" style={{ padding: '10px', height: '100%' }}>
+                {colorSettings.length > 0 ?
+                    <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
                             <div className="row">
-                                <div className="col">
+                            <div className="col-3">
                                     {colCol1.map((c: OpenSee.Color, i: number) =>
                                         <ColorButton
                                             key={i}
@@ -608,7 +612,7 @@ const PlotCard = (props: ICardProps) => {
                                             scrollOffset={props.scrollOffset}
                                             />)}
                                 </div>
-                                <div className="col">
+                            <div className="col-3">
                                     {colCol2.map((c: OpenSee.Color, i: number) =>
                                         <ColorButton
                                             key={i}
@@ -618,7 +622,7 @@ const PlotCard = (props: ICardProps) => {
                                             scrollOffset={props.scrollOffset}
                                         />)}
                                 </div>
-                                <div className="col">
+                            <div className="col-3">
                                     {colCol3.map((c: OpenSee.Color, i: number) =>
                                         <ColorButton
                                             key={i}
@@ -628,7 +632,7 @@ const PlotCard = (props: ICardProps) => {
                                             scrollOffset={props.scrollOffset}
                                         />)}
                                 </div>
-                                <div className="col">
+                            <div className="col-3">
                                     {colCol4.map((c: OpenSee.Color, i: number) =>
                                         <ColorButton
                                             key={i}
@@ -638,6 +642,9 @@ const PlotCard = (props: ICardProps) => {
                                             scrollOffset={props.scrollOffset}
                                         />)}
                                 </div>
+                        </div>
+                    </fieldset> : null}
+
 
                             </div>
                         </fieldset>
