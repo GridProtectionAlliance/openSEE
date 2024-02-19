@@ -203,16 +203,34 @@ const LineChart = (props: iProps) => {
     // For performance Combine a bunch of Hooks that call updateLimits() since that is what re-renders the Lines
     //Effect to adjust Axes when Units change
     React.useEffect(() => {
-        if (yScaleRef.current == undefined || xScaleRef.current == undefined)
+        if (yScaleRef.current === undefined || xScaleRef.current === undefined)
             return;
 
-        yScaleRef.current.domain(yLimits);
+        relevantUnits.forEach(unit => {
+            if (yScaleRef.current?.[unit] && yLimits?.[unit]) {
+                yScaleRef.current[unit].domain(yLimits[unit]);
+            }
+        });
+
+        const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception')
+        const isOverlappingWaveform = props.dataKey.DataType === 'OverlappingWave'
+
+        if (isSinceInception && startTimeSinceInception && endTimeSinceInception && !isOverlappingWaveform)
+            xScaleRef.current.domain([startTimeSinceInception, endTimeSinceInception])
+        else if (startTime && endTime) {
         xScaleRef.current.domain([startTime, endTime])
+        }
         
+        if (enabledUnits?.length > 2)
+            xScaleRef.current.range([120, props.width - 110])
+        else if (enabledUnits?.length > 3)
+            xScaleRef.current.range([120, props.width - 170])
+
+        if (yLimits)
         updateLimits();
 
 
-    }, [activeUnit, yLimits, startTime, endTime])
+    }, [activeUnit, yLimits, startTime, endTime, isZoomed, timeUnit, lineData, useRelevantTime])
 
     React.useEffect(() => {
 
