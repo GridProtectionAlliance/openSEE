@@ -353,8 +353,21 @@ const SettingsWidget = (props) => {
                                         </div>
                                     }
                                     </fieldset>
-
+                                <fieldset className="border p-2">
+                                    <legend>Plot Markers:</legend>
+                                    <div className="form-row">
+                                        <div className="col-auto form-check form-check-inline">
+                                            <CheckBox
+                                                Record={{ plotMarkers }}
+                                                Field={'plotMarkers'}
+                                                Setter={(item) => dispatch(SetPlotMarkers(item.plotMarkers))}
+                                                Label={"Display Inception and Duration."}
+                                                Help={"For events without this information record start and end time will be used."}
+                                            />
                                     </div>
+                                    </div>
+                                </fieldset>
+                            </div>
 
                                 </div>
                             </div>
