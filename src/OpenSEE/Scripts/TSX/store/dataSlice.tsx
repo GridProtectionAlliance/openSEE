@@ -388,60 +388,27 @@ export const DataReducer = createSlice({
             return state
 
         },
-        ReplaceData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
-            let plot = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
-            if (plot == null)
-                return state;
-            let updated = [];
-
-            action.payload.data.forEach(d => {
-                let dIndex = plot.data.findIndex((od,di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
-                if (dIndex == -1)
-                    return
-                updated.push(dIndex);
-                state.data[index][dIndex] = d;
-            });
-            return state;
-        },
-        UpdateTimeLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }> ) => {
-            if (Math.abs(action.payload.start - action.payload.end) < 10)
-                return state;
-
-            state.startTime = action.payload.start;
-            state.endTime = action.payload.end;
-
-            state.Plots 
-                .forEach((graph, index) => {
-                    updateAutoLimits(graph, state.startTime, state.endTime, action.payload.baseUnits);
-                });
-            return state;
-
-        },
-        UpdateFFTLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
+        UpdateFFTLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 1)
                 return state;
 
-            state.fftLimits = [action.payload.start, action.payload.end];
+            state.fftLimits[0] = action.payload.start
+            state.fftLimits[1] = action.payload.end
 
-            //Update All Y Units and limits
-            state.Plots
-                .forEach((graph, index) => {
-                    updateFFTAutoLimits(graph, state.fftLimits[0], state.fftLimits[1], action.payload.baseUnits);
-                });
+            const fftPlot = state.Plots.find(plot => plot.key.DataType === "FFT")
+            updateAutoLimits(fftPlot, state.fftLimits[0], state.fftLimits[1]);
             return state;
-
         },
-        updatecycleLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting> }>) => {
+        UpdateCycleLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
             if (Math.abs(action.payload.start - action.payload.end) < 5)
                 return state;
 
-            state.cycleLimit = [action.payload.start, action.payload.end];
+            state.cycleLimit[0] = action.payload.start
+            state.cycleLimit[1] = action.payload.end
 
-            //Update All Y Units and limits
-            state.Plots
-                .forEach((graph, index) => {
-                    updatedCycleAutoLimits(graph, state.cycleLimit[0], state.cycleLimit[1], action.payload.baseUnits);
-                });
+            const plot = state.Plots.find(plot => plot.key.DataType === "OverlappingWave")
+            updateAutoLimits(plot, state.cycleLimit[0], state.cycleLimit[1]);
+
             return state;
 
         },
@@ -460,7 +427,6 @@ export const DataReducer = createSlice({
 
             // Recompute limits and update units
             const relevantTraces = action.payload.trace.map(index => curPlot.data[index])
-
             const RelevantAxis = _.uniq(relevantTraces.map(s => s?.Unit));
 
             if (RelevantAxis.length > 0)
@@ -581,28 +547,39 @@ export const DataReducer = createSlice({
                 state.Plots.push(plot)
             }
 
-            plot.key = action.meta.arg.key;
-            plot.loading = 'Loading';
-
             if (action.meta.arg.yLimits)
                 Object.keys(action.meta.arg.yLimits).forEach(unit => {
                     plot.yLimits[unit] = action.meta.arg.yLimits[unit]
                 })
+
             if (action.meta.arg.isZoomed !== undefined)
                 plot.isZoomed = action.meta.arg.isZoomed
+
+            plot.key = action.meta.arg.key;
+            plot.loading = 'Loading';
+
+
+            const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
+            if (singlePlot)
+                singlePlot.loading = 'Loading'
 
             return state
         });
         builder.addCase(AddPlot.fulfilled, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-            if (plot) {
+            if (plot === undefined)
+                return state
+
             plot.loading = 'Idle'
+            const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
+            if (singlePlot)
+                singlePlot.loading = 'Idle'
 
                 if (action.meta.arg.fftLimits)
                     state.fftLimits = action.meta.arg.fftLimits
                 if (action.meta.arg.fftLimits)
                     state.cycleLimit = action.meta.arg.cycleLimits
-            }
+
 
             return state
         });
@@ -610,12 +587,14 @@ export const DataReducer = createSlice({
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
             if (plot)
                 plot.loading = 'Loading';
+
             return state
         });
         builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
             if (plot)
                 plot.loading = 'Idle';
+
             return state
         });
         builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
