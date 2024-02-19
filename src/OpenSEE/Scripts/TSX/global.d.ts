@@ -29,7 +29,6 @@ declare global {
     var eventID: number;
     var eventStartTime: string;
     var eventEndTime: string;
-
 }
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
@@ -52,6 +51,14 @@ export namespace OpenSee {
         Navigation: EventNavigation
     }
 
+    interface IAnalyticStore {
+        Harmonic: number,
+        LPFOrder: number,
+        HPFOrder: number,
+        Trc: number,
+        FFTCycles: number,
+        FFTStartTime: number
+    }
     
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')
@@ -92,29 +99,31 @@ export namespace OpenSee {
         m_Item2?: iXDAEvent;
     }
 
-    interface iPostedData {
-        BreakerNumber?: string;
-        BreakerTiming?: string;
-        BreakerSpeed?: string;
-        BreakerOperation?: string;
-        CalculationCycle?: string;
-        Date?: string;
-        DurationPeriod?: string;
-        EventDate?: string;
-        EventId?: string;
-        EventMilliseconds?: string;
-        EventName?: string;
-        LineLength?: string;
-        AssetName?: string;
-        Magnitude?: string;
-        MeterId?: string;
-        MeterName?: string;
-        Phase?: string;
-        SagDepth?: string;
-        StartTime?: string;
-        StationName?: string;
-        SystemFrequency?: string;
-        xdaInstance?: string;
+    interface IEventInfo {
+        MeterName: string,
+        StationName: string,
+        AssetName: string,
+        EventName: string,
+        EventDate: string,
+        SystemFrequency: string,
+        MeterId: string,
+        EventMilliseconds: number,
+        xdaInstance: string,
+        Inception: number,
+        DurationEndTime: number,
+        BreakerNumber?: string,
+        BreakerTiming?: string,
+        BreakerSpeed?: string,
+        BreakerOperation?: string,
+        CalculationCycle?: string,
+        Date: string,
+        DurationPeriod?: string,
+        EventId: number;
+        LineLength?: string,
+        Magnitude?: string,
+        Phase?: string,
+        SagDepth?: string,
+        StartTime?: string,
         enableLightningData?: boolean,
     }
 
