@@ -244,39 +244,67 @@ export const DataReducer = createSlice({
             }
         },
         UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
-            const curPlot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
-            const oldLimits = curPlot.yLimits[action.payload.unit].dataLimits
+
+            state.Plots.filter(plot => plot.key.DataType === action.payload.key.DataType).forEach(curPlot => {
+
+                const oldUnitIndex = curPlot.yLimits[action.payload.unit].current
+                let newUnitIndex = action.payload.value
+                const oldFactor = defaultSettings.Units[action.payload.unit].options[oldUnitIndex].factor
+                const newFactor = defaultSettings.Units[action.payload.unit].options[newUnitIndex].factor
+                const isPU = oldFactor === undefined || newFactor === undefined ? true : false
 
             curPlot.yLimits[action.payload.unit].isAuto = action.payload.auto
             curPlot.yLimits[action.payload.unit].current = action.payload.value
 
             const axisSetting: OpenSee.IAxisSettings = curPlot.yLimits[action.payload.unit];
+                const oldLimits = axisSetting.dataLimits
             const filteredData = curPlot.data.filter(item => item.Enabled && item.Unit === action.payload.unit);
 
+                //handle autoUnit case
             let unitIndex = updateActiveUnits(curPlot.yLimits, action.payload.unit, filteredData, state.startTime, state.endTime, null);
-
-            if (unitIndex)
+                if (unitIndex) {
                 curPlot.yLimits[action.payload.unit].current = unitIndex
+                    newUnitIndex = unitIndex
+                }
 
             if (curPlot.key.DataType != 'FFT' && curPlot.key.DataType != 'OverlappingWave') {
                 const limits = recomputeDataLimits(state.startTime, state.endTime, filteredData, curPlot.yLimits[action.payload.unit].current);
                 axisSetting.dataLimits = limits;
-                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
-                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                    if (isPU) {
+                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
             }
+                    else {
+                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
+                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
+                    }
+                }
             else if (curPlot.key.DataType == 'FFT') {
                 const limits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], filteredData, curPlot.yLimits[action.payload.unit].current)
                 axisSetting.dataLimits = limits;
-                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
-                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                    if (isPU) {
+                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
             }
+                    else {
+                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
+                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
+                    }
+                }
             else if (curPlot.key.DataType == 'OverlappingWave') {
                 const limits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], filteredData, curPlot.yLimits[action.payload.unit].current);
                 axisSetting.dataLimits = limits;
-                axisSetting.manualLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.manualLimits)
-                axisSetting.zoomedLimits = recomputeNonAutoLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                    if (isPU) {
+                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
             }
+                    else {
+                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
+                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
+                    }
+                }
 
+            })
             saveSettings(state);
 
             return state;
