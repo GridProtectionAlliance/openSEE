@@ -972,12 +972,26 @@ export const selectIsOverlappingManual = (graphType: OpenSee.graphType) => creat
 );
 
 
-//For SettingsWindow
-export const selectGraphTypes = createSelector((state: OpenSee.IRootState) => state.Data.plotKeys, (state: OpenSee.IRootState) => state.Data.eventID, (keys, eventId) => {
-    let graphs = uniq(keys.map(item => item.DataType));
-    return graphs.map(item => { return { DataType: item, EventId: eventId} as OpenSee.IGraphProps })
-});
+export const SelectOverlappingAutoUnits = (graphType: OpenSee.graphType) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (state: OpenSee.IRootState) => state.EventInfo.EventID,
+    (plots, evtID) => {
+        let overlappingPlots = plots.filter(p => p.key.DataType === graphType && p.key.EventId !== evtID);
+        let result = {};
+        if (overlappingPlots.length > 0) {
+            overlappingPlots.forEach(plot => {
+                let units = {}
+                Object.keys(plot.yLimits).forEach(key => {
+                    units[key] = plot.yLimits[key].isAuto;
+                })
+                result[plot.key.DataType] = units as OpenSee.IUnitCollection<boolean>
+            })
 
+            return result;
+        }
+
+    }
+);
 // For tooltip
 export const selectHoverPoints = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
