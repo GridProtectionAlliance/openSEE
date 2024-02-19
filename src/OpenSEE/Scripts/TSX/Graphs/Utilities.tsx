@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import { OpenSee } from "../global"
+import { defaultSettings } from "../defaults"
 
 export function GetDisplayLabel(type: OpenSee.graphType): string {
     switch (type) {
@@ -54,4 +55,21 @@ export function GetDisplayLabel(type: OpenSee.graphType): string {
         default:
             return (type as string)
     }
+}
+
+export function sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
+    if (item1.DataType == item2.DataType)
+        return 0
+
+    let index1 = defaultSettings.PlotOrder.findIndex((v) => v == item1.DataType);
+    let index2 = defaultSettings.PlotOrder.findIndex((v) => v == item2.DataType);
+
+    if (index1 != -1 && index2 != -1)
+        return (index1 > index2 ? 1 : -1);
+    if (index1 != -1)
+        return -1;
+    if (index2 != -1)
+        return 1;
+
+    return (item1 > item2 ? 1 : -1);
 }
