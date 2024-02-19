@@ -166,13 +166,20 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
     // FFT Limits get updated base on values not eventTime
     let state = (thunkAPI.getState() as OpenSee.IRootState);
     let fftPlot = state.Data.Plots.find(item => item.key.DataType == 'FFT');
+    let overlappingWaveform = state.Data.Plots.find(item => item.key.DataType == 'OverlappingWave');
 
-    if (fftPlot != null) {
+    if (fftPlot) {
         let start = Math.min(...fftPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
         let end = Math.max(...fftPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
-
-        thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ start: start, end: end }));
+        thunkAPI.dispatch(SetFFTLimits({ start: start, end: end }));
     }
+
+    if (overlappingWaveform) {
+        let start = Math.min(...overlappingWaveform.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+        let end = Math.max(...overlappingWaveform.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+        thunkAPI.dispatch(SetCycleLimit({ start: start, end: end }));
+    }
+
 
     thunkAPI.dispatch(DataReducer.actions.ResetZoom());
 
