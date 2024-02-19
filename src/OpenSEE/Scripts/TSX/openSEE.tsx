@@ -326,78 +326,69 @@ const OpenSeeHome = () => {
                                             {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
                                                 <LineChart
                                                     key={item.DataType + item.EventId}
-                                                    eventId={item.EventId}
                                                     width={plotWidth}
-                                                    eventStartTime={evtStartTime.getTime()}
-                                                    height={GraphHeight}
-                                                    timeLabel={"Time"}
-                                                    type={item.DataType}
+                                                    height={plotHeight}
                                                     showToolTip={openDrawers.ToolTipDelta}
-                                                /> :
+                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                                                    />
+                                            ))}
+
+                                            {groupedKeys[eventID].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
                                                 <BarChart
                                                     key={item.DataType + item.EventId}
-                                                    eventId={item.EventId}
                                                     width={plotWidth}
-                                                    eventStartTime={evtStartTime.getTime()}
-                                                    height={GraphHeight}
-                                                    timeLabel={"Harmonic"}
-                                                    type={item.DataType}
+                                                    height={plotHeight}
+                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                                 />
-                                        ))
-                                        : null}
-                                    {Object.keys(graphList).filter(item => parseInt(item) !== eventID).map(key =>
-                                        <div className="card">
-                                            {eventList.find(item => item.EventID == parseInt(key)) !== undefined ?
+                                            ))}
+                                        </>
+                                    ) :  null}
+
+                                    {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventID).map(key =>
+                                        <div className="card" key={key}> 
+                                            {eventList.find(item => item.EventID === parseInt(key)) ? (
                                                 <div className="card-header">
                                                     <div className="row">
                                                         <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                             <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                            {eventList.find(item => item.EventID == parseInt(key)).MeterName}
+                                                            {eventList.find(item => item.EventID === parseInt(key)).MeterName}
                                                         </div>
                                                         <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                             <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                            {eventList.find(item => item.EventID == parseInt(key)).AssetName}
+                                                            {eventList.find(item => item.EventID === parseInt(key)).AssetName}
                                                         </div>
                                                         <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                             <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                            {eventList.find(item => item.EventID == parseInt(key)).EventType}
+                                                            {eventList.find(item => item.EventID === parseInt(key)).EventType}
                                                         </div>
                                                         <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                             <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                            {moment(eventList.find(item => item.EventID == parseInt(key)).StartTime).format('YYYY-MM-DD HH:mm:ss')}
+                                                            {moment(eventList.find(item => item.EventID === parseInt(key)).Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                                                         </div>
-
                                                     </div>
                                                 </div>
-
-                                                : null
-                                            }
+                                            ) : null}
                                             <div className="card-body" style={{ padding: 0 }}>
-                                                {graphList[key].sort(sortGraph).map(item => (
+                                                {groupedKeys[key].sort(sortGraph).map(item => (
                                                     item.DataType !== 'FFT' ?
                                                         <LineChart
                                                             key={item.DataType + item.EventId}
-                                                            eventId={item.EventId}
                                                             width={plotWidth}
-                                                            eventStartTime={evtStartTime.getTime()}
-                                                            height={GraphHeight}
-                                                            timeLabel={"Time"}
-                                                            type={item.DataType}
+                                                            height={plotHeight}
                                                             showToolTip={openDrawers.ToolTipDelta}
+                                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                                         /> :
                                                         <BarChart
                                                             key={item.DataType + item.EventId}
-                                                            eventId={item.EventId}
                                                             width={plotWidth}
-                                                            eventStartTime={evtStartTime.getTime()}
-                                                            height={GraphHeight}
-                                                            timeLabel={"Harmonic"}
-                                                            type={item.DataType}
+                                                            height={plotHeight}
+                                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                                         />
                                                 ))}
                                             </div>
                                         </div>
                                     )}
+
                                 </div>
                             </SplitSection>
                         </VerticalSplit>
