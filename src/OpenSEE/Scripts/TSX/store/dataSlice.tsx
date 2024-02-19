@@ -1380,9 +1380,9 @@ function updatedCycleAutoLimits(plot: OpenSee.IGraphstate, start: number, end: n
 // #region [ Helper Functions ]
 
 //This Function Recomputes y Limits based on X limits for all states
-function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSeries[]): [number, number] {
+function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSeries[], activeUnit: number): [number, number] {
 
-    let limitedData = data.map((item, index) => {
+    let limitedData = data.map(item => {
         let dataPoints = item.DataPoints;
         if (item.SmoothDataPoints.length > 0)
             dataPoints = item.SmoothDataPoints;
@@ -1390,9 +1390,16 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
         let indexStart = getIndex(start, dataPoints);
         let indexEnd = getIndex(end, dataPoints);
 
-        let dt = dataPoints.slice(indexStart, indexEnd).map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
-        return [Math.min(...dt), Math.max(...dt)];
+        let factor = defaultSettings.Units[item.Unit].options[activeUnit].factor;
         
+        if (factor === undefined) { //p.u case
+            factor = 1.0 / item.BaseValue;
+        }
+
+        let sliced = dataPoints.slice(indexStart, indexEnd)
+        let dt = sliced.map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
+
+        return [Math.min(...dt) * factor, Math.max(...dt) * factor];
     });
 
     let yMin = Math.min(...limitedData.map(item => item[0]));
