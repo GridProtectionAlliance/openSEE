@@ -23,12 +23,12 @@
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
 import * as _ from 'lodash';
-import { SetTimeUnit as SetTimeUnitSetting, plotTypes } from './settingSlice';
+import { plotTypes } from './settingSlice';
 import { AddRequest, AppendRequest, CancelAnalytics } from './RequestHandler';
 import { emptygraph, getData, getDetailedData } from './GraphLogic';
 import { RootState } from './store';
 import { defaultSettings } from '../defaults';
-
+import { sortGraph } from '../Graphs/Utilities'
 
 declare var eventID: number;
 
@@ -188,7 +188,7 @@ export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, e
 
 
 // Thunk to Set Zoomed YLimits
-export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { limits: [number, number], key: OpenSee.IGraphProps}, thunkAPI) => {
+export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { limits: [number, number], key: OpenSee.IGraphProps }, thunkAPI) => {
     const state = (thunkAPI.getState() as OpenSee.IRootState);
     const plot = state.Data.Plots.find(plot => plot.key.DataType == arg.key.DataType && plot.key.EventId == arg.key.EventId);
     const primaryAxis = getPrimaryAxis(plot.key)
@@ -202,7 +202,7 @@ export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { 
         oldLimits = plot.yLimits[primaryAxis].dataLimits
 
 
-    thunkAPI.dispatch(DataReducer.actions.SetZoomedLimits({ oldLimits: oldLimits, key: arg.key, newLimits: arg.limits} ));
+    thunkAPI.dispatch(DataReducer.actions.SetZoomedLimits({ oldLimits: oldLimits, key: arg.key, newLimits: arg.limits }));
     return Promise.resolve();
 })
 
@@ -454,23 +454,16 @@ export const DataReducer = createSlice({
                 });
 
         },
-        SelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
-            if (state.mouseMode == 'none')
-                return state;
-            if (state.mouseMode == 'zoom')
-                // This case is handled locally in plot to avoid any confusion
-                return state
-            if (state.mouseMode == 'select') {
-                // Only work those with main eventId for now
-                state.selectedIndixes.forEach((item, index) => {
-                    if (state.plotKeys[index].EventId != state.eventID)
-                        return;
-                    if (state.data[index].length == 0)
-                        return;
-                    let dataIndex = getIndex(action.payload[0], state.data[index][0].DataPoints)
-                    state.selectedIndixes[index].push(dataIndex);
+        SetSelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
+            // Only work those with main eventId for now CHANGED THIS BECAUSE IT DOESNT MAKE SENSE WHY WE WOULD
+            state.Plots.forEach(plot => {
+                //if (plot.key.EventId != eventID) return;
+                if (plot.data.length == 0) return;
+
+                let dataIndex = getIndex(action.payload[0], plot.data[0].DataPoints)
+                plot.selectedIndixes.push(dataIndex);
                 })
-            }
+
         },
         ClearSelectPoints: (state: OpenSee.IDataState) => {
             state.Plots.forEach(plot => plot.selectedIndixes = []);
@@ -478,7 +471,7 @@ export const DataReducer = createSlice({
         RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.Plots.forEach(plot => plot.selectedIndixes.splice(action.payload, 1));
         },
-        SetZoomedLimits: (state: OpenSee.IDataState, action: PayloadAction<{ oldLimits: [number, number], key: OpenSee.IGraphProps, newLimits: [number, number]}>) => {
+        SetZoomedLimits: (state: OpenSee.IDataState, action: PayloadAction<{ oldLimits: [number, number], key: OpenSee.IGraphProps, newLimits: [number, number] }>) => {
             const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
             if (curPlot) {
                 const RelevantAxis = _.uniq(curPlot.data.filter(item => item.Enabled).map(s => s.Unit));
@@ -486,11 +479,11 @@ export const DataReducer = createSlice({
                     if (axis === getPrimaryAxis(action.payload.key))
                         curPlot.yLimits[axis].zoomedLimits = action.payload.newLimits
                     else if (curPlot.yLimits[axis].isManual) 
-                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].manualLimits);
+                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].manualLimits);
                      else if (curPlot.isZoomed) 
-                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].zoomedLimits);
+                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].zoomedLimits);
                      else 
-                        curPlot.yLimits[axis].zoomedLimits = recomputeZoomedLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].dataLimits);
+                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].dataLimits);
                 })
 
 
