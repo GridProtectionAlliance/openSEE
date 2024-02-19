@@ -174,12 +174,12 @@ export const SelectOverlappingWaveTimeUnit = (state: RootState) => state.Setting
 export const SelectMouseMode = (state: OpenSee.IRootState) => state.Settings.MouseMode
 export const SelectZoomMode = (state: OpenSee.IRootState) => state.Settings.ZoomMode
 
-
 export const SelectEnabledPlots = createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
-    (state: OpenSee.IRootState) => SelectAllPlotKeys(state),
-    (Plots, plotKeys) => {
+    (Plots) => {
         let enabledPlots: OpenSee.PlotQuery[] = [];
+        let plotKeys = Plots.map(plot => plot.key)
+        plotKeys = _.uniq(plotKeys)
 
         if (plotKeys.length > 0)
             plotKeys.forEach(key => {
@@ -213,11 +213,15 @@ export const SelectQueryString = createSelector(
     (state: OpenSee.IRootState) => state.Analytic,
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.OverlappingEvents,
-    (state: OpenSee.IRootState) => SelectAllPlotKeys(state),
     (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-    (data, analyticInfo, evtID, overLappingEvents, plotKeys, singlePlot) => {
+    (data, analyticInfo, evtID, overLappingEvents, singlePlot) => {
         let plotQuery: OpenSee.PlotQuery[] = [];
-        if(plotKeys.length > 0)
+        let overlappingEvts = []
+        let plotCount = 0;
+        let plotKeys = data.Plots.map(plot => plot.key)
+        plotKeys = _.uniq(plotKeys)
+
+        if (plotKeys.length > 0)
             plotKeys.forEach(key => {
                 const matchingPlot = data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId); 
 
@@ -228,16 +232,27 @@ export const SelectQueryString = createSelector(
 
                     Object.keys(matchingPlot.yLimits).forEach(key => {
                         if (enabledUnits.includes(key as OpenSee.Unit))
-                            yLimits[key] = { ...matchingPlot.yLimits[key], autoUnit: matchingPlot.yLimits[key as OpenSee.Unit].isAuto };
+                            yLimits[key] = { ...matchingPlot.yLimits[key] };
                     })
 
+                    //This might be able to be increased
+                    if(plotCount < 8)
                     plotQuery.push({
                         yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
                         isZoomed: matchingPlot.isZoomed,
                         key: matchingPlot.key
     });
+
+                    plotCount++;
                 }
             });
+
+        if (overLappingEvents.EventList.length > 0) {
+            overLappingEvents.EventList.forEach(evt => {
+                if(evt.Selected)
+                    overlappingEvts.push(evt.EventID)
+            })
+        }
 
         const queryObj = {
             eventID: evtID,
@@ -252,7 +267,7 @@ export const SelectQueryString = createSelector(
             FFTStartTime: analyticInfo.FFTStartTime,
             Harmonic: analyticInfo.Harmonic,
             plots: JSON.stringify(plotQuery),
-            overlappingInfo: JSON.stringify(overLappingEvents.EventList),
+            overlappingInfo: JSON.stringify(overlappingEvts),
             singlePlot: singlePlot,
         }
 
@@ -321,10 +336,7 @@ function getSettings(): OpenSee.ISettingsState {
         // overwrite options if new options are available
         let storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
 
-        const timeUnitValid =
-            storageState.TimeUnit !== undefined &&
-            storageState.TimeUnit.current >= 0 &&
-            storageState.TimeUnit.current < defaultSettings.TimeUnit.options.length;
+        const timeUnitValid = storageState.TimeUnit !== undefined && storageState.TimeUnit.current >= 0 && storageState.TimeUnit.current < defaultSettings.TimeUnit.options.length;
 
         storageState.TimeUnit = { ...defaultSettings.TimeUnit, current: timeUnitValid ? storageState.TimeUnit.current : defaultSettings.TimeUnit.current };
 
