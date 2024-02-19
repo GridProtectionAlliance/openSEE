@@ -622,21 +622,13 @@ export default DataReducer.reducer;
 // #endregion
 
 // #region [ Individual Selectors ]
+export const SelectFFTLimits = (state: OpenSee.IRootState) => state.Data.fftLimits;
+export const SelectCycleLimits = (state: OpenSee.IRootState) => state.Data.cycleLimit;
+export const SelectStartTime = (state: OpenSee.IRootState) => state.Data.startTime;
+export const SelectEndTime = (state: OpenSee.IRootState) => state.Data.endTime;
+export const SelectCycleStart = (state: OpenSee.IRootState) => state.Data.cycleLimit[0]
+export const SelectCycleEnd = (state: OpenSee.IRootState) => state.Data.cycleLimit[1]
 
-// Returns a List of keys for Plots that should be displayed.
-export const selectListGraphs = createSelector(
-    (state: RootState) => state.Data.Plots,
-    (state: RootState) => state.Settings.SinglePlot,
-    (plots, singlePlot) => {
-
-        if (singlePlot) {
-            const keys = plots.filter(item => item.key.EventId == -1).map(p => p.key);
-            return _.groupBy(keys, "EventId");
-        }
-
-        const keys = plots.map(p => p.key)
-        return _.groupBy(keys, "EventId");
-    })
 
 export const SelectOverlappingEvents = (graphType: OpenSee.graphType) => createSelector(
     (state: RootState) => state.Data.Plots,
