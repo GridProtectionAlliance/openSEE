@@ -32,6 +32,7 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
 using GSF;
+using GSF.Console;
 using GSF.Data;
 using GSF.Data.Model;
 using GSF.NumericalAnalysis;
@@ -430,12 +431,7 @@ namespace OpenSEE
                 {
                     foreach (DataRow row in table.Rows)
                     {
-                        D3Series series = QueryFaultDistanceData(int.Parse(row["ID"].ToString()), meter, asset);
-                        
-                        List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", eventId,series.ChartLabel).ToList();
-                        if(faultSummaries.Count >= 0 ){
-                            series.DataMarker.AddRange(from faultSummary in faultSummaries select new double[] { faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds, faultSummary.Distance});
-                        }
+                        D3Series series = QueryFaultDistanceData(int.Parse(row["ID"].ToString()), meter, asset, evt.ID);
                         returnList.Add(series);
                     }
                 }
@@ -446,7 +442,7 @@ namespace OpenSEE
             }
         }
 
-        private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter, Asset asset)
+        private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter, Asset asset, int evtID)
         {
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
@@ -454,7 +450,8 @@ namespace OpenSEE
                 DataGroup dataGroup = new DataGroup();
                 dataGroup.FromData(meter, new List<byte[]>(1) { faultCurve.Data });
                 string units = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'");
-
+                List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", evtID, faultCurve.Algorithm).ToList();
+               
                 D3Series series = new D3Series()
                 {
                     ChartLabel = faultCurve.Algorithm,
@@ -466,6 +463,10 @@ namespace OpenSEE
                     DataPoints = dataGroup.DataSeries[0].DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList()
                 };
 
+                if (faultSummaries.Count >= 0)
+                {
+                    series.DataMarker.AddRange(from faultSummary in faultSummaries select new double[] { faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds, faultSummary.Distance });
+                }
 
                 if (units == "kilometer")
                 {
@@ -2364,6 +2365,31 @@ namespace OpenSEE
 
             return output;
         }
+        #endregion
+
+        #region [ NewAnalytic ]
+
+        [Route("GetNewAnalytic"), HttpGet]
+        public async Task<JsonReturn> GetNewAnalyticData()
+        {
+            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            {
+                Dictionary<string, string> query = Request.QueryParameters();
+                int eventId = int.Parse(query["eventId"]);
+                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+
+                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
+                List<D3Series> returnList = GetFrequencyLookup(viDataGroup);
+
+                JsonReturn returnDict = new JsonReturn();
+                returnDict.Data = returnList;
+                DownSample(returnDict);
+                return returnDict;
+            }
+        }
+
         #endregion
 
 
