@@ -200,6 +200,18 @@ const LineChart = (props: iProps) => {
         return () => { };
     }, [hover])
 
+    //Effect to change location of tool tip
+    React.useEffect(() => {
+        if (xScaleRef.current != undefined) {
+            if (!isNaN(selectedPointTime))
+                setSelectedPointLocation(xScaleRef.current(selectedPointTime))
+        }
+
+        return () => { };
+    }, [selectedPointTime])
+
+
+
     // For performance Combine a bunch of Hooks that call updateLimits() since that is what re-renders the Lines
     //Effect to adjust Axes when Units change
     React.useEffect(() => {
