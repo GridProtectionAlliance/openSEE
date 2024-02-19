@@ -276,10 +276,9 @@ export namespace OpenSee {
     interface IDataState {
         startTime: number,
         endTime: number,
-        hover:  [number,number],
-        mouseMode: OpenSee.MouseMode,
-        zoomMode: OpenSee.ZoomMode,
         Plots: OpenSee.IGraphstate[],
+        fftLimits: [number, number],
+        cycleLimit: [number, number],
     }
 
     type LoadingState = ('Idle' | 'Loading' | 'Partial' | 'Error' | 'Uninitiated');
