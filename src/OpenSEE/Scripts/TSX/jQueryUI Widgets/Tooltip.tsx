@@ -26,14 +26,14 @@
 import * as React from 'react';
 import moment = require('moment');
 import { useSelector } from 'react-redux';
-import { selectHoverPoints } from '../store/dataSlice';
+import { SelectHoverPoints } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice';
 import HoverContext from '../Context/HoverContext'
 
 
 const ToolTipWidget = () => {
     const hover = React.useContext(HoverContext);
-    const points = useSelector(selectHoverPoints(hover.hover));
+    const points = useSelector(SelectHoverPoints(hover.hover));
     const colors = useSelector(SelectColor);
 
     return (
@@ -52,7 +52,7 @@ const ToolTipWidget = () => {
                                 <b>{p.Name}</b>
                             </td>
                             <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'right' }}>
-                                <b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
+                                <b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
                             </td>
                         </tr>)}
                 </tbody>
