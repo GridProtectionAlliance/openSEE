@@ -45,7 +45,7 @@ declare var eventEndTime: string;
 
 interface IProps {
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
-    DisableSelect: boolean
+    OpenDrawers: OpenSee.Drawers
 }
 
 const OpenSeeNavBar = (props: IProps) => {
@@ -66,14 +66,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const cycles = useAppSelector(SelectCycles);
     const fftTime = useAppSelector(SelectFFTLimits);
 
-    const [showPoints, setShowPoints] = React.useState<boolean>(false);
-    const [showPolar, setShowPolar] = React.useState<boolean>(false);
-    const [showScalarStats, setShowScalarStats] = React.useState<boolean>(false);
-    const [showHarmonicStats, setShowHarmonicStats] = React.useState<boolean>(false);
-    const [showCorrelatedSags, setShowCorrelatedSags] = React.useState<boolean>(false);
-    const [showLightning, setShowLightning] = React.useState<boolean>(false);
-    const [showFFTTable, setShowFFTTable] = React.useState<boolean>(false);
-    const [showSettings, setShowSettings] = React.useState<boolean>(false);
     const [showAbout, setShowAbout] = React.useState<boolean>(false); 
 
     const [positionHarmonicStats, setPositionHarmonicStats] = React.useState<[number, number]>([0, 0]);
@@ -81,7 +73,7 @@ const OpenSeeNavBar = (props: IProps) => {
     
 
     React.useEffect(() => {
-        if (showPoints) {
+        if (props.OpenDrawers.AccumulatedPoints) {
             let oldMode = clone(mouseMode);
             dispatch(SetMouseMode('select'))
             return () => {
@@ -90,7 +82,7 @@ const OpenSeeNavBar = (props: IProps) => {
         }
         return () => { }
 
-    }, [showPoints])
+    }, [props.OpenDrawers.AccumulatedPoints])
 
     function exportData(type) {
         window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
@@ -194,7 +186,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             onMouseEnter={() => setHover('Show Points')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
-                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowPoints(!showPoints); props.ToggleDrawer('AccumulatedPoints', !showPoints); }}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints); }}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
                             </button>
                             <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'} Theme={'dark'}>
@@ -206,7 +198,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             onMouseEnter={() => setHover('Clock')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
-                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowPolar(!showPolar); props.ToggleDrawer('PolarChart', !showPolar); }}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart); }}>
                             <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }} >{PhasorClock}</i>
                             </button>
                             <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'} Theme={'dark'}>
@@ -230,7 +222,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             onMouseEnter={() => setHover('Sags')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
-                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowCorrelatedSags(!showCorrelatedSags); props.ToggleDrawer('CorrelatedSags', !showCorrelatedSags); }}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags); }}>
                                 < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
                             </button>
                             <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'} Theme={'dark'}>
@@ -243,7 +235,7 @@ const OpenSeeNavBar = (props: IProps) => {
                             disabled={!showFFT}
                             onMouseEnter={() => setHover('FFTTable')}
                             onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
-                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowFFTTable(!showFFTTable); dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !showFFTTable) }}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable) }}>
                             <i style={{ fontStyle: "normal", fontSize: "25px" }} >{FFT}</i>
                         </button>
                         <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'} Theme={'dark'}>
@@ -255,7 +247,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             onMouseEnter={() => setHover('Lightning')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
-                            data-toggle="tooltip" data-placement="bottom" onClick={() => { setShowLightning(!showLightning); props.ToggleDrawer('Lightning', !showLightning); }}>
+                            data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning); }}>
                             <i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
                             </button>
                             <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'} Theme={'dark'}>
@@ -319,11 +311,11 @@ const OpenSeeNavBar = (props: IProps) => {
                                 </ToolTip>
 
                             { /*Select*/}
-                            <button type="button" className={"btn btn-" + (mouseMode === "select" ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
-                                disabled={props.DisableSelect}
+                            <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints && props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                                disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
                                 onMouseEnter={() => setHover('Select')}
                                 onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
-                                data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("select"))}>
+                                data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
                             </button>
                             <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'} Theme={'dark'}>
@@ -359,7 +351,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                             onMouseEnter={() => setHover('Settings')}
                             onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
-                            onClick={() => { setShowSettings(!showSettings); props.ToggleDrawer('Settings', !showSettings); }}
+                            onClick={() => { props.ToggleDrawer('Settings', !props.OpenDrawers.Settings); }}
                         >
                                 <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                             </button>
@@ -385,7 +377,7 @@ const OpenSeeNavBar = (props: IProps) => {
                                     {(navigation == "meter" ? <a href={(lookupInfo.Meter.m_Item1 != null ? "?eventID=" + lookupInfo.Meter.m_Item1.ID : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (lookupInfo.Meter.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
                                     {(navigation == "asset" ? <a href={(lookupInfo.Asset.m_Item1 != null ? "?eventID=" + lookupInfo.Asset.m_Item1.ID : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (lookupInfo.Asset.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
                                     </div>
-                                <select id="next-back-selection" value={navigation} onChange={e => SetNavigation(e.target.value as OpenSee.EventNavigation)}>
+                                <select id="next-back-selection" value={navigation} onChange={e => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
                                         <option value="system">System</option>
                                         <option value="station">Station</option>
                                         <option value="meter">Meter</option>
