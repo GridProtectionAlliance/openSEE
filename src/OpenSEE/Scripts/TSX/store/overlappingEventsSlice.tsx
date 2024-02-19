@@ -20,7 +20,7 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { OpenSee } from '../global';
 import * as _ from 'lodash';
 import { AddPlot, RemovePlot } from './dataSlice';
@@ -115,6 +115,23 @@ export default OverlappingEventReducer.reducer;
 
 export const SelectEventList = (state: OpenSee.IRootState) => state.OverlappingEvents.EventList;
 export const SelectEventListLoading = (state: OpenSee.IRootState) => state.OverlappingEvents.Loading;
+
+export const SelectedOverlappingEventIds = createSelector(
+    (state: OpenSee.IRootState) => state.OverlappingEvents.EventList,
+    (eventList) => {
+        if (eventList.length > 0) {
+            let evtList = []
+            eventList.forEach(evt => {
+                if (evt.Selected)
+                    evtList.push({ EventID: evt.EventID })
+            })
+            return evtList
+        } else
+            return []
+
+    }
+)
+
 
 function getOverlappingEvents(eventID: number, eventStartTime: string, eventEndTime: string): JQuery.jqXHR<any> {
 
