@@ -133,6 +133,10 @@ const OpenSeeHome = () => {
         setPlotContainerHeight(divRef.current.offsetHeight ?? 0);
     })
 
+    React.useLayoutEffect(() => {
+        setPlotHeight((window.innerHeight - 130) / Math.min(plotKeys.length, 3))
+    }, [plotKeys, resizeCount])
+
     //Effect to update width when a drawer opens
     React.useLayoutEffect(() => {
         setTimeout(() => {
@@ -243,9 +247,6 @@ const OpenSeeHome = () => {
         );
     }
 
-
-    const GraphHeight = (window.innerHeight - 130) / Math.min(plotKeys.length, 3);
-    const evtStartTime = new Date(eventStartTime + 'Z');
 
     return (
         <Application
