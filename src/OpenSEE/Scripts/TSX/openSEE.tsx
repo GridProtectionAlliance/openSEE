@@ -42,12 +42,13 @@ import LineChart from './Graphs/LineChartBase';
 import OpenSeeNavBar from './Components/OpenSEENavbar';
 
 import store from './store/store';
+import { sortGraph } from './Graphs/Utilities'
 import { OpenSee } from './global';
 
-import { LoadSettings, SelectQueryString } from './store/settingSlice';
+import { LoadSettings, SelectQueryString, SelectMouseMode, SetMouseMode, SelectSinglePlot } from './store/settingSlice';
 import { SelectCycles, UpdateAnalytic, SelectAnalytics } from './store/analyticSlice';
-import { SetTimeLimit, selectDisplayed, selectFFTLimits, selectListGraphs, SelectPlotKeys } from './store/dataSlice';
-import { SetEventInfo, SetEventID, SelectEventInfo, SetLookupInfo } from './store/eventInfoSlice'
+import { SetTimeLimit, SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
+import { LoadEventInfo, SetEventID, SelectEventInfo, LoadLookupInfo, SelectEventID } from './store/eventInfoSlice'
 import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
 
 import OverlappingEventWindow from './Components/OverlappingEvents';
@@ -65,14 +66,13 @@ import TimeCorrelatedSagsWidget from './jQueryUI Widgets/TimeCorrelatedSags';
 import LightningDataWidget from './jQueryUI Widgets/LightningData';
 import FFTTable from './jQueryUI Widgets/FFTTable';
 import EventInfo from './jQueryUI Widgets/EventInfo';
+import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats'
 
 import HoverProvider from './Context/HoverProvider'
 
 declare var homePath: string;
 declare var version: string;
 declare var eventID: number;
-
-const Plotorder: OpenSee.graphType[] = ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'];
 
 const OpenSeeHome = () => {
     const divRef = React.useRef<any>(null);
@@ -105,28 +105,30 @@ const OpenSeeHome = () => {
     })
 
     const [resizeCount, setResizeCount] = React.useState<number>(0);
-
     const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
+
+    const mouseMode = useAppSelector(SelectMouseMode);
 
     const eventInfo = useAppSelector(SelectEventInfo);
 
-    const graphList = useAppSelector(selectListGraphs);
+    const groupedKeys = useAppSelector(SelectListGraphs);
     const plotKeys = useAppSelector(SelectPlotKeys);
 
     const eventList = useAppSelector(SelectEventList);
+    const singlePlot = useAppSelector(SelectSinglePlot);
 
-
-    const showPlots = useAppSelector(selectDisplayed);
+    const showPlots = useAppSelector(SelectDisplayed);
     const cycles = useAppSelector(SelectCycles);
     const analytics = useAppSelector(SelectAnalytics);
 
-    const fftTime = useAppSelector(selectFFTLimits);
+    const fftTime = useAppSelector(SelectFFTLimits);
     const query = useAppSelector(SelectQueryString);
 
-    const [currentHeight, setCurrentHeight] = React.useState<number>(0);
+    const [plotContainerHeight, setPlotContainerHeight] = React.useState<number>(0);
+    const [plotHeight, setPlotHeight] = React.useState<number>(0);
 
     React.useLayoutEffect(() => {
-        setCurrentHeight(divRef.current.offsetHeight ?? 0);
+        setPlotContainerHeight(divRef.current.offsetHeight ?? 0);
     })
 
     //Effect to update width when a drawer opens
@@ -145,6 +147,7 @@ const OpenSeeHome = () => {
 
         const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
         const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
+
         const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
