@@ -85,6 +85,12 @@ const ScalarStatsWidget = (props: Iprops) => {
                                 headerStyle: { width: 'calc(60% - 8.25em)' },
                                 rowStyle: { width: 'calc(60% - 8.25em)' },
                             },
+                            {
+                                key: 'Export',
+                                label: <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>,
+                                headerStyle: { width: 'calc(60% - 8.25em)' },
+                                rowStyle: { width: 'calc(60% - 8.25em)' },
+                            },
                         ]}
                         tableClass="table table-hover w-100"
                         data={stats}

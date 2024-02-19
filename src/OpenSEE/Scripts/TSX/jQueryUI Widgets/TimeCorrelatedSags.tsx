@@ -161,6 +161,14 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             </ReactTable.Column>
                         </ConfigTable.Configurable>
 
+                        <ReactTable.Column<ICorrelatedSags>
+                            Key={'Export'}
+                            AllowSort={false}
+                            RowStyle={{ width: 0 }}
+                        >
+                            <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>
+                        </ReactTable.Column>
+
                     </ConfigTable.Table>
                 </div>
 
