@@ -22,32 +22,27 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { useAppSelector } from '../hooks';
 import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
-
+import { SelectEventID} from '../store/eventInfoSlice'
 interface Iprops {
-    closeCallback: () => void,
     exportCallback: () => void,
-    eventId: number,
-    isOpen: boolean,
-    position: [number, number]
-    setPosition: (t: number, l: number) => void
 }
 
 const HarmonicStatsWidget = (props: Iprops) => {
-
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
-
+    const evtID = useAppSelector(SelectEventID);
     
     React.useEffect(() => {
         let handle = getData();
 
         return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props.eventId])
+    }, [evtID])
 
     function getData(): JQuery.jqXHR {
         let handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${props.eventId}`,
+            url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${evtID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
@@ -100,9 +95,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
     }
 
     return (
-        <WidgetWindow show={props.isOpen} close={props.closeCallback} maxHeight={600} width={1706} position={props.position} setPosition={props.setPosition} >
-            <div style={{ maxWidth: 1700 }}>
-                <table className="table" style={{ fontSize: 'large', marginBottom: 0 }}>
+            <div className="d-flex" style={{ width: '100%', height: '100%' }}>
+                <table className="table" style={{ fontSize: 'large', marginBottom: 0, height: '100%', width: '100%' }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         {tblData[0]}
                         {tblData[1]}
@@ -112,7 +106,6 @@ const HarmonicStatsWidget = (props: Iprops) => {
                     </tbody>
                 </table>
             </div>
-        </WidgetWindow>
     );
 
 }
