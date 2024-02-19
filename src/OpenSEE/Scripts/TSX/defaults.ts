@@ -28,7 +28,7 @@ import { OpenSee } from './global';
 
 // Default Settings
 export const defaultSettings = {
-    DefaultVType: 'L-L' as 'L-L'|'L-N',
+    DefaultVType: 'L-L' as 'L-L' | 'L-N',
     snapToPoint: false,
     singlePoint: true,
     Colors: {
@@ -98,36 +98,31 @@ export const defaultSettings = {
     } as OpenSee.IColorCollection,
     Units: {
         Voltage: {
-            current: 0, options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliVolt", short: "mV", factor: 1000 },
                 { label: "Volt", short: "V", factor: 1 },
                 { label: "kiloVolt", short: "kV", factor: 0.001 },
             ],
-            useAutoLimits: true
         },
         Angle: {
-            current: 0, options: [
+            current: 0, autoUnit: false, options: [
                 { label: "degree", short: "deg", factor: 1 },
                 { label: "radians", short: "rad", factor: 0.0174532925 }
             ],
-            useAutoLimits: true
         },
         Current: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 },
             ],
-            useAutoLimits: true
         },
         VoltageperSecond: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u./s", factor: undefined },
                 { label: "milliVolts per sec", short: "mV/s", factor: 1000 },
@@ -135,11 +130,9 @@ export const defaultSettings = {
                 { label: "kiloVolts per sec", short: "kV/s", factor: 0.001 },
                 { label: "megaVolts per sec", short: "MV/s", factor: 0.000001 },
             ],
-            useAutoLimits: true
         },
         CurrentperSecond: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u./s", factor: undefined },
                 { label: "milliAmps per sec", short: "mA/s", factor: 1000 },
@@ -147,117 +140,89 @@ export const defaultSettings = {
                 { label: "kiloAmps per sec", short: "kA/s", factor: 0.001 },
                 { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 }
             ],
-            useAutoLimits: true
         },
         Freq: {
-            current:0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliHertz", short: "mHz", factor: 1000 },
                 { label: "Hertz", short: "Hz", factor: 1 },
-                { label: "kiloHertz", short: "kHz", factor: 0.001 } 
+                { label: "kiloHertz", short: "kHz", factor: 0.001 }
             ],
-            useAutoLimits: true
         },
         Impedance: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliOhms", short: "mOhm", factor: 1000 },
                 { label: "Ohms", short: "Ohm", factor: 1 },
                 { label: "kiloOhms", short: "kOhm", factor: 0.001 },
             ],
-            useAutoLimits: true
         },
         PowerP: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Watt", short: "W", factor: 1000000 },
                 { label: "Kilo Watt", short: "kW", factor: 1000 },
                 { label: "Mega Watt", short: "MW", factor: 1 }
             ],
-            useAutoLimits: true
         },
         PowerQ: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Volt-Amps Reactive", short: "VAR", factor: 1000000 },
                 { label: "Kilo Volt-Amps Reactive", short: "kVAR", factor: 1000 },
                 { label: "Mega Volt-Amps Reactive", short: "MVAR", factor: 1 }
             ],
-            useAutoLimits: true
         },
         PowerS: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "Volt-Amps", short: "VA", factor: 1000000 },
                 { label: "Kilo Volt-Amps", short: "kVA", factor: 1000 },
                 { label: "Mega Volt-Amps", short: "MVA", factor: 1 }
             ],
-            useAutoLimits: true
         },
         PowerPf: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: false, options: [
                 { label: "None", short: "pf", factor: 1 }
             ],
-            useAutoLimits: true
         },
-
         TCE: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: true, options: [
                 { label: "auto", short: "auto", factor: 0 },
-                { label: "Per Unit", short: "p.u.", factor: 0 },
                 { label: "Per Unit", short: "p.u.", factor: undefined },
                 { label: "milliAmps", short: "mA", factor: 1000 },
                 { label: "Amps", short: "A", factor: 1 },
                 { label: "kiloAmps", short: "kA", factor: 0.001 }
-            ],
-            useAutoLimits: true
+            ]
         },
-
         Distance: {
-            current: 1,
-            options: [
+            current: 0, autoUnit: false, options: [
                 { label: "kilometers", short: "km", factor: 1.60934 },
                 { label: "miles", short: "mile", factor: 1 },
-            ],
-            useAutoLimits: true
+            ]
         },
-
         Unbalance: {
-            current: 1,
-            options: [
+            current: 0, autoUnit: false, options: [
                 { label: "Percent", short: "%", factor: 100 },
                 { label: "Per Unit", short: "p.u.", factor: 1 }
-            ],
-            useAutoLimits: true
+            ]
         },
         THD: {
-            current: 1,
-            options: [
+            current: 0, autoUnit: false, options: [
                 { label: "Percent", short: "%", factor: 1 },
                 { label: "Per Unit", short: "p.u.", factor: 0.01 }
-            ],
-            useAutoLimits: true
+            ]
         },
         [""]: {
-            current: 0,
-            options: [
+            current: 0, autoUnit: false, options: [
                 { label: "", short: "", factor: 1 }
-            ],
-            useAutoLimits: true
-        }
-
+            ]
+        },
     } as OpenSee.IUnitCollection<OpenSee.IUnitSetting>,
     TimeUnit: {
         current: 0, options: [
