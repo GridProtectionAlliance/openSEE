@@ -31,12 +31,10 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
-using GSF.Console;
 using GSF.Data;
 using GSF.Data.Model;
 using GSF.Web;
@@ -316,7 +314,6 @@ namespace OpenSEE
                     LegendVertical = DisplayPhaseName(cdg.Peak.SeriesInfo.Channel.Phase),
                     DataPoints = cdg.Peak.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                     ChartLabel = GetChartLabel(cdg.Peak.SeriesInfo.Channel, "Amplitude"),
-
                     Unit = type,
                     Color = GetColor(cdg.Peak.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.Peak.SeriesInfo.Channel),
@@ -471,9 +468,9 @@ namespace OpenSEE
                 returnDict.Add("SystemFrequency", connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? "60.0");
                 returnDict.Add("StationName", theEvent.StationName);
                 returnDict.Add("MeterId", theEvent.MeterID.ToString());
+                returnDict.Add("EventId", theEvent.ID);
                 returnDict.Add("MeterName", theEvent.MeterName);
                 returnDict.Add("AssetName", theEvent.AssetName);
-
                 returnDict.Add("EventName", theEvent.EventTypeName);
                 returnDict.Add("EventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
                 returnDict.Add("Date", theEvent.StartTime.ToShortDateString());
@@ -519,18 +516,18 @@ namespace OpenSEE
                 }
                 else if (new List<string>() { "Sag", "Swell" }.Contains(returnDict["EventName"]))
                 {
-
+                    
                     List<openXDA.Model.Disturbance> disturbances = new TableOperations<openXDA.Model.Disturbance>(connection)
                         .QueryRecordsWhere("EventID = {0}", theEvent.ID)
                         .Where(row => row.EventTypeID == theEvent.EventTypeID)
                         .OrderBy(row => row.StartTime)
                         .ToList(); 
-
+                    
                     openXDA.Model.Disturbance firstDisturbance = disturbances.FirstOrDefault();
                     openXDA.Model.Disturbance lastDisturbance = disturbances.LastOrDefault();
 
                     if (firstDisturbance != null)
-                        {
+                    {
                         returnDict.Add("StartTime", firstDisturbance.StartTime.TimeOfDay.ToString());
                         returnDict.Add("Phase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", firstDisturbance.PhaseID).Name);
                         returnDict.Add("DurationPeriod", firstDisturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
