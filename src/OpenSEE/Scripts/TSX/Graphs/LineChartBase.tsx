@@ -22,31 +22,40 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { uniq } from "lodash";
+import * as _ from "lodash";
 import * as d3 from "d3";
 import { OpenSee } from '../global';
 
 import moment from "moment"
 import Legend from './LegendBase';
-import { selectColor, selectActiveUnit, selectTimeUnit} from '../store/settingSlice'
-import { selectData, selectEnabled, selectStartTime, selectEndTime, selectLoading, selectYLimits, selectHover, SetHover, SelectPoint, selectMouseMode, SetTimeLimit, selectZoomMode, SetYLimits, selectCycleStart, selectCycleEnd, SetCycleLimit } from '../store/dataSlice';
-import { selectAnalyticOptions, selectCycles, selectFFTWindow, selectShowFFTWindow, SetFFTWindow } from '../store/analyticSlice';
+import { GetDisplayLabel } from './Utilities'
+import { SelectColor, SelectActiveUnit, SelectTimeUnit, SelectSinglePlot, SelectPlotMarkers, SelectUseOverlappingTime, SelectOverlappingWaveTimeUnit, SelectZoomMode, SelectMouseMode } from '../store/settingSlice'
+
+import {
+    SelectData, SelectRelevantUnits, SelectIsZoomed, SelectEnabled, SelectStartTime,
+    SelectEndTime, SelectLoading, SelectYLimits, SetZoomedLimits, SetSelectPoint, SetTimeLimit, SelectEnabledUnits,
+    SetCycleLimit, SelectYLabels, SelectDeltaHoverPoints, getPrimaryAxis, SelectCycleLimits, SelectStartTimeSinceInception, SelectEndTimeSinceInception
+} from '../store/dataSlice';
+
+import { SelectEventID, SelectEventInfo } from '../store/eventInfoSlice'
+
+import { SelectEventList } from '../store/overlappingEventsSlice'
+
+import { SelectAnalyticOptions, SelectCycles, SelectFFTWindow, SelectShowFFTWindow, SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
-import { GetDisplayLabel } from './Utilities';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-
+import HoverContext from '../Context/HoverContext'
+import { defaultSettings } from '../defaults';
 
 interface iProps {   
-    type: OpenSee.graphType,
-    eventId: number,
     height: number,
     width: number,
-    eventStartTime: number,
-    timeLabel: string,
+    showToolTip: boolean,
+    dataKey: OpenSee.IGraphProps
 };
 
-interface IMarker { x: number, y: number, unit: string, base: number}
+interface IMarker { x: number, y: number, unit: string, base: number }
 
 // The following Classes are used in this 
 // xAxis, yaxis => The axis Labels
@@ -63,69 +72,96 @@ interface IMarker { x: number, y: number, unit: string, base: number}
 // Overlay => The Container Overlayed for eventHandling
 
 const LineChart = (props: iProps) => {
-    const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId };
-    const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
-    const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
+    const dispatch = useAppDispatch();
+    const cycleLimits = useAppSelector(SelectCycleLimits);
 
-    const selectStartTimeInstance = React.useMemo(() => (props.type == 'OverlappingWave' ? selectCycleStart : selectStartTime), [props.type])
+    const MemoSelectActiveUnit = React.useMemo(() => SelectActiveUnit(props.dataKey), [props.dataKey])
+    const activeUnit = useAppSelector(MemoSelectActiveUnit);
 
-    const selectEndTimeInstance = React.useMemo(() => (props.type == 'OverlappingWave' ? selectCycleEnd : selectEndTime), [props.type])
+    const MemoSelectAnalyticOption = React.useMemo(() => SelectAnalyticOptions(props.dataKey.DataType), [props.dataKey])
+    const options = useAppSelector(MemoSelectAnalyticOption);
 
-    const MemoSelectData = React.useMemo(selectData, []);
-    const MemoSelectEnabled = React.useMemo(selectEnabled, []);
-    const SelectYLimits = React.useMemo(() => selectYLimits(dataKey), [props.eventId, props.type]);
+    const MemoSelectStartTime = React.useMemo(() => (SelectStartTime), [props.dataKey])
+    const MemoSelectEndTime = React.useMemo(() => (SelectEndTime), [props.dataKey])
+
+    const MemoSelectData = React.useMemo(() => SelectData(props.dataKey), []);
+    const lineData = useAppSelector(MemoSelectData);
+
+    const MemoSelectRelevantUnits = React.useMemo(() => SelectRelevantUnits(props.dataKey), []);
+    const relevantUnits = useAppSelector(MemoSelectRelevantUnits);
+
+    const MemoSelectEnabledUnit = React.useMemo(() => SelectEnabledUnits(props.dataKey), []);
+    const enabledUnits = useAppSelector(MemoSelectEnabledUnit);
+
+    const MemoSelectEnabled = React.useMemo(() => SelectEnabled(props.dataKey), []);
+    const enabledLine = useAppSelector(MemoSelectEnabled);
+
+
+    const SelectYlimits = React.useMemo(() => SelectYLimits(props.dataKey), [props.dataKey, lineData]);
+    const yLimits = useAppSelector(SelectYlimits);
+
+    const isZoomed = useAppSelector(SelectIsZoomed(props.dataKey));
 
     const xScaleRef = React.useRef<any>();
-    const yScaleRef = React.useRef<any>();
-   // const zScaleRef = React.useRef<any>();
+    const yScaleRef = React.useRef<OpenSee.IUnitCollection<any> | {}>({});
 
-    //const [xScale, setXscale] = React.useState<any>(null);
-    //const [yScale, setYscale] = React.useState<any>(null);
+    const primaryAxis = getPrimaryAxis(props.dataKey)
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
+    const [fftMouseDown, setFFTMouseDown] = React.useState<boolean>(false);
     const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
+    const [selectedPointLocation, setSelectedPointLocation] = React.useState<number>(10);
+    const [inceptionLocation, setInceptionLocation] = React.useState<number>(10);
+    const [durationLocation, setDurationLocation] = React.useState<number>(10);
 
-    const [width, setWidth] = React.useState<number>(100); 
+    const evtID = useAppSelector(SelectEventID);
     
-    const lineData = useAppSelector(state => MemoSelectData(state, dataKey));
-    const enabledLine = useAppSelector(state => MemoSelectEnabled(state, dataKey));
+    const singlePlot = useAppSelector(SelectSinglePlot);
+    const plotMarkers = useAppSelector(SelectPlotMarkers);
 
-    const startTime = useAppSelector(selectStartTimeInstance);
-    const endTime = useAppSelector(selectEndTimeInstance);
-    const yLimits = useAppSelector(SelectYLimits);
+    const startTime = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[0] : useAppSelector(MemoSelectStartTime);
+    const endTime = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[1] : useAppSelector(MemoSelectEndTime);
 
-    const loading = useAppSelector(selectLoading(dataKey));
+    const startTimeSinceInception = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[0] : useAppSelector(SelectStartTimeSinceInception);
+    const endTimeSinceInception = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[1] : useAppSelector(SelectEndTimeSinceInception);
 
-    const colors = useAppSelector(selectColor);
-    const timeUnit = useAppSelector(selectTimeUnit);
-    const activeUnit = useAppSelector(SelectActiveUnitInstance);
-    const mouseMode = useAppSelector(selectMouseMode);
-    const zoomMode = useAppSelector(selectZoomMode);
+    const analytics = useAppSelector(SelectAnalytics);
+    const overlappingEvents = useAppSelector(SelectEventList);
+    const useRelevantTime = useAppSelector(SelectUseOverlappingTime);
 
-    const fftWindow = useAppSelector(selectFFTWindow);
-    const showFFT = useAppSelector(selectShowFFTWindow);
+    const loading = useAppSelector(SelectLoading(props.dataKey));
 
-    const hover = useAppSelector(selectHover);
-    const options = useAppSelector(selectAnalyticOptionInstance);
-    const fftCycles = useAppSelector(selectCycles);
-    const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
-    const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
+    const colors = useAppSelector(SelectColor);
+    const timeUnit = useAppSelector(SelectTimeUnit);
+    const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
-    const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
-    const [yLblTextLeft, setYLblTextLeft] = React.useState<string>('');
-    const [yLblTextRight, setYLblTextRight] = React.useState<string>('');
+
+    const yLabels = useAppSelector(SelectYLabels(props.dataKey));
     const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
-    const dispatch = useAppDispatch();
+    const mouseMode = useAppSelector(SelectMouseMode);
+    const zoomMode = useAppSelector(SelectZoomMode);
 
-    React.useLayoutEffect(() => {
-        setWidth(document.getElementById("graphWindow-" + props.type + "-" + props.eventId).offsetWidth)
+    const eventInfo = useAppSelector(SelectEventInfo);
 
-    });
+    const fftWindow = useAppSelector(SelectFFTWindow);
+    const showFFT = useAppSelector(SelectShowFFTWindow);
+    const fftCycles = useAppSelector(SelectCycles);
+    const { hover, setHover } = React.useContext(HoverContext);
+
+    const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
+    const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
+    const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
+
+    const points = useAppSelector(SelectDeltaHoverPoints(hover));
+    //const [selectedPointTime, setSelectedPointTime] = React.useState<number>(points.length > 0 ? points[0].Time : NaN);
+
+    let selectedPointTime = points.length > 0 ? points[0].Time : NaN; //this needs to change to a state might fix issue with tooltip being off too..
+
     //Effect to update the Data 
     React.useEffect(() => {
         if (loading == 'Loading')
