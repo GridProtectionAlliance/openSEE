@@ -29,16 +29,19 @@ import * as _ from 'lodash';
 import { BlockPicker } from 'react-color';
 import { OpenSee } from '../global';
 import {
-    selectData, selectGraphTypes, SetUnit, selectIsManual, SetIsManual, SelectOverlappingEvents,
-    SelectYLimits, SetManualLimits, selectStartTime, selectEndTime,
-    SetTimeLimit, SetTimeUnit, selectAutoUnits, selectIsOverlappingManual,
-    selectOverlappingYLimits, SelectAxisSettings, selectOverlappingAutoUnits
+    SelectData, SelectPlotKeys, SetUnit, SelectIsManual, SetIsManual, SelectOverlappingEvents,
+    SelectYLimits, SetManualLimits, SelectStartTime, SelectEndTime, 
+    SetTimeLimit, SelectAutoUnits, SelectIsOverlappingManual,
+    SelectOverlappingYLimits, SelectAxisSettings, SelectOverlappingAutoUnits, 
 } from '../store/dataSlice';
 
 import {
-    SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces,
-    SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot
+    SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces, SelectPlotMarkers, SetPlotMarkers,
+    SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
+    SetOverlappingWaveTimeUnit, SetTimeUnit
 } from '../store/settingSlice';
+
+import { SelectEventInfo, SelectEventID } from '../store/eventInfoSlice'
 
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
@@ -54,17 +57,19 @@ interface TimeLimit {
 
 const SettingsWidget = (props) => {
     const dispatch = useAppDispatch();
-    const list = useAppSelector(selectGraphTypes);
+    const plotKeys = useAppSelector(SelectPlotKeys);
     const defaultTraces = useAppSelector(SelectDefaultTraces);
     const defaultVtype = useAppSelector(SelectVTypeDefault);
+    const plotMarkers = useAppSelector(SelectPlotMarkers);
 
-    const selectStartTimeInstance = React.useMemo(() => (selectStartTime), [])
-    const selectEndTimeInstance = React.useMemo(() => (selectEndTime), [])
-
-    const startTime = useAppSelector(selectStartTimeInstance);
-    const endTime = useAppSelector(selectEndTimeInstance);
+    const startTime = useAppSelector(SelectStartTime);
+    const endTime = useAppSelector(SelectEndTime);
 
     const timeUnit = useAppSelector(SelectTimeUnit);
+    const eventInfo = useAppSelector(SelectEventInfo);
+    const evtID = useAppSelector(SelectEventID);
+    const originalStartTime = new Date(eventInfo?.EventDate + "Z").getTime()
+    const inceptionOffset = (eventInfo?.Inception - originalStartTime)
 
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
     const [formattedTime, setFormattedTime] = React.useState<TimeLimit>({ start: '', end: '' });
