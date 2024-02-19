@@ -35,13 +35,12 @@ declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
 
 export namespace OpenSee {
 
-    interface IEventInfo {
-        MeterName: string,
-        StationName: string,
-        AssetName: string,
-        EventName: string,
-        EventDate: string,
-        
+    interface IRootState {
+        Settings: ISettingsState,
+        Data: IDataState,
+        Analytic: IAnalyticStore,
+        EventInfo: IEventStore,
+        OverlappingEvents: IOverlappingEventsStore
       }
 
     interface IEventStore {
