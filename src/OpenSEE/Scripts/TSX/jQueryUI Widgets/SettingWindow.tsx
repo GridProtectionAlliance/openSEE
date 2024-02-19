@@ -49,7 +49,6 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 
 import { DatePicker, Input, CheckBox } from '@gpa-gemstone/react-forms'
 
-
 interface TimeLimit {
     start: string,
     end: string
@@ -71,14 +70,27 @@ const SettingsWidget = (props) => {
     const originalStartTime = new Date(eventInfo?.EventDate + "Z").getTime()
     const inceptionOffset = (eventInfo?.Inception - originalStartTime)
 
+    const [startMS, setStartMS] = React.useState<number>(startTime - originalStartTime);
+    const [endMS, setEndMS] = React.useState<number>(endTime - originalStartTime);
+
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
     const [formattedTime, setFormattedTime] = React.useState<TimeLimit>({ start: '', end: '' });
     const [currentDate, setCurrentDate] = React.useState<{ start: Date, end: Date }>({ start: new Date(), end: new Date() });
+
     const [valid, setValid] = React.useState<boolean>(true)
+    const [timeSinceChanged, setTimeSinceChanged] = React.useState<boolean>(false) 
     
+    const handleTimeChange = (time: number, start: boolean) => {
+        if (start)
+            setStartMS(time)
+        else
+            setEndMS(time)
+        if (!timeSinceChanged)
+            setTimeSinceChanged(true)
+    }
+
     const handleTimeUnitChange = (index: number) => {
-        let auto = defaultSettings.TimeUnit.options[index].factor === undefined ? true : false;
-        dispatch(SetTimeUnit({ index: index, auto: auto }))
+        dispatch(SetTimeUnit({ index: index }))
     }
 
     const handleDateChange = (time, start: boolean) => {
@@ -118,27 +130,86 @@ const SettingsWidget = (props) => {
     };
 
    React.useEffect(() => {
+        const startDate = new Date(startTime)
+        const endDate = new Date(endTime)
+        setFormattedTime({ start: moment(startDate).format('HH:mm:ss.SSS'), end: moment(new Date(endDate)).format('HH:mm:ss.SSS') })
+        setCurrentDate({ start: startDate, end: endDate })
+    }, [])
+
+    //Effect to update start and end time whenever formattedTime changes
+    React.useEffect(() => {
+        const timeOutId = setTimeout(() => {
+
+            if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
+                const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
+                const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
+                const curStartMS = isCycles ? startMS / (60.0 / 1000.0) : startMS
+                const curEndMS = isCycles ? endMS / (60.0 / 1000.0) : endMS
+                let newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
+                let endOffset = curEndMS - (endTime - originalStartTime)
+                let newEndTime = isSinceInception ? endTime + endOffset + inceptionOffset : endTime + endOffset
+
+
+                if (newStartTime !== startTime && timeSinceChanged)
+                    dispatch(SetTimeLimit({ start: newStartTime, end: endTime }));
+
+
+                if (newEndTime !== endTime && timeSinceChanged)
+                    dispatch(SetTimeLimit({ start: startTime, end: newEndTime }));
+            }
+        }, 1000);
+        return () => clearTimeout(timeOutId);
+
+    }, [startMS, endMS]);
+
+
+    //Effect to update 
+    React.useEffect(() => {
+        const timeOutId = setTimeout(() => {
+            if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
+                const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
+                const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
+                let newStartMS = isSinceInception ? startTime - originalStartTime - inceptionOffset : startTime - originalStartTime
+                let newEndMS = isSinceInception ? endTime - originalStartTime - inceptionOffset : endTime - originalStartTime
+
+
+                if (isCycles) {
+                    let newStartCycles = newStartMS * 60.0 / 1000.0
+                    let newEndCycles = newEndMS * 60.0 / 1000.0
+
+                    if (Math.abs(newStartCycles - startMS) > 0.1)
+                        setStartMS(newStartCycles)
+                    if (Math.abs(newEndCycles - endMS) > 0.1)
+                        setEndMS(newEndCycles)
+                }
+
+                else {
+                    setStartMS(newStartMS)
+                    setEndMS(newEndMS)
+
+                }
+
+            }
+
+        }, 1000);
+        return () => clearTimeout(timeOutId);
+    }, [startTime, endTime, timeUnit]);
+
+
+    //Effect to update start and end time whenever formattedTime changes
+    React.useEffect(() => {
         const newStart = currentDate.start.getTime();
         const newEnd = currentDate.end.getTime();
 
-        if (newStart !== startTime || newEnd !== endTime && valid ) {
+        if (newEnd - newStart !== endTime - startTime && valid && !defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since")) {
             const timeOutId = setTimeout(() => {
                 dispatch(SetTimeLimit({ start: newStart, end: newEnd }));
-            }, 1500);
+            }, 1000);
 
             return () => clearTimeout(timeOutId);
         }
-    }, [formattedTime, currentDate, dispatch]);
+    }, [formattedTime]);
 
-    React.useEffect(() => {
-        const newFormattedTime = {
-            start: moment(new Date(startTime)).format('HH:mm:ss.SSS'),
-            end: moment(new Date(endTime)).format('HH:mm:ss.SSS')
-        };
-
-        setFormattedTime(newFormattedTime);
-
-    }, [startTime, endTime]);
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -148,6 +219,7 @@ const SettingsWidget = (props) => {
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
         return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
     }, [props])
+
 
     return (
         <div className="d-flex flex-column" style={{ marginTop: '10px', width: '100%', height: '100%', padding: '10px' }}>
@@ -228,6 +300,27 @@ const SettingsWidget = (props) => {
                                             {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnitIndex={timeUnit.current} setter={index => handleTimeUnitChange(index)} /> : null}
                                         </div>
                                     </div>
+                                    {defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since") ?
+                                        <div className="form-row" style={{ marginTop: '10px' }}>
+                                            <div className="col-6">
+                                                <Input
+                                                    Record={{ startMS }}
+                                                    Setter={start => handleTimeChange(start.startMS, true)}
+                                                    Field={"startMS"}
+                                                    Valid={() => true}
+                                                    Label={"Start"}
+                                                    Type={"number"}
+                                                />
+                                            </div>
+                                            <div className="col-6">
+                                                <Input
+                                                    Record={{ endMS }}
+                                                    Setter={end => handleTimeChange(end.endMS, false)}
+                                                    Field={"endMS"}
+                                                    Valid={() => true}
+                                                    Label={"End"}
+                                                    Type={"number"}
+                                                />
                                             </div>
                                         </div> :
                                         <div className="form-row" style={{ marginTop: '10px' }}>
@@ -256,8 +349,9 @@ const SettingsWidget = (props) => {
                                                 Feedback={"Start Time can not be greater than End Time"}
                                             />
                                                     </div>
-                                                    </div>
 
+                                        </div>
+                                    }
                                     </fieldset>
 
                                     </div>
