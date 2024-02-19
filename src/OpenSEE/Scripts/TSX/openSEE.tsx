@@ -208,22 +208,18 @@ const OpenSeeHome = () => {
         return () => { clearTimeout(handle); }
     }, [resizeCount]);
 
-    function sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number {
-        if (item1.DataType == item2.DataType)
-            return 0
+    React.useEffect(() => {
+        if (openDrawers.ToolTipDelta) {
+            let oldMode = _.clone(mouseMode);
+            dispatch(SetMouseMode('select'))
+            return () => {
+                dispatch(SetMouseMode(oldMode))
+            }
+        }
+        return () => { }
 
-        let index1 = Plotorder.findIndex((v) => v == item1.DataType);
-        let index2 = Plotorder.findIndex((v) => v == item2.DataType);
+    }, [openDrawers.ToolTipDelta])
 
-        if (index1 != -1 && index2 != -1)
-            return (index1 > index2 ? 1 : -1);
-        if (index1 != -1)
-            return -1;
-        if (index2 != -1)
-            return 1;
-
-        return (item1 > item2 ? 1 : -1);
-    }
 
     function ToogleDrawer(drawer: OpenSee.OverlayDrawers, open: boolean) {
         overlayHandles.current[drawer](open);
