@@ -85,21 +85,21 @@ const OpenSeeNavBar = (props: IProps) => {
     }, [props.OpenDrawers.AccumulatedPoints])
 
     function exportData(type) {
-        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventId}` +
+        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
             `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
-            `${tab == 'Analytic' && analytic != 'FFT' ? `&displayAnalytics=${analytic}` : ``}` +
-            `${tab == 'Analytic' && analytic == 'LowPassFilter' ? `&filterOrder=${lpf}` : ``}` +
-            `${tab == 'Analytic' && analytic == 'HighPassFilter' ? `&filterOrder=${hpf}` : ``}` +
-            `${tab == 'Analytic' && analytic == 'Rectifier' ? `&Trc=${trc}` : ``}` +
-            `${tab == 'Analytic' && analytic == 'Harmonic' ? `&harmonic=${harmonic}` : ``}` +
+            `${`&displayAnalytics=${analytics}`}` +
+            `${`&lpfOrder=${lpf}`}` +
+            `${`&hpfOrder=${hpf}`}` +
+            `${`&Trc=${trc}`}` +
+            `${`&harmonic=${harmonic}`}` +
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
-            `&Meter=${props.EventData.MeterName}` +
-            `&EventType=${props.EventData.EventName}`
+            `&Meter=${eventInfo.MeterName}` +
+            `&EventType=${eventInfo.EventName}`
         );
     }
 
