@@ -551,12 +551,12 @@ namespace OpenSEE
             bool displayTCE = requestParameters["displayTCE"] == null ? false : bool.Parse(requestParameters["displayTCE"]);
             bool breakerdigitals = requestParameters["breakerdigitals"] == null ? false : bool.Parse(requestParameters["breakerdigitals"]);
             bool displayAnalogs = requestParameters["displayAnalogs"] == null ? false : bool.Parse(requestParameters["displayAnalogs"]);
-            int filterOrder = requestParameters["filterOrder"] == null? 0:  int.Parse(requestParameters["filterOrder"]);
+            int lpfOrder = requestParameters["lpfOrder"] == null ? 0 : int.Parse(requestParameters["lpfOrder"]);
+            int hpfOrder = requestParameters["hpfOrder"] == null ? 0 : int.Parse(requestParameters["hpfOrder"]);
             double Trc = requestParameters["Trc"] == null ? 0.0 : double.Parse(requestParameters["Trc"]);
             int harmonic = requestParameters["harmonic"] == null ? 1 : int.Parse(requestParameters["harmonic"]);
-
-            string displayAnalytics = requestParameters["displayAnalytics"] == null ? "" : requestParameters["displayAnalytics"];
-
+            List<string> displayAnalytics = requestParameters["displayAnalytics"] == null ? new List<string>() : requestParameters["displayAnalytics"].Split(',').ToList();
+            
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
                 Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
@@ -579,9 +579,11 @@ namespace OpenSEE
                 if (breakerdigitals)
                     returnList = returnList.Concat(QueryDigitalData(meter, evt));
 
-                if (displayAnalytics != "")
-                    returnList = returnList.Concat(QueryAnalyticData(meter, evt, displayAnalytics, filterOrder,Trc, harmonic));
-                
+                foreach (var analytics in displayAnalytics)
+                {
+                    if (!string.IsNullOrEmpty(analytics))
+                        returnList = returnList.Concat(QueryAnalyticData(meter, evt, analytics, lpfOrder, hpfOrder, Trc, harmonic));
+                }
 
                 returnList = AlignData(returnList.ToList());
 
@@ -589,7 +591,7 @@ namespace OpenSEE
             }
         }
 
-        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int order, double Trc, int harmonic)
+        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int lowPassOrder, int highPassOrder, double Trc, int harmonic)
         {
             Lazy<DataGroup> lazyDataGroup = new Lazy<DataGroup>(() =>
             {
@@ -632,9 +634,9 @@ namespace OpenSEE
             if (analytic == "MissingVoltage")
                 return controller.GetMissingVoltageLookup(lazyDataGroup.Value);
             if (analytic == "LowPassFilter")
-                return controller.GetLowPassFilterLookup(lazyDataGroup.Value, order);
+                return controller.GetLowPassFilterLookup(lazyDataGroup.Value, lowPassOrder);
             if (analytic == "HighPassFilter")
-                return controller.GetHighPassFilterLookup(lazyDataGroup.Value, order);
+                return controller.GetHighPassFilterLookup(lazyDataGroup.Value, highPassOrder);
             if (analytic == "SymmetricalComponents")
                 return controller.GetSymmetricalComponentsLookup(lazyVICycleDataGroup.Value);
             if (analytic == "Unbalance")
