@@ -370,9 +370,33 @@ export namespace OpenSee {
 
     interface IOverlayHandlers {
         Settings: (state: boolean) => void,
+        AccumulatedPoints: (state: boolean) => void,
+        PolarChart: (state: boolean) => void,
+        ScalarStats: (state: boolean) => void,
+        CorrelatedSags: (state: boolean) => void,
+        Lightning: (state: boolean) => void,
+        FFTTable: (state: boolean) => void,
+        HarmonicStats: (state: boolean) => void,
     }
 
-    type OverlayDrawers = 'Settings' | 'Info' | 'Tooltip' | 'Phasor'
+    type OverlayDrawers = 'Settings' | 'Info' | 'Tooltip' | 'Phasor' | 'PolarChart' | 'AccumulatedPoints' | 'ScalarStats' | 'CorrelatedSags' | 'Lightning' | 'FFTTable' | 'HarmonicStats'
+
+
+    interface Drawers {
+        Settings: boolean,
+        AccumulatedPoints: boolean,
+        PolarChart: boolean,
+        ScalarStats: boolean,
+        CorrelatedSags: boolean,
+        Lightning: boolean,
+        FFTTable: boolean,
+        Info: boolean,
+        Compare: boolean,
+        Analytics: boolean,
+        ToolTip: boolean,
+        ToolTipDelta: boolean,
+        HarmonicStats: boolean
+    }
 
     interface IPoint {
         Color: Color,
