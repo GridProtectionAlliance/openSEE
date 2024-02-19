@@ -644,7 +644,7 @@ namespace OpenSEE
         #region [ Compare ]
 
         [Route("GetOverlappingEvents"),HttpGet]
-        public DataTable GetOverlappingEvents()
+        public IEnumerable<object> GetOverlappingEvents()
         {
             using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
             {
@@ -663,7 +663,8 @@ namespace OpenSEE
 	                Asset.AssetName,
 	                Event.ID as EventID,
                     Event.StartTime,
-                    EventType.Name as EventType
+                    EventType.Name as EventType ,
+                    Event.EndTime
                 FROM
 	                Event
                     JOIN
@@ -677,8 +678,53 @@ namespace OpenSEE
 	                Event.StartTime <= {2} AND
 	                Event.EndTime >= {1} 
                 ", eventId, ToDateTime2(connection, startTime), ToDateTime2(connection, endTime));
-                return dataTable;
 
+                var results = new List<object>(); 
+
+
+                //instead of for eaching through each row we should make this work in the sql query itself...
+                foreach (DataRow row in dataTable.AsEnumerable())
+                {
+                    int eventID = row.Field<int>("EventID");
+                    double Inception = row.Field<DateTime>("StartTime").Subtract(m_epoch).TotalMilliseconds;
+                    double DurationEndTime = row.Field<DateTime>("EndTime").Subtract(m_epoch).TotalMilliseconds;
+
+                    FaultSummary faultSummary = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND IsSelectedAlgorithm = 1", eventID).OrderBy(row => row.IsSuppressed).ThenBy(row => row.Inception).FirstOrDefault();
+                    if (faultSummary != null)
+                    {
+                        Inception = faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds;
+                        DurationEndTime = faultSummary.Inception.AddSeconds(faultSummary.DurationSeconds).Subtract(m_epoch).TotalMilliseconds;
+                    }
+
+                    List<openXDA.Model.Disturbance> disturbances = new TableOperations<openXDA.Model.Disturbance>(connection)
+                        .QueryRecordsWhere("EventID = {0}", eventID)
+                        .Where(row => row.EventTypeID == eventID)
+                        .OrderBy(row => row.StartTime)
+                        .ToList();
+
+                    openXDA.Model.Disturbance firstDisturbance = disturbances.FirstOrDefault();
+                    openXDA.Model.Disturbance lastDisturbance = disturbances.LastOrDefault();
+
+                    if(firstDisturbance != null)
+                    {
+                        Inception = firstDisturbance.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                        DurationEndTime = lastDisturbance.EndTime.Subtract(m_epoch).TotalMilliseconds;
+                    }
+
+                    results.Add(new
+                    {
+                        MeterName = row.Field<string>("MeterName"),
+                        AssetName = row.Field<string>("AssetName"),
+                        EventID = eventID,
+                        StartTime = row.Field<DateTime>("StartTime"),
+                        EventType = row.Field<string>("EventType"),
+                        Inception,
+                        DurationEndTime,
+                        EndTime = row.Field<DateTime>("EndTime")
+                    });
+                }
+
+                return results;
             }
         }
 
