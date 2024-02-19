@@ -1256,29 +1256,75 @@ export const selectLoadAnalogs = createSelector((state: OpenSee.IRootState) => s
 
 export const selectLoadDigitals = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
     return (loading.filter((item, index) => plotKeys[index].DataType == 'Digitals' && item != 'Idle').length > 0)
+function applyLocalSettings(plot: OpenSee.IGraphstate) {
+
+    try {
+        let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
+        const unitSettings = settings.Units
+        console.log('isUnitSettings array',Array.isArray(unitSettings))
+
+        if (unitSettings && Array.isArray(unitSettings)) {
+            const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
+
+            Object.keys(matchingPlot.Units).forEach(key => {
+                plot.yLimits[key].current = matchingPlot.Units[key].current
+                plot.yLimits[key].isAuto = matchingPlot.Units[key].isAuto
 })
+        }
+        else if (!Array.isArray(unitSettings)){ //reset unit localstorage settings for old structure
+            settings.Units = []
+            const serializedState = JSON.stringify(settings);
+            localStorage.setItem('openSee.Settings', serializedState);
+        }
+    } catch { }
+}
 
 export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
     return (loading.filter((item, index) => plotKeys[index].DataType == 'TripCoil' && item != 'Idle').length > 0)
 })
 
+function saveSettings(state: OpenSee.IDataState) {
+    try {
+        //lets type currentSettings to prevent errors in future
+        const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
+        let unitSettings = settings.Units
+        if (unitSettings === null || unitSettings === undefined)
+            unitSettings = []
 
-// #endregion
+        plotTypes.forEach(plotType => {
+            const matchingPlot = state.Plots.find(plot => plot.key.DataType === plotType);
 
-// #region [ Async Functions ]
+            if (matchingPlot) {
+                const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                const plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
 
-function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
+                if (plot === undefined)
+                    unitSettings.push({ DataType: matchingPlot.key.DataType, Units: null })
 
-    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
+                Object.keys(matchingPlot.yLimits).forEach(key => {
+                    if (enabledUnits.includes(key as OpenSee.Unit)) {
+                        let plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
+                        const yLimits = matchingPlot.yLimits[key]
+                        if (plot.Units === undefined || plot.Units === null)
+                            plot.Units = {}
+                        plot.Units[key] = { current: yLimits.current, isAuto: yLimits.isAuto }
+                    }
+                })
 
-    RelevantAxis.forEach((axis) => {
-        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
-        if (!autoLimits || plot.key.DataType == 'FFT' || plot.key.DataType == 'OverlappingWave')
-            return;
-        plot.yLimits[axis].dataLimits = recomputeDataLimits(startTime, endTime,
-            plot.data.filter((item, i) => plot.enabled[i]));
-        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
+            }
     });
+
+        let currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
+        if (currentSettings === null || currentSettings === undefined)
+            currentSettings = {}
+        currentSettings.Units = unitSettings
+        const serializedState = JSON.stringify(currentSettings)
+        localStorage.setItem('openSee.Settings', serializedState);
+    } catch {
+        // ignore write errors
+    }
+}
 
 export function getPrimaryAxis(key: OpenSee.IGraphProps) {
     if (key.DataType === "Voltage")
