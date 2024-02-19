@@ -47,7 +47,7 @@ export namespace OpenSee {
         EventInfo: IEventInfo,
         State: LoadingState,
         EventID: number,
-        Navigation: EventNavigation
+        LookupInfo: iNextBackLookup
     }
 
     interface IAnalyticStore {
@@ -326,13 +326,27 @@ export namespace OpenSee {
         Inception: number, 
         DurationEndTime: number
     }
+
+    interface PlotQuery {
+        key: IGraphProps,
+        yLimits: IUnitCollection<OpenSee.IAxisSettings>,
+        isZoomed: boolean
+    }
+    interface Query {
+        plots: PlotQuery[]
         Harmonic: number,
         LPFOrder: number,
         HPFOrder: number,
         Trc: number,
+        CycleLimits: [number, number],
+        FFTLimits: [number, number],
         FFTCycles: number,
         FFTStartTime: number,
-        Analytic: Analytic,       
+        startTime: number,
+        endTime: number,
+        eventID: number,
+        overlappingInfo: [number],
+        singlePlot: boolean
     }
 
     interface IUnitCollection<T> {
