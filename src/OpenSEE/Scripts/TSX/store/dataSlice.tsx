@@ -866,7 +866,29 @@ export const SelectAxisSettings = (key: OpenSee.IGraphProps) => {
     };
 };
 
+
+export const SelectYLabels = (key: OpenSee.IGraphProps) => {
+    return (state: OpenSee.IRootState) => {
+        let labels = {} as OpenSee.IUnitCollection<string>
+        const plot = state.Data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(unit => {
+                let short = defaultSettings.Units[unit].options[plot.yLimits[unit].current].short
+                if (short === undefined)
+                    short = "N/A"
+
+                labels[unit] = `${unit} [${short}]`
+            })
+            return labels;
 }
+        else {
+            Object.keys(defaultSettings.Units).forEach(unit => {
+                labels[unit] = ""
+            })
+            return labels;
+        }
+    };
+};
 
 export const SelectStartTimeSinceInception = (state: RootState) => {
     let startTime = state.Data.startTime
