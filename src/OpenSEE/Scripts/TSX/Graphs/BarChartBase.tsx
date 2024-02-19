@@ -22,28 +22,25 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { range, uniq } from "lodash";
+import * as _ from "lodash";
 import * as d3 from "d3";
 import { OpenSee } from '../global';
 
 
 import Legend from './LegendBase';
-import { selectColor, selectActiveUnit } from '../store/settingSlice'
-import { selectData, selectEnabled,   selectLoading, selectYLimits, selectMouseMode, selectZoomMode, SetYLimits, selectFFTLimits, SetFFTLimits } from '../store/dataSlice';
-import { selectAnalyticOptions } from '../store/analyticSlice';
+import { SelectColor, SelectActiveUnit, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice'
+import {
+    SelectData, SelectEnabled, SelectLoading, SelectYLimits, SetZoomedLimits, SelectFFTLimits,
+    SetFFTLimits, SelectRelevantUnits, SelectIsZoomed, getPrimaryAxis, SelectYLabels, SelectEnabledUnits
+} from '../store/dataSlice';
+import { SelectAnalyticOptions, SelectFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
-import OpenSEEService from '../../TS/Services/OpenSEE';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-
-
 interface iProps {   
-    type: OpenSee.graphType,
-    eventId: number,
     height: number,
     width: number,
-    eventStartTime: number,
-    timeLabel: string,
+    dataKey: OpenSee.IGraphProps
 };
 
 // The following Classes are used in this 
@@ -62,42 +59,52 @@ interface iProps {
 // Overlay => The Container Overlayed for eventHandling
 
 const BarChart = (props: iProps) => {
-    const dataKey: OpenSee.IGraphProps = { DataType: props.type, EventId: props.eventId };
-    const SelectActiveUnitInstance = React.useMemo(() => selectActiveUnit(dataKey), [props.eventId, props.type])
-    const selectAnalyticOptionInstance = React.useMemo(() => selectAnalyticOptions(props.type), [props.type])
+    const dataKey: OpenSee.IGraphProps = { DataType: props.dataKey.DataType, EventId: props.dataKey.EventId };
+    const SelectActiveUnitInstance = React.useMemo(() => SelectActiveUnit(dataKey), [props.dataKey.EventId, props.dataKey.DataType])
+    const selectAnalyticOptionInstance = React.useMemo(() => SelectAnalyticOptions(props.dataKey.DataType), [props.dataKey.DataType])
+    const MemoSelectNumUnits = React.useMemo(() => SelectRelevantUnits(dataKey), []);
+    const yLimits = useAppSelector(SelectYLimits(dataKey));
 
-    const MemoSelectData = React.useMemo(selectData, []);
-    const MemoSelecEnable = React.useMemo(selectEnabled, []);
+    const MemoSelectIsZoomed = React.useMemo(() => SelectIsZoomed(dataKey), [props.dataKey.EventId, props.dataKey.DataType, yLimits])
+
+    const MemoSelectData = React.useMemo(() => SelectData(dataKey), []);
+    const MemoSelecEnable = React.useMemo(() => SelectEnabled(dataKey), []);
 
     const xScaleRef = React.useRef<any>();
     const xScaleLblRef = React.useRef<any>();
-    const yScaleRef = React.useRef<any>();
+    const yScaleRef = React.useRef<OpenSee.IUnitCollection<any> | {}>({});
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
+    const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
+    const relevantUnits = useAppSelector(MemoSelectNumUnits);
+    const MemoSelectEnabledUnit = React.useMemo(() => SelectEnabledUnits(props.dataKey), []);
+    const enabledUnits = useAppSelector(MemoSelectEnabledUnit);
 
-    const barData = useAppSelector((state) => MemoSelectData(state, dataKey));
-    const enabledBar = useAppSelector(state => MemoSelecEnable(state,dataKey));
+    const barData = useAppSelector(MemoSelectData);
+    const enabledBar = useAppSelector(MemoSelecEnable);
 
-    const xLimits = useAppSelector(selectFFTLimits);
+    const yLabels = useAppSelector(SelectYLabels(dataKey));
 
-    const loading = useAppSelector(selectLoading(dataKey));
+    const xLimits = useAppSelector(SelectFFTLimits);
+    const fftWindow = useAppSelector(SelectFFTWindow);
 
-    const colors = useAppSelector(selectColor);
+    const loading = useAppSelector(SelectLoading(dataKey));
+
+    const colors = useAppSelector(SelectColor);
     const activeUnit = useAppSelector(SelectActiveUnitInstance);
-    const mouseMode = useAppSelector(selectMouseMode);
-    const zoomMode = useAppSelector(selectZoomMode);
+    const mouseMode = useAppSelector(SelectMouseMode);
+    const zoomMode = useAppSelector(SelectZoomMode);
 
     const dispatch = useAppDispatch();
-    const yLimits = useAppSelector(selectYLimits(dataKey));
     const options = useAppSelector(selectAnalyticOptionInstance)
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
-    const [yLblText, setYLblText] = React.useState<string>('');
-    const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
+    const [yLblFontSize, setYLblFontSize] = React.useState<OpenSee.IUnitCollection<number> | {}>({});
+    const isZoomed = useAppSelector(MemoSelectIsZoomed);
+    const primaryAxis = getPrimaryAxis(dataKey)
 
-    //Effect to update the Data 
     React.useEffect(() => {
         if (loading == 'Loading')
             return;
