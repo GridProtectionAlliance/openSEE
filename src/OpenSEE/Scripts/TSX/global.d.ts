@@ -283,8 +283,8 @@ export namespace OpenSee {
 
     interface IUnitSetting {
         current: number,
-        options: Array<iUnitOptions>,
-        useAutoLimits: boolean
+        options?: Array<iUnitOptions>, 
+        autoUnit: boolean
     }
 
     interface IDefaultTrace {
