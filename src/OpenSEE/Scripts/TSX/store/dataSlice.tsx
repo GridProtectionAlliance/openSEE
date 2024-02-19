@@ -1353,30 +1353,23 @@ export function getPrimaryAxis(key: OpenSee.IGraphProps) {
 
 }
 
-function updateFFTAutoLimits(plot: OpenSee.IGraphstate, start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
-    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
+function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number) {
+    //only update limits once there is data loaded
+    if (plot?.data?.length > 0) {
+        const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
+        RelevantAxis.forEach(axis => {
+            const autoLimits = !plot.isZoomed && !plot.yLimits[axis].isManual;
+            if (!autoLimits)
+                return;
 
-    RelevantAxis.forEach((axis) => {
-        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
-        if (!autoLimits || plot.key.DataType != 'FFT')
-            return;
-        plot.yLimits[axis].dataLimits = recomputeDataLimits(start, end,
-            plot.data.filter((item, i) => plot.enabled[i]));
-        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
+            let filteredData = plot.data.filter(item => item.Unit === axis && item.Enabled);
+            const newLimits = recomputeDataLimits(startTime, endTime, filteredData, plot.yLimits[axis].current);
+            if (newLimits)
+                plot.yLimits[axis].dataLimits = newLimits;
+
     });
 }
 
-function updatedCycleAutoLimits(plot: OpenSee.IGraphstate, start: number, end: number, baseUnits: OpenSee.IUnitCollection<OpenSee.IUnitSetting>) {
-    const RelevantAxis = _.uniq(plot.data.map((s) => s.Unit));
-
-    RelevantAxis.forEach((axis) => {
-        const autoLimits = !plot.isZoomed && baseUnits[axis].useAutoLimits;
-        if (!autoLimits || plot.key.DataType != 'OverlappingWave')
-            return;
-        plot.yLimits[axis].dataLimits = recomputeDataLimits(start, end,
-            plot.data.filter((item, i) => plot.enabled[i]));
-        updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
-    });
 }
 
 // #endregion
