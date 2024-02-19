@@ -24,7 +24,7 @@
 import * as React from 'react';
 
 import { useSelector } from 'react-redux';
-import { selectVPhases, selectIPhases } from '../store/dataSlice';
+import { SelectVPhases, SelectIPhases } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice';
 import * as _ from 'lodash';
 import { OpenSee } from '../global';
@@ -34,8 +34,8 @@ import HoverContext from '../Context/HoverContext'
 const PhasorChartWidget = () => {
     const hover = React.useContext(HoverContext);
 
-    const VVector = useSelector(selectVPhases(hover.hover));
-    const IVector = useSelector(selectIPhases(hover.hover));
+    const VVector = useSelector(SelectVPhases(hover.hover));
+    const IVector = useSelector(SelectIPhases(hover.hover));
     const colors = useSelector(SelectColor);
 
     const [AssetList, setAssetList] = React.useState<string[]>([]);
@@ -77,7 +77,7 @@ const PhasorChartWidget = () => {
         if (vec == undefined)
             return <React.Fragment key={index}><td>N/A</td><td>N/A</td> </React.Fragment>
 
-        const factor = (vec.Unit.short == 'pu' ? (1.0 / vec.BaseValue) : vec.Unit.factor);
+        const factor = (vec.Unit.factor === undefined ? (1.0 / vec.BaseValue) : vec.Unit.factor);
 
         return (<React.Fragment key={index}>
             <td >{(vec.Magnitude * factor).toFixed(2)}</td>
