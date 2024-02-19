@@ -666,12 +666,52 @@ export const selectDisplayed = createSelector(
     })
 )
 
-/*
-export const selectData = () =>
-    createSelector(
-        (state: OpenSee.IRootState) => state.Data.data,
-        (state: OpenSee.IRootState) => state.Data.plotKeys,
-export const selectData = (key: OpenSee.IGraphProps) => createSelector(
+export const SelectPlotKeys = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (state: RootState) => state.Settings.SinglePlot,
+    (plots, singlePlot) => {
+        let keys = plots.map(plot => plot.key)
+        if (singlePlot)
+            keys = keys.filter(key => key.EventId === -1)
+
+        keys = _.uniq(keys)
+        keys.sort(sortGraph)
+
+        return keys?.length > 0 ? keys : []
+    }
+)
+
+// Returns a List of keys for Plots that should be displayed.
+export const SelectListGraphs = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (state: RootState) => state.Settings.SinglePlot,
+    (plots, singlePlot) => {
+        let keys = plots.map(p => p.key)
+
+        if (singlePlot)
+            return _.groupBy(keys.filter(item => item.EventId === -1), "EventId");
+
+        return _.groupBy(keys, "EventId");
+    })
+
+//Returns the DataType of plots that are Analytics
+export const SelectAnalytics = createSelector(
+    (state: RootState) => state.Data.Plots,
+    (state: RootState) => state.EventInfo.EventID,
+    (plots, evtID) => {
+        const analytics = ['FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'NewAnalytic'] as OpenSee.graphType[];
+        let plotTypes = plots.filter(plot => plot.key.EventId === evtID && analytics.includes(plot.key.DataType)).map(plot => plot.key.DataType)
+
+        plotTypes = _.uniq(plotTypes)
+
+        if (plotTypes)
+            return plotTypes
+        else
+            return []
+    }
+)
+
+export const SelectData = (key: OpenSee.IGraphProps) => createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
         (state: OpenSee.IRootState) => state.Settings.SinglePlot,
     (plots, singlePlot) => {
