@@ -283,7 +283,22 @@ export namespace OpenSee {
 
     type LoadingState = ('Idle' | 'Loading' | 'Partial' | 'Error' | 'Uninitiated');
 
-    interface IAnalyticStore {
+    interface IOverlappingEventsStore {
+        EventList: OverlappingEvents[],
+        Loading: boolean
+    }
+
+    interface OverlappingEvents {
+        Selected: boolean,
+        AssetName: string,
+        MeterName: string,
+        EventID: number,
+        StartTime: number,
+        EndTime: number,
+        EventType: string,
+        Inception: number, 
+        DurationEndTime: number
+    }
         Harmonic: number,
         LPFOrder: number,
         HPFOrder: number,
@@ -291,14 +306,6 @@ export namespace OpenSee {
         FFTCycles: number,
         FFTStartTime: number,
         Analytic: Analytic,       
-    }
-
-    interface IOverlappingEventsStore {
-        EventList: Array<number>,
-        Selected: Array<boolean>,
-        Label: Array<string>,
-        Group: Array<string>,
-        loadingOverlappingEvents: boolean
     }
 
     interface IUnitCollection<T> {
