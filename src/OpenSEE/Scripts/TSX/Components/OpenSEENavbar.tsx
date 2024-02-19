@@ -142,9 +142,11 @@ const OpenSeeNavBar = (props: IProps) => {
                     <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
-                        <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</div>
+                        <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {moment(eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                        </div>
                         <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'} Zindex={9999}>
-                                <p>{moment(eventInfo?.EventDate).format('YYYY-MM-DD HH:mm:ss')}</p>
+                            <p>{moment(eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
                             </ToolTip>
                         </li>
                     </ul>
