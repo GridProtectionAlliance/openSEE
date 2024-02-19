@@ -347,19 +347,15 @@ export const DataReducer = createSlice({
         },
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
             key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
-            defaultTraces: OpenSee.IDefaultTrace, defaultV: OpenSee.IDefaultVType,
+            defaultTraces: OpenSee.IDefaultTrace, defaultV: "L-L" | "L-N",
             eventID: number
         }>) => {
             let currentPlot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
 
             if (currentPlot) {
-                const isDuplicate = currentPlot.data.some(data => data.EventID === action.payload.eventID)
-                if (isDuplicate)
-                    return state
-
                 const orignalLength = currentPlot.data.length
-                //update plot with settings from local storage
-                loadSettings(currentPlot)
+                //update plot with unit settings from local storage
+                applyLocalSettings(currentPlot)
 
                 currentPlot.data.push(...action.payload.data);
                 const newLength = currentPlot.data.length
@@ -371,6 +367,14 @@ export const DataReducer = createSlice({
                     currentPlot.data[i].EventID = action.payload.eventID
                 }
 
+                const RelevantAxises = _.uniq(currentPlot.data.map(s => s.Unit));
+
+                RelevantAxises.forEach(axis => {
+                    let filteredData = currentPlot.data.filter(item => item.Unit === axis && item.Enabled);
+                    let index = updateActiveUnits(currentPlot.yLimits, axis, filteredData, state.startTime, state.endTime, null);
+                    if (index)
+                        currentPlot.yLimits[axis].current = index;
+                })
 
                 if (currentPlot.key.DataType === 'FFT') {
                     state.fftLimits = [Math.min(...currentPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...currentPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
