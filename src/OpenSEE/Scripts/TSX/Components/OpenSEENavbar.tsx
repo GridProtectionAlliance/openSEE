@@ -35,7 +35,6 @@ import { ToolTip } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
 
-import HarmonicStatsWidget from '../jQueryUI Widgets/HarmonicStats'; 
 import About from './About'; 
 
 
@@ -67,8 +66,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const fftTime = useAppSelector(SelectFFTLimits);
 
     const [showAbout, setShowAbout] = React.useState<boolean>(false); 
-
-    const [positionHarmonicStats, setPositionHarmonicStats] = React.useState<[number, number]>([0, 0]);
     const [hover, setHover] = React.useState<('None' | 'Waveform' | 'Show Points' | 'Polar Chart' | 'Stat' | 'Sags' | 'Lightning' | 'Export' | 'Tooltip' | 'Clock' | 'Zoom Mode' | 'Pan' | 'FFTTable' | 'FFTMove' | 'Reset Zoom' | 'Settings' | 'NavLeft' | 'NavRight' | 'Help' | 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception' | 'Select')>('None')
     
 
@@ -420,13 +417,11 @@ const OpenSeeNavBar = (props: IProps) => {
                             <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'} Theme={'dark'}>
                                 <p>Help</p>
                             </ToolTip>
+                        <About isOpen={showAbout} closeCallback={() => setShowAbout(false)} />
+
                         </li>
                     </ul>
             </div>
-                    <React.Suspense fallback={<div>Loading...</div>}>
-                {eventID ? <HarmonicStatsWidget isOpen={showHarmonicStats} eventId={eventID} closeCallback={() => setShowHarmonicStats(false)} exportCallback={() => exportData('harmonics')} position={positionHarmonicStats} setPosition={(t, l) => setPositionHarmonicStats([t, l])} /> : null}
-                <About isOpen={showAbout} closeCallback={() => setShowAbout(false)} />
-                    </React.Suspense>
                     </>
             );
 
