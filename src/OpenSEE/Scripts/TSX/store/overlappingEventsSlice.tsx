@@ -74,11 +74,11 @@ export const OverlappingEventReducer = createSlice({
         UpdateEnabled: (state, action: PayloadAction<number>) => {
             state.EventList[action.payload].Selected = !state.EventList[action.payload].Selected
         },
-        SetOverlappingEventList: (state, action: PayloadAction<OpenSee.OverlappingEvents[]>) => {
-            action.payload.forEach(event => {
-                const evt = state.EventList.find(evt => evt.AssetName === event.AssetName && evt.MeterName === event.MeterName && evt.EventID === event.EventID && evt.Selected === event.Selected)
-                if (evt === undefined)
-                    state.EventList.push({ Selected: event.Selected, AssetName: event.AssetName, MeterName: event.MeterName, EventID: event.EventID, StartTime: event.StartTime, EventType: event.EventType })
+        SetOverlappingEventList: (state, action: PayloadAction<[number]>) => {
+            action.payload.forEach(id => {
+                const evt = state.EventList.find(evt => evt.EventID === id)
+                if(evt === undefined)
+                    state.EventList.push({ Selected: true, AssetName: "", MeterName: "", EventID: id, StartTime: 0, EventType: "", Inception: 0, DurationEndTime: 0, EndTime: 0 })
             })
         },
     },
@@ -90,9 +90,19 @@ export const OverlappingEventReducer = createSlice({
         builder.addCase(LoadOverlappingEvents.fulfilled, (state, action) => {
             state.Loading = false;
             action.payload.forEach(event => {
-                const evt = state.EventList.find(evt => evt.AssetName === event.AssetName && evt.MeterName === event.MeterName && evt.EventID === event.EventID)
-                if(evt === undefined)
-                    state.EventList.push({ Selected: false, AssetName: event.AssetName, MeterName: event.MeterName, EventID: event.EventID, StartTime: new Date(event.StartTime + "Z").getTime(), EventType: event.EventType })
+                let evt = state.EventList.find(evt => evt.EventID === event.EventID)
+                if (evt === undefined)
+                    state.EventList.push({ Selected: false, AssetName: event.AssetName, MeterName: event.MeterName, EventID: event.EventID, StartTime: new Date(event.StartTime + "Z").getTime(), EndTime: new Date(event.EndTime + "Z").getTime(), EventType: event.EventType, Inception: event.Inception, DurationEndTime: event.DurationEndTime })
+                else {
+                    //update eventIDs that were pushed from queryString
+                    evt.AssetName = event.AssetName;
+                    evt.MeterName = event.MeterName;
+                    evt.StartTime = new Date(event.StartTime + "Z").getTime();
+                    evt.EndTime = new Date(event.EndTime + "Z").getTime();
+                    evt.EventType = event.EventType;
+                    evt.Inception = event.Inception;
+                    evt.DurationEndTime = event.DurationEndTime;
+                }
             })
             return state
         });
