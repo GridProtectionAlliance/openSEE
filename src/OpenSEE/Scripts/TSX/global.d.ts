@@ -361,11 +361,13 @@ export namespace OpenSee {
     }
 
     interface IAxisSettings {
-        activeUnit: number,
-        manuallimits: [number, number],
+        isManual: boolean,
         dataLimits: [number, number],
+        manualLimits: [number, number],
         zoomedLimits: [number, number],
-        label: string
+        isAuto: boolean,
+        current: number
+    }
     }
 
     interface IOverlayHandlers {
