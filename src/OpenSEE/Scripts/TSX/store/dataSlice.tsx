@@ -1425,21 +1425,30 @@ function recomputeNonAutoLimits(oldLimits: [number, number], newLimits: [number,
     return [updatedLowerLimit, updatedUpperLimit];
 }
 
-function recomputeZoomedLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
-    // Calculate the proportion of the current limits relative to the old range
-    const oldRange = oldLimits[1] - oldLimits[0];
-    const lowerLimit = (newLimits[0] - oldLimits[0]) / oldRange;
-    const upperLimit = (newLimits[1] - oldLimits[0]) / oldRange;
+function scaleLimitsByFactor(oldIndex, newIndex, unit: OpenSee.Unit, limits: [number, number]): [number, number] {
+    const oldFactor = defaultSettings.Units[unit].options[oldIndex].factor
+    const newFactor = defaultSettings.Units[unit].options[newIndex].factor
+    const change = newFactor / oldFactor
 
-    // Apply the proportional change to the new range
-    const currentRange = currentLimits[1] - currentLimits[0];
-    const updatedLowerLimit = currentLimits[0] + lowerLimit * currentRange;
-    const updatedUpperLimit = currentLimits[0] + upperLimit * currentRange;
+    //need to handle pu factor somehow..
 
-    return [updatedLowerLimit, updatedUpperLimit];
+    return [limits[0] * change, limits[1] * change]
 }
 
+function scaleLimits(oldDataLimits, newDataLimits, zoomedLimits): [number, number] {
+    // Calculate the range of old and new data limits
+    const oldRange = oldDataLimits[1] - oldDataLimits[0];
+    const newRange = newDataLimits[1] - newDataLimits[0];
 
+    // Calculate the proportional change
+    const scale = newRange / oldRange;
+
+    // Apply the proportional change to zoomed limits
+    const scaledZoomedLowerLimit = zoomedLimits[0] * scale;
+    const scaledZoomedUpperLimit = zoomedLimits[1] * scale;
+
+    return [scaledZoomedLowerLimit, scaledZoomedUpperLimit];
+}
 
 //function that Updates the Current Units if they are on auto 
 function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number]) {
