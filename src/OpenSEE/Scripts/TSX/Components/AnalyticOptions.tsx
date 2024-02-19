@@ -26,30 +26,29 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { SelectHarmonic,SelectHPF, SelectLPF, SelectTRC, SelectCycles, UpdateAnalytic, SelectAnalytics } from '../store/analyticSlice';
-import { selectGraphTypes, RemovePlot, AddPlot, selectPlotTypes, SelectEventIDs } from '../store/dataSlice'
+import { SelectPlotKeys, RemovePlot, AddPlot, SelectEventIDs } from '../store/dataSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive"
 import { Select, Input } from "@gpa-gemstone/react-forms"
 import * as _ from 'lodash'
 import { ToInt } from '../store/queryThunk'
-import { plotLabels } from '../defaults'
+import { GetDisplayLabel } from '../Graphs/Utilities'
 
 const AnalyticOptions = () => {
     const dispatch = useAppDispatch();
     const harmonic = useAppSelector(SelectHarmonic)
-    const graphTypes = useAppSelector(selectGraphTypes)
+    const plotKeys = useAppSelector(SelectPlotKeys)
     const hpf = useAppSelector(SelectHPF)
     const lpf = useAppSelector(SelectLPF)
     const trc = useAppSelector(SelectTRC)
     const cycles = useAppSelector(SelectCycles);
     const analytics = useAppSelector(SelectAnalytics);
-    const plotTypes = useAppSelector(selectPlotTypes); 
     const eventIDs = useAppSelector(SelectEventIDs)
 
     const [isHarmonicValid, setIsHarmonicValid] = React.useState<boolean>(true)
 
 
-    const analyticDefaults = [
+    const defaultAnalyticBtns = [
         { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FaultDistance', EventId: id } }))), DataType: 'FaultDistance' },
         { Label: 'FFT', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FFT', EventId: id } }))), DataType: 'FFT' },
         { Label: 'First Derivative', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FirstDerivative', EventId: id } }))), DataType: "FirstDerivative" },
@@ -67,12 +66,11 @@ const AnalyticOptions = () => {
         { Label: 'Specified Harmonic', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Harmonic', EventId: id } }))), DataType: 'Harmonic' },
         { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'SymetricComp', EventId: id } }))), DataType: 'SymetricComp' },
         { Label: 'THD', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'THD', EventId: id } }))), DataType: 'THD' },
-        { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Unbalance', EventId: id } }))), DataType: 'Unbalance' }
+        { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Unbalance', EventId: id } }))), DataType: 'Unbalance' },
+        { Label: 'NewAnalytic', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'NewAnalytic', EventId: id } }))), DataType: 'NewAnalytic' }
     ];
 
-
-
-    const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(analyticDefaults)
+    const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(defaultAnalyticBtns)
 
     const handleHarmonicChange = (harmonic: number) => {
         if (harmonic) {
@@ -119,13 +117,10 @@ const AnalyticOptions = () => {
     }
 
     React.useEffect(() => {
-        const currentPlots = _.uniq(plotTypes)
-
-        const filteredAnalyticBtns = analyticDefaults.filter(btn => !currentPlots.includes(btn.DataType as OpenSee.graphType));
+        const filteredAnalyticBtns = defaultAnalyticBtns.filter(btn => !plotKeys.map(key => key.DataType).includes(btn.DataType as OpenSee.graphType));
 
         setAnalyticBtns(filteredAnalyticBtns)
-    }, [plotTypes])
-
+    }, [plotKeys])
 
 
     //nonanalytic plots or analytic plots that need parameters
@@ -136,13 +131,13 @@ const AnalyticOptions = () => {
             <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
                 <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', height: '100%', width: '100%', overflowY: 'auto', padding: '10px', marginTop: 0 }}>
                     <div style={{marginBottom: '20px'}}>
-                    <BtnDropdown // why is this refreshing the page??
-                        Label={analyticBtns[0].Label}
-                        Callback={() => false}
-                        Options={analyticBtns}
+                    <BtnDropdown // why is this refreshing the page if i click the button  itself..??
+                            Label={analyticBtns[0].Label}
+                            Callback={() => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: analyticBtns[0].DataType, EventId: id } })))}
+                            Options={analyticBtns}
                         />
                     </div>
-                    {graphTypes.some(type => type.DataType === "Harmonic") && (
+                    {plotKeys.some(type => type.DataType === "Harmonic") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Specified Harmonic</legend>
@@ -164,7 +159,7 @@ const AnalyticOptions = () => {
                             </fieldset>
                         </div>
                     )}
-                    {graphTypes.some(type => type.DataType === "HighPassFilter") && (
+                    {plotKeys.some(type => type.DataType === "HighPassFilter") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>High Pass Filter</legend>
@@ -185,7 +180,7 @@ const AnalyticOptions = () => {
                             </fieldset>
                         </div>
                     )}
-                    {graphTypes.some(type => type.DataType === "LowPassFilter") && (
+                    {plotKeys.some(type => type.DataType === "LowPassFilter") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Low Pass Filter</legend>
@@ -206,7 +201,7 @@ const AnalyticOptions = () => {
                             </fieldset>
                         </div>
                     )}
-                    {graphTypes.some(type => type.DataType === "Rectifier") && (
+                    {plotKeys.some(type => type.DataType === "Rectifier") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
@@ -227,7 +222,7 @@ const AnalyticOptions = () => {
                             </fieldset>
                         </div>
                     )}
-                    {graphTypes.some(type => type.DataType === "FFT") && (
+                    {plotKeys.some(type => type.DataType === "FFT") && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
@@ -248,10 +243,10 @@ const AnalyticOptions = () => {
                             </fieldset>
                         </div>
                     )}
-                    {graphTypes.map(key => !dynamicPlots.includes(key.DataType) && (
+                    {_.uniqBy(plotKeys, "DataType").map(key => !dynamicPlots.includes(key.DataType) && (
                         <div className="form-row">
                             <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                                <legend className="w-auto" style={{ fontSize: 'large' }}>{plotLabels[key.DataType]}</legend>
+                                <legend className="w-auto" style={{ fontSize: 'large' }}>{GetDisplayLabel(key.DataType)}</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
                                         <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: key.DataType })))}>Remove</button>
