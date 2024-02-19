@@ -218,9 +218,6 @@ export const DataReducer = createSlice({
     initialState: {
         startTime: 0 as number,
         endTime: 0 as number,
-        hover: [0, 0] as number[],
-        mouseMode: 'zoom' as OpenSee.MouseMode,
-        zoomMode: 'x' as OpenSee.ZoomMode,
         Plots: [] as OpenSee.IGraphstate[],
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0 / 60.0],
@@ -245,14 +242,6 @@ export const DataReducer = createSlice({
                     state.Plots.splice(plotIndex, 1);
             }
             }
-        },
-        SetMouseMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.MouseMode>) => {
-            state.mouseMode = action.payload
-        },
-        SetZoomMode: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.ZoomMode>) => {
-            state.zoomMode = action.payload
-            if (state.mouseMode !== "zoom")
-                state.mouseMode = "zoom"
         },
         UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
             const curPlot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
