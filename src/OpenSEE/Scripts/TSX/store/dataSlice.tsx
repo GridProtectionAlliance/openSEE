@@ -309,6 +309,42 @@ export const DataReducer = createSlice({
 
             return state;
         },
+        SetIsManual: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean }>) => {
+            let plot = state.Plots.find(plot => plot.key.DataType === action.payload.key.DataType && plot.key.EventId === action.payload.key.EventId);
+            plot.yLimits[action.payload.unit].isManual = action.payload.manual
+
+            const isValidNumber = (value) => !isNaN(value) && isFinite(value);
+
+            const invalidZoomedLimits = (plot.yLimits[action.payload.unit].zoomedLimits === null) || !isValidNumber(plot.yLimits[action.payload.unit].zoomedLimits[0]) || !isValidNumber(plot.yLimits[action.payload.unit].zoomedLimits[1]);
+            const invalidDataLimits = (plot.yLimits[action.payload.unit].dataLimits === null) || !isValidNumber(plot.yLimits[action.payload.unit].dataLimits[0]) || !isValidNumber(plot.yLimits[action.payload.unit].dataLimits[1]);
+
+            if (plot.isZoomed && !invalidZoomedLimits)
+                plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].zoomedLimits
+            else if (!invalidDataLimits)
+                plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].dataLimits
+
+            return state;
+        },
+
+        UpdateTimeLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
+            if (Math.abs(action.payload.start - action.payload.end) < 10)
+                return state;
+
+            state.startTime = action.payload.start;
+            state.endTime = action.payload.end;
+
+            state.Plots.forEach(graph => {
+                if (graph.key.DataType === "FFT")
+                    updateAutoLimits(graph, state.fftLimits[0], state.fftLimits[1]);
+                else if (graph.key.DataType === "OverlappingWave")
+                    updateAutoLimits(graph, state.cycleLimit[0], state.cycleLimit[1]);
+                else
+                    updateAutoLimits(graph, state.startTime, state.endTime);
+
+            });
+
+            return state;
+        },
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
             key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
             defaultTraces: OpenSee.IDefaultTrace, defaultV: OpenSee.IDefaultVType,
