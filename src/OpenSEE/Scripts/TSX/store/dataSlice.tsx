@@ -206,11 +206,6 @@ export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { 
     return Promise.resolve();
 })
 
-// Thunk to Update time Units
-export const SetTimeUnit = createAsyncThunk('Data/SetTimeUnit', (arg: { auto: boolean, index: number }, thunkAPI) => {
-    thunkAPI.dispatch(SetTimeUnitSetting({ index: arg.index, auto: arg.auto }));
-})
-
 export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }, thunkAPI) => {
     thunkAPI.dispatch(UpdateActiveUnits({ unit: arg.unit, value: arg.value, auto: arg.auto, key: arg.key }));
 })
