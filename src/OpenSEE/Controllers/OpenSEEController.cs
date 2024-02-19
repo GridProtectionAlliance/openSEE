@@ -477,11 +477,10 @@ namespace OpenSEE
                 returnDict.Add("EventName", theEvent.EventTypeName);
                 returnDict.Add("EventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
                 returnDict.Add("Date", theEvent.StartTime.ToShortDateString());
-                returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds.ToString());
-                                
+                returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));
-
-                
+                returnDict.Add("Inception", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds); //for non fault events we are using startTime as the inception time for now
+                returnDict.Add("DurationEndTime", theEvent.EndTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);//for non fault events we are using endTime as the end of duration for now
 
                 if (new List<string>() { "Fault", "RecloseIntoFault" }.Contains(returnDict["EventName"]))
                 {
@@ -504,31 +503,43 @@ namespace OpenSEE
                         "ORDER BY PerUnitMagnitude";
 
                     FaultSummary thesummary = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND IsSelectedAlgorithm = 1", theEvent.ID).OrderBy(row => row.IsSuppressed).ThenBy(row => row.Inception).FirstOrDefault();
-                    double sagDepth = connection.ExecuteScalar<double>(SagDepthQuery, thesummary.ID);
-
-                    if ((object)thesummary != null)
+                    if (thesummary != null)
                     {
-                        returnDict.Add("StartTime", thesummary.Inception.TimeOfDay.ToString());
+                        double sagDepth = connection.ExecuteScalar<double>(SagDepthQuery, thesummary.ID);
                         returnDict.Add("Phase", thesummary.FaultType);
                         returnDict.Add("DurationPeriod", thesummary.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
                         returnDict.Add("Magnitude", thesummary.CurrentMagnitude.ToString("####.#", CultureInfo.InvariantCulture) + " Amps (RMS)");
                         returnDict.Add("SagDepth", sagDepth.ToString("####.#", CultureInfo.InvariantCulture) + "%");
                         returnDict.Add("CalculationCycle", thesummary.CalculationCycle.ToString());
+                        returnDict.Add("DurationCycles", thesummary.DurationCycles);
+                        returnDict.Add("DurationSeconds", thesummary.DurationSeconds);
+                        returnDict["Inception"] = thesummary.Inception.Subtract(m_epoch).TotalMilliseconds;
+                        returnDict["DurationEndTime"] = thesummary.Inception.AddSeconds(thesummary.DurationSeconds).Subtract(m_epoch).TotalMilliseconds;
                     }
                 }
                 else if (new List<string>() { "Sag", "Swell" }.Contains(returnDict["EventName"]))
                 {
-                    openXDA.Model.Disturbance disturbance = new TableOperations<openXDA.Model.Disturbance>(connection).QueryRecordsWhere("EventID = {0}", theEvent.ID).Where(row => row.EventTypeID == theEvent.EventTypeID).OrderBy(row => row.StartTime).FirstOrDefault();
 
-                    if ((object)disturbance != null)
-                    {
-                        returnDict.Add("StartTime", disturbance.StartTime.TimeOfDay.ToString());
-                        returnDict.Add("Phase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", disturbance.PhaseID).Name);
-                        returnDict.Add("DurationPeriod", disturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
+                    List<openXDA.Model.Disturbance> disturbances = new TableOperations<openXDA.Model.Disturbance>(connection)
+                        .QueryRecordsWhere("EventID = {0}", theEvent.ID)
+                        .Where(row => row.EventTypeID == theEvent.EventTypeID)
+                        .OrderBy(row => row.StartTime)
+                        .ToList(); 
 
-                        if (disturbance.PerUnitMagnitude != -1.0e308)
+                    openXDA.Model.Disturbance firstDisturbance = disturbances.FirstOrDefault();
+                    openXDA.Model.Disturbance lastDisturbance = disturbances.LastOrDefault();
+
+                    if (firstDisturbance != null)
                         {
-                            returnDict.Add("Magnitude", disturbance.PerUnitMagnitude.ToString("N3", CultureInfo.InvariantCulture) + " pu (RMS)");
+                        returnDict.Add("StartTime", firstDisturbance.StartTime.TimeOfDay.ToString());
+                        returnDict.Add("Phase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", firstDisturbance.PhaseID).Name);
+                        returnDict.Add("DurationPeriod", firstDisturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
+                        returnDict.Add("DurationSeconds", firstDisturbance.DurationSeconds);
+                        returnDict["Inception"] = firstDisturbance.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                        returnDict["DurationEndTime"] = lastDisturbance.EndTime.Subtract(m_epoch).TotalMilliseconds;
+                        if (firstDisturbance.PerUnitMagnitude != -1.0e308)
+                        {
+                            returnDict.Add("Magnitude", firstDisturbance.PerUnitMagnitude.ToString("N3", CultureInfo.InvariantCulture) + " pu (RMS)");
                         }
                     }
                 }
@@ -541,7 +552,7 @@ namespace OpenSEE
                     {
                         BreakerOperation breakerRow = new TableOperations<BreakerOperation>(connection).QueryRecordWhere("ID = {0}", id);
 
-                        if ((object)breakerRow != null)
+                        if (breakerRow != null)
                         {
                             returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
                             returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
