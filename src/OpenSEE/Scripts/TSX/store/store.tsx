@@ -21,8 +21,8 @@
 //
 //******************************************************************************************************
 import { configureStore } from '@reduxjs/toolkit';
-import  SettingsReducer from './settingSlice';
-import  DataReducer from './dataSlice';
+import SettingsReducer from './settingSlice';
+import DataReducer from './dataSlice';
 import AnalyticReducer  from './analyticSlice';
 import OverlappingEventReducer from './overlappingEventsSlice';
 import EventInfoReducer from './eventInfoSlice'
@@ -37,6 +37,6 @@ const reducer = {
     EventInfo: EventInfoReducer,
     OverlappingEvents: OverlappingEventReducer
 }
-const store = configureStore({ reducer } );
+const store = configureStore({ reducer });
 
 export default store;
