@@ -734,17 +734,56 @@ const FilterData = (data: OpenSee.iD3DataSeries[][], plotKeys: OpenSee.IGraphPro
         return data[index].concat(...d);
     }
 
-    return data[index];
+
+export const SelectRelevantUnits = (key: OpenSee.IGraphProps) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (Plots) => {
+        let units: OpenSee.Unit[] = [];
+
+        // Filter relevant plots and collect units
+        Plots.filter(plot => key.DataType === plot.key.DataType && key.EventId === plot.key.EventId).forEach(plot => {
+            plot.data.forEach(data => {
+                if (data.Unit) {
+                    units.push(data.Unit);
+                }
+            });
+        });
+
+        //Make sure the primaryAxis is at the beginning of the array for plotting purposes..
+        if (units.includes(getPrimaryAxis(key))) {
+            units = units.filter(unit => unit !== getPrimaryAxis(key))
+            units.unshift(getPrimaryAxis(key))
+        }
+        return _.uniq(units);
+    }
+);
+
+
+export const SelectEnabledUnits = (key: OpenSee.IGraphProps) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (Plots) => {
+        let units: OpenSee.Unit[] = [];
+        const plot = Plots.find(plot => key.DataType === plot.key.DataType && key.EventId === plot.key.EventId)
+        // Filter relevant plots and collect units
+        if (plot) {
+            plot.data.forEach(data => {
+                if (data.Unit && data.Enabled) {
+                    units.push(data.Unit);
+                }
+            });
+
+            //Make sure the primaryAxis is at the beginning of the array
+            if (units.includes(getPrimaryAxis(key))) {
+                units = units.filter(unit => unit !== getPrimaryAxis(key))
+                units.unshift(getPrimaryAxis(key))
+            }
+            return _.uniq(units);
+        }
+        else {
+            return []
 }
 
-export const selectEnabled = () =>
-    createSelector(
-    (state: OpenSee.IRootState) => state.Data.enabled,
-    (state: OpenSee.IRootState) => state.Data.plotKeys,
-    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-    (state: OpenSee.IRootState) => state.Settings.Tab,
-    (_, key: OpenSee.IGraphProps) => key,
-    FilterEnabled
+    }
 );
 
 export const SelectYLimits = (key: OpenSee.IGraphProps) => {
