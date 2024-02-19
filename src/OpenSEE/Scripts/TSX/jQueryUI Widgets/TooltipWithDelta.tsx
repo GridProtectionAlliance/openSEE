@@ -26,22 +26,22 @@
 
 import * as React from 'react';
 import moment = require('moment');
-import { selectDeltaHoverPoints } from '../store/dataSlice';
+import { SelectDeltaHoverPoints } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext'
 
 const ToolTipDeltaWidget = () => {
     const hover = React.useContext(HoverContext);
-    const points = useAppSelector(selectDeltaHoverPoints(hover.hover));
+    const points = useAppSelector(SelectDeltaHoverPoints(hover.hover));
     const colors = useAppSelector(SelectColor);
 
     let data: Array<JSX.Element> = (points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.short == 'pu' || p.Unit.short == 'pu/s' ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
     </tr>))
 
 
@@ -49,8 +49,8 @@ const ToolTipDeltaWidget = () => {
     let secondDate = points.length > 0 ? points[0].Time : NaN;
 
     return (
-        <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
-            <table className="table" style={{ overflowY: 'auto', height: '100%', overflowX: 'hidden', margin: '3%' }}>
+        <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center', padding: '10px' }}>
+            <table className="table" style={{ width: '100%' ,overflowY: 'auto', height: '100%', overflowX: 'hidden' }}>
                 <thead>
                     <tr><td style={{ width: 34 }}></td>
                         <td style={{ width: 120 }}></td>

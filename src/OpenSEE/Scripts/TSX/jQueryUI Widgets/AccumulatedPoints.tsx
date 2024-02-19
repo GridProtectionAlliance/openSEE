@@ -24,20 +24,14 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { selectSelectedPoints, selectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
+import { SelectSelectedPoints, SelectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-interface Iprops {
-    closeCallback: () => void,
-    isOpen: boolean,
-    position: [number, number],
-    setPosition: (t: number, l: number) => void
-}
 
 const PointWidget = () => {
-    const points = useAppSelector(selectSelectedPoints);
-    const startTime = useAppSelector(selectStartTime);
+    const points = useAppSelector(SelectSelectedPoints);
+    const startTime = useAppSelector(SelectStartTime);
     const dispatch = useAppDispatch();
     const colors = useAppSelector(SelectColor);
     const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
@@ -59,7 +53,6 @@ const PointWidget = () => {
     React.useLayoutEffect(() => {
         if (flexRef.current)
             setFlexSize({ width: flexRef.current.offsetWidth, height: flexRef.current.offsetHeight });
-
     }, []);
 
     return (
@@ -122,9 +115,9 @@ const PointWidget = () => {
                     </table>
                 </div>
                 <div style={{ height: '5%' }}>
-                    <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dispatch(RemoveSelectPoints(selectedIndex)); }} />
+                    <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dispatch(RemoveSelectPoints(selectedIndex)); setSelectedIndex(-1) }} />
                     <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
-                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => dispatch(ClearSelectPoints())} />
+                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { dispatch(ClearSelectPoints()); setSelectedIndex(-1) }} />
                 </div>
             </div>
         </>
