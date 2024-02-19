@@ -17,7 +17,7 @@ function buildConfig(env, argv) {
             ToolTipWidget: "./Scripts/TSX/jQueryUI Widgets/Tooltip.tsx",
             TimeCorrelatedSagsWidget: "./Scripts/TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
             PointWidget: "./Scripts/TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
-            PolarChartWidget: "./Scripts/TSX/jQueryUI Widgets/PolarChart.tsx",
+            PhasorChartWidget: "./Scripts/TSX/jQueryUI Widgets/PhasorChart.tsx",
             ScalarStatsWidget: "./Scripts/TSX/jQueryUI Widgets/ScalarStats.tsx",
             LightningDataWidget: "./Scripts/TSX/jQueryUI Widgets/LightningData.tsx",
             SettingsWidget: "./Scripts/TSX/jQueryUI Widgets/SettingWindow.tsx",
