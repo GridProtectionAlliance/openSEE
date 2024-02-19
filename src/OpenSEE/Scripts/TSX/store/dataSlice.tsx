@@ -992,6 +992,16 @@ export const SelectOverlappingAutoUnits = (graphType: OpenSee.graphType) => crea
 
     }
 );
+
+export const SelectIsZoomed = (key: OpenSee.IGraphProps,) => createSelector(
+    (state: OpenSee.IRootState) => state.Data.Plots,
+    (plots) => {
+        let plot = plots.find(p => p.key.DataType === key.DataType && p.key.EventId === key.EventId);
+        return plot?.isZoomed;
+    }
+);
+
+
 // For tooltip
 export const selectHoverPoints = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
