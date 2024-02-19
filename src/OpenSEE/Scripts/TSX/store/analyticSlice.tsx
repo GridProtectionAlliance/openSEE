@@ -20,21 +20,18 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSelector } from 'reselect';
 import { OpenSee } from '../global';
-import * as _ from 'lodash';
-import { createSelector } from 'reselect'
+import { UpdateAnalyticPlot } from './dataSlice';
 import { RootState } from './store';
-import { UpdateAnalyticPlot } from './dataSlice'
 
 // #region [ Thunks ]
-
 export const UpdateAnalytic = createAsyncThunk('Analytic/updateAnalytic', async (arg: { settings: OpenSee.IAnalyticStore, key?: OpenSee.IGraphProps }, thunkAPI) => {
     if(arg.key)
         thunkAPI.dispatch(UpdateAnalyticPlot({ key: arg.key }));
     return Promise.resolve();
 })
-
 // #endregion
 
 export const AnalyticReducer = createSlice({
