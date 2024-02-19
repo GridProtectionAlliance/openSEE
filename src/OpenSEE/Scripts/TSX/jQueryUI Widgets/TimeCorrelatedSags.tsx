@@ -79,7 +79,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                         OnSort={() => true}
                         SortKey={"EventID"}
                         TbodyStyle={{ overflowY: 'scroll', maxHeight: '100vh', height: '100%' }}
-                        RowStyle={{width: '100%'}}
+                        RowStyle={{ width: '100%' }}
                         TableStyle={{ height: '100%', width: '100%', margin: '3%' }}
                         Ascending={false}
                     >
@@ -98,7 +98,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             </ReactTable.Column>
                         </ConfigTable.Configurable>
 
-                        <ConfigTable.Configurable Key={'AssetName'} Label={'Asset Name'} Default={true}>
+                        <ConfigTable.Configurable Key={'AssetName'} Label={'Asset Name'} Default={false}>
                             <ReactTable.Column<ICorrelatedSags>
                                 Key={'AssetName'}
                                 AllowSort={true}
@@ -107,7 +107,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             </ReactTable.Column>
                         </ConfigTable.Configurable>
 
-                        <ConfigTable.Configurable Key={'EventType'} Label={'Event Type'} Default={true}>
+                        <ConfigTable.Configurable Key={'EventType'} Label={'Event Type'} Default={false}>
                             <ReactTable.Column<ICorrelatedSags>
                                 Key={'EventType'}
                                 AllowSort={true}
@@ -116,7 +116,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             </ReactTable.Column>
                         </ConfigTable.Configurable>
 
-                        <ConfigTable.Configurable Key={'MeterName'} Label={'MeterName'} Default={true}>
+                        <ConfigTable.Configurable Key={'MeterName'} Label={'MeterName'} Default={false}>
                             <ReactTable.Column<ICorrelatedSags>
                                 Key={'MeterName'}
                                 AllowSort={true}
@@ -152,7 +152,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             </ReactTable.Column>
                         </ConfigTable.Configurable>
 
-                        <ConfigTable.Configurable Key={'StartTime'} Label={'Start Time'} Default={true}>
+                        <ConfigTable.Configurable Key={'StartTime'} Label={'Start Time'} Default={false}>
                             <ReactTable.Column<ICorrelatedSags>
                                 Key={'StartTime'}
                                 AllowSort={true}
