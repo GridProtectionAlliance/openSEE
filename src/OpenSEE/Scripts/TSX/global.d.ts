@@ -229,12 +229,18 @@ export namespace OpenSee {
     }
 
     interface ISettingsState {
-        Units: IUnitCollection<IUnitSetting>,
         Colors: IColorCollection,
         TimeUnit: IUnitSetting,
         SinglePlot: boolean,
         DefaultTrace: IDefaultTrace,
-        DefaultVType: 'L-L'| 'L-N',
+        DefaultVType: 'L-L' | 'L-N',
+        Navigation: EventNavigation,
+        PlotMarkers: boolean,
+        UseOverlappingTime: boolean,
+        OverlappingWaveTimeUnit: number,
+        MouseMode: MouseMode,
+        ZoomMode: ZoomMode,
+        Units: { DataType: OpenSee.graphType, Units: OpenSee.IUnitCollection<{ current: number, isAuto: boolean }>}[]
     }
 
 
