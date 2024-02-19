@@ -149,7 +149,6 @@ export namespace OpenSee {
         LegendVertical: string,
         LegendGroup: string,
         LegendVGroup: string,
-        Axis: number, 
 
         Unit: Unit,
         Color: Color,
@@ -161,9 +160,11 @@ export namespace OpenSee {
         SmoothDataPoints: Array<[number, number]>,
         DataPoints: Array<[number, number]>,
         DataMarker: Array<[number, number]>,
-        LineType?: ('-'|':')
+        LineType?: LineType,
+        EventID: number
     }
 
+    type LineType = ('-' | ':' )
     // Settings For Plots 
     type Color = keyof IColorCollection;
 
