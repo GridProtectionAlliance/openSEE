@@ -431,6 +431,14 @@ export namespace OpenSee {
         BaseValue: number,
     }
 
+    interface BarSeries {
+        unit: OpenSee.Unit,
+        data: [number, number],
+        color: OpenSee.Color,
+        base: number,
+        enabled: boolean
+    }
+
     interface IPointCollection {
         Group: string,
         Name: string,
