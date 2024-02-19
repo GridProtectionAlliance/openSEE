@@ -269,10 +269,16 @@ export const defaultSettings = {
             { label: "milliseconds", short: "ms", factor: 0 },
             { label: "seconds", short: "s", factor: 0 },
             { label: "minutes", short: "min", factor: 0 },
-            { label: "seconds", short: "s", factor: 0 }
         ],
-        useAutoLimits: true
-    },
+        autoUnit: true
+    } as OpenSee.IUnitSetting,
+    OverlappingWaveTimeUnit: {
+        current: 0, options: [
+            { label: "milliseconds", short: "ms", factor: 0 },
+            { label: "cycles", short: "cycles", factor: 0 },
+        ],
+        autoUnit: false
+    } as OpenSee.IUnitSetting,
     DefaultTrace: {
         Pk: false,
         Ph: false,
