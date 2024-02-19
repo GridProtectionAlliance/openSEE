@@ -868,22 +868,52 @@ export const SelectAxisSettings = (key: OpenSee.IGraphProps) => {
 
 }
 
-export const selectLoading = (key: OpenSee.IGraphProps) => { return (state: OpenSee.IRootState) => state.Data.loading.find((item, index) => state.Data.plotKeys[index].DataType == key.DataType && state.Data.plotKeys[index].EventId == key.EventId); }
+export const SelectStartTimeSinceInception = (state: RootState) => {
+    let startTime = state.Data.startTime
+    let inceptionDiff = state.EventInfo?.EventInfo?.Inception - startTime
 
-export const selectFFTLimits = (state: OpenSee.IRootState) => state.Data.fftLimits;
+    if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('since')) {
+        if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('inception'))
+            startTime = state.Data.startTime - inceptionDiff
+    }
+
+    return startTime
+};
+
+export const SelectEndTimeSinceInception = (state: RootState) => {
+    let endTime = state.Data.endTime
+    let inceptionDiff = state.EventInfo?.EventInfo?.Inception - state.Data.startTime
+
+    if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('since')) {
+        if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('inception'))
+            endTime = state.Data.endTime - inceptionDiff
+    }
+
+    return endTime
+};
 
 
-export const selectStartTime = (state: OpenSee.IRootState) => state.Data.startTime;
-export const selectEndTime = (state: OpenSee.IRootState) => state.Data.endTime;
-export const selectHover = (state: OpenSee.IRootState) => state.Data.hover
-export const selectMouseMode = (state: OpenSee.IRootState) => state.Data.mouseMode
-export const selectZoomMode = (state: OpenSee.IRootState) => state.Data.zoomMode
-export const selectCycleStart = (state: OpenSee.IRootState) => state.Data.cycleLimit[0]
-export const selectCycleEnd = (state: OpenSee.IRootState) => state.Data.cycleLimit[1]
+export const SelectEventIDs = (state: RootState) => {
+    let ids = []
+    ids.push(state.EventInfo.EventID)
+    state.OverlappingEvents.EventList.forEach(evt => {
+        if (evt.Selected)
+            ids.push(evt.EventID)
+    })
 
-export const selectEventID = (state: OpenSee.IRootState) => state.Data.eventID
-export const selectAnalytic = (state: OpenSee.IRootState) => state.Data.Analytic;
-export const selectIsManual = (key: OpenSee.IGraphProps) => createSelector(
+    const eventIDS = _.uniq(ids)
+    return eventIDS
+}
+
+export const SelectFFTEnabled = (state: RootState) => {
+    const keys = state.Data.Plots.filter(plot => plot.key.DataType === 'FFT')
+    if (keys?.length > 0)
+        return true
+    else
+        return false
+}
+
+export const SelectIsManual = (key: OpenSee.IGraphProps) => createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
     (plots) => {
         let plot = plots.find(p => p.key.DataType === key.DataType && p.key.EventId === key.EventId);
