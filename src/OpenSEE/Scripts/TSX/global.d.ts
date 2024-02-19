@@ -126,22 +126,21 @@ export namespace OpenSee {
         enableLightningData?: boolean,
     }
 
-    interface iListObject {
-        group?: string;
-        label: string;
-        value: number;
-        selected: boolean;
-    }
+    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'NewAnalytic')
 
-    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT')
+    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'NewAnalytic')
 
-    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT')
+    type MouseMode = ("zoom" | "select" | 'pan' | 'none' | 'fftMove')
 
-    type Tab = ("Info" | "Compare" | "Analytic")
-
-    type MouseMode = ("zoom" | "select" | 'pan'| 'none' | 'fftMove')
     type ZoomMode = ("x" | "y" | 'xy')
 
+    type LineType = ('-' | ':')
+
+    type Color = keyof IColorCollection;
+
+    type Unit = ((keyof IUnitCollection<number>) | "Time");
+
+    type Trace = "RMS" | "W" | "Pk" | "Ph";
    
 
     interface iD3DataSeries {
