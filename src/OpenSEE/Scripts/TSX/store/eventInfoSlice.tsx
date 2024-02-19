@@ -27,7 +27,7 @@ import { OpenSee } from '../global';
 declare var homePath: string;
 
 
-export const SetEventInfo = createAsyncThunk("EventInfo/setEventInfo", async (arg: { breakeroperation: string }, thunkAPI) => {
+export const LoadEventInfo = createAsyncThunk("EventInfo/setEventInfo", async (arg: { breakeroperation: string }, thunkAPI) => {
     let state = (thunkAPI.getState() as OpenSee.IRootState);
     const eventID = state.EventInfo.EventID;
     if (eventID && !isNaN(eventID) && eventID !== 0) {
@@ -43,7 +43,7 @@ export const SetEventInfo = createAsyncThunk("EventInfo/setEventInfo", async (ar
 
 })
 
-export const SetLookupInfo = createAsyncThunk("EventInfo/setLookupInfo", async (arg: { }, thunkAPI) => {
+export const LoadLookupInfo = createAsyncThunk("EventInfo/setLookupInfo", async (_, thunkAPI) => {
     let state = (thunkAPI.getState() as OpenSee.IRootState);
     const eventID = state.EventInfo.EventID;
     if (eventID && !isNaN(eventID) && eventID !== 0) {
@@ -65,7 +65,7 @@ const EventInfoReducer = createSlice({
         EventInfo: null,
         LookupInfo: null,
         State: 'Idle',
-        EventID: null,
+        EventID: 1,
     } as OpenSee.IEventStore,
     reducers: {
         SetEventID: (state, action: PayloadAction<number>) => {
@@ -73,17 +73,17 @@ const EventInfoReducer = createSlice({
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(SetEventInfo.pending, (state, action) => {
+        builder.addCase(LoadEventInfo.pending, (state, action) => {
             state.State = 'Loading'
         });
-        builder.addCase(SetEventInfo.rejected, (state, action) => {
+        builder.addCase(LoadEventInfo.rejected, (state, action) => {
             state.State = 'Error'
         });
-        builder.addCase(SetEventInfo.fulfilled, (state, action) => {
+        builder.addCase(LoadEventInfo.fulfilled, (state, action) => {
             state.EventInfo = action.payload
             state.State = 'Idle'
         })
-        builder.addCase(SetLookupInfo.fulfilled, (state, action) => {
+        builder.addCase(LoadLookupInfo.fulfilled, (state, action) => {
             state.LookupInfo = action.payload
         })
     }
