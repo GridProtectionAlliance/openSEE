@@ -655,7 +655,7 @@ export const SelectOverlappingEvents = (graphType: OpenSee.graphType) => createS
         return sortedPlots;
     })
 
-export const selectDisplayed = createSelector(
+export const SelectDisplayed = createSelector(
     (state: RootState) => state.Data.Plots,
     (plots) => ({
         Voltage: plots.some(p => p.key.DataType == 'Voltage'),
@@ -786,6 +786,7 @@ export const SelectEnabledUnits = (key: OpenSee.IGraphProps) => createSelector(
     }
 );
 
+
 export const SelectYLimits = (key: OpenSee.IGraphProps) => {
     return createSelector(
         (state: OpenSee.IRootState) => state.Data,
@@ -807,7 +808,7 @@ export const SelectYLimits = (key: OpenSee.IGraphProps) => {
         });
 }
 
-export const selectOverlappingYLimits = (graphType: OpenSee.graphType) => {
+export const SelectOverlappingYLimits = (graphType: OpenSee.graphType) => {
     return createSelector(
         (state: OpenSee.IRootState) => state.Data.Plots,
         (state: OpenSee.IRootState) => state.EventInfo.EventID,
@@ -830,13 +831,13 @@ export const selectOverlappingYLimits = (graphType: OpenSee.graphType) => {
                     result[plot.key.DataType] = yLimits
                 })
 
-                return result;
+                return result as OpenSee.IGraphCollection<[number, number]>;
             }
 
         });
 }
 
-export const selectLoading = (key: OpenSee.IGraphProps) => {
+export const SelectLoading = (key: OpenSee.IGraphProps) => {
     return (state: OpenSee.IRootState) => {
         const plot = state.Data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
         if (plot)
@@ -950,7 +951,7 @@ export const SelectIsManual = (key: OpenSee.IGraphProps) => createSelector(
     }
 );
 
-export const selectIsOverlappingManual = (graphType: OpenSee.graphType) => createSelector(
+export const SelectIsOverlappingManual = (graphType: OpenSee.graphType) => createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (plots, evtID) => {
@@ -1003,7 +1004,7 @@ export const SelectIsZoomed = (key: OpenSee.IGraphProps,) => createSelector(
 
 
 // For tooltip
-export const selectHoverPoints = (hover: [number, number]) => createSelector(
+export const SelectHoverPoints = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.Data,
     (eventID, state) => {
@@ -1035,7 +1036,7 @@ export const selectHoverPoints = (hover: [number, number]) => createSelector(
 });
 
 
-export const selectDeltaHoverPoints = (hover: [number, number]) => createSelector(
+export const SelectDeltaHoverPoints = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.Data,
     (eventID, state) => {
@@ -1071,7 +1072,7 @@ export const selectDeltaHoverPoints = (hover: [number, number]) => createSelecto
 
 
 // For vector
-export const selectVPhases = (hover: [number, number]) => createSelector(
+export const SelectVPhases = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.Data,
     (eventID, state) => {
@@ -1120,7 +1121,7 @@ export const selectVPhases = (hover: [number, number]) => createSelector(
 );
 
 
-export const selectIPhases = (hover: [number, number]) => createSelector(
+export const SelectIPhases = (hover: [number, number]) => createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.Data,
     (eventID, state) => {
@@ -1165,7 +1166,7 @@ export const selectIPhases = (hover: [number, number]) => createSelector(
 );
 
 // For Accumulated Point widget
-export const selectSelectedPoints = createSelector(
+export const SelectSelectedPoints = createSelector(
     (state: OpenSee.IRootState) => state.EventInfo.EventID,
     (state: OpenSee.IRootState) => state.Data,
     (eventID, state) => {
@@ -1197,7 +1198,7 @@ export const selectSelectedPoints = createSelector(
 
 
 // For FFT Table
-export const selectFFTData = createSelector(
+export const SelectFFTData = createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots.find(plot => plot.key.DataType === "FFT" && plot.key.EventId === state.EventInfo.EventID),
     (fftPlot) => {
         if (fftPlot?.data == null) return [];
@@ -1375,9 +1376,11 @@ function updatedCycleAutoLimits(plot: OpenSee.IGraphstate, start: number, end: n
         updateActiveUnits(baseUnits, plot.yLimits[axis], axis);
     });
 }
+
 // #endregion
 
 // #region [ Helper Functions ]
+
 
 //This Function Recomputes y Limits based on X limits for all states
 function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSeries[], activeUnit: number): [number, number] {
@@ -1411,17 +1414,18 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
 }
 
 function recomputeNonAutoLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
-    // Calculate the proportion of the current limits relative to the old range
+    // Calculate the old range
+    const oldRange = oldLimits[1] - oldLimits[0];
 
-    const oldRange = oldLimits[1] - oldLimits[0]; 
-    const lowerLimit = (currentLimits[0] - oldLimits[0]) / oldRange;
-    const upperLimit = (currentLimits[1] - oldLimits[0]) / oldRange;
+    // Calculate the proportional change
+    const lowerProportion = (newLimits[0] - oldLimits[0]) / oldRange;
+    const upperProportion = (newLimits[1] - oldLimits[0]) / oldRange;
 
-    // Apply the proportional change to the new range
-    const newRange = newLimits[1] - newLimits[0];
-    const updatedLowerLimit = newLimits[0] + lowerLimit * newRange;
-    const updatedUpperLimit = newLimits[0] + upperLimit * newRange;
 
+    // Apply the proportional change to the current range
+    const currentRange = currentLimits[1] - currentLimits[0];
+    const updatedLowerLimit = currentLimits[0] + lowerProportion * currentRange;
+    const updatedUpperLimit = currentLimits[0] + upperProportion * currentRange;
     return [updatedLowerLimit, updatedUpperLimit];
 }
 
@@ -1498,7 +1502,7 @@ function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>
 }
 
 
-// Functioon that gets a Tooltip Display Name
+// Function that gets a Tooltip Display Name
 function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
     if (type == 'Voltage' || type == 'Current')
         return d.LegendGroup + (type == 'Voltage' ? ' V ' : ' I ') + d.LegendVertical + ' ' + d.LegendHorizontal;
@@ -1520,7 +1524,7 @@ function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
 
 
 // Function to get Default Enabled Traces
-function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, defaultVoltage: 'L-L'|'L-N', data: OpenSee.iD3DataSeries[]): boolean[] {
+function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, defaultVoltage: "L-L" | "L-N", data: OpenSee.iD3DataSeries[]): boolean[] {
 
     if (type == 'Voltage') 
         return data.map(item => item.LegendVGroup == defaultVoltage &&
@@ -1530,7 +1534,7 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
                 (item.LegendHorizontal == 'W' && defaultTraces.W)
             ))
     
-    if ( type == 'Current') 
+    if (type == 'Current')
         return data.map(item => ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
             (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
             (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||
