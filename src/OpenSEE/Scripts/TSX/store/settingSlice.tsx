@@ -102,9 +102,17 @@ export const SettingsReducer = createSlice({
             state.Colors[action.payload.color] = action.payload.value
             saveSettings(state);
         },
-        SetTimeUnit: (state, action: PayloadAction<{ index: number, auto: boolean }>) => {
+        SetTimeUnit: (state, action: PayloadAction<{ index: number }>) => {
             state.TimeUnit.current = action.payload.index
-            state.TimeUnit.autoUnit = action.payload.auto
+
+            if (defaultSettings.TimeUnit.options[action.payload.index].factor === undefined)
+                state.TimeUnit.autoUnit = true
+            else
+                state.TimeUnit.autoUnit = false
+
+            if (!defaultSettings.TimeUnit.options[action.payload.index].short.includes('since'))
+                state.UseOverlappingTime = false
+
             saveSettings(state);
         },
         SetSinglePlot: (state, action: PayloadAction<boolean>) => {
