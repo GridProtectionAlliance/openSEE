@@ -144,7 +144,7 @@ const OpenSeeHome = () => {
                 setPlotWidth(plotRef.current.offsetWidth);
             }
         }, 500);
-    }, [graphList, openDrawers]);
+    }, [groupedKeys, openDrawers]);
 
 
     //Effect to handle queryParams
@@ -157,6 +157,8 @@ const OpenSeeHome = () => {
         const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
+        dispatch(LoadEventInfo({ breakeroperation: ""/*not really sure what breakeroperation is..*/ }))
+        dispatch(SetEventID(eventID))
         dispatch(SetTimeLimit({ start: startTime, end: endTime }));
         dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: startTime } }));
 
@@ -180,10 +182,10 @@ const OpenSeeHome = () => {
     //Effect to update EventID
     React.useEffect(() => {
         if (eventID && !isNaN(eventID) && eventID !== 0) {
-            dispatch(SetEventID(eventID)) //this is probably not eneded double check
-            dispatch(SetEventInfo({ breakeroperation: ""/*not really sure what breakeroperation is..*/ }))
-            dispatch(SetLookupInfo({}))
-            dispatch(LoadOverlappingEvents()) //this is probably not need either since we set this in queryParams.. 
+            dispatch(SetEventID(eventID))
+            dispatch(LoadEventInfo({ breakeroperation: "" }))
+            dispatch(LoadLookupInfo())
+            dispatch(LoadOverlappingEvents())
         }
     }, [eventID]);
 
@@ -192,7 +194,7 @@ const OpenSeeHome = () => {
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
             history.current['push'](`?${query}`);
-        }, 1000); //might be able to redduce this
+        }, 1000);
 
         return () => clearTimeout(timeoutId);
     }, [query]);
@@ -251,58 +253,63 @@ const OpenSeeHome = () => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToogleDrawer} />}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToogleDrawer} OpenDrawers={openDrawers} />}
             UseLegacyNavigation={true}
         ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
-                <div className="d-flex flex-column h-100 w-100" style={{ position: 'relative', top: '31px' }}>
+                <div className="d-flex flex-column" style={{ position: 'relative', top: '31px', height: '100%', width: '100%' }}>
                     <HoverProvider>
-                        <VerticalSplit>
-                            <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
+                        <VerticalSplit style={{height: '100%'}}>
+                            <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                                 <EventInfo />
                             </SplitDrawer>
-                            <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
+
+                            <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
                                 <OverlappingEventWindow />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
+                            <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
                                 <AnalyticOptions />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
+                            <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
                                 <ToolTipWidget />
                             </SplitDrawer>
-                            <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={20} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
+
+                            <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
                                 <ToolTipDeltaWidget />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
+                            <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("Settings", item)} >
                                 <SettingsWidget />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
+                            <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
                                 <PointWidget />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
+                            <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
                                 <ScalarStatsWidget exportCallback={() => exportData('stats')} />
                             </SplitDrawer>
-                            <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
+
+                            <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
                                 <TimeCorrelatedSagsWidget exportCallback={() => exportData('correlatedsags')} />
                             </SplitDrawer>
-                            <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
+
+                            <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("Lightning", item)}>
                                 <LightningDataWidget />
                             </SplitDrawer>
-                            <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
+
+                            <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("FFTTable", item)}>
                                 <FFTTable />
                             </SplitDrawer>
 
-                            <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={20} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
+                            <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
                                 OnChange={(item) => handleDrawerChange("PolarChart", item)}>
                                 <PhasorChartWidget />
                             </SplitDrawer>
@@ -311,7 +318,12 @@ const OpenSeeHome = () => {
                                 OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
                                 <HarmonicStatsWidget exportCallback={() => exportData('harmonics')} />
                             </SplitDrawer>
-                                            item.DataType !== 'FFT' ?
+
+                            <SplitSection MinWidth={70} MaxWidth={100} Width={75}>
+                                <div ref={plotRef} style={{ overflowY: 'auto', maxHeight: plotContainerHeight - 25, width: '100%', height: '100%' }}>
+                                    {groupedKeys[eventID] != undefined ? (
+                                        <>
+                                            {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
                                                 <LineChart
                                                     key={item.DataType + item.EventId}
                                                     eventId={item.EventId}
