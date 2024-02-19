@@ -623,7 +623,7 @@ export const DataReducer = createSlice({
 });
 
 
-// export const { SetHover, SetMouseMode, SelectPoint, SetZoomMode, RemoveSelectPoints, ClearSelectPoints, RemovePlot, UpdateActiveUnits } = DataReducer.actions;
+export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, UpdateActiveUnits, SetManualLimits, AppendData } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion
