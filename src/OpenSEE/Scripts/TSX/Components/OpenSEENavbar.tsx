@@ -24,10 +24,10 @@
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { clone } from 'lodash';
-import { selectMouseMode, SetMouseMode, ResetZoom, SetZoomMode, SelectEventIDs, selectFFTLimits, selectDisplayed, AddPlot, RemovePlot, SelectFFTEnabled } from '../store/dataSlice';
+import { ResetZoom, SelectEventIDs, SelectFFTLimits, SelectDisplayed, AddPlot, RemovePlot, SelectFFTEnabled, SelectAnalytics } from '../store/dataSlice';
 import { SelectEventInfo, SelectLookupInfo } from '../store/eventInfoSlice'
 import { SelectCycles, SelectHarmonic, SelectHPF, SelectLPF, SelectTRC } from '../store/analyticSlice';
-import { SelectNavigation, SetNavigation } from '../store/settingSlice'
+import { SelectNavigation, SetNavigation, SetMouseMode, SetZoomMode, SelectMouseMode } from '../store/settingSlice'
 
 import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, Pan, FFT, Reset, Square, ValueRect, TimeRect, Settings, Help, ShowPoints, CorrelatedSags } from '../Graphs/ChartIcons';
 import { Point } from '@gpa-gemstone/gpa-symbols'
@@ -50,21 +50,21 @@ interface IProps {
 
 const OpenSeeNavBar = (props: IProps) => {
     const dispatch = useAppDispatch()
-    const mouseMode = useAppSelector(selectMouseMode);
+    const mouseMode = useAppSelector(SelectMouseMode);
     const eventInfo = useAppSelector(SelectEventInfo);
     const lookupInfo = useAppSelector(SelectLookupInfo);
     const showFFT = useAppSelector(SelectFFTEnabled);
 
-    const analytic = null;
+    const analytics = useAppSelector(SelectAnalytics);
 
     const navigation = useAppSelector(SelectNavigation);
-    const showPlots = useAppSelector(selectDisplayed);
+    const showPlots = useAppSelector(SelectDisplayed);
     const harmonic = useAppSelector(SelectHarmonic);
     const trc = useAppSelector(SelectTRC);
     const lpf = useAppSelector(SelectLPF);
     const hpf = useAppSelector(SelectHPF);
     const cycles = useAppSelector(SelectCycles);
-    const fftTime = useAppSelector(selectFFTLimits);
+    const fftTime = useAppSelector(SelectFFTLimits);
 
     const [showPoints, setShowPoints] = React.useState<boolean>(false);
     const [showPolar, setShowPolar] = React.useState<boolean>(false);
