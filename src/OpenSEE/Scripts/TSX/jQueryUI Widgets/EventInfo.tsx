@@ -24,8 +24,7 @@ import React from 'react';
 import { useAppSelector } from '../hooks';
 import { SelectEventInfo } from '../store/eventInfoSlice'
 import queryString from 'querystring';
-import moment from 'moment';
-
+import moment from 'moment';SelectEventInfo
 const EventInfo = () => {
     const eventData = useAppSelector(SelectEventInfo)
     const [pqBrowserURL, setPqBrowserURL] = React.useState<string>('http://localhost:44368')
@@ -37,7 +36,6 @@ const EventInfo = () => {
         const handle1 = getPQUrl();
         handle1.done((data) => setPqBrowserURL(data));
     }, [])
-
     function getPQUrl() {
         return $.ajax({
             type: "GET",
@@ -67,8 +65,8 @@ const EventInfo = () => {
         <>
             {eventData ?
                 <div className="d-flex" style={{ marginTop: '10px', width: '100%', height: '100%', textAlign: 'center', padding: '10px' }}>
-                    <table className="table" style={{ overflowY: 'auto', height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`, margin: '3%' }}>
-                        <tbody>
+                    <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`, margin: '3%' }}>
+                        <tbody style={{overflow: 'auto'}}>
                             <tr><td>Meter:</td><td>{eventData.MeterName}</td></tr>
                             <tr><td>Station:</td><td>{eventData.StationName}</td></tr>
                             <tr><td>Asset:</td><td>{eventData.AssetName}</td></tr>
@@ -87,7 +85,7 @@ const EventInfo = () => {
                             {(eventData.BreakerSpeed ? <tr><td>Speed:</td><td>{eventData.BreakerSpeed}</td></tr> : null)}
                             {(eventData.BreakerOperation ? <tr><td>Operation:</td><td>{eventData.BreakerOperation}</td></tr> : null)}
                             <tr>
-                                {/*<td><button className="btn btn-link" onClick={() => { window.open(eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + eventID) }}>Edit</button></td>*/}
+                                {<td><button className="btn btn-link" onClick={() => { window.open(eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + eventID) }}>Edit</button></td>}
                                 {<td><button className="btn btn-link" onClick={() => { window.open(pqBrowserURL + '/eventsearch?' + pqBrowserParams) }}>Manage Notes</button></td>}
                                 <td></td>
                             </tr>
