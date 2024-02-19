@@ -717,11 +717,18 @@ export const SelectData = (key: OpenSee.IGraphProps) => createSelector(
     );
 
 
-    if (single && tab == 'Compare') {
-        let d = data.filter((item, i) => plotKeys[i].DataType == type.DataType && type.EventId != plotKeys[i].EventId);
-        d = d.map(lst => lst.map(item => { return { ...item, LineType: ':' } }));
-        return data[index].concat(...d);
+export const SelectEnabled = (key: OpenSee.IGraphProps) =>
+    createSelector(
+        (state: OpenSee.IRootState) => state.Data.Plots,
+        (plots) => {
+            let plot = plots.find(item => item.key.DataType === key.DataType && item.key.EventId === key.EventId);
+
+            if (plot)
+                return plot.data.map(item => item.Enabled)
+            else
+                return []
     }
+    );
 
 
 export const SelectRelevantUnits = (key: OpenSee.IGraphProps) => createSelector(
