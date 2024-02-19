@@ -274,9 +274,14 @@ export const defaultSettings = {
         Pk: false,
         Ph: false,
         RMS: true,
-        W: false
+        W: false,
     } as OpenSee.IDefaultTrace,
-
+    Navigation: 'system' as OpenSee.EventNavigation,
+    SinglePlot: false,
+    UseOverlappingTime: false,
+    PlotMarkers: false,
+    MouseMode: 'zoom' as OpenSee.MouseMode,
+    ZoomMode: 'x' as OpenSee.ZoomMode,
     ColorSelection: ['#A30000', '#0029A3', '#007A29', '#a3a3a3', "#BD9B33",
         "#cb4b4b", '#0066CC', "#4da74d", '#d3d3d3','#edc240',
         '#FF0000', '#afd8f8', '#33CC33', "#9440ed"]
