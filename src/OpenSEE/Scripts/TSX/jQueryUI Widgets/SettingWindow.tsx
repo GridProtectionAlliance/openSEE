@@ -372,7 +372,7 @@ const SettingsWidget = (props) => {
                                 </div>
                             </div>
 
-                    {list.map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
+                    {plotKeys.filter(key => key.EventId === evtID || key.EventId === -1).map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
                    
                 </div>
             </div>
@@ -474,33 +474,34 @@ interface ILimits {
 const PlotCard = (props: ICardProps) => {
     const dispatch = useAppDispatch();
 
-    const SelectData = React.useMemo(() => selectData(props), [props]);
-    const SelectYlimits = React.useMemo(() => SelectYLimits(props), [props]);
-    const SelectOverLappingYLimits = React.useMemo(() => selectOverlappingYLimits(props.DataType), [props]);
+    const MemoSelectYlimits = React.useMemo(() => SelectYLimits(props), [props]);
+    const yLimits = useAppSelector(MemoSelectYlimits);
+
+    const MemoSelectOverLappingYLimits = React.useMemo(() => SelectOverlappingYLimits(props.DataType), [props]);
+    const overlappingYLimits = useAppSelector(MemoSelectOverLappingYLimits);
+
+    const MemoSelectData = React.useMemo(() => SelectData(props), []);
+    const lineData = useAppSelector(MemoSelectData);
+
     const singlePlot = useAppSelector(SelectSinglePlot);
-
-    const yLimits = useAppSelector(SelectYlimits);
-    const overlappingYLimits = useAppSelector(SelectOverLappingYLimits);
     const axisSettings = useAppSelector(SelectAxisSettings(props));
-
-    const lineData = useAppSelector(SelectData);
-
     const colors = useAppSelector(SelectColor);
+
     const overlappingKeys = useAppSelector(SelectOverlappingEvents(props.DataType));
+    const overlapWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
-
-    const isManual = useAppSelector(selectIsManual(props));
-    const isOverlappingManual = useAppSelector(selectIsOverlappingManual(props.DataType));
-    const isOverlappingAuto = useAppSelector(selectOverlappingAutoUnits(props.DataType));
+    const isManual = useAppSelector(SelectIsManual(props));
+    const isOverlappingManual = useAppSelector(SelectIsOverlappingManual(props.DataType));
+    const isOverlappingAuto = useAppSelector(SelectOverlappingAutoUnits(props.DataType));
 
     const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits>>(null);
-    const [overlappingLimits, setOverlappingLimits] = React.useState<any>(null)
+    const [overlappingLimits, setOverlappingLimits] = React.useState<OpenSee.IGraphCollection<ILimits>>(null)
 
     const [limitsPayload, setLimitsPayload] = React.useState<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number }>(null);
 
     const [valid, setValid] = React.useState<boolean>(true)
 
-    const autoUnits = useAppSelector(selectAutoUnits(props));
+    const autoUnits = useAppSelector(SelectAutoUnits(props));
 
     let colorSettings: OpenSee.Color[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
@@ -578,14 +579,13 @@ const PlotCard = (props: ICardProps) => {
             let overlappingLimits = {}
 
             Object.keys(overlappingYLimits).forEach(graphType => {
-                const yLimits = overlappingYLimits[graphType];
+                const yLimits = overlappingYLimits[graphType as OpenSee.graphType];
                 const limits = getYlimits(yLimits, graphType);
                 overlappingLimits[graphType] = limits
             });
 
-            setOverlappingLimits(overlappingLimits)
+            setOverlappingLimits(overlappingLimits as OpenSee.IGraphCollection<ILimits>)
         }
-
 
     }, [yLimits, overlappingYLimits])
 
@@ -612,6 +612,10 @@ const PlotCard = (props: ICardProps) => {
 
         })
         return limits
+    }
+
+    const handleTimeUnitChange = (index: number) => {
+        dispatch(SetOverlappingWaveTimeUnit(index))
     }
 
     return (<div className="card">
@@ -707,10 +711,7 @@ const PlotCard = (props: ICardProps) => {
                                             )}
                             </div>
                                     )) : null}
-
                         </fieldset>
-                    </div>
-                </div>
                 ))}
 
                 {colorSettings.length > 0 ?
@@ -761,10 +762,16 @@ const PlotCard = (props: ICardProps) => {
                     </fieldset> : null}
 
 
+                {props.DataType === "OverlappingWave" ?
+                    <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Time:</legend>
+                        <div className="row">
+                            <div className="col-12">
+                                <TimeUnitSelector label={"Time"} timeUnitIndex={overlapWaveTimeUnit} setter={index => handleTimeUnitChange(index)} overlappingWave={true} />
+                            </div>
                             </div>
                         </fieldset>
-                    </div> 
-                </div> : null}
+                    : null}
             </div>
         </div>
     </div>);
