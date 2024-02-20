@@ -74,6 +74,7 @@ interface IMarker { x: number, y: number, unit: string, base: number }
 const LineChart = (props: iProps) => {
     const dispatch = useAppDispatch();
     const cycleLimits = useAppSelector(SelectCycleLimits);
+    const isOverlappingWaveform = props.dataKey.DataType === "OverlappingWave"
 
     const MemoSelectActiveUnit = React.useMemo(() => SelectActiveUnit(props.dataKey), [props.dataKey])
     const activeUnit = useAppSelector(MemoSelectActiveUnit);
@@ -119,15 +120,16 @@ const LineChart = (props: iProps) => {
     const [durationLocation, setDurationLocation] = React.useState<number>(10);
 
     const evtID = useAppSelector(SelectEventID);
+    const isOriginalEvt = props.dataKey.EventId === evtID
     
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
 
-    const startTime = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[0] : useAppSelector(MemoSelectStartTime);
-    const endTime = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[1] : useAppSelector(MemoSelectEndTime);
+    const startTime = isOverlappingWaveform ? cycleLimits[0] : useAppSelector(MemoSelectStartTime);
+    const endTime = isOverlappingWaveform ? cycleLimits[1] : useAppSelector(MemoSelectEndTime);
 
-    const startTimeSinceInception = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[0] : useAppSelector(SelectStartTimeSinceInception);
-    const endTimeSinceInception = props.dataKey.DataType === "OverlappingWave" ? cycleLimits[1] : useAppSelector(SelectEndTimeSinceInception);
+    const startTimeSinceInception = isOverlappingWaveform ? cycleLimits[0] : useAppSelector(SelectStartTimeSinceInception);
+    const endTimeSinceInception = isOverlappingWaveform ? cycleLimits[1] : useAppSelector(SelectEndTimeSinceInception);
 
     const analytics = useAppSelector(SelectAnalytics);
     const overlappingEvents = useAppSelector(SelectEventList);
@@ -137,8 +139,9 @@ const LineChart = (props: iProps) => {
 
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
-    const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
+    const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception')
 
+    const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
     const yLabels = useAppSelector(SelectYLabels(props.dataKey));
     const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
@@ -147,6 +150,7 @@ const LineChart = (props: iProps) => {
     const zoomMode = useAppSelector(SelectZoomMode);
 
     const eventInfo = useAppSelector(SelectEventInfo);
+    const originalStartTime = new Date(eventInfo?.EventDate + "Z").getTime()
 
     const fftWindow = useAppSelector(SelectFFTWindow);
     const showFFT = useAppSelector(SelectShowFFTWindow);
@@ -166,7 +170,7 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (loading == 'Loading')
             return;
-        if (lineData.length == 0)
+        if (lineData === undefined || lineData?.length == 0)
             return;
         if (isCreated) {
             UpdateData();
@@ -177,25 +181,28 @@ const LineChart = (props: iProps) => {
         UpdateData();
         updateVisibility();
         setCreated(true);
-        //setSelectedPoints([]);
-        return () => {}
+        return () => { }
     }, [lineData, loading]);
+
 
     //Effect to adjust Axes Labels when Scale changes
     React.useEffect(() => {
         if (yScaleRef.current != undefined && xScaleRef.current != undefined)
             updateSize();
+    }, [props.height, props.width])
 
-    }, [props.height, width])
 
     React.useEffect(() => {
+        if (lineData && lineData?.length > 0)
         updateVisibility();
     }, [enabledLine])
+
 
     //Effect to change location of tool tip
     React.useEffect(() => {
         if (xScaleRef.current != undefined)
-            setTooltipLocation(xScaleRef.current(hover[0]))
+            setTooltipLocation(xScaleRef.current(hover?.[0]))
+
         updateHover();
         return () => { };
     }, [hover])
@@ -225,7 +232,6 @@ const LineChart = (props: iProps) => {
         });
 
         const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception')
-        const isOverlappingWaveform = props.dataKey.DataType === 'OverlappingWave'
 
         if (isSinceInception && startTimeSinceInception && endTimeSinceInception && !isOverlappingWaveform)
             xScaleRef.current.domain([startTimeSinceInception, endTimeSinceInception])
@@ -244,6 +250,7 @@ const LineChart = (props: iProps) => {
 
     }, [activeUnit, yLimits, startTime, endTime, isZoomed, timeUnit, lineData, useRelevantTime])
 
+
     React.useEffect(() => {
 
         if (leftSelectCounter == 0)
@@ -255,7 +262,7 @@ const LineChart = (props: iProps) => {
     }, [leftSelectCounter])
     
 
-    React.useEffect(() => {
+    React.useEffect(() => { //mouseDown Effect
         if (!mouseDownInit) {
             setMouseDownInit(true);
             return;
@@ -284,9 +291,11 @@ const LineChart = (props: iProps) => {
         }
     }, [mouseDown])
 
+
     React.useEffect(() => {
         updateColors();
     }, [colors])
+
 
     React.useEffect(() => {
         updateFFTWindow()
@@ -301,13 +310,13 @@ const LineChart = (props: iProps) => {
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
+        d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
 
         if (loading == 'Loading') {
             setCreated(false);
             return;
         }
-        if (lineData.length == 0) {
+        if (lineData?.length == 0) {
             setCreated(false);
             return;
         }
@@ -316,9 +325,9 @@ const LineChart = (props: iProps) => {
         UpdateData();
         updateVisibility();
 
-        return () => {}
+        return () => { }
       
-    }, [props.type, props.eventId, options]);
+    }, [props.dataKey, options]);
 
     React.useEffect(() => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
@@ -357,10 +366,6 @@ const LineChart = (props: iProps) => {
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
 
-        let lineGen = d3.line()
-            .x(function (d) { return 0 })
-            .y(function (d) { return 0 })
-           
     function createLineGen(unit = null, base = null) {
         let factor = 1.0
 
@@ -601,7 +606,7 @@ const LineChart = (props: iProps) => {
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
-            .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")")
+            .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
             .style("transition", 'd 0.5s')
             .attr("fill", "none")
             .attr("stroke-width", 0.0);
@@ -614,10 +619,10 @@ const LineChart = (props: iProps) => {
             .attr("x", 20)
             .attr("y", 0)
             .style("opacity", 0)
-            .on('mousemove', (evt) => MouseMove(evt) )
-            .on('mouseout', (evt) => MouseOut(evt) )
-            .on('mousedown', (evt) => MouseDown(evt) )
-            .on('mouseup', (evt) => MouseUp(evt))
+            .on('mousemove', (evt) => MouseMove(evt))
+            .on('mouseout', () => MouseOut())
+            .on('mousedown', (evt) => MouseDown(evt))
+            .on('mouseup', () => MouseUp())
             .on('mouseenter', () => { setLeftSelectCounter(1) })
             .call(wheelZoom)
             .on('wheel', (evt) => evt.preventDefault());
@@ -645,6 +650,7 @@ const LineChart = (props: iProps) => {
     function formatTimeTick(d: number) {
         let TS = moment(d);
         let h = 100;
+
         if (xScaleRef.current != undefined)
             h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
@@ -657,7 +663,7 @@ const LineChart = (props: iProps) => {
             else
                 return TS.format("ss.S")
         }
-        else if (timeUnit.options[timeUnit.current].short  == 's') {
+        else if (timeUnit.options[timeUnit.current].short == 's') {
             if (h < 100)
                 return TS.format("ss.SSS")
             else if (h < 1000)
@@ -665,13 +671,13 @@ const LineChart = (props: iProps) => {
             else
                 return TS.format("ss.S")
         }
-        else if (timeUnit.options[timeUnit.current].short  == 'ms')
+        else if (timeUnit.options[timeUnit.current].short == 'ms')
             if (h < 100)
                 return TS.format("SSS.S")
             else
                 return TS.format("SSS")
 
-        else if (timeUnit.options[timeUnit.current].short  == 'min')
+        else if (timeUnit.options[timeUnit.current].short == 'min')
             return TS.format("mm:ss")
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since event') {
@@ -765,15 +771,6 @@ const LineChart = (props: iProps) => {
                     factor = (activeUnit[d.unit].short == 'pu' || activeUnit[d.unit].short == 'pu/s' ? 1.0 / d.base : factor);
                 }
 
-                return isNaN(yScaleRef.current(d.y)) ? null : yScaleRef.current(d.y*factor)
-            })
-
-        updateLabels();
-
-        if (xScaleRef.current != null)
-            setCurrentFFTWindow([(xScaleRef.current as any)(fftWindow[0]), (xScaleRef.current as any)(fftWindow[1])]);
-    }
-
     function MouseMove(evt) {
 
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -790,10 +787,11 @@ const LineChart = (props: iProps) => {
         if (y0 > (props.height - 40))
             y0 = props.height - 40;
 
-        let t0 = (xScaleRef.current as any).invert(x0);
-        let d0 = (yScaleRef.current as any).invert(y0);
-        dispatch(SetHover({ t: t0, y: d0 }));
+        let t0: number = (xScaleRef.current as any).invert(x0) as number
+        let d0: number = (yScaleRef.current[primaryAxis] as any).invert(y0) as number;
+        setHover([t0, d0])
     }
+
 
     function MouseDown(evt) {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
@@ -829,8 +827,8 @@ const LineChart = (props: iProps) => {
 
     }
 
-    function MouseUp(evt) {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+    function MouseUp() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
     }
@@ -842,7 +840,7 @@ const LineChart = (props: iProps) => {
     // This function needs to be called if hover is updated
     function updateHover() {
         
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -887,10 +885,10 @@ const LineChart = (props: iProps) => {
     }
 
     function updateFFTWindow() {
-        if (props.type != 'Voltage' && props.type != 'Current')
+        if (props.dataKey.DataType != 'Voltage' && props.dataKey.DataType != 'Current')
             return;
 
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -999,20 +997,22 @@ const LineChart = (props: iProps) => {
                 dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
     }
 
-    function MouseOut(evt) {
-        setLeftSelectCounter((n) => -1);
+        });
+
+    function MouseOut() {
+        setLeftSelectCounter(() => -1);
     }
 
     // Mouse Left only get's called if we left for a minimum of time
     function MouseLeft() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
 
-    //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limitw change (due to auto Units)
+    //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limits change (due to auto Units)s
     function updateLabels() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         function GetTLabel() {
             let h = 100;
@@ -1057,7 +1057,7 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever (a) Color Setting changes occur
     function updateColors() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         function GetColor(col: OpenSee.Color) {
                 return colors[col as string]
@@ -1081,8 +1081,6 @@ const LineChart = (props: iProps) => {
             .classed("active", d => d.Enabled)
             .attr("opacity", d => d.Enabled ? 1.0 : 0);
 
-        // Also disable/enable points of interest
-        container.selectAll(".Markers").data(lineData).classed("active", (d, index) => enabledLine[index])
 
         // Update axis visibility based on whether the unit is enabled
         let isAxisLeft = true;
