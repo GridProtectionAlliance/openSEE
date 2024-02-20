@@ -25,7 +25,7 @@
 import * as React from "react";
 import { OpenSee } from '../global';
 import { cloneDeep } from "lodash";
-import { selectData, selectEnabled, EnableTrace } from "../store/dataSlice";
+import { SelectData, SelectEnabled, EnableTrace } from "../store/dataSlice";
 import { SelectColor } from "../store/settingSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
@@ -35,8 +35,7 @@ const hrow = 26;
 
 interface iProps {
     height: number,
-    type: OpenSee.graphType,
-    eventId: number,
+    dataKey: OpenSee.IGraphProps
 }
 
 interface ICategory {
@@ -55,23 +54,21 @@ interface ILegendGrid {
 }
 
 const horizontalSort = ['W', 'Pk', 'RMS', 'Ph', 'V', 'I', 'Pre', 'Post', 'P', 'Q', 'S', 'Pf', 'R', 'X', 'Z', 'Mag', 'Ang'];
-const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.','V','I'];
-const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero','S0/S1','S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
+const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.', 'V', 'I'];
+const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero', 'S0/S1', 'S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
 
 const Legend = (props: iProps) => {
-    const MemoSelectData = React.useMemo(() => selectData(props.dataKey), []);
-    const MemoSelectEnabled = React.useMemo(() => selectEnabled(props.dataKey), []);
+    const MemoSelectData = React.useMemo(() => SelectData(props.dataKey), []);
+    const MemoSelectEnabled = React.useMemo(() => SelectEnabled(props.dataKey), []);
 
     const data = useAppSelector(MemoSelectData);
     const enabled = useAppSelector(MemoSelectEnabled)
     const dispatch = useAppDispatch();
 
     const [categories, setCategories] = React.useState<Array<ICategory>>([]);
-    const [showCategories, setShowCategories] = React.useState<boolean>(false);
     const [verticalHeader, setVerticalHeader] = React.useState<Array<[string, string]>>([]);
     const [horizontalHeader, setHorizontalHeader] = React.useState<Array<string>>([]);
     const [grid, setGrid] = React.useState<Map<string, ILegendGrid[]>>(new Map<string, ILegendGrid[]>());
-
     const [wScroll, setWScroll] = React.useState<number>(0);
 
     React.useEffect(() => {
@@ -87,7 +84,7 @@ const Legend = (props: iProps) => {
         let categories: Array<ICategory> = [];
         let grid: Array<ILegendGrid> = [];
 
-        data.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
+        data?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
             let index = categories.findIndex(category => category.Text === item.LegendGroup);
             if (index === -1) {
                 categories.push({ Value: 0, Text: item.LegendGroup, Selected: false });
@@ -125,7 +122,7 @@ const Legend = (props: iProps) => {
     function update() {
         let updateGrid: Map<string, ILegendGrid[]> = cloneDeep(grid);
 
-        data.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
+        data?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
 
             let index = item.LegendVertical + item.LegendVGroup;
             if (!updateGrid.has(index)) {
@@ -229,8 +226,7 @@ const Legend = (props: iProps) => {
                         traces = traces.concat(data.traces.get(item.Text));
                 }));
 
-            dispatch(EnableTrace({ trace: traces, enabled: tmp[index].Selected, key: dataKey }));
-
+            dispatch(EnableTrace({ trace: traces, enabled: tmp[index].Selected, key: props.dataKey }));
             return tmp;
         });
     }
@@ -326,20 +322,19 @@ const Legend = (props: iProps) => {
             }
         }
 
-        dispatch(EnableTrace({ key: { EventId: props.eventId, DataType: props.type }, trace: updates, enabled: !isAny }))
+        dispatch(EnableTrace({ key: props.dataKey, trace: updates, enabled: !isAny }))
 
     }
     const isScroll = (props.height - 97) < (verticalHeader.length * (2 + hrow));
-
     return (
-        <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.type + "-" + props.eventId}> 
-        <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px"}} >
-                <div className="form-group" style={ {color: undefined}}>
+        <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId}>
+            <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px" }} >
+                <div className="form-group" >
                         <MultiCheckBoxSelect
                             Options={categories}
-                            OnChange={(options) => {
-                                options.forEach((o) => {
-                                    const i = categories.findIndex((c) => c.Text == o.Text);
+                        OnChange={(evt, options) => {
+                            options.forEach(o => {
+                                const i = categories.findIndex(c => c.Text == o.Text);
                                     changeCategory(i, categories[i])
                                 })
                             }}
@@ -349,7 +344,7 @@ const Legend = (props: iProps) => {
                 <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
                 <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: (isScroll ? wScroll : 0) }}>
                     <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }}></div>
-                    {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}/>)}
+                        {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
                 </div>
                 <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101, width: '100%' }}>
                 {(verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ?
