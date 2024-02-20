@@ -319,19 +319,19 @@ const LineChart = (props: iProps) => {
     }, [props.type, props.eventId, options]);
 
     React.useEffect(() => {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         if (container == null || container.select(".yAxisLabel") == null)
             return;
-        container.select(".yAxisLabel")
-            .style('font-size', yLblFontSize.toString() + 'rem');
+        relevantUnits.forEach(unit => {
+            container.select(`.yAxisLabelLeft[type='${unit}']`).style('font-size', yLblFontSize.toString() + 'rem');
+            container.select(`.yAxisLabelLeft[type='${unit}']`).text(yLabels[unit])
 
-        container.select(".yAxisLabel.left")
-            .text(yLblTextLeft)
-        container.select(".yAxisLabel.right")
-            .text(yLblTextRight)
-    }, [yLblTextLeft, yLblTextRight, yLblFontSize]);
+            container.select(`.yAxisLabelRight[type='${unit}']`).style('font-size', yLblFontSize.toString() + 'rem');
+            container.select(`.yAxisLabelRight[type='${unit}']`).text(yLabels[unit])
+        })
 
+    }, [yLabels, yLblFontSize]);
 
     React.useEffect(() => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
