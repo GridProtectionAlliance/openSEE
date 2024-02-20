@@ -429,21 +429,30 @@ const LineChart = (props: iProps) => {
     }
 
     function createPlot() {
-        d3.select("#graphWindow-" + props.type + "-" + props.eventId + ">svg").select("g.root").remove()
+        d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
 
-        let svg = d3.select("#graphWindow-" + props.type + "-" + props.eventId).select("svg")
+        let svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
             .append("g").classed("root", true)
-            .attr("transform", "translate(40,0)");
-        // Everything should start at 40, 20 except the div for overlay....
+            .attr("transform", "translate(10,0)");
 
-        // Now Create Axis
-        yScaleRef.current = d3.scaleLinear()
-            .domain(yLimits)
-            .range([props.height - 40, 20]);
+        // Everything should start at 40, 20 except the div for overlay...
+        //Update x/y scales
+        if (yLimits) {
+            Object.keys(yLimits).forEach(unit => {
+                if (yLimits?.[unit])
+                    yScaleRef.current[unit] = d3.scaleLinear().domain(yLimits?.[unit]).range([props.height - 40, 20]);
+                else
+                    yScaleRef.current[unit] = d3.scaleLinear().domain([0, 1]).range([props.height - 40, 20]);
+            })
+        }
 
-        xScaleRef.current = d3.scaleLinear()
-            .domain([startTime, endTime])
-            .range([60, width - 150]);
+        if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception'))
+            xScaleRef.current = d3.scaleLinear().domain([startTimeSinceInception, endTimeSinceInception]).range([60, props.width - 110])
+        else
+            xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
+
+        //Create xAxis
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
 
         //ScaleRef.current = d3.scaleLinear()
           //  .domain(yLimits)
@@ -480,17 +489,15 @@ const LineChart = (props: iProps) => {
 
         //Add Clip Path
         svg.append("defs").append("svg:clipPath")
-            .attr("id", "clipData-" + props.type + "-" + props.eventId)
-            .append("svg:rect").classed("clip",true)
-            .attr("width", width - 210)
+            .attr("id", "clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId)
+            .append("svg:rect").classed("clip", true)
+            .attr("width", props.width - 110)
             .attr("height", props.height - 60)
             .attr("x", 60)
             .attr("y", 20);
 
-
         //Add Window to indicate Zooming
-
-        svg.append("rect").classed("zoomWindow",true)
+        svg.append("rect").classed("zoomWindow", true)
             .attr("stroke", "#000")
             .attr("x", 60).attr("width", 0)
             .attr("y", 20).attr("height", props.height - 60)
