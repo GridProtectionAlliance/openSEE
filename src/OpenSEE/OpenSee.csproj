@@ -59,8 +59,8 @@
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
-    <Content Include="Images\openSEELogo.png" />
     <None Include="Scripts\jquery-3.6.0.intellisense.js" />
+    <Content Include="Images\openSEELogo.png" />
     <Content Include="Scripts\OpenSee.js" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
@@ -117,15 +117,14 @@
     <None Include="Scripts\TSX\Graphs\LineChartBase.tsx" />
     <None Include="Scripts\TSX\Components\About.tsx" />
     <None Include="Scripts\TSX\Components\Menu.tsx" />
-    <None Include="Scripts\TSX\Components\MultiSelectWindow.tsx" />
+    <None Include="Scripts\TSX\Components\OverlappingEvents.tsx" />
     <None Include="Scripts\TSX\Components\OpenSEENavbar.tsx" />
-    <None Include="Scripts\TSX\Components\OpenSEENoteModal.tsx" />
     <None Include="Scripts\TSX\Components\AnalyticOptions.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\FFTTable.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\HarmonicStats.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\LightningData.tsx" />
-    <None Include="Scripts\TSX\jQueryUI Widgets\PolarChart.tsx" />
+    <None Include="Scripts\TSX\jQueryUI Widgets\PhasorChart.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\ScalarStats.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\TimeCorrelatedSags.tsx" />
     <None Include="Scripts\TSX\jQueryUI Widgets\Tooltip.tsx" />
@@ -264,7 +263,10 @@
     <Content Include="Scripts\TSX\store\analyticSlice.tsx" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\TSX\store\eventSlice.tsx" />
+    <Content Include="Scripts\TSX\store\overlappingEventsSlice.tsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts\TSX\store\GraphLogic.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\TSX\Graphs\BarChartBase.tsx" />
@@ -285,7 +287,10 @@
     <Content Include="Scripts\TSX\hooks.ts" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\TSX\store\infoSlice.tsx" />
+    <TypeScriptCompile Include="Scripts\TSX\Context\HoverContext.tsx" />
+    <TypeScriptCompile Include="Scripts\TSX\Context\HoverProvider.tsx" />
+    <TypeScriptCompile Include="Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
+    <TypeScriptCompile Include="Scripts\TSX\store\eventInfoSlice.tsx" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
