@@ -72,12 +72,21 @@ const Legend = (props: iProps) => {
     const [wScroll, setWScroll] = React.useState<number>(0);
 
     React.useEffect(() => {
-        update();
-    }, [enabled])
+        const timeoutId = setTimeout(() => {
+            dataUpdate();
+        }, 250);
+
+        return () => clearTimeout(timeoutId);
+    }, [data]);
 
     React.useEffect(() => {
-        dataUpdate();
-    }, [data])
+        const timeoutId = setTimeout(() => {
+        update();
+        }, 250);
+
+        return () => clearTimeout(timeoutId);
+    }, [enabled]);
+
 
     React.useEffect(() => { setWScroll(measureScrollbarWidth()); }, [])
     function dataUpdate() {
