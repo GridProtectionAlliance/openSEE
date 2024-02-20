@@ -469,13 +469,12 @@ const LineChart = (props: iProps) => {
             .text(yLblTextLeft);
             //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
 
-        svg.append("text").classed("yAxisLabel", true).classed("right", true)
-            .attr("transform", "rotate(-90)")
-            .attr("y", (width - 92))
-            .attr("x", - (props.height / 2 - 20))
-            .attr("dy", "1em")
+        // Create Plot Title
+        svg.append("text").classed("plotTitle", true)
+            .attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ", 20)")
             .style("text-anchor", "middle")
-            .text(yLblTextRight);
+            .style("font-weight", "bold")
+            .text(GetDisplayLabel(props.dataKey.DataType));
 
         setTooltipLocation(10);
 
