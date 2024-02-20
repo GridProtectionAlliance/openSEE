@@ -725,11 +725,15 @@ const LineChart = (props: iProps) => {
         }
     }
 
-    function formatValueTick(d: number) {
+    function formatValueTick(d: number, unit: OpenSee.Unit) {
         let h = 1;
 
-        if (yScaleRef.current != undefined)
-            h = yScaleRef.current.domain()[1] - yScaleRef.current.domain()[0]
+        if (yScaleRef.current)
+            h = yScaleRef.current[unit].domain()[1] - yScaleRef.current[unit].domain()[0]
+
+        if (Math.abs(d) >= 100000) {
+            return d.toString().slice(0, 4) + '...';
+        }
 
         if (h > 100)
             return d.toFixed(0)
@@ -791,14 +795,14 @@ const LineChart = (props: iProps) => {
 
     function MouseMove(evt) {
 
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
         if (x0 < 60)
             x0 = 60;
-        if (x0 > (width - 140))
-            x0 = width - 140;
+        if (x0 > (props.width - 140))
+            x0 = props.width - 140;
 
         if (y0 < 20)
             y0 = 20;
