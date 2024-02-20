@@ -922,8 +922,13 @@ const LineChart = (props: iProps) => {
             return;
 
         container.select(".fftWindow")
-            .attr("x", currentFFTWindow[0]).attr("width", currentFFTWindow[1] - currentFFTWindow[0])
-            .style("opacity", (showFFT ? 0.5 : 0)).style('cursor', (showFFT ? 'move' : 'default'))
+            .attr("x", currentFFTWindow[0])
+            .attr("width", currentFFTWindow[1] - currentFFTWindow[0])
+            .style("opacity", (showFFT ? 0.5 : 0))
+            .style('cursor', (mouseMode === 'fftMove' && showFFT ? 'grab' : 'default'))
+
+    }
+
     function updateYAxises() {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
