@@ -169,8 +169,7 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (loading == 'Loading')
             return;
-        if (lineData === undefined || lineData?.length == 0)
-            return;
+        if (lineData && lineData?.length > 0) {
         if (isCreated) {
             UpdateData();
             return () => { };
@@ -181,6 +180,8 @@ const LineChart = (props: iProps) => {
         updateVisibility();
         setCreated(true);
         return () => { }
+        }
+
     }, [lineData, loading]);
 
 

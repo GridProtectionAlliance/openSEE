@@ -108,9 +108,7 @@ const BarChart = (props: iProps) => {
     React.useEffect(() => {
         if (loading == 'Loading')
             return;
-        if (barData === undefined || barData?.length == 0)
-            return;
-
+        if (barData && barData?.length > 0) {
         if (isCreated) {
             UpdateData();
             return () => { };
@@ -122,6 +120,8 @@ const BarChart = (props: iProps) => {
         setCreated(true);
         //setSelectedPoints([]);
         return () => { }
+        }
+
     }, [barData, loading]);
 
     //Effect to adjust Axes Labels when Scale changes
