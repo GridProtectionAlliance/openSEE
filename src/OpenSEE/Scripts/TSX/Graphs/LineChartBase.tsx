@@ -97,7 +97,6 @@ const LineChart = (props: iProps) => {
     const MemoSelectEnabled = React.useMemo(() => SelectEnabled(props.dataKey), []);
     const enabledLine = useAppSelector(MemoSelectEnabled);
 
-
     const SelectYlimits = React.useMemo(() => SelectYLimits(props.dataKey), [props.dataKey, lineData]);
     const yLimits = useAppSelector(SelectYlimits);
 
@@ -267,29 +266,48 @@ const LineChart = (props: iProps) => {
             setMouseDownInit(true);
             return;
         }
-        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && props.type != 'OverlappingWave')
-            dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
-        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && props.type == 'OverlappingWave')
-            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+
+
+        let scaledHover = hover
+        let scaledPointMouse = pointMouse
+        const curOverlappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId && props.dataKey.DataType === props.dataKey.DataType)
+
+        if (isSinceInception && !isOverlappingWaveform) {
+            if (isOriginalEvt) {
+                scaledHover[0] = hover[0] + (eventInfo.Inception - originalStartTime)
+                scaledPointMouse[0] = pointMouse[0] + (eventInfo.Inception - originalStartTime)
+            }
+            else if (props.dataKey.EventId !== -1) {
+                scaledHover[0] = hover[0] + (curOverlappingEvt.Inception - originalStartTime)
+                scaledPointMouse[0] = pointMouse[0] + (curOverlappingEvt.Inception - originalStartTime)
+            }
+
+        }
+
+
+        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
+            dispatch(SetTimeLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
+        if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
+            dispatch(SetCycleLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
-            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
-        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && props.type != 'OverlappingWave') {
-            dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
-            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
+            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
+            dispatch(SetTimeLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
+            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
         }
-        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && props.type == 'OverlappingWave') {
-            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
-            dispatch(SetYLimits({ max: Math.max(pointMouse[1], hover[1]), min: Math.min(pointMouse[1], hover[1]), key: dataKey }))
+        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
+            dispatch(SetCycleLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
+            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
         }
-        else if (!mouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
-            const deltaT = pointMouse[0] - oldFFTWindow[0];
+        else if (!fftMouseDown && mouseMode == 'fftMove' && scaledPointMouse[0] < oldFFTWindow[1] && scaledPointMouse[0] > oldFFTWindow[0]) {
+            const deltaT = scaledPointMouse[0] - oldFFTWindow[0];
             const deltaData = oldFFTWindow[1] - oldFFTWindow[0];
-            let Tstart = (hover[0] - deltaT);
+            let Tstart = (scaledHover[0] - deltaT);
             Tstart = (Tstart < xScaleRef.current.domain()[0] ? xScaleRef.current.domain()[0] : Tstart)
             Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
-            dispatch(SetFFTWindow({ startTime: Tstart, cycle: fftCycles }));
+            dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: Tstart, FFTCycles: fftCycles }, key: { DataType: "FFT", EventId: evtID } }));
         }
-    }, [mouseDown])
+    }, [mouseDown, fftMouseDown])
 
 
     React.useEffect(() => {
@@ -858,30 +876,41 @@ const LineChart = (props: iProps) => {
                 container.select(".zoomWindow").style("opacity", 0.5)
                     .attr("x", (xScaleRef.current as any)(startTime))
                     .attr("width", (xScaleRef.current as any)(endTime) - (xScaleRef.current as any)(startTime))
-                    .attr("height", Math.abs((yScaleRef.current as any)(pointMouse[1]) - (yScaleRef.current as any)(hover[1])))
-                    .attr("y", Math.min((yScaleRef.current as any)(pointMouse[1]), (yScaleRef.current as any)(hover[1])))
+                    .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
+                    .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
             else if (zoomMode == "xy")
                 container.select(".zoomWindow").style("opacity", 0.5)
                     .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])))
                     .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
-                    .attr("height", Math.abs((yScaleRef.current as any)(pointMouse[1]) - (yScaleRef.current as any)(hover[1])))
-                    .attr("y", Math.min((yScaleRef.current as any)(pointMouse[1]), (yScaleRef.current as any)(hover[1])))
+                    .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
+                    .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
         }
+        const curOverlappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId && props.dataKey.DataType === props.dataKey.DataType)
+
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
 
+        if (isSinceInception && !isOverlappingWaveform) {
+            if (isOriginalEvt)
+                deltaT = (hover[0] + (eventInfo.Inception - originalStartTime)) - (pointMouse[0] + (eventInfo.Inception - originalStartTime))
+            else if (props.dataKey.EventId !== -1)
+                deltaT = (hover[0] + (curOverlappingEvt.Inception - originalStartTime)) - (pointMouse[0] + (curOverlappingEvt.Inception - originalStartTime))
+        }
 
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && props.type != 'OverlappingWave')
+
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy")) {
+            if (props.dataKey.DataType != 'OverlappingWave')
             dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && props.type == 'OverlappingWave')
+            else if (props.dataKey.DataType == 'OverlappingWave')
             dispatch(SetCycleLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
+        }
 
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
-            dispatch(SetYLimits({ min: (yLimits[0] - deltaData), max: (yLimits[1] - deltaData), key: dataKey }));
-
-        if (mouseMode == 'fftMove' && mouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) 
-            setCurrentFFTWindow([(xScaleRef.current as any)(oldFFTWindow[0] + deltaT), (xScaleRef.current as any)(oldFFTWindow[1] + deltaT)])
+        if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy")) {
+            dispatch(SetZoomedLimits({ limits: [(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], key: props.dataKey }));
+        }
         
+        if (mouseMode == 'fftMove' && fftMouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0])
+            setCurrentFFTWindow([xScaleRef.current(oldFFTWindow[0] + deltaT), xScaleRef.current(oldFFTWindow[1] + deltaT)])
     }
 
     function updateFFTWindow() {
