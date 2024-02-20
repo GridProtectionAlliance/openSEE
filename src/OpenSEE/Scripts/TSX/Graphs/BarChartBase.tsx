@@ -232,7 +232,7 @@ const BarChart = (props: iProps) => {
 
         relevantUnits.forEach(unit => {
         let fs = 1;
-        let l = GetTextWidth('', '1rem', yLblText);
+            let l = GetTextWidth('', '1rem', yLabels[unit]);
 
         while ((l > props.height - 60) && fs > 0.2) {
             fs = fs - 0.05;
@@ -309,15 +309,20 @@ const BarChart = (props: iProps) => {
                 .data(rectData)
             .enter().append("g")
             .classed("Bar", true)
-            .attr("stroke", (d) => colors[d.Color])
+                .attr("stroke", d => colors[d.Color])
             .selectAll('rect')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as BarSeries[])
+                .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
             .enter()
             .append('rect')
-            .attr("x", d => xScaleRef.current(d.data[0]))
-            .attr("y", d => yScaleRef.current(d.data[1]))
+                .attr("x", d => { let x = xScaleRef.current(d.data[0]); return isNaN(x) ? 0 : x })
+                .attr("y", d => { let y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
             .attr("width", xScaleRef.current.bandwidth())
-            .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current(d.data[1])), 0) })
+                .attr("height", d => {
+                    let h = yScaleRef.current[d.unit](d.data[1])
+                    if (isNaN(h))
+                        return 0
+                    return Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0)
+                })
             .attr("fill", "none")
             .attr("stroke-width", 2)
             .style("transition", 'x 0.5s')
@@ -328,26 +333,43 @@ const BarChart = (props: iProps) => {
 
 
             //draw circles for Ang
+            const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
             let circles = container.select(".DataContainer").selectAll(".Point")
             .data(barData.filter(function(d){ return d.LegendHorizontal === 'Ang'; }))//filter data for LegendHorizontal === 'Ang'
             .enter().append("g")
             .classed("Point", true)
-            .attr("fill", (d) => colors[d.Color])
+                .attr("fill", d => colors[d.Color])
             .selectAll('circle')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as BarSeries[])
+                .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
             .enter().append('circle')
-            .attr("cx", d => xScaleRef.current(d.data[0])) //set the circle cx position
-            .attr("cy", d => yScaleRef.current(d.data[1])) //set the circle cy position
+                .attr("cx", d => isNaN(xScaleRef.current(d.data[0])) ? -1 : xScaleRef.current(d.data[0])) //set the circle cx position
+                .attr("cy", d => isNaN(yScaleRef.current[d.unit](d.data[1])) ? -1 : yScaleRef.current[d.unit](d.data[1])) //set the circle cy position
             .attr("r", 5) //set the radius as 5
             .attr("stroke", "none") //set the stroke as none
             .style("transition", 'cx 0.5s')
             .style("transition", 'cy 0.5s')
             .style("transition", 'r 0.5s')
 
-            container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
-            container.select(".DataContainer").selectAll(".Point").data(barData).exit().remove();
+
+            //draw lines to connect Ang circles
+            let lines = container.select(".DataContainer").selectAll(".Line").data(pointData);
+            lines.enter().append("path").classed("Line", true)
+                .attr("type", d => `axis-${d.Unit}`)
+                .attr("fill", "none")
+                .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
+                .attr("stroke-dasharray", d => (d.LineType == undefined || d.LineType == "-" ? 0 : 5))
+                .attr("d", d => {
+                    let lineGen = createLineGen(d.Unit)
+                    if (d.SmoothDataPoints.length > 0)
+                        return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                    return lineGen(d.DataPoints);
+                })
+
+            lines.exit().remove();
            
             
+            container.select(".DataContainer").selectAll(".Bar").data(rectData).exit().remove();
+            container.select(".DataContainer").selectAll(".Point").data(pointData).exit().remove();
         }
        
         updateLimits();
@@ -471,16 +493,12 @@ const BarChart = (props: iProps) => {
             .style("text-anchor", "middle")
             .text('Harmonic (Hz)');
 
-        svg.append("text").classed("yAxisLabel", true)
-            .attr("transform", "rotate(-90)")
-            .attr("y", 2)
-            .attr("x", - (props.height / 2 - 20))
-            .attr("dy", "1em")
+        // Create Plot Title
+        svg.append("text").classed("plotTitle", true)
+            .attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ", 20)")
             .style("text-anchor", "middle")
-            .text(uniq(barData.map(d => d.Unit)).map(unit => {
-                return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A") + "]";
-            }).join("  "));
-            
+            .style("font-weight", "bold")
+            .text(dataKey.DataType);
 
         svg.append("line").classed("xAxisExtLeft", true)
              .attr("stroke", "currentColor")
@@ -710,6 +728,10 @@ const BarChart = (props: iProps) => {
 
     }
         
+    function MouseOut() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        container.select(".zoomWindow").style("opacity", 0);
+        setMouseDown(false);
     }
 
 
