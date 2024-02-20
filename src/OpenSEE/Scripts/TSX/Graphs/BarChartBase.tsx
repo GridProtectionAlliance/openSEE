@@ -109,6 +109,7 @@ const BarChart = (props: iProps) => {
         if (loading == 'Loading')
             return;
         if (barData === undefined || barData?.length == 0)
+            return;
 
         if (isCreated) {
             UpdateData();
@@ -257,6 +258,12 @@ const BarChart = (props: iProps) => {
                 factor = 1.0 / base
         }
 
+        if (enabledUnits?.length > 2) 
+            xScaleRef.current.range([120, props.width - 110]);
+
+         if (enabledUnits?.length > 3) 
+            xScaleRef.current.range([120, props.width - 170]);
+        
         return d3.line()
             .x(d => xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0)
             .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
@@ -347,12 +354,60 @@ const BarChart = (props: iProps) => {
 
     }
 
+    // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
+    function updateLimits() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+
+        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleLblRef.current).tickFormat(d => formatFrequencyTick(d as number)).tickSizeOuter(0) as any);
+
+        const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
+        const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
+
+        xScaleLblRef.current.range([60 + offsetLeft, props.width - 110 - offsetRight]);
+        container.select('.xAxisExtLeft').attr("x2", 60 + offsetLeft)
+        container.select('.xAxisExtRight').attr("x2", props.width - 110 - offsetRight)
+
+        let barGen = (unit: OpenSee.Unit, base: number) => {
+            //Determine Factors
+            let factor = 1.0;
+            if (activeUnit[unit as string] != undefined) {
+                factor = activeUnit[unit as string].factor
+                if (factor === undefined)  //p.u case
+                    factor = 1.0 / base
+            }
+
+            return (d) => { return yScaleRef.current[d.unit](d.data[1] * factor) }
+        }
+
+        container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
+            .attr("x", (d: OpenSee.BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : v) })
+            .style("opacity", (d: OpenSee.BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
+            .attr("y", (d: OpenSee.BarSeries) => { let y = barGen(d.unit, d.base)(d); return (isNaN(y) ? 0 : y) })
+            .attr("width", Math.max(xScaleRef.current.bandwidth()))
+            .attr("height", (d: OpenSee.BarSeries) => {
+                let h = barGen(d.unit, d.base)(d)
+                if (isNaN(h))
+                    return 0
+                return Math.max(((props.height - 40) - barGen(d.unit, d.base)(d)), 0)
+            })
+
+        container.select(".DataContainer").selectAll(".Point").selectAll('circle')
+            .attr("cx", (d: OpenSee.BarSeries) => { let v = (xScaleRef.current(d.data[0])) + (xScaleRef.current.bandwidth() / 2); return (isNaN(v) ? 0 : v) })
+            .style("opacity", (d: OpenSee.BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 1.0) })
+            .attr("cy", (d: OpenSee.BarSeries) => (isNaN(yScaleRef.current[d.unit](d.data[0])) ? -1 : (barGen(d.unit, d.base)(d))))
+            .attr("r", (d: OpenSee.BarSeries) => { let v = xScaleRef.current(d.data[0]); return (isNaN(v) ? 0.0 : 5) })
+
+        updateYAxises();
+
+    }
+
+
     function createPlot() {
         d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
 
         let svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
             .append("g").classed("root", true)
-            .attr("transform", "translate(40,0)");
+            .attr("transform", "translate(10,0)");
 
         // Set yScales
         if (yLimits) {
@@ -367,25 +422,52 @@ const BarChart = (props: iProps) => {
         // We can assume consistent sampling rate for now
         let domain = barData[0].DataPoints.filter(pt => pt[0] > xLimits[0] && pt[0] < xLimits[1]).map(pt => pt[0]);
 
-        xScaleRef.current = d3.scaleBand()
-            .domain(domain.map(d => d.toString()))
-            .range([60, props.width - 240])
-            .padding(0.1);
+        xScaleRef.current = d3.scaleBand().domain(domain.map(d => d.toString())).range([60, props.width - 150])
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
        
-        xScaleLblRef.current = d3.scaleLinear()
-            .domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)])
-            .range([60 + offsetLeft, props.width - 240 - offsetRight ]);
+        xScaleLblRef.current = d3.scaleLinear().domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)]).range([60 + offsetLeft, props.width - 110 - offsetRight]);
 
-        svg.append("g").classed("yAxis", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
+        //create xAxis 
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(() => d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSize(6));
+
+        let isAxisLeft = true;
+        let axisCount = 0;
+
+        //Create yAxises
+        relevantUnits.forEach(unit => {
+            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
+            const enabledUnit = enabledUnits.includes(unit)
+
+            svg.append("g")
+                .classed(`yAxis`, true)
+                .attr("type", `${unit}`)
+                .attr("transform", axisTransform)
+                .call(isAxisLeft ? d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) : d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)))
+                .style("opacity", enabledUnit ? 1 : 0)
+
+            // Create axis label
+            let labelYPos = isAxisLeft ? 2 : props.width - 70;
     
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(() => d3.axisBottom(xScaleLblRef.current).tickFormat((d, i) => formatFrequencyTick(d as number)).tickSize(6));
+            svg.append("text")
+                .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
+                .attr("type", `${unit}`)
+                .attr("x", - (props.height / 2 - 20))
+                .attr("y", labelYPos)
+                .attr("dy", "1em")
+                .attr("transform", "rotate(-90)")
+                .style("text-anchor", "middle")
+                .style("opacity", enabledUnit ? 1 : 0)
+                .text(yLabels[unit]);
 
+            isAxisLeft = !isAxisLeft;
+            axisCount++;
+
+        });
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 10) + ")")
+            .attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 10) + ")")
             .style("text-anchor", "middle")
             .text('Harmonic (Hz)');
 
@@ -407,7 +489,7 @@ const BarChart = (props: iProps) => {
 
         svg.append("line").classed("xAxisExtRight", true)
             .attr("stroke", "currentColor")
-            .attr("x1", props.width - 240).attr("x2", props.width - 240 - offsetRight)
+            .attr("x1", props.width - 110).attr("x2", props.width - 110 - offsetRight)
             .attr("y1", props.height - 40).attr("y2", props.height - 40)
        
 
@@ -415,7 +497,7 @@ const BarChart = (props: iProps) => {
         svg.append("defs").append("svg:clipPath")
             .attr("id", "clip-" + props.dataKey.DataType + "-" + props.dataKey.EventId)
             .append("svg:rect").classed("clip", true)
-            .attr("width", props.width - 300)
+            .attr("width", props.width - 110)
             .attr("height", props.height - 60)
             .attr("x", 60)
             .attr("y", 20);
@@ -436,7 +518,7 @@ const BarChart = (props: iProps) => {
 
         //Event overlay
         svg.append("svg:rect").classed("Overlay", true)
-            .attr("width", props.width - 240)
+            .attr("width", props.width - 110)
             .attr("height", '100%')
             .attr("x", 20)
             .attr("y", 0)
@@ -564,23 +646,69 @@ const BarChart = (props: iProps) => {
             dispatch(SetZoomedLimits({ limits: [(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], key: props.dataKey }));
     }
 
-    function MouseOut() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        container.select(".zoomWindow").style("opacity", 0);
-        setMouseDown(false);
+    function updateYAxises() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let svg = container.select(".DataContainer");
+
+        if (container === undefined)
+            return
+
+        //Flag to alternate axis placement
+        let isAxisLeft = true; //this can just be exchanged for a % 2 since we have a counter now.
+        let currentAxis = 0;
+
+        //Update yAxises
+        enabledUnits?.forEach(unit => {
+            let axisType = `[type='${unit}']`;
+            let firstLeftAxisType = `[type='${enabledUnits[0]}']`
+            let firstRightAxisType = `[type='${enabledUnits[1]}']`
+
+            if (isAxisLeft) {
+                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+
+                if (currentAxis > 1) {
+                    container.selectAll(`.yAxis${firstLeftAxisType}`).attr("transform", "translate(120, 0)")
+                    container.selectAll(`.yAxisLabelLeft${firstLeftAxisType}`).attr("y", "62")
+                }
+            }
+            else {
+                if (currentAxis > 2) {
+                    container.selectAll(`.yAxis${firstRightAxisType}`).attr("transform", `translate(${props.width - 170},0)`)
+                    container.selectAll(`.yAxisLabelRight${firstRightAxisType}`).attr("y", props.width - 135)
+                }
+                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+                svg.selectAll(`path[type='axis-${unit}']`)
+                    .attr("d", function (d: OpenSee.iD3DataSeries) {
+                        const scopedLineGen = createLineGen(d.Unit, d.BaseValue);
+                        if (d.SmoothDataPoints.length > 0)
+                            return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                        return scopedLineGen(d.DataPoints);
+                    })
     }
 
-    //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limitw change (due to auto Units)
-    function updateLabels() {
+            isAxisLeft = !isAxisLeft;
+            currentAxis++;
       
-        function GetYLabel() {
-            return uniq(barData.map(d => d.Unit)).map(unit => {
-                return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A")+ "]";
-            }).join("  ")
+
+        });
+
+
+        if (enabledUnits.length < 3)
+            return
+
+        let clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
+        let evtOverlay = container.select(`rect.Overlay`)
+
+        if (enabledUnits.length === 3) {
+            clipPath.attr("x", 120).attr("width", props.width - 270)
+            evtOverlay.attr("x", 120).attr("width", props.width - 270)
+        }
+        else if (enabledUnits.length === 4) {
+            clipPath.attr("x", 120).attr("width", props.width - 210 - 120)
+            evtOverlay.attr("x", 120).attr("width", props.width - 210 - 120)
         }
 
-        if (yLblText != GetYLabel())
-            setYLblText(GetYLabel())
+    }
         
     }
 
@@ -600,16 +728,46 @@ const BarChart = (props: iProps) => {
    
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        if (barData) {
+            //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
+            const rectData = barData.filter(d => d.LegendHorizontal === "Mag")
+            container.select(".DataContainer").selectAll(".Bar").data(rectData).classed("active", d => d.Enabled)
+            container.select(".DataContainer").selectAll(".Bar.active").style("opacity", 1.0);
+            container.select(".DataContainer").selectAll(".Bar:not(.active)").style("opacity", 0);
 
-        //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
-        container.select(".DataContainer").selectAll(".Bar").data(barData).classed("active", (d, index) => enabledBar[index])
+            const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
 
-        container.select(".DataContainer").selectAll(".Bar.active").style("opacity", 1.0);
+            container.select(".DataContainer").selectAll(".Point").data(pointData).classed("active", d => d.Enabled)
+            container.select(".DataContainer").selectAll(".Line").data(pointData).classed("active", d => d.Enabled)
+            container.select(".DataContainer").selectAll(".Line.active").style("opacity", 1.0);
+            container.select(".DataContainer").selectAll(".Line:not(.active)").style("opacity", 0);
 
-        container.select(".DataContainer").selectAll(".Bar:not(.active)").style("opacity", 0);
+
+            container.select(".DataContainer").selectAll(".Point.active").style("opacity", 1.0);
+            container.select(".DataContainer").selectAll(".Point:not(.active)").style("opacity", 0);
+
+            let isAxisLeft = true;
+
+            relevantUnits.forEach(unit => {
+                let enabledUnit = enabledUnits?.includes(unit);
+                let axisType = `[type='${unit}']`;
+
+                if (enabledUnit) {
+                    container.selectAll(`.yAxis${axisType}`).style("opacity", 1);
+                    container.selectAll(`.yAxisLabel${axisType}`).style("opacity", 1);
+                } else {
+                    container.selectAll(`.yAxis${axisType}`).remove();
+                    container.selectAll(`.yAxisLabel${axisType}`).remove();
+                }
+
+                isAxisLeft = !isAxisLeft;
+            })
+
+        }
 
     }
+
 
     // This Function needs to be called whenever height or width change
     function updateSize() {
@@ -617,24 +775,30 @@ const BarChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")");
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 300) / 2 + 60) + " ," + (props.height - 5) + ")")
-        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
-        xScaleRef.current.range([60, props.width - 240]);
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".plotTitle").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ",20)").style("font-weight", "bold")
+
+        container.select(".yAxisLabelLeft").attr("x", - (props.height / 2 - 20))
+        container.select(".yAxisLabelRight").attr("y", props.width - 120).attr("x", - (props.height / 2 - 20))
+        xScaleRef.current.range([60, props.width - 110]);
+        container.select(".yAxisRight").attr("transform", "translate(" + (props.width - 150) + ",0)");
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
 
-        xScaleLblRef.current.range([60 + offsetLeft, props.width - 240 - offsetRight]);
+        xScaleLblRef.current.range([60 + offsetLeft, props.width - 110 - offsetRight]);
+
         container.select('.xAxisExtLeft')
             .attr("x2", 60 + offsetLeft)
             .attr("y1", props.height - 40)
             .attr("y2", props.height - 40)
 
         container.select('.xAxisExtRight')
-            .attr("x2", props.width - 240 - offsetRight)
+            .attr("x2", props.width - 140 - offsetRight)
             .attr("y1", props.height - 40)
             .attr("y2", props.height - 40)
-            .attr("x1", props.width - 240)
+            .attr("x1", props.width - 140)
+
         relevantUnits.forEach(unit => {
             yScaleRef.current[unit].range([props.height - 40, 20]);
         })
