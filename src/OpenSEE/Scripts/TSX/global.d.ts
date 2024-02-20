@@ -375,7 +375,6 @@ export namespace OpenSee {
         isAuto: boolean,
         current: number
     }
-    }
 
     interface IOverlayHandlers {
         Settings: (state: boolean) => void,
