@@ -1167,24 +1167,32 @@ const LineChart = (props: iProps) => {
         return width;
     } 
 
-
     return (
         <div>
-            <Container eventID={props.eventId} height={props.height} loading={loading} type={props.type} hover={toolTipLocation} hasData={lineData.length > 0} hasTrace={enabledLine.some(i => i)} />
-            {loading == 'Loading' || lineData.length == 0 ? null : <Legend height={props.height} type={props.type} eventId={props.eventId} />}
+            <Container key={props.dataKey.DataType + props.dataKey.EventId + 'container'} dataKey={props.dataKey} height={props.height} loading={loading} hover={toolTipLocation} hasData={lineData?.length > 0} hasTrace={enabledLine?.some(i => i)}
+                selectedPointLocation={selectedPointLocation} showToolTip={props.showToolTip} inceptionLocation={inceptionLocation} durationLocation={durationLocation} plotMarkers={plotMarkers} />
+            {loading === 'Loading'|| lineData?.length == 0 ? null : <Legend key={props.dataKey.DataType + props.dataKey.EventId + 'legend'} height={props.height} dataKey={props.dataKey} />}
         </div>
     );
 }
 
 
-const Container = React.memo((props: { height: number, eventID: number, type: OpenSee.graphType, loading: OpenSee.LoadingState, hover: number, hasData: boolean, hasTrace: boolean }) => {
+const Container = React.memo((props: {
+    height: number, dataKey: OpenSee.IGraphProps, loading: OpenSee.LoadingState, hover: number, hasData: boolean,
+    hasTrace: boolean, selectedPointLocation: number, showToolTip: boolean, inceptionLocation: number, durationLocation: number, plotMarkers: boolean
+}) => {
     const showSVG = props.loading != 'Loading' && props.hasData;
+    return (
+        <div data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
+            {props.loading === 'Loading' ? <LoadingIcon /> : null}
+            {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
 
-    return (<div data-drawer={"graphWindow-" + props.type + "-" + props.eventID}  id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: '100%' }}>
-        {props.loading == 'Loading' ? <LoadingIcon /> : null}
-        {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
-            {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height - 40} left={props.hover} />}
+                { /*PolyLine for the mouse position*/}
+                {props.loading == 'Loading' || !props.hasData ? null : <PolyLine class={"hover"} key={'hover'} height={props.height - 40} left={props.hover} style={{ stroke: "#000", opacity: 0.5 }} />}
+                { /*PolyLine for the position of Selected Point*/}
+                {!props.showToolTip ? null : <PolyLine class={"selectedPoint"} key={'selectedPoint'} height={props.height - 40} left={props.selectedPointLocation} style={{ stroke: "#000", opacity: 1, strokeDasharray: "5,5" }} />}
+
                 { /*PolyLine for the inception of the event*/}
                 {props.loading == 'Loading' || !props.hasData || !props.plotMarkers ? null : <PolyLine class={"inception"} key={'inception'} height={props.height - 40} left={props.inceptionLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />}
                 { /*PolyLine for the end of the duration of the event*/}
@@ -1197,11 +1205,12 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
     </div>)
 })
 
-const ToolTip = (props: { height: number, left: number }) => {
-
-    return <g>
-        <polyline points={`${props.left},20 ${props.left},${props.height}`} style={{ stroke: "#000", opacity: 0.5 }} />
+const PolyLine = (props: { height: number, left: number, style: React.CSSProperties, class: string }) => {
+    return (
+        <g className={props.class} >
+            <polyline className="polyLine" points={`${props.left + 10},20 ${props.left + 10},${props.height}`} style={props.style} />
         </g>
+    )
 }
 
 export default LineChart;
