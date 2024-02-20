@@ -1270,9 +1270,6 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
     } catch { }
 }
 
-export const selectLoadTCE = createSelector((state: OpenSee.IRootState) => state.Data.loading, (state: OpenSee.IRootState) => state.Data.plotKeys, (loading, plotKeys) => {
-    return (loading.filter((item, index) => plotKeys[index].DataType == 'TripCoil' && item != 'Idle').length > 0)
-})
 
 function saveSettings(state: OpenSee.IDataState) {
     try {
