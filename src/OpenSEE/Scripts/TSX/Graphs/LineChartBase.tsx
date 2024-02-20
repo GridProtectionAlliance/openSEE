@@ -293,8 +293,10 @@ const LineChart = (props: iProps) => {
     }, [currentFFTWindow, showFFT])
 
     React.useEffect(() => {
-        if (xScaleRef.current != null)
-            setCurrentFFTWindow([(xScaleRef.current as any)(fftWindow[0]), (xScaleRef.current as any)(fftWindow[1])]);
+        if (xScaleRef.current === undefined)
+            return
+        updateDurationWindow()
+    }, [plotMarkers, startTime, endTime, props.width, props.height, timeUnit])
     }, [fftWindow])
 
     //This Clears the Plot if loading is activated
@@ -504,15 +506,15 @@ const LineChart = (props: iProps) => {
             .attr("fill", "black")
             .style("opacity", 0);
 
-        // Window Indicating fft 
-        if (props.type == 'Voltage' || props.type == 'Current')
-            svg.append("rect").classed("fftWindow", true)
-                .attr("clip-path", "url(#clipData-" + props.type + "-" + props.eventId + ")")
-                .attr("stroke", "#000")
-                .attr("x", 60).attr("width", 0)
+        //Add Window to indicate Inception and Duration of event
+        svg.append("rect").classed("DurationWindow", true)
+            .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
+            .attr("stroke", "#d3d3d3")
+            .attr("x", (xScaleRef.current as any)(eventInfo?.Inception))
+            .attr("width", eventInfo?.DurationEndTime - eventInfo?.Inception)
+            .style("opacity", (plotMarkers ? 0.25 : 0))
                 .attr("y", 20).attr("height", props.height - 60)
                 .attr("fill", "black")
-                .style("opacity", 0);
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
@@ -812,6 +814,32 @@ const LineChart = (props: iProps) => {
         container.select(".fftWindow")
             .attr("x", currentFFTWindow[0]).attr("width", currentFFTWindow[1] - currentFFTWindow[0])
             .style("opacity", (showFFT ? 0.5 : 0)).style('cursor', (showFFT ? 'move' : 'default'))
+    function updateDurationWindow() {
+        if (xScaleRef.current == undefined)
+            return;
+
+        let inceptionOffset = 0
+        if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception'))
+            inceptionOffset = (eventInfo?.Inception - startTime)
+
+        setInceptionLocation(xScaleRef.current(eventInfo?.Inception - inceptionOffset))
+        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime - inceptionOffset))
+
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+
+        let width = 1
+        let x = 1
+
+        width = xScaleRef.current(eventInfo?.DurationEndTime) - xScaleRef.current(eventInfo?.Inception)
+        x = xScaleRef.current(eventInfo?.Inception - inceptionOffset)
+
+
+        container.select(".DurationWindow")
+            .attr("x", x)
+            .attr("width", width)
+            .style("opacity", (plotMarkers ? 0.25 : 0))
+    }
+
     const wheelZoom = d3.zoom() //probably could include panning in here...
         .filter(event => {
             return event.type === 'wheel';
@@ -983,6 +1011,12 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
         {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
             {props.loading == 'Loading' || !props.hasData ? null : <ToolTip height={props.height - 40} left={props.hover} />}
+                { /*PolyLine for the inception of the event*/}
+                {props.loading == 'Loading' || !props.hasData || !props.plotMarkers ? null : <PolyLine class={"inception"} key={'inception'} height={props.height - 40} left={props.inceptionLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />}
+                { /*PolyLine for the end of the duration of the event*/}
+                {props.loading == 'Loading' || !props.hasData || !props.plotMarkers ? null : <PolyLine class={"duration"} key={'duration'} height={props.height - 40} left={props.durationLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />}
+
+
             {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
                 <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
         </svg>
