@@ -528,7 +528,26 @@ const LineChart = (props: iProps) => {
             .on('mousedown', (evt) => MouseDown(evt) )
             .on('mouseup', (evt) => MouseUp(evt))
             .on('mouseenter', () => { setLeftSelectCounter(1) })
+
+
+        //Window to indicate FFT -- this needs to be placed after the Event Overlay so it can capture mouseEvents
+        if (props.dataKey.DataType == 'Voltage' || props.dataKey.DataType == 'Current')
+            svg.append("rect").classed("fftWindow", true)
+                .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
+                .attr("stroke", "#000")
+                .style("z-index", 9999)
+                .attr("x", (xScaleRef.current as any)(fftWindow[0]))
+                .attr("width", currentFFTWindow[1] - currentFFTWindow[0])
+                .style("opacity", (showFFT ? 0.5 : 0))
+                .style('cursor', (mouseMode === 'fftMove' && showFFT ? 'grab' : 'default'))
+                .attr("y", 20).attr("height", props.height - 60)
+                .attr("fill", "black")
+                .on('mousemove', (evt) => MouseMove(evt))
+                .on('mousedown', (evt) => FFTMouseDown(evt))
+                .on('mouseup', () => FFTMouseUp())
+
     }
+
 
     function formatTimeTick(d: number) {
         let TS = moment(d);
@@ -699,6 +718,20 @@ const LineChart = (props: iProps) => {
 
         if (x0 > 60 && x0 < width - 140)
             dispatch(SelectPoint([t0, d0]));
+    function FFTMouseDown(evt) {
+        setFFTMouseDown(true);
+
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+
+        let t0 = (xScaleRef.current as any).invert(x0);
+        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
+
+        setPointMouse([t0, d0]);
+
+        if (props.dataKey.DataType == 'OverlappingWave')
+            return;
         setOldFFTWindow(() => { return fftWindow });
 
     }
@@ -707,6 +740,10 @@ const LineChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
+    }
+
+    function FFTMouseUp() {
+        setFFTMouseDown(false);
     }
 
     // This function needs to be called if hover is updated
