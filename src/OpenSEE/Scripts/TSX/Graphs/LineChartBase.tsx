@@ -672,8 +672,27 @@ const LineChart = (props: iProps) => {
         if (xScaleRef.current != undefined)
             h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
+        if (isOverlappingWaveform) {
+            if (defaultSettings.OverlappingWaveTimeUnit.options[overlappingWaveTimeUnit].short === "ms") {
+                if (h < 2)
+                    return d.toFixed(3)
+                if (h < 5)
+                    return d.toFixed(2)
+                else
+                    return d.toFixed(1)
+            } else if (defaultSettings.OverlappingWaveTimeUnit.options[overlappingWaveTimeUnit].short === "cycles") {
+                const cyc = d * 60.0 / 1000.0;
+                h = h * 60.0 / 1000.0;
+                if (h < 2)
+                    return cyc.toFixed(3)
+                if (h < 5)
+                    return cyc.toFixed(2)
+                else
+                    return cyc.toFixed(1)
+            }
         
-        if (timeUnit.options[timeUnit.current].short == 'auto') {
+        }
+        else if (timeUnit.options[timeUnit.current].short == 'auto') {
             if (h < 100)
                 return TS.format("SSS.S")
             else if (h < 1000)
@@ -698,10 +717,13 @@ const LineChart = (props: iProps) => {
         else if (timeUnit.options[timeUnit.current].short == 'min')
             return TS.format("mm:ss")
 
-        else if (timeUnit.options[timeUnit.current].short == 'ms since event') {
-            let ms = d - props.eventStartTime;
-            if (props.type == 'OverlappingWave')
-                ms = d;
+        else if (timeUnit.options[timeUnit.current].short == 'ms since record') {
+            let ms = d - (new Date(eventInfo?.EventDate + "Z").getTime());
+            if (useRelevantTime && props.dataKey.EventId !== evtID) {
+                const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
+                ms = d - evt.StartTime
+            }
+
             if (h < 2)
                 return ms.toFixed(3)
             if (h < 5)
@@ -710,10 +732,35 @@ const LineChart = (props: iProps) => {
                 return ms.toFixed(1)
         }
 
-        else if (timeUnit.options[timeUnit.current].short == 'cycles') {
-            let cyc = (d - props.eventStartTime) * 60.0 / 1000.0;
-            if (props.type == 'OverlappingWave')
-                cyc = (d) * 60.0 / 1000.0;
+        else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
+            let ms = d - (new Date(eventInfo?.EventDate + "Z").getTime());
+
+            if (useRelevantTime && props.dataKey.EventId !== evtID) {
+                const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
+                ms = d - evt.StartTime
+            }
+
+            if (h < 2)
+                return ms.toFixed(3)
+            if (h < 5)
+                return ms.toFixed(2)
+            else
+                return ms.toFixed(1)
+        }
+
+        else if (timeUnit.options[timeUnit.current].short == 'cycles since record') {
+            let cyc = (d - startTime) * 60.0 / 1000.0;
+
+            h = h * 60.0 / 1000.0;
+            if (h < 2)
+                return cyc.toFixed(3)
+            if (h < 5)
+                return cyc.toFixed(2)
+            else
+                return cyc.toFixed(1)
+        }
+        else if (timeUnit.options[timeUnit.current].short == 'cycles since inception') {
+            let cyc = (d - startTime) * 60.0 / 1000.0;
 
             h = h * 60.0 / 1000.0;
             if (h < 2)
