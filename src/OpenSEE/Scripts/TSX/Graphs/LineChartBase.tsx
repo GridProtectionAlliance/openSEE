@@ -528,6 +528,8 @@ const LineChart = (props: iProps) => {
             .on('mousedown', (evt) => MouseDown(evt) )
             .on('mouseup', (evt) => MouseUp(evt))
             .on('mouseenter', () => { setLeftSelectCounter(1) })
+            .call(wheelZoom)
+            .on('wheel', (evt) => evt.preventDefault());
 
 
         //Window to indicate FFT -- this needs to be placed after the Event Overlay so it can capture mouseEvents
@@ -804,6 +806,25 @@ const LineChart = (props: iProps) => {
         container.select(".fftWindow")
             .attr("x", currentFFTWindow[0]).attr("width", currentFFTWindow[1] - currentFFTWindow[0])
             .style("opacity", (showFFT ? 0.5 : 0)).style('cursor', (showFFT ? 'move' : 'default'))
+    const wheelZoom = d3.zoom() //probably could include panning in here...
+        .filter(event => {
+            return event.type === 'wheel';
+        })
+        .on("zoom", (event) => {
+            //need to scale here whenever since inception is enabled and overlapping stuff..
+
+            const newTime = event.transform.rescaleX(xScaleRef.current).domain();
+            const newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
+
+            if (mouseMode == 'zoom' && zoomMode == "x" && props.dataKey.DataType != 'OverlappingWave')
+                dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1] }))
+
+            if (mouseMode == 'zoom' && zoomMode == "y" && props.dataKey.DataType != 'OverlappingWave')
+                dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
+
+            if (mouseMode == 'zoom' && zoomMode == "xy" && props.dataKey.DataType != 'OverlappingWave') {
+                dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1]}))
+                dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
     }
 
     function MouseOut(evt) {
