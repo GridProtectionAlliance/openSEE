@@ -372,7 +372,29 @@ const LineChart = (props: iProps) => {
         }
 
         return d3.line()
-            .x(d => xScaleRef.current ? xScaleRef.current(d[0]) : 0)
+            .x(d => {
+                let x = xScaleRef.current ? xScaleRef.current(d[0]) : 0;
+                let scale = 0;
+                const overLappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId);
+
+                if (!isOverlappingWaveform) {
+                    if (isSinceInception)
+                        scale = (eventInfo.Inception - startTime);
+
+                    if (useRelevantTime && !isOriginalEvt && props.dataKey.EventId !== -1) {
+                        if (isSinceInception)
+                            scale = (overLappingEvt.Inception - originalStartTime);
+                        else
+                            scale = (overLappingEvt.StartTime - originalStartTime);
+
+                    }
+                }
+
+                x = xScaleRef.current ? xScaleRef.current(d[0] - scale) : 0;
+
+                return x
+
+            })
             .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
             .defined(d => {
                 let tx = !isNaN(parseFloat(xScaleRef.current ? xScaleRef.current(d[0]) : 0));
