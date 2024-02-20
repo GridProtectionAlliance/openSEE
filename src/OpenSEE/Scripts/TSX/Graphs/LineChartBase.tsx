@@ -406,49 +406,94 @@ const LineChart = (props: iProps) => {
     }
 
             
-            .attr("stroke", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
-            .attr("stroke-dasharray", (d) => (d.LineType == undefined || d.LineType == "-"? 0 : 5))
-            .attr("d", function (d) {
+    // This Function needs to be called whenever Data is Added
+    function UpdateData() {
+        // Set x scale range based on the number of enabled units
+
+        if (enabledUnits?.length > 2)
+            xScaleRef.current.range([120, props.width - 110]);
+        if (enabledUnits?.length > 3)
+            xScaleRef.current.range([120, props.width - 170]);
+
+
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+
+        let lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
+
+        lines.enter().append("path").classed(`Line`, true)
+            .attr("type", d => `${d.Unit}`)
+            .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
+            .attr("stroke-dasharray", d => singlePlot && evtID !== d.EventID ? 5 : 0)
+            .attr("d", d => {
+                let lineGen = createLineGen(d.Unit)
                 if (d.SmoothDataPoints.length > 0)
                     return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
                 return lineGen(d.DataPoints);
             })
             
-
         lines.exit().remove();
 
-        let points = container
-            .select(".DataContainer")
-            .selectAll(".Markers")
+        let points = container.select(".DataContainer").selectAll(".Markers")
             .data(lineData)
             .enter()
             .append("g")
-            .attr("fill", (d) => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
+            .attr("fill", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .classed("Markers", true)
             .selectAll("circle")
-            .data(function (d, i, j) {
-                return d.DataMarker.map(v => ({
+            .data(d => d.DataMarker.map(v => ({
                     x: v[0], y: v[1], unit: d.Unit as string, base: d.BaseValue
-                } as IMarker))
-            });
+            }) as IMarker)
+            );
 
 
         points.enter()
             .append("circle")
-            .classed("Circle",true)
-            .attr("cx", function (d) {
-                return isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d.x)
-            })
-            .attr("cy", function (d) {
-                return isNaN(yScaleRef.current(d[1])) ? null : yScaleRef.current(d.y)
-            })
-            .attr("r", 10)
-
+            .classed("Circle", true)
+            .attr("cx", d => isNaN(xScaleRef.current(d[0])) ? null : xScaleRef.current(d.x))
+            .attr("cy", d => isNaN(yScaleRef.current[d.unit](d[1])) ? null : yScaleRef.current[d.unit](d.y))
+            .attr("r", 10);
 
 
         points.exit().remove();
 
         updateLimits();
+        updateDurationWindow();
+    }
+
+
+    // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
+    function updateLimits() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let svg = container.select(".DataContainer");
+
+        svg.selectAll(".Line").attr("d", function (d: OpenSee.iD3DataSeries) {
+            const scopedLineGen = createLineGen(d.Unit, d.BaseValue);
+            if (d.SmoothDataPoints.length > 0)
+                return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+            return scopedLineGen(d.DataPoints);
+        });
+
+        svg.selectAll("circle")
+            .attr("cx", function (d: IMarker) {
+                return isNaN(xScaleRef.current(d.x)) ? null : xScaleRef.current(d.x);
+            })
+            .attr("cy", function (d: IMarker) {
+                let factor: number = 1.0;
+                if (activeUnit?.[d.unit] != undefined)
+                    factor = activeUnit?.[d.unit].factor === undefined ? (1.0 / d.base) : factor;
+
+                return isNaN(yScaleRef.current[d.unit](d.y)) ? null : yScaleRef.current[d.unit](d.y * factor);
+            });
+
+        updateYAxises()
+        updateLabels();
+
+        //Format Time Axis with current xScale
+        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleRef.current).tickFormat(d => formatTimeTick(d as number)) as any);
+
+        if (xScaleRef.current != null && showFFT) {
+            setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
+    }
 
     }
 
@@ -478,29 +523,45 @@ const LineChart = (props: iProps) => {
         //Create xAxis
         svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
 
-        //ScaleRef.current = d3.scaleLinear()
-          //  .domain(yLimits)
-            //.range([props.height - 40, 20]);
+        let isAxisLeft = true;
+        let axisCount = 0;
 
-        svg.append("g").classed("yAxis", true).classed("left", true).attr("transform", "translate(60,0)").call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
-        svg.append("g").classed("yAxis", true).classed("right", true).attr("transform", "translate(" + (width - 150) + ",0)").call(d3.axisRight(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)));
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
+        //Create yAxises that have enabled Units
+        enabledUnits.forEach(unit => {
+            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
             
+            svg.append("g")
+                .classed(`yAxis`, true)
+                .attr("type", `${unit}`)
+                .attr("transform", axisTransform)
+                .call(isAxisLeft ? d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) : d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)))
+                .style("opacity", 1)
+
+            // Create axis label
+            let labelYPos = isAxisLeft ? 2 : props.width - 70;
+
+            svg.append("text")
+                .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
+                .attr("type", `${unit}`)
+            .attr("x", - (props.height / 2 - 20))
+                .attr("y", labelYPos)
+            .attr("dy", "1em")
+                .attr("transform", "rotate(-90)")
+            .style("text-anchor", "middle")
+                .style("opacity", 1)
+                .text(yLabels[unit]);
+
+            isAxisLeft = !isAxisLeft;
+            axisCount++;
+
+
+        });
 
         //Create Axis Labels
         svg.append("text").classed("xAxisLabel", true)
-            .attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
+            .attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
             .style("text-anchor", "middle")
-            .text(props.timeLabel);
-
-        svg.append("text").classed("yAxisLabel", true).classed("left", true)
-            .attr("transform", "rotate(-90)")
-            .attr("y", 2 )
-            .attr("x", - (props.height / 2 - 20))
-            .attr("dy", "1em")
-            .style("text-anchor", "middle")
-            .text(yLblTextLeft);
-            //.text(uniq(lineData.map(d => units.get[d.Unit].options[activeUnit.get({ ...settingKey, unit: d.Unit })].short)).join("/"));
+            .text("Time");
 
         // Create Plot Title
         svg.append("text").classed("plotTitle", true)
@@ -836,6 +897,61 @@ const LineChart = (props: iProps) => {
         container.select(".fftWindow")
             .attr("x", currentFFTWindow[0]).attr("width", currentFFTWindow[1] - currentFFTWindow[0])
             .style("opacity", (showFFT ? 0.5 : 0)).style('cursor', (showFFT ? 'move' : 'default'))
+    function updateYAxises() {
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+
+        //Flag to alternate axis placement
+        if (container === undefined)
+            return
+
+        let isAxisLeft = true; //this can just be exchanged for a % 2 since we have a counter now.
+        let currentAxis = 0;
+
+        //Update yAxises
+        enabledUnits?.forEach(unit => {
+            let axisType = `[type='${unit}']`;
+            let firstLeftAxisType = `[type='${enabledUnits[0]}']`
+            let firstRightAxisType = `[type='${enabledUnits[1]}']`
+
+            if (isAxisLeft) {
+                if (currentAxis > 1) {
+                    container.selectAll(`.yAxis${firstLeftAxisType}`).attr("transform", "translate(120, 0)")
+                    container.selectAll(`.yAxisLabelLeft${firstLeftAxisType}`).attr("y", "62")
+                }
+                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+            }
+            else {
+                if (currentAxis > 2) {
+                    container.selectAll(`.yAxis${firstRightAxisType}`).attr("transform", `translate(${props.width - 170},0)`)
+                    container.selectAll(`.yAxisLabelRight${firstRightAxisType}`).attr("y", props.width - 135)
+                }
+                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+            }
+
+            isAxisLeft = !isAxisLeft;
+            currentAxis++;
+
+
+        });
+
+
+        if (enabledUnits.length < 3)
+            return
+
+        let clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
+        let evtOverlay = container.select(`rect.Overlay`)
+
+        if (enabledUnits.length === 3) {
+            clipPath.attr("x", 120).attr("width", props.width - 270)
+            evtOverlay.attr("x", 120).attr("width", props.width - 270)
+        }
+        else if (enabledUnits.length === 4) {
+            clipPath.attr("x", 120).attr("width", props.width - 210 - 120)
+            evtOverlay.attr("x", 120).attr("width", props.width - 210 - 120)
+        }
+
+    }
+
     function updateDurationWindow() {
         if (xScaleRef.current == undefined)
             return;
@@ -953,46 +1069,84 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
-        //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
-        container.selectAll(".Line").data(lineData).classed("active", (d, index) => enabledLine[index])
+        // Update line visibility for each unit
+        container.selectAll(`.Line`).data(lineData)
+            .classed("active", d => d.Enabled)
+            .attr("stroke-width", d => d.Enabled ? 2.5 : 0);
 
-        container.select(".DataContainer").selectAll(".Line.active").attr("stroke-width", 2.5);
-
-        container.select(".DataContainer").selectAll(".Line:not(.active)").attr("stroke-width", 0);
+        // Update markers for primary lines
+        container.selectAll(`.Markers`).data(lineData)
+            .classed("active", d => d.Enabled)
+            .attr("opacity", d => d.Enabled ? 1.0 : 0);
 
         // Also disable/enable points of interest
         container.selectAll(".Markers").data(lineData).classed("active", (d, index) => enabledLine[index])
 
-        container.select(".DataContainer").selectAll(".Markers.active").attr("opacity", 1.0);
+        // Update axis visibility based on whether the unit is enabled
+        let isAxisLeft = true;
 
-        container.select(".DataContainer").selectAll(".Markers:not(.active)").attr("opacity", 0);
+        relevantUnits.forEach(unit => {
+            let enabledUnit = enabledUnits?.includes(unit);
+            let axisType = `[type='${unit}']`;
+            if (enabledUnit) {
+                container.selectAll(`.yAxis${axisType}`).style("opacity", 1 );
+                container.selectAll(`.yAxisLabel${axisType}`).style("opacity", 1);
+            } else {
+                container.selectAll(`.yAxis${axisType}`).remove();
+                container.selectAll(`.yAxisLabel${axisType}`).remove();
+            }
 
+            isAxisLeft = !isAxisLeft;
+        })
 
     }
 
     // This Function needs to be called whenever height or width change
     function updateSize() {
 
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
-        container.select(".xAxisLabel").attr("transform", "translate(" + ((width - 210) / 2 + 60) + " ," + (props.height -5) + ")")
-        container.select(".yAxisLabel").attr("x", - (props.height / 2 - 20))
-        container.select(".yAxis.right").attr("transform", "translate(" + (width - 150) + ",0)")
+        container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
+        container.select(".plotTitle").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ",20)").style("font-weight", "bold")
 
-        container.select(".yAxisLabel.right").attr("y", (width - 92))
+        //this is gonna have to change for the addition of more than 2 axises
+        container.select(".yAxisLabelLeft").attr("x", - (props.height / 2 - 20))
+        container.select(".yAxisLabelRight").attr("y", props.width - 120).attr("x", - (props.height / 2 - 20))
 
-        xScaleRef.current.range([60, width - 140]);
-        yScaleRef.current.range([props.height - 40, 20]);
+        let isAxisLeft = true;
+        relevantUnits.forEach(unit => {
+            //Update yScale
+            yScaleRef.current[unit].range([props.height - 40, 20]);
+
+            let axisType = `[type='${unit}']`;
+            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
+
+            if (isAxisLeft)
+                container.selectAll(`.yAxis${axisType}`).attr("transform", axisTransform);
+            else
+                container.selectAll(`.yAxis${axisType}`).attr("transform", axisTransform);
+
+            isAxisLeft = !isAxisLeft;
+        })
+
+
+        // Set x scale range based on the number of enabled units
+        xScaleRef.current.range([60, props.width - 110]);
+
+        if (enabledUnits?.length > 2) {
+            xScaleRef.current.range([120, props.width - 110]);
+        } else if (enabledUnits?.length > 3) {
+            xScaleRef.current.range([120, props.width - 170]);
+        }
 
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")")
 
-        container.select(".clip").attr("width", width - 210)
-            .attr("height", props.height - 60)
+        container.select(".clip").attr("width", props.width - 210).attr("height", props.height - 60)
       
         container.select(".fftwindow").attr("height", props.height - 60);
-        container.select(".Overlay").attr("width", width - 210)
+        container.select(".Overlay").attr("width", props.width - 210)
         updateLimits();
     }
 
