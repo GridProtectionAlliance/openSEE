@@ -317,13 +317,18 @@ const LineChart = (props: iProps) => {
 
     React.useEffect(() => {
         updateFFTWindow()
-    }, [currentFFTWindow, showFFT])
+    }, [fftWindow, showFFT, currentFFTWindow])
 
     React.useEffect(() => {
         if (xScaleRef.current === undefined)
             return
         updateDurationWindow()
     }, [plotMarkers, startTime, endTime, props.width, props.height, timeUnit])
+
+    React.useEffect(() => {
+        if (xScaleRef.current != null) {
+            setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
+        }
     }, [fftWindow])
 
     //This Clears the Plot if loading is activated
@@ -363,26 +368,23 @@ const LineChart = (props: iProps) => {
     }, [yLabels, yLblFontSize]);
 
     React.useEffect(() => {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (container == null || container.select(".yAxisLabel") == null)
             return;
 
         let fs = 1;
-        let l = GetTextWidth('', '1rem', yLblTextLeft);
-        let r = GetTextWidth('', '1rem', yLblTextRight);
+        let l = GetTextWidth('', '1rem', yLabels?.[primaryAxis]);
+        let r = GetTextWidth('', '1rem', yLabels?.[primaryAxis] ? yLabels?.[primaryAxis] : "");
 
         while (((l > props.height - 60) || (r > props.height - 60)) && fs > 0.2) {
             fs = fs - 0.05;
-            l = GetTextWidth('', fs.toString() + 'rem', yLblTextLeft);
-            r = GetTextWidth('', fs.toString() + 'rem', yLblTextRight);
+            l = GetTextWidth('', fs.toString() + 'rem', yLabels?.[primaryAxis]);
+            r = GetTextWidth('', fs.toString() + 'rem', yLabels?.[primaryAxis] ? yLabels?.[primaryAxis] : "");
         }
         if (fs != yLblFontSize)
             setYLblFontSize(fs)
 
-    }, [props.height, yLblTextLeft, yLblTextRight])
-    // This Function needs to be called whenever Data is Added
-    function UpdateData() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
+    }, [props.height, yLabels])
 
     function createLineGen(unit = null, base = null) {
         let factor = 1.0
@@ -630,9 +632,8 @@ const LineChart = (props: iProps) => {
             .attr("stroke-width", 0.0);
 
         //Event overlay - needs to be treated seperately
-
         svg.append("svg:rect").classed("Overlay", true)
-            .attr("width", width - 210)
+            .attr("width", props.width - 110)
             .attr("height", '100%')
             .attr("x", 20)
             .attr("y", 0)
@@ -792,54 +793,6 @@ const LineChart = (props: iProps) => {
 
     }
 
-    // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
-    function updateLimits() {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-
-        container.selectAll(".yAxis").transition().call(d3.axisLeft(yScaleRef.current).tickFormat((d, i) => formatValueTick(d as number)) as any);
-        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)) as any);
-
-        let lineGen = (unit: OpenSee.Unit, base: number) => {
-
-            let factor: number = 1.0;
-            if (activeUnit[unit as string] != undefined) {
-                factor = activeUnit[unit as string].factor
-                factor = (activeUnit[unit as string].short == 'pu' || activeUnit[unit as string].short == 'pu/s' ? 1.0 / base : factor);
-            }
-            return d3.line()
-                .x(function (d) { return xScaleRef.current(d[0]) })
-                .y(function (d) { return yScaleRef.current(d[1] * factor) })
-                .defined(function (d) {
-                    let tx = !isNaN(parseFloat(xScaleRef.current(d[0])));
-                    let ty = !isNaN(parseFloat(yScaleRef.current(d[1])));
-                    tx = tx && isFinite(parseFloat(xScaleRef.current(d[0])));
-                    ty = ty && isFinite(parseFloat(yScaleRef.current(d[1])));
-                    return tx && ty;
-                })
-        }
-
-        let svg = container.select(".DataContainer");
-
-        svg.selectAll(".Line")
-            .attr("d", function (d: OpenSee.iD3DataSeries) {
-                const scopedLineGen = lineGen(d.Unit, d.BaseValue);
-                if (d.SmoothDataPoints.length > 0)
-                    return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
-                return lineGen(d.Unit, d.BaseValue)(d.DataPoints);
-            })
-
-        svg.selectAll("circle")
-            .attr("cx", function (d: IMarker) {
-                return isNaN(xScaleRef.current(d.x)) ? null : xScaleRef.current(d.x)
-            })
-            .attr("cy", function (d: IMarker) {
-
-                let factor: number = 1.0;
-                if (activeUnit[d.unit] != undefined) {
-                    factor = activeUnit[d.unit].factor
-                    factor = (activeUnit[d.unit].short == 'pu' || activeUnit[d.unit].short == 'pu/s' ? 1.0 / d.base : factor);
-                }
-
     function MouseMove(evt) {
 
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
@@ -863,21 +816,27 @@ const LineChart = (props: iProps) => {
 
 
     function MouseDown(evt) {
-        let container = d3.select("#graphWindow-" + props.type + "-" + props.eventId);
-        let x0 = d3.pointer(evt,container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt,container.select(".Overlay").node())[1];
+        setMouseDown(true);
+
+        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
         let t0 = (xScaleRef.current as any).invert(x0);
-        let d0 = (yScaleRef.current as any).invert(y0);
+        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
 
-        setMouseDown(true);
         setPointMouse([t0, d0]);
 
-        if (props.type == 'OverlappingWave')
+
+        if (isOverlappingWaveform)
             return;
 
-        if (x0 > 60 && x0 < width - 140)
-            dispatch(SelectPoint([t0, d0]));
+        if (x0 > 60 && x0 < props.width - 140 && mouseMode === 'select')
+            dispatch(SetSelectPoint([t0, d0]));
+        setOldFFTWindow(() => { return fftWindow });
+
+    }
+
     function FFTMouseDown(evt) {
         setFFTMouseDown(true);
 
@@ -1215,7 +1174,6 @@ const LineChart = (props: iProps) => {
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")")
 
         container.select(".clip").attr("width", props.width - 210).attr("height", props.height - 60)
-      
         container.select(".fftwindow").attr("height", props.height - 60);
         container.select(".Overlay").attr("width", props.width - 210)
         updateLimits();
