@@ -1020,10 +1020,10 @@ const LineChart = (props: iProps) => {
                 h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
 
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && props.type != 'OverlappingWave')
+            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && props.dataKey.DataType != 'OverlappingWave')
                 return (timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short;
 
-            if (props.type != 'OverlappingWave') {
+            if (isOverlappingWaveform) {
                 if (h < 100)
                     return "ms"
                 else
@@ -1040,19 +1040,7 @@ const LineChart = (props: iProps) => {
                 return "s"
         }
 
-        function GetYLabel(axis: number) {
-            return uniq(lineData.filter(d => d.Axis == axis ).map(d => d.Unit)).map(unit => {
-                return "[" + (activeUnit[unit] != undefined ? activeUnit[unit].short : "N/A")+ "]";
-            }).join("  ")
-        }
-
-        if (yLblTextLeft != GetDisplayLabel(props.type) + ' ' + GetYLabel(0))
-            setYLblTextLeft(GetDisplayLabel(props.type) + ' ' + GetYLabel(0));
-
-        if (yLblTextRight != GetDisplayLabel(props.type) + ' ' + GetYLabel(1))
-            setYLblTextRight(GetDisplayLabel(props.type) + ' ' + GetYLabel(1));
-
-        container.select(".xAxisLabel").text(props.timeLabel + " (" + GetTLabel() + ")")
+        container.select(".xAxisLabel").text("Time (" + GetTLabel() + ")")
     }
 
     //This Function needs to be called whenever (a) Color Setting changes occur
