@@ -37,7 +37,7 @@ import { SelectAnalyticOptions, SelectFFTWindow } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-interface iProps {   
+interface iProps {
     height: number,
     width: number,
     dataKey: OpenSee.IGraphProps
@@ -134,7 +134,7 @@ const BarChart = (props: iProps) => {
 
     React.useEffect(() => {
         if (barData && barData?.length > 0)
-        updateVisibility();
+            updateVisibility();
     }, [enabledBar])
 
     //Effect to adjust Axes when Units change
@@ -156,7 +156,7 @@ const BarChart = (props: iProps) => {
 
         if (barData) {
             UpdateData();
-        updateLimits();
+            updateLimits();
         }
 
     }, [activeUnit, yLimits])
@@ -203,7 +203,7 @@ const BarChart = (props: iProps) => {
         updateVisibility();
 
         return () => { }
-      
+
     }, [props.dataKey, options]);
 
     React.useEffect(() => {
@@ -231,13 +231,13 @@ const BarChart = (props: iProps) => {
             return;
 
         relevantUnits.forEach(unit => {
-        let fs = 1;
+            let fs = 1;
             let l = GetTextWidth('', '1rem', yLabels[unit]);
 
-        while ((l > props.height - 60) && fs > 0.2) {
-            fs = fs - 0.05;
+            while ((l > props.height - 60) && fs > 0.2) {
+                fs = fs - 0.05;
                 l = GetTextWidth('', fs.toString() + 'rem', yLabels[unit]);
-        }
+            }
 
             if (fs != yLblFontSize[unit])
                 setYLblFontSize(prevState => ({
@@ -283,19 +283,19 @@ const BarChart = (props: iProps) => {
         //Draw all bars when selected type is not FFT
         if (props.dataKey.DataType !== 'FFT') {
             container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g")
-            .classed("Bar", true)
-            .attr("fill", (d) => colors[d.Color])
-            .selectAll('rect')
+                .classed("Bar", true)
+                .attr("fill", (d) => colors[d.Color])
+                .selectAll('rect')
                 .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as OpenSee.BarSeries[])
-            .enter().append('rect')
-            .attr("x", d => xScaleRef.current(d.data[0]))
+                .enter().append('rect')
+                .attr("x", d => xScaleRef.current(d.data[0]))
                 .attr("y", d => yScaleRef.current[d.unit](d.data[1]))
-            .attr("width", xScaleRef.current.bandwidth())
+                .attr("width", xScaleRef.current.bandwidth())
                 .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0) })
-            .style("transition", 'x 0.5s')
-            .style("transition", 'y 0.5s')
-            .style("transition", 'width 0.5s')
-            .style("height", 'width 0.5s')
+                .style("transition", 'x 0.5s')
+                .style("transition", 'y 0.5s')
+                .style("transition", 'width 0.5s')
+                .style("height", 'width 0.5s')
 
 
             container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
@@ -307,48 +307,48 @@ const BarChart = (props: iProps) => {
 
             let rectangles = container.select(".DataContainer").selectAll(".Bar")
                 .data(rectData)
-            .enter().append("g")
-            .classed("Bar", true)
+                .enter().append("g")
+                .classed("Bar", true)
                 .attr("stroke", d => colors[d.Color])
-            .selectAll('rect')
+                .selectAll('rect')
                 .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
-            .enter()
-            .append('rect')
+                .enter()
+                .append('rect')
                 .attr("x", d => { let x = xScaleRef.current(d.data[0]); return isNaN(x) ? 0 : x })
                 .attr("y", d => { let y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
-            .attr("width", xScaleRef.current.bandwidth())
+                .attr("width", xScaleRef.current.bandwidth())
                 .attr("height", d => {
                     let h = yScaleRef.current[d.unit](d.data[1])
                     if (isNaN(h))
                         return 0
                     return Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0)
                 })
-            .attr("fill", "none")
-            .attr("stroke-width", 2)
-            .style("transition", 'x 0.5s')
-            .style("transition", 'y 0.5s')
-            .style("transition", 'width 0.5s')
-            .style("height", 'width 0.5s')
-             
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .style("transition", 'x 0.5s')
+                .style("transition", 'y 0.5s')
+                .style("transition", 'width 0.5s')
+                .style("height", 'width 0.5s')
+
 
 
             //draw circles for Ang
             const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
             let circles = container.select(".DataContainer").selectAll(".Point")
-            .data(barData.filter(function(d){ return d.LegendHorizontal === 'Ang'; }))//filter data for LegendHorizontal === 'Ang'
-            .enter().append("g")
-            .classed("Point", true)
+                .data(pointData)
+                .enter().append("g")
+                .classed("Point", true)
                 .attr("fill", d => colors[d.Color])
-            .selectAll('circle')
+                .selectAll('circle')
                 .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
-            .enter().append('circle')
+                .enter().append('circle')
                 .attr("cx", d => isNaN(xScaleRef.current(d.data[0])) ? -1 : xScaleRef.current(d.data[0])) //set the circle cx position
                 .attr("cy", d => isNaN(yScaleRef.current[d.unit](d.data[1])) ? -1 : yScaleRef.current[d.unit](d.data[1])) //set the circle cy position
-            .attr("r", 5) //set the radius as 5
-            .attr("stroke", "none") //set the stroke as none
-            .style("transition", 'cx 0.5s')
-            .style("transition", 'cy 0.5s')
-            .style("transition", 'r 0.5s')
+                .attr("r", 5) //set the radius as 5
+                .attr("stroke", "none") //set the stroke as none
+                .style("transition", 'cx 0.5s')
+                .style("transition", 'cy 0.5s')
+                .style("transition", 'r 0.5s')
 
 
             //draw lines to connect Ang circles
@@ -366,12 +366,12 @@ const BarChart = (props: iProps) => {
                 })
 
             lines.exit().remove();
-           
-            
+
+
             container.select(".DataContainer").selectAll(".Bar").data(rectData).exit().remove();
             container.select(".DataContainer").selectAll(".Point").data(pointData).exit().remove();
         }
-       
+
         updateLimits();
 
     }
@@ -448,7 +448,7 @@ const BarChart = (props: iProps) => {
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
-       
+
         xScaleLblRef.current = d3.scaleLinear().domain([(domain[0] * 60.0), (domain[domain.length - 1] * 60.0)]).range([60 + offsetLeft, props.width - 110 - offsetRight]);
 
         //create xAxis 
@@ -471,7 +471,7 @@ const BarChart = (props: iProps) => {
 
             // Create axis label
             let labelYPos = isAxisLeft ? 2 : props.width - 70;
-    
+
             svg.append("text")
                 .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
                 .attr("type", `${unit}`)
@@ -501,15 +501,15 @@ const BarChart = (props: iProps) => {
             .text(dataKey.DataType);
 
         svg.append("line").classed("xAxisExtLeft", true)
-             .attr("stroke", "currentColor")
-             .attr("x1", 60).attr("x2", 60 + offsetLeft)
+            .attr("stroke", "currentColor")
+            .attr("x1", 60).attr("x2", 60 + offsetLeft)
             .attr("y1", props.height - 40).attr("y2", props.height - 40)
 
         svg.append("line").classed("xAxisExtRight", true)
             .attr("stroke", "currentColor")
             .attr("x1", props.width - 110).attr("x2", props.width - 110 - offsetRight)
             .attr("y1", props.height - 40).attr("y2", props.height - 40)
-       
+
 
         //Add Clip Path
         svg.append("defs").append("svg:clipPath")
@@ -624,13 +624,13 @@ const BarChart = (props: iProps) => {
         let index = Math.floor((p / eachBand));
         if (index == xScaleRef.current.domain().length)
             index = index - 1
-       
+
         return xScaleRef.current.domain()[index];
     }
 
     // This function needs to be called if hover is updated
     function updateHover() {
-        
+
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         if (mouseMode == 'zoom' && mouseDown) {
@@ -702,11 +702,11 @@ const BarChart = (props: iProps) => {
                             return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
                         return scopedLineGen(d.DataPoints);
                     })
-    }
+            }
 
             isAxisLeft = !isAxisLeft;
             currentAxis++;
-      
+
 
         });
 
@@ -727,7 +727,7 @@ const BarChart = (props: iProps) => {
         }
 
     }
-        
+
     function MouseOut() {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         container.select(".zoomWindow").style("opacity", 0);
@@ -740,14 +740,14 @@ const BarChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         function GetColor(col: OpenSee.Color) {
-                return colors[col as string]
+            return colors[col as string]
         }
 
         container.select(".DataContainer").selectAll(".Bar").attr("fill", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
 
     }
 
-   
+
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
@@ -849,7 +849,7 @@ const BarChart = (props: iProps) => {
         const width = Math.ceil(text.clientWidth);
         document.body.removeChild(text);
         return width;
-    } 
+    }
 
     return (
         <div>
@@ -864,13 +864,13 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
 
     return (
         <div data-drawer={"graphWindow-" + props.type + "-" + props.eventID} id={"graphWindow-" + props.type + "-" + props.eventID} style={{ height: props.height, float: 'left', width: '100%' }}>
-        {props.loading == 'Loading' ? <LoadingIcon /> : null}
-        {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
-        <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
-            {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
-                <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
-        </svg>
-    </div>)
+            {props.loading == 'Loading' ? <LoadingIcon /> : null}
+            {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
+            <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
+                {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
+                    <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
+            </svg>
+        </div>)
 })
 
 export default BarChart;
