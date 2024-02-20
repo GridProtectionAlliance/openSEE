@@ -412,26 +412,15 @@ const Row = (props: { category: string, label: string, data: Array<ILegendGrid>,
     const hasCategoryGroup = props.category !== '' && props.category !== null
     const labelWidth = !hasHorizontalHeaders && !hasCategoryGroup ? '50%' : hasHorizontalHeaders && !hasCategoryGroup ? 2 * props.width : props.width
 
-    function hasData(data: ILegendGrid) {
-        let n = 0;
-        data.traces.forEach((val, key) => {
-            if (props.activeCategories.indexOf(key) !== -1)
-                n = n + val.length;
-        })
-
-        return n > 0;
-    }
 
     return (
         <div className="d-flex" style={{ width: "100%", backgroundColor: "rgb(204,204,204)", textAlign: "center", borderTop: "2px solid #b2b2b2", height: 'auto' }}>
             <div style={{ width: labelWidth, textAlign: "center" }} key={0}>
-                <span style={{ fontSize: "smaller", fontWeight: "bold", wordWrap: 'break-word' }} onClick={() => props.clickHeader(props.label+props.category, 'vertical')}>{props.label}</span>
+                <span style={{ fontSize: "smaller", fontWeight: "bold", wordWrap: 'break-word' }} onClick={() => props.clickHeader(props.label + props.category, 'vertical')}>{props.label}</span>
             </div>
-            {props.data.map((item, index) =>
-                (hasData(item) ?
-                <TraceButton width={!hasHorizontalHeaders && !hasCategoryGroup ? { width: '50%' } : {width: props.width}} data={item} activeCategory={props.activeCategories} key={index} dataKey={props.dataKey}/> :
-                    <div key={index} style={{ width: props.width, backgroundColor: "b2b2b2", borderLeft: "2px solid #b2b2b2" }}> </div>)
-            )}
+            {props?.data?.map((item, index) =>
+                <TraceButton width={!hasHorizontalHeaders && !hasCategoryGroup ? { width: '50%' } : { width: props.width }} data={item} activeCategory={props.activeCategories} key={index} dataKey={props.dataKey} />)
+            }
         </div>
     )
 }
@@ -449,8 +438,7 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
 
     function onClick(sender) {
         let traces: Array<number> = [];
-        props.data.traces.forEach((val, key) => {
-            if (props.activeCategory.indexOf(key) !== -1)
+        props.data.traces.forEach(val => {
                 traces = traces.concat(val);
         })
         props.data.enabled = !props.data.enabled;
