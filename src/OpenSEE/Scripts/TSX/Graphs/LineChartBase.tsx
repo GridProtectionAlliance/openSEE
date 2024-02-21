@@ -720,7 +720,8 @@ const LineChart = (props: iProps) => {
             return TS.format("mm:ss")
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since record') {
-            let ms = d - (new Date(eventInfo?.EventDate + "Z").getTime());
+            let ms = d - originalStartTime;
+
             if (useRelevantTime && props.dataKey.EventId !== evtID) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
                 ms = d - evt.StartTime
@@ -735,11 +736,12 @@ const LineChart = (props: iProps) => {
         }
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
-            let ms = d - (new Date(eventInfo?.EventDate + "Z").getTime());
+            const startOffset = (startTime - originalStartTime) 
+            let ms = d - originalStartTime - startOffset;
 
             if (useRelevantTime && props.dataKey.EventId !== evtID) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
-                ms = d - evt.StartTime
+                ms = d - evt.StartTime - startOffset
             }
 
             if (h < 2)
