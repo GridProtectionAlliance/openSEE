@@ -117,7 +117,6 @@ const OpenSeeHome = () => {
     const plotKeys = useAppSelector(SelectPlotKeys);
 
     const eventList = useAppSelector(SelectEventList);
-    const singlePlot = useAppSelector(SelectSinglePlot);
 
     const showPlots = useAppSelector(SelectDisplayed);
     const cycles = useAppSelector(SelectCycles);
@@ -144,8 +143,7 @@ const OpenSeeHome = () => {
                 setPlotWidth(plotRef.current.offsetWidth);
             }
         }, 500);
-    }, [groupedKeys, openDrawers]);
-
+    }, [groupedKeys, openDrawers, resizeCount]);
 
     //Effect to handle queryParams
     React.useEffect(() => {
@@ -189,7 +187,6 @@ const OpenSeeHome = () => {
         }
     }, [eventID]);
 
-
     //Effect to push updatedQueryParams
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -199,17 +196,6 @@ const OpenSeeHome = () => {
         return () => clearTimeout(timeoutId);
     }, [query]);
 
-
-    React.useEffect(() => {
-        if (resizeCount == 0)
-            return;
-
-        const handle = setTimeout(() => {
-            setPlotWidth(window.innerWidth - 300);
-        }, 100);
-        return () => { clearTimeout(handle); }
-    }, [resizeCount]);
-
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
             let oldMode = _.clone(mouseMode);
@@ -218,10 +204,8 @@ const OpenSeeHome = () => {
                 dispatch(SetMouseMode(oldMode))
             }
         }
-        return () => { }
 
     }, [openDrawers.ToolTipDelta])
-
 
     function ToogleDrawer(drawer: OpenSee.OverlayDrawers, open: boolean) {
         overlayHandles.current[drawer](open);
@@ -244,7 +228,6 @@ const OpenSeeHome = () => {
             `&EventType=${eventInfo.MeterName}`
         );
     }
-
 
     return (
         <Application
