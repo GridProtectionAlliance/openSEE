@@ -45,26 +45,26 @@ const FFTTable = () => {
     return (
         <>
             {fftPoints.length > 0 ? 
-            <div className="d-flex flex-column" style={{ height: '100%', width: '100%', overflowY: 'auto', padding: '10px' }}>
+            <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
                 <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            {fftPoints.map((item, index) => (
-                                <th colSpan={2} key={index}><span>{item.Asset} {item.Phase}</span></th>
-                            ))}
-                        </tr>
-                        <tr>
-                            <th>Harmonic [Hz]</th>
-                            {fftPoints.map((item, index) => (
-                                <>
-                                    <th key={index}><span>Mag ({item?.Unit?.short})</span></th>
-                                    <th key={index}><span>Ang ({item?.PhaseUnit?.short})</span></th>
-                                </>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                {fftPoints.map((item, index) => (
+                                    <th colSpan={2} key={`header-${index}`}><span>{item.Asset} {item.Phase}</span></th>
+                                ))}
+                            </tr>
+                            <tr>
+                                <th>Harmonic [Hz]</th>
+                                {fftPoints.map((item, index) => (
+                                    <React.Fragment key={`headerFrag-${index}`}>
+                                        <th key={`mag-${index}`}><span>Mag ({item?.Unit?.short})</span></th>
+                                        <th key={`ang-${index}`}><span>Ang ({item?.PhaseUnit?.short})</span></th>
+                                    </React.Fragment>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
                         {fftPoints[0].Angle.map((a, row) => (
                             <tr key={a+row}>
                                 <td key={a+row} >{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
