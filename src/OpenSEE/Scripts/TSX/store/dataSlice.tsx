@@ -452,7 +452,6 @@ export const DataReducer = createSlice({
                     }
                     updateActiveUnits(curPlot.yLimits, axis, relevantData, state.startTime, state.endTime, null);
                 });
-
         },
         SetSelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
             // Only work those with main eventId for now CHANGED THIS BECAUSE IT DOESNT MAKE SENSE WHY WE WOULD
@@ -564,9 +563,19 @@ export const DataReducer = createSlice({
                 return state
 
             plot.loading = 'Idle'
+            
             const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
-            if (singlePlot)
-                singlePlot.loading = 'Idle'
+            if (singlePlot) {
+                const evtIDs = _.uniq(state.Plots.map(plot => plot.key.EventId).filter(id => id !== -1))
+                const evtIDsPresent = _.uniq(singlePlot.data.map(data => data.EventID))
+                const allDataPresent = evtIDs.every(id => {
+                    return evtIDsPresent.includes(id)
+                })
+
+                if (allDataPresent)
+                    singlePlot.loading = 'Idle';
+            }
+                
 
                 if (action.meta.arg.fftLimits)
                     state.fftLimits = action.meta.arg.fftLimits
@@ -606,8 +615,16 @@ export const DataReducer = createSlice({
         });
         builder.addCase(AddSingleOverlappingPlot.fulfilled, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
-            if (plot)
+            if (plot) {
+                const evtIDs = _.uniq(state.Plots.map(plot => plot.key.EventId).filter(id => id !== -1))
+                const evtIDsPresent = _.uniq(plot.data.map(data => data.EventID))
+                const allDataPresent = evtIDs.every(id => {
+                    return evtIDsPresent.includes(id)
+                })
+
+                if (allDataPresent)
                 plot.loading = 'Idle';
+            }
 
             return state
         });
