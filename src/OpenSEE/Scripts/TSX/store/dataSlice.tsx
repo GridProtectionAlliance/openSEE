@@ -30,17 +30,15 @@ import { RootState } from './store';
 import { defaultSettings } from '../defaults';
 import { sortGraph } from '../Graphs/Utilities'
 
-declare var eventID: number;
-
 // #region [ Thunks ]
-
 //Thunk to Get Detailed Data
-/*
-const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    AppendRequest(arg, getDetailedData(arg, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (d,t) => { thunkAPI.dispatch(DataReducer.actions.AppendData()) }))
+export const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
+    AppendRequest(arg, getDetailedData(arg, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (key, data) => {
+        thunkAPI.dispatch(DataReducer.actions.ReplaceData({ key, data }))
+    }))
     return Promise.resolve();
 });
-*/
+
 
 // Thunk To Add New Plot
 export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number] }, thunkAPI) => {
@@ -70,8 +68,11 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenS
             else
                 thunkAPI.dispatch(AddSingleOverlappingPlot(arg.key));
         }
-
-    });
+    },
+        () => {
+            thunkAPI.dispatch(InitiateDetailed(arg.key))
+        }
+    );
 
     AddRequest(arg.key, handles);
     return await Promise.all(handles);
@@ -531,6 +532,24 @@ export const DataReducer = createSlice({
                 })
 
             })
+        },
+        ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
+            let plot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
+            if (plot) {
+                let updated = [];
+
+                if (action.payload.data && action.payload.data?.length > 0) {
+
+                    action.payload.data.forEach(d => {
+                        let dIndex = plot.data.findIndex((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
+                        if (dIndex !== -1) {
+                            updated.push(dIndex);
+                            plot.data[dIndex] = d;
+                        }
+                    });
+                }
+                return state;
+            }
         },
     },
     extraReducers: (builder) => {

@@ -23,6 +23,8 @@
 
 import _ from "lodash";
 import { OpenSee } from "../global";
+import { ReplaceData, InitiateDetailed } from "./dataSlice"
+import { useAppDispatch } from '../hooks';
 
 const defaultLimits = {
     isManual: false,
@@ -62,8 +64,9 @@ export const emptygraph: OpenSee.IGraphstate = {
 // #region [ Async Functions ]
 
 //This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
-export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, callback: (data: OpenSee.iD3DataSeries[], type: 'time'|'frequency') => void): Array<JQuery.jqXHR<any>> {
+export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, appendCallBack: (data: OpenSee.iD3DataSeries[], type: 'time'|'frequency') => void, detailedCallBack: (key: OpenSee.IGraphProps) => void): Array<JQuery.jqXHR<any>> {
     let result = [];
+
     switch (key.DataType) {
 
         case ('Current'):
@@ -89,9 +92,15 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            handlePOW.then((data) => callback(data.Data, 'time'));
-            handleFreq.then((data) => callback(data.Data, 'frequency'));
-          
+            handlePOW.then(data => {
+                appendCallBack(data.Data, 'time')
+                detailedCallBack(key);
+            });
+            handleFreq.then((data) => {
+                appendCallBack(data.Data, 'frequency');
+                detailedCallBack(key);
+            });
+
             result.push(handlePOW);
             result.push(handleFreq);
             break;
@@ -105,7 +114,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            breakerAnalogsDataHandle.then((data) => callback(data.Data, 'time'));
+            breakerAnalogsDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(breakerAnalogsDataHandle);
             break;
         case ('Digitals'):
@@ -118,7 +127,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            breakerDigitalsDataHandle.then((data) => callback(data.Data, 'time'));
+            breakerDigitalsDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(breakerDigitalsDataHandle);
             break;
         case ('TripCoil'):
@@ -133,7 +142,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            waveformTCEDataHandle.then((data) => callback(data.Data, 'time'));
+            waveformTCEDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(waveformTCEDataHandle);
             break;
         case ('FirstDerivative'):
@@ -145,7 +154,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            derivativeDataHandle.then((data) => callback(data.Data, 'time'));
+            derivativeDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(derivativeDataHandle);
             break
         case ('ClippedWaveforms'):
@@ -157,7 +166,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            clippedWaveformDataHandle.then((data) => callback(data.Data, 'time'));
+            clippedWaveformDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(clippedWaveformDataHandle);
             break
         case ('Frequency'):
@@ -169,7 +178,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            freqencyAnalyticDataHandle.then((data) => callback(data.Data, 'time'));
+            freqencyAnalyticDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(freqencyAnalyticDataHandle);
             break
         case ('HighPassFilter'):
@@ -182,7 +191,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            highPassFilterDataHandle.then((data) => callback(data.Data, 'time'));
+            highPassFilterDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(highPassFilterDataHandle);
             break
         case ('LowPassFilter'):
@@ -195,7 +204,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            lowPassFilterDataHandle.then((data) => callback(data.Data, 'time'));
+            lowPassFilterDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(lowPassFilterDataHandle);
             break
 
@@ -209,7 +218,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            impedanceDataHandle.then((data) => callback(data.Data, 'time'));
+            impedanceDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(impedanceDataHandle);
             break
         case ('Power'):
@@ -221,7 +230,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            powerDataHandle.then((data) => callback(data.Data, 'time'));
+            powerDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(powerDataHandle);
             break
         case ('MissingVoltage'):
@@ -233,7 +242,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            missingVoltageDataHandle.then((data) => callback(data.Data, 'time'));
+            missingVoltageDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(missingVoltageDataHandle);
             break
         case ('OverlappingWave'):
@@ -246,7 +255,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 async: true
             });
 
-            overlappingWaveformDataHandle.then((data) => callback(data.Data, 'time'));
+            overlappingWaveformDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(overlappingWaveformDataHandle);
             break
         case ('Rectifier'):
@@ -259,7 +268,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            rectifierDataHandle.then((data) => callback(data.Data, 'time'));
+            rectifierDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(rectifierDataHandle);
             break
         case ('RapidVoltage'):
@@ -271,7 +280,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            rapidVoltageChangeDataHandle.then((data) => callback(data.Data, 'time'));
+            rapidVoltageChangeDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(rapidVoltageChangeDataHandle);
             break
         case ('RemoveCurrent'):
@@ -283,7 +292,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            removeCurrentDataHandle.then((data) => callback(data.Data, 'time'));
+            removeCurrentDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(removeCurrentDataHandle);
             break
         case ('Harmonic'):
@@ -296,7 +305,10 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            specifiedHarmonicDataHandle.then((data) => callback(data.Data, 'time'));
+            specifiedHarmonicDataHandle.then((data) => {
+                appendCallBack(data.Data, 'time');
+                detailedCallBack(key);
+            });
             result.push(specifiedHarmonicDataHandle);
             break
         case ('SymetricComp'):
@@ -308,7 +320,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            symmetricalComponentsDataHandle.then((data) => callback(data.Data, 'time'));
+            symmetricalComponentsDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(symmetricalComponentsDataHandle);
             break
         case ('THD'):
@@ -320,7 +332,10 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            thdDataHandle.then((data) => callback(data.Data, 'time'));
+            thdDataHandle.then((data) => {
+                appendCallBack(data.Data, 'time')
+                detailedCallBack(key);
+            });
             result.push(thdDataHandle);
             break
         case ('Unbalance'):
@@ -332,7 +347,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            unbalanceDataHandle.then((data) => callback(data.Data, 'time'));
+            unbalanceDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(unbalanceDataHandle);
             break
         case ('FaultDistance'):
@@ -344,7 +359,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            faultDistanceDataHandle.then((data) => callback(data.Data, 'time'));
+            faultDistanceDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(faultDistanceDataHandle);
             break
         case ('Restrike'):
@@ -356,7 +371,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            breakerRestrikeDataHandle.then((data) => callback(data.Data, 'time'));
+            breakerRestrikeDataHandle.then((data) => appendCallBack(data.Data, 'time'));
             result.push(breakerRestrikeDataHandle);
             break
         case ('FFT'):
@@ -368,7 +383,10 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
                 cache: true,
                 async: true
             });
-            fftAnalyticDataHandle.then((data) => callback(data.Data, 'time'));
+            fftAnalyticDataHandle.then((data) => {
+                appendCallBack(data.Data, 'time')
+                detailedCallBack(key);
+            });
             result.push(fftAnalyticDataHandle);
             break
         default:
@@ -380,7 +398,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
     return result;
 }
 
-export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, callback: (data: OpenSee.iD3DataSeries[], type: 'time' | 'frequency') => void): Array<JQuery.jqXHR<any>> {
+export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, callBack: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void): Array<JQuery.jqXHR<any>> {
     let result = [];
 
     switch (key.DataType) {
@@ -409,8 +427,8 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
                 async: true
             });
 
-            handlePOW.then((data) => callback(data.Data, 'time'));
-            handleFreq.then((data) => callback(data.Data, 'frequency'));
+            handlePOW.then(data => callBack(key, data.Data));
+            handleFreq.then(data => callBack(key, data.Data))
 
             result.push(handlePOW);
             result.push(handleFreq);
@@ -425,7 +443,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            thdDataHandle.then((data) => callback(data.Data, 'time'));
+            thdDataHandle.then(data => callBack(key, data.Data));
             result.push(thdDataHandle);
             break;
 
@@ -439,10 +457,9 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            specifiedHarmonicDataHandle.then((data) => callback(data.Data, 'time'));
+            specifiedHarmonicDataHandle.then(data => callBack(key, data.Data));
             result.push(specifiedHarmonicDataHandle);
             break;
-
         default:
             return [];
     }
