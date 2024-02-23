@@ -52,12 +52,12 @@ const PhasorChartWidget = () => {
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
-        const newAssetList = _.uniq([...VVector.map(item => item.Asset), ...IVector.map(item => item.Asset)]);
-        if (!_.isEqual(newAssetList.sort(), AssetList.sort())) {
-            setAssetList(newAssetList);
-        }
-        setScaleV(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...VVector.map(item => item.Magnitude)))
-        setScaleI(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...IVector.map(item => item.Magnitude)))
+            const newAssetList = _.uniq([...VVector.map(item => item.Asset), ...IVector.map(item => item.Asset)]);
+            if (!_.isEqual(newAssetList.sort(), AssetList.sort())) {
+                setAssetList(newAssetList);
+            }
+            setScaleV(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...VVector.map(item => item.Magnitude)))
+            setScaleI(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...IVector.map(item => item.Magnitude)))
         }, 100);
 
         return () => clearTimeout(timeoutId);
