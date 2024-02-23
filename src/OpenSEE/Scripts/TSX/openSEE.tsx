@@ -128,12 +128,14 @@ const OpenSeeHome = () => {
     const [plotContainerHeight, setPlotContainerHeight] = React.useState<number>(0);
     const [plotHeight, setPlotHeight] = React.useState<number>(0);
 
+    const [navBarProperties, setNavBarProperties] = React.useState<HTMLDivElement>(null);
+
     React.useLayoutEffect(() => {
         setPlotContainerHeight(divRef.current.offsetHeight ?? 0);
     })
 
     React.useLayoutEffect(() => {
-        setPlotHeight((window.innerHeight - 130) / Math.min(plotKeys.length, 3))
+        setPlotHeight(((window.innerHeight - navBarProperties?.offsetHeight) / Math.min(plotKeys.length, 3)) - 15)
     }, [plotKeys, resizeCount])
 
     //Effect to update width when a drawer opens
@@ -237,6 +239,7 @@ const OpenSeeHome = () => {
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
             NavBarContent={<OpenSeeNavBar ToggleDrawer={ToogleDrawer} OpenDrawers={openDrawers} />}
+            NavBarCallBack={div => setNavBarProperties(div)}
             UseLegacyNavigation={true}
         ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
                 <div className="d-flex flex-column" style={{ position: 'relative', top: '31px', height: '100%', width: '100%' }}>
