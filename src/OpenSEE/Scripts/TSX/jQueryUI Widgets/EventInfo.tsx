@@ -75,6 +75,7 @@ const EventInfo = () => {
                                     "FaultLocation", "left=0,top=0,width=350,height=300,status=no,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no")}
                             >Fault</a>)}</td></tr>
                             <tr><td>Event Date:</td><td>{eventData.EventDate}</td></tr>
+                            <tr><td>Inception:</td><td>{moment(eventData.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</td></tr>
                             {(eventData.StartTime ? <tr><td>Event Start:</td><td>{eventData.StartTime}</td></tr> : null)}
                             {(eventData.Phase ? <tr><td>Phase:</td><td>{eventData.Phase}</td></tr> : null)}
                             {(eventData.DurationPeriod ? <tr><td>Duration:</td><td>{eventData.DurationPeriod}</td></tr> : null)}
