@@ -34,7 +34,7 @@ import { SelectColor, SelectActiveUnit, SelectTimeUnit, SelectSinglePlot, Select
 import {
     SelectData, SelectRelevantUnits, SelectIsZoomed, SelectEnabled, SelectStartTime,
     SelectEndTime, SelectLoading, SelectYLimits, SetZoomedLimits, SetSelectPoint, SetTimeLimit, SelectEnabledUnits,
-    SetCycleLimit, SelectYLabels, SelectDeltaHoverPoints, getPrimaryAxis, SelectCycleLimits, SelectStartTimeSinceInception, SelectEndTimeSinceInception
+    SetCycleLimit, SelectYLabels, SelectDeltaHoverPoints, getPrimaryAxis, SelectCycleLimits
 } from '../store/dataSlice';
 
 import { SelectEventID, SelectEventInfo } from '../store/eventInfoSlice'
@@ -127,9 +127,6 @@ const LineChart = (props: iProps) => {
     const startTime = isOverlappingWaveform ? cycleLimits[0] : useAppSelector(MemoSelectStartTime);
     const endTime = isOverlappingWaveform ? cycleLimits[1] : useAppSelector(MemoSelectEndTime);
 
-    const startTimeSinceInception = isOverlappingWaveform ? cycleLimits[0] : useAppSelector(SelectStartTimeSinceInception);
-    const endTimeSinceInception = isOverlappingWaveform ? cycleLimits[1] : useAppSelector(SelectEndTimeSinceInception);
-
     const analytics = useAppSelector(SelectAnalytics);
     const overlappingEvents = useAppSelector(SelectEventList);
     const useRelevantTime = useAppSelector(SelectUseOverlappingTime);
@@ -138,7 +135,6 @@ const LineChart = (props: iProps) => {
 
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
-    const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception')
 
     const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
@@ -231,14 +227,6 @@ const LineChart = (props: iProps) => {
             }
         });
 
-        const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception')
-
-        if (isSinceInception && startTimeSinceInception && endTimeSinceInception && !isOverlappingWaveform)
-            xScaleRef.current.domain([startTimeSinceInception, endTimeSinceInception])
-        else if (startTime && endTime) {
-        xScaleRef.current.domain([startTime, endTime])
-        }
-        
         if (enabledUnits?.length > 2)
             xScaleRef.current.range([120, props.width - 110])
         else if (enabledUnits?.length > 3)
@@ -268,42 +256,25 @@ const LineChart = (props: iProps) => {
             return;
         }
 
-
-        let scaledHover = hover
-        let scaledPointMouse = pointMouse
-        const curOverlappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId && props.dataKey.DataType === props.dataKey.DataType)
-
-        if (isSinceInception && !isOverlappingWaveform) {
-            if (isOriginalEvt) {
-                scaledHover[0] = hover[0] + (eventInfo.Inception - originalStartTime)
-                scaledPointMouse[0] = pointMouse[0] + (eventInfo.Inception - originalStartTime)
-            }
-            else if (props.dataKey.EventId !== -1) {
-                scaledHover[0] = hover[0] + (curOverlappingEvt.Inception - originalStartTime)
-                scaledPointMouse[0] = pointMouse[0] + (curOverlappingEvt.Inception - originalStartTime)
-            }
-
-        }
-
-
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
-            dispatch(SetTimeLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
+            dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
-            dispatch(SetCycleLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
+            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
-            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
+            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-            dispatch(SetTimeLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
-            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
+            dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         }
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-            dispatch(SetCycleLimit({ end: Math.max(scaledPointMouse[0], scaledHover[0]), start: Math.min(scaledPointMouse[0], scaledHover[0]) }))
-            dispatch(SetZoomedLimits({ limits: [Math.min(scaledPointMouse[1], scaledHover[1]), Math.max(scaledPointMouse[1], scaledHover[1])], key: props.dataKey }));
+            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         }
-        else if (!fftMouseDown && mouseMode == 'fftMove' && scaledPointMouse[0] < oldFFTWindow[1] && scaledPointMouse[0] > oldFFTWindow[0]) {
-            const deltaT = scaledPointMouse[0] - oldFFTWindow[0];
+        else if (!fftMouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
+            let deltaT = pointMouse[0] - oldFFTWindow[0];
             const deltaData = oldFFTWindow[1] - oldFFTWindow[0];
-            let Tstart = (scaledHover[0] - deltaT);
+            let Tstart = hover[0] - deltaT;
+
             Tstart = (Tstart < xScaleRef.current.domain()[0] ? xScaleRef.current.domain()[0] : Tstart)
             Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
             dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: Tstart, FFTCycles: fftCycles }, key: { DataType: "FFT", EventId: evtID } }));
@@ -399,27 +370,7 @@ const LineChart = (props: iProps) => {
 
         return d3.line()
             .x(d => {
-                let x = xScaleRef.current ? xScaleRef.current(d[0]) : 0;
-                let scale = 0;
-                const overLappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId);
-
-                if (!isOverlappingWaveform) {
-                    if (isSinceInception)
-                        scale = (eventInfo.Inception - startTime);
-
-                    if (useRelevantTime && !isOriginalEvt && props.dataKey.EventId !== -1) {
-                        if (isSinceInception)
-                            scale = (overLappingEvt.Inception - originalStartTime);
-                        else
-                            scale = (overLappingEvt.StartTime - originalStartTime);
-
-                    }
-                }
-
-                x = xScaleRef.current ? xScaleRef.current(d[0] - scale) : 0;
-
-                return x
-
+                return xScaleRef.current ? xScaleRef.current(d[0]) : 0
             })
             .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
             .defined(d => {
@@ -541,9 +492,6 @@ const LineChart = (props: iProps) => {
             })
         }
 
-        if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception'))
-            xScaleRef.current = d3.scaleLinear().domain([startTimeSinceInception, endTimeSinceInception]).range([60, props.width - 110])
-        else
             xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
 
         //Create xAxis
@@ -722,7 +670,7 @@ const LineChart = (props: iProps) => {
         else if (timeUnit.options[timeUnit.current].short == 'ms since record') {
             let ms = d - originalStartTime;
 
-            if (useRelevantTime && props.dataKey.EventId !== evtID) {
+            if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
                 ms = d - evt.StartTime
             }
@@ -736,12 +684,12 @@ const LineChart = (props: iProps) => {
         }
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
-            const startOffset = (startTime - originalStartTime) 
+            let ms = d - (new Date(eventInfo?.InceptionDate + "Z").getTime());
             let ms = d - originalStartTime - startOffset;
 
-            if (useRelevantTime && props.dataKey.EventId !== evtID) {
+            if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
-                ms = d - evt.StartTime - startOffset
+                ms = d - (new Date(evt.InceptionDate + "Z").getTime())
             }
 
             if (h < 2)
@@ -903,27 +851,23 @@ const LineChart = (props: iProps) => {
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
 
-        if (isSinceInception && !isOverlappingWaveform) {
-            if (isOriginalEvt)
-                deltaT = (hover[0] + (eventInfo.Inception - originalStartTime)) - (pointMouse[0] + (eventInfo.Inception - originalStartTime))
-            else if (props.dataKey.EventId !== -1)
-                deltaT = (hover[0] + (curOverlappingEvt.Inception - originalStartTime)) - (pointMouse[0] + (curOverlappingEvt.Inception - originalStartTime))
-        }
-
-
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy")) {
-            if (props.dataKey.DataType != 'OverlappingWave')
+        if (mouseMode === 'pan' && mouseDown && (zoomMode === "x" || zoomMode === "xy")) {
+                if (!isOverlappingWaveform) {
             dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
-            else if (props.dataKey.DataType == 'OverlappingWave')
+                } else if (isOverlappingWaveform) {
             dispatch(SetCycleLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
         }
+        }
 
-        if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy")) {
+        if (mouseMode === 'pan' && mouseDown && (zoomMode === "y" || zoomMode === "xy")) {
             dispatch(SetZoomedLimits({ limits: [(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], key: props.dataKey }));
         }
         
-        if (mouseMode == 'fftMove' && fftMouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0])
-            setCurrentFFTWindow([xScaleRef.current(oldFFTWindow[0] + deltaT), xScaleRef.current(oldFFTWindow[1] + deltaT)])
+
+        if (mouseMode == 'fftMove' && fftMouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
+            setCurrentFFTWindow([xScaleRef.current(oldFFTWindow[0] + hover[0] - pointMouse[0]), xScaleRef.current(oldFFTWindow[1] + hover[0] - pointMouse[0])])
+        }
+
     }
 
     function updateFFTWindow() {
@@ -1001,12 +945,8 @@ const LineChart = (props: iProps) => {
         if (xScaleRef.current == undefined)
             return;
 
-        let inceptionOffset = 0
-        if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since inception'))
-            inceptionOffset = (eventInfo?.Inception - startTime)
-
-        setInceptionLocation(xScaleRef.current(eventInfo?.Inception - inceptionOffset))
-        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime - inceptionOffset))
+        setInceptionLocation(xScaleRef.current(eventInfo?.Inception))
+        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime ))
 
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
@@ -1014,7 +954,7 @@ const LineChart = (props: iProps) => {
         let x = 1
 
         width = xScaleRef.current(eventInfo?.DurationEndTime) - xScaleRef.current(eventInfo?.Inception)
-        x = xScaleRef.current(eventInfo?.Inception - inceptionOffset)
+        x = xScaleRef.current(eventInfo?.Inception)
 
 
         container.select(".DurationWindow")

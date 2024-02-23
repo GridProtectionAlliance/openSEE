@@ -893,31 +893,7 @@ export const SelectYLabels = (key: OpenSee.IGraphProps) => {
             })
             return labels;
         }
-    };
 };
-
-export const SelectStartTimeSinceInception = (state: RootState) => {
-    let startTime = state.Data.startTime
-    let inceptionDiff = state.EventInfo?.EventInfo?.Inception - startTime
-
-    if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('since')) {
-        if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('inception'))
-            startTime = state.Data.startTime - inceptionDiff
-    }
-
-    return startTime
-};
-
-export const SelectEndTimeSinceInception = (state: RootState) => {
-    let endTime = state.Data.endTime
-    let inceptionDiff = state.EventInfo?.EventInfo?.Inception - state.Data.startTime
-
-    if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('since')) {
-        if (defaultSettings.TimeUnit.options[state.Settings.TimeUnit.current].short.includes('inception'))
-            endTime = state.Data.endTime - inceptionDiff
-    }
-
-    return endTime
 };
 
 
