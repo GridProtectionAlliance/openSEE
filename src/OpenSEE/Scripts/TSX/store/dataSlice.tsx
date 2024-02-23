@@ -363,8 +363,11 @@ export const DataReducer = createSlice({
                 let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV, currentPlot.data);
 
                 for (let i = orignalLength; i < newLength; i++) {
-                    currentPlot.data[i].Enabled = extendEnabled[i];
                     currentPlot.data[i].EventID = action.payload.eventID
+                }
+
+                for (let i = 0; i < newLength; i++) {
+                    currentPlot.data[i].Enabled = extendEnabled[i];
                 }
 
                 const RelevantAxises = _.uniq(currentPlot.data.map(s => s.Unit));
