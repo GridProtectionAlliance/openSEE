@@ -209,9 +209,9 @@ const OpenSeeHome = () => {
 
     }, [openDrawers.ToolTipDelta])
 
-    function ToogleDrawer(drawer: OpenSee.OverlayDrawers, open: boolean) {
+    const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
         overlayHandles.current[drawer](open);
-    }
+    };
 
     const handleDrawerChange = (drawerName: keyof OpenSee.Drawers, isOpen: boolean) => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
@@ -238,7 +238,7 @@ const OpenSeeHome = () => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToogleDrawer} OpenDrawers={openDrawers} />}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navBarProperties?.offsetWidth} />}
             NavBarCallBack={div => setNavBarProperties(div)}
             UseLegacyNavigation={true}
         ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
