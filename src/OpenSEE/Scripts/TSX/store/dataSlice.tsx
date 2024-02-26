@@ -457,16 +457,15 @@ export const DataReducer = createSlice({
                     updateActiveUnits(curPlot.yLimits, axis, relevantData, state.startTime, state.endTime, null);
                 });
         },
-        SetSelectPoint: (state: OpenSee.IDataState, action: PayloadAction<[number, number]>) => {
-            // Only work those with main eventId for now CHANGED THIS BECAUSE IT DOESNT MAKE SENSE WHY WE WOULD
+        SetSelectPoint: (state: OpenSee.IDataState, action: PayloadAction<{ time: number, key: OpenSee.IGraphProps }>) => {
             state.Plots.forEach(plot => {
-                //if (plot.key.EventId != eventID) return;
-                if (plot.data.length == 0) return;
+                let shortestDataObject = _.minBy(plot.data, dataObject => dataObject.DataPoints.length);
 
-                let dataIndex = getIndex(action.payload[0], plot.data[0].DataPoints)
+                if (plot?.data?.length > 0) {
+                    let dataIndex = getIndex(action.payload.time, shortestDataObject.DataPoints)
                 plot.selectedIndixes.push(dataIndex);
+                }
                 })
-
         },
         ClearSelectPoints: (state: OpenSee.IDataState) => {
             state.Plots.forEach(plot => plot.selectedIndixes = []);
