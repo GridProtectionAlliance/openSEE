@@ -69,7 +69,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
 
     return (
         <>
-            {sagsData ? //need to add a columnn for the export button..
+            {sagsData ?
                 <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
                     <ConfigTable.Table<ICorrelatedSags>
                         LocalStorageKey={"OpenSee.Correlated.TableCols"}
