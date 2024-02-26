@@ -375,13 +375,13 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         < i style={{ fontStyle: "normal", fontSize: "25px" }} >{Zoom}</i>
                     </button>
                     <div className="dropdown-menu" style={{ position: "absolute" }}>
-                        <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))}>
+                        <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
                         </a>
-                        <a key={"option-y"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('y'))}>
+                        <a key={"option-y"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('y'))} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value
                         </a>
-                        <a key={"option-xy"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('xy'))}>
+                        <a key={"option-xy"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('xy'))} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle
                         </a>
                     </div>
@@ -550,11 +550,11 @@ const WidgetSection = (props: iWidgets) => {
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{statsIcon}</i>
                 </button>
                 <div className="dropdown-menu" style={{ position: "absolute" }}>
-                    <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)}>
+                    <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)} style={{cursor: 'pointer'}}>
                         <i style={{ fontStyle: "normal" }}>Scalar Stats</i>
                     </a>
                     {props.eventInfo?.EventName === "Snapshot" ?
-                        <a key={"option-harmonic"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.HarmonicStats)}>
+                        <a key={"option-harmonic"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.HarmonicStats)} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>Harmonic Stats</i>
                         </a>
                         : null}
@@ -609,14 +609,14 @@ const WidgetSection = (props: iWidgets) => {
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{exportBtn}</i>
                 </button>
                 <div className="dropdown-menu" style={{ position: "absolute" }}>
-                    <a className="dropdown-item" onClick={() => { props.exportData('csv') }}>
+                    <a className="dropdown-item" onClick={() => { props.exportData('csv') }} style={{ cursor: 'pointer' }}>
                         Export CSV
                     </a>
-                    <a className="dropdown-item" onClick={() => { props.exportData('pqds') }}>
+                    <a className="dropdown-item" onClick={() => { props.exportData('pqds') }} style={{ cursor: 'pointer' }}>
                         Export PQDS
                     </a>
                     {props.showFFT ?
-                        <a className="dropdown-item" onClick={() => { props.exportData('fft') }}>
+                        <a className="dropdown-item" onClick={() => { props.exportData('fft') }} style={{ cursor: 'pointer' }}>
                             Export FFT
                         </a>
                         : null}
