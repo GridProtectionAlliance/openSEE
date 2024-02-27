@@ -79,7 +79,7 @@ const SettingsWidget = (props) => {
 
     const [valid, setValid] = React.useState<boolean>(true)
     const [timeSinceChanged, setTimeSinceChanged] = React.useState<boolean>(false) 
-    
+
     const handleTimeChange = (time: number, start: boolean) => {
         if (start)
             setStartMS(time)
@@ -100,7 +100,7 @@ const SettingsWidget = (props) => {
         else
             newDate = new Date(endTime);
 
-        if (time && time !== 'Invalid date') { 
+        if (time && time !== 'Invalid date') {
             let [hours, minutes, seconds] = time.split(':');
             let milliseconds = '';
             [seconds, milliseconds] = seconds.split('.')
@@ -121,7 +121,7 @@ const SettingsWidget = (props) => {
                     setCurrentDate({ start: new Date(startTime), end: newDate })
                     setValid(true)
                 }
-                else 
+                else
                     setValid(false)
             }
 
@@ -129,7 +129,7 @@ const SettingsWidget = (props) => {
 
     };
 
-   React.useEffect(() => {
+    React.useEffect(() => {
         const startDate = new Date(startTime)
         const endDate = new Date(endTime)
         setFormattedTime({ start: moment(startDate).format('HH:mm:ss.SSS'), end: moment(new Date(endDate)).format('HH:mm:ss.SSS') })
@@ -214,7 +214,7 @@ const SettingsWidget = (props) => {
     React.useEffect(() => {
         const handleScroll = () => {
             let offset = document.getElementById("settingScrollContainer").scrollTop;
-                setScrollOffset(offset);
+            setScrollOffset(offset);
         }
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
         return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
@@ -253,7 +253,7 @@ const SettingsWidget = (props) => {
                                                 Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, Pk: item.Pk }))}
                                                 Label={"Peak"}
                                             />
-                                    </div>
+                                        </div>
                                         <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
@@ -261,7 +261,7 @@ const SettingsWidget = (props) => {
                                                 Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, RMS: item.RMS }))}
                                                 Label={"RMS"}
                                             />
-                                </div>
+                                        </div>
                                         <div className="col-auto form-check form-check-inline mr-0">
                                             <CheckBox
                                                 Record={defaultTraces}
@@ -269,8 +269,8 @@ const SettingsWidget = (props) => {
                                                 Setter={(item) => dispatch(SetDefaultTrace({ ...defaultTraces, Ph: item.Ph }))}
                                                 Label={"Phase"}
                                             />
-                                                </div>
-                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="form-row">
                                         <div className="col-auto form-check form-check-inline mr-0">
                                             <div className="form-check">
@@ -279,8 +279,8 @@ const SettingsWidget = (props) => {
                                                     dispatch(SetDefaultVType('L-L'))
                                             }} />
                                                 <label className="form-check-label" >Line to Line</label>
-                                                </div>
                                             </div>
+                                        </div>
                                         <div className="col-auto form-check form-check-inline mr-0">
                                             <div className="form-check">
 
@@ -289,7 +289,7 @@ const SettingsWidget = (props) => {
                                                     dispatch(SetDefaultVType('L-N'))
                                             }} />
                                                 <label className="form-check-label" >Line to Neutral</label>
-                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </fieldset>
@@ -325,34 +325,34 @@ const SettingsWidget = (props) => {
                                         </div> :
                                         <div className="form-row" style={{ marginTop: '10px' }}>
                                             <div className="col-6">
-                                            <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'start'}
-                                                Setter={(e) => {
-                                                    handleDateChange(e.start, true)
-                                                }}
-                                                Label={"Start Time"}
-                                                Accuracy={'millisecond'}
-                                                Valid={() => valid}
-                                                Type={'time'}
-                                                Feedback={"Start Time can not be greater than End Time"}
-                                            />
+                                                <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'start'}
+                                                    Setter={(e) => {
+                                                        handleDateChange(e.start, true)
+                                                    }}
+                                                    Label={"Start Time"}
+                                                    Accuracy={'millisecond'}
+                                                    Valid={() => valid}
+                                                    Type={'time'}
+                                                    Feedback={"Start Time can not be greater than End Time"}
+                                                />
                                             </div>
 
                                             <div className="col-6">
-                                            <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'end'}
-                                                Setter={(e) => {
-                                                    handleDateChange(e.end, false)
-                                                }}
-                                                Label={"End Time"}
-                                                Valid={() => valid}
-                                                Type={'time'}
-                                                Accuracy={'millisecond'}
-                                                Feedback={"Start Time can not be greater than End Time"}
-                                            />
-                                                    </div>
+                                                <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'end'}
+                                                    Setter={(e) => {
+                                                        handleDateChange(e.end, false)
+                                                    }}
+                                                    Label={"End Time"}
+                                                    Valid={() => valid}
+                                                    Type={'time'}
+                                                    Accuracy={'millisecond'}
+                                                    Feedback={"Start Time can not be greater than End Time"}
+                                                />
+                                            </div>
 
                                         </div>
                                     }
-                                    </fieldset>
+                                </fieldset>
                                 <fieldset className="border p-2">
                                     <legend>Plot Markers:</legend>
                                     <div className="form-row">
@@ -364,19 +364,19 @@ const SettingsWidget = (props) => {
                                                 Label={"Display Inception and Duration."}
                                                 Help={"For events without this information record start and end time will be used."}
                                             />
-                                    </div>
+                                        </div>
                                     </div>
                                 </fieldset>
                             </div>
 
-                                </div>
-                            </div>
+                        </div>
+                    </div>
 
                     {plotKeys.filter(key => key.EventId === evtID || key.EventId === -1).map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
-                   
+
                 </div>
             </div>
-       </div>
+        </div>
     );
 }
 
@@ -391,22 +391,22 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
         zIndex: 1010,
     }
 
-    function updateColor(color, event) {
+    function updateColor(color) {
         props.statesetter(color.hex);
         setDisplayColorPicker(false)
     };
 
-        return (
-            <div style={{ margin: ' 5px 10px 5px 10px' }}>
-                <button className="btn btn-primary" onClick={() => setDisplayColorPicker(!displayColorPicker)} style={{ backgroundColor: props.color }}>{props.label}</button>
-                {displayColorPicker ? <div style={popover}>
+    return (
+        <div style={{ margin: ' 5px 10px 5px 10px' }}>
+            <button className="btn btn-primary" onClick={() => setDisplayColorPicker(!displayColorPicker)} style={{ backgroundColor: props.color }}>{props.label}</button>
+            {displayColorPicker ? <div style={popover}>
                     <div style={{ position: 'fixed', transform: `translate(0px,-${props.scrollOffset}px)` }}>
-                        <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} colors={defaultSettings.ColorSelection} />
-                    </div>
-                </div> : null}
-            </div>
-        )
-    
+                    <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} colors={defaultSettings.ColorSelection} />
+                </div>
+            </div> : null}
+        </div>
+    )
+
 }
 
 export const AxisUnitSelector = (props: { label: string, setter: (index: number) => void, unitType: OpenSee.Unit, axisSetting: OpenSee.IAxisSettings }) => {
@@ -421,7 +421,7 @@ export const AxisUnitSelector = (props: { label: string, setter: (index: number)
     else
         buttonLabel = props.label + " [" + defaultSettings.Units[props.unitType].options[props.axisSetting.current].short + "]"
 
-    
+
 
     return (
         <div className="btn-group dropright" >
@@ -433,7 +433,7 @@ export const AxisUnitSelector = (props: { label: string, setter: (index: number)
             </div>
         </div>
     );
-        }
+}
 
 export const TimeUnitSelector = (props: { label: string, setter: (index: number) => void, timeUnitIndex: number, overlappingWave?: boolean }) => {
     let entries;
@@ -446,23 +446,23 @@ export const TimeUnitSelector = (props: { label: string, setter: (index: number)
         buttonLabel = props.label + " [" + defaultSettings.OverlappingWaveTimeUnit.options[props.timeUnitIndex].short + "]"
 
     } else {
-    entries = defaultSettings.TimeUnit.options.map((option, index) =>
+        entries = defaultSettings.TimeUnit.options.map((option, index) =>
             <a key={"option-" + index} className="dropdown-item" style={{ cursor: 'default' }} onClick={() => { props.setter(index) }}> {option.label} </a>
-    )
+        )
         buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnitIndex].short + "]"
 
     }
 
-        return (
+    return (
         <div className="btn-group dropright" >
-                <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 {buttonLabel}
-                </button>
-                <div className="dropdown-menu">
-                    {entries}
-                </div>
+            </button>
+            <div className="dropdown-menu">
+                {entries}
             </div>
-        );    
+        </div>
+    );
 }
 
 interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
@@ -558,7 +558,7 @@ const PlotCard = (props: ICardProps) => {
                 let index = settingOptions.findIndex(item => item.factor === 1)
                 return settingOptions[index].short
             }
-            else 
+            else
                 return defaultSettings.Units[unit].options[axisSettings[unit].current].short
         }
 
@@ -567,7 +567,7 @@ const PlotCard = (props: ICardProps) => {
             let index = settingOptions.findIndex(item => item.factor === 1)
             return settingOptions[index].short
         }
-        else 
+        else
             return defaultSettings.Units[unit].options[axisSettings[unit].current].short
     }
 
@@ -623,7 +623,7 @@ const PlotCard = (props: ICardProps) => {
             <h2 className="mb-0">
                 <button className="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target={"#collaps-" + props.DataType} aria-expanded="true" aria-controls={"#collaps-" + props.DataType}>
                     {GetDisplayLabel(props.DataType)} Settings
-                    </button>
+                </button>
             </h2>
         </div>
 
@@ -705,59 +705,59 @@ const PlotCard = (props: ICardProps) => {
                                                                 Help={autoUnits[item] ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
                                                                 Feedback={"Minimum limit can not be greater than Maximum limit"}
                                                             />
-                                </div>
-                                </div>
+                                                        </div>
+                                                    </div>
                                                 </>
                                             )}
-                            </div>
+                                        </div>
                                     )) : null}
-                        </fieldset>
+                            </fieldset>
                 ))}
 
                 {colorSettings.length > 0 ?
                     <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
-                            <div className="row">
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
+                        <div className="row">
                             <div className="col-3">
-                                    {colCol1.map((c: OpenSee.Color, i: number) =>
-                                        <ColorButton
-                                            key={i}
-                                            label={c as string}
-                                            color={colors[c]}
-                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                            scrollOffset={props.scrollOffset}
-                                            />)}
-                                </div>
+                                {colCol1.map((c: OpenSee.Color, i: number) =>
+                                    <ColorButton
+                                        key={i}
+                                        label={c as string}
+                                        color={colors[c]}
+                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                        scrollOffset={props.scrollOffset}
+                                    />)}
+                            </div>
                             <div className="col-3">
-                                    {colCol2.map((c: OpenSee.Color, i: number) =>
-                                        <ColorButton
-                                            key={i}
-                                            label={c as string}
-                                            color={colors[c]}
-                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                            scrollOffset={props.scrollOffset}
-                                        />)}
-                                </div>
+                                {colCol2.map((c: OpenSee.Color, i: number) =>
+                                    <ColorButton
+                                        key={i}
+                                        label={c as string}
+                                        color={colors[c]}
+                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                        scrollOffset={props.scrollOffset}
+                                    />)}
+                            </div>
                             <div className="col-3">
-                                    {colCol3.map((c: OpenSee.Color, i: number) =>
-                                        <ColorButton
-                                            key={i}
-                                            label={c as string}
-                                            color={colors[c]}
-                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                            scrollOffset={props.scrollOffset}
-                                        />)}
-                                </div>
+                                {colCol3.map((c: OpenSee.Color, i: number) =>
+                                    <ColorButton
+                                        key={i}
+                                        label={c as string}
+                                        color={colors[c]}
+                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                        scrollOffset={props.scrollOffset}
+                                    />)}
+                            </div>
                             <div className="col-3">
-                                    {colCol4.map((c: OpenSee.Color, i: number) =>
-                                        <ColorButton
-                                            key={i}
-                                            label={c as string}
-                                            color={colors[c]}
-                                            statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                            scrollOffset={props.scrollOffset}
-                                        />)}
-                                </div>
+                                {colCol4.map((c: OpenSee.Color, i: number) =>
+                                    <ColorButton
+                                        key={i}
+                                        label={c as string}
+                                        color={colors[c]}
+                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
+                                        scrollOffset={props.scrollOffset}
+                                    />)}
+                            </div>
                         </div>
                     </fieldset> : null}
 
@@ -769,8 +769,8 @@ const PlotCard = (props: ICardProps) => {
                             <div className="col-12">
                                 <TimeUnitSelector label={"Time"} timeUnitIndex={overlapWaveTimeUnit} setter={index => handleTimeUnitChange(index)} overlappingWave={true} />
                             </div>
-                            </div>
-                        </fieldset>
+                        </div>
+                    </fieldset>
                     : null}
             </div>
         </div>
