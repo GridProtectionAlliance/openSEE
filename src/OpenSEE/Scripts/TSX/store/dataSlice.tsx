@@ -46,10 +46,9 @@ export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenS
     const state = (thunkAPI.getState() as OpenSee.IRootState)
     const singlePlot = state.Settings.SinglePlot
 
-    if (plot === null || plot.loading !== 'Loading') {
+    if (plot === null || plot.loading !== 'Loading') 
         return Promise.resolve();
-    }
-
+    
     // Adding Data to the Plot
     let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
 
@@ -103,7 +102,7 @@ export const AddSingleOverlappingPlot = createAsyncThunk('Data/addOverlappingPlo
     const currentPlot = state.Data.Plots.find(plot => plot.key.DataType === arg.DataType && plot.key.EventId === arg.EventId)
 
     if (singleOverlappingPlot === null || singleOverlappingPlot.loading !== 'Loading')
-            return Promise.resolve(); 
+        return Promise.resolve();
 
     // Adding Data with matching datatypes
     thunkAPI.dispatch(DataReducer.actions.AppendData({ key: { EventId: -1, DataType: currentPlot.key.DataType }, data: _.cloneDeep(currentPlot.data), defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: currentPlot.key.EventId })); //not really sure what requestID and secondary is...
@@ -116,16 +115,18 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
     let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
     const state = (thunkAPI.getState() as OpenSee.IRootState)
 
-    if (plot === null) {
-        return Promise.resolve(); 
-    }
+    if (plot === null) 
+        return Promise.resolve();
+    
 
     thunkAPI.dispatch(DataReducer.actions.RemoveData(arg.key))
 
     // Adding Data to the Plot
     let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
     let handles = getData(arg.key, analyticOptions, data => {
-        thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: plot.key.EventId })); //not really sure what requestID and secondary is...
+        thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: plot.key.EventId }));
+    }, () => {
+        thunkAPI.dispatch(InitiateDetailed(arg.key))
     });
 
     AddRequest(arg.key, handles);
@@ -199,7 +200,7 @@ export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { 
         oldLimits = plot.yLimits[primaryAxis].manualLimits
     else if (plot.isZoomed)
         oldLimits = plot.yLimits[primaryAxis].zoomedLimits
-    else 
+    else
         oldLimits = plot.yLimits[primaryAxis].dataLimits
 
 
@@ -223,7 +224,7 @@ export const DataReducer = createSlice({
         fftLimits: [0, 0],
         cycleLimit: [0, 1000.0 / 60.0],
     } as OpenSee.IDataState,
-    reducers: {        
+    reducers: {
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.Plots.splice(action.payload, 1);
         },
@@ -241,7 +242,7 @@ export const DataReducer = createSlice({
                 else {
                     const plotIndex = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
                     state.Plots.splice(plotIndex, 1);
-            }
+                }
             }
         },
         UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
@@ -254,51 +255,51 @@ export const DataReducer = createSlice({
                 const newFactor = defaultSettings.Units[action.payload.unit].options[newUnitIndex].factor
                 const isPU = oldFactor === undefined || newFactor === undefined ? true : false
 
-            curPlot.yLimits[action.payload.unit].isAuto = action.payload.auto
-            curPlot.yLimits[action.payload.unit].current = action.payload.value
+                curPlot.yLimits[action.payload.unit].isAuto = action.payload.auto
+                curPlot.yLimits[action.payload.unit].current = action.payload.value
 
-            const axisSetting: OpenSee.IAxisSettings = curPlot.yLimits[action.payload.unit];
+                const axisSetting: OpenSee.IAxisSettings = curPlot.yLimits[action.payload.unit];
                 const oldLimits = axisSetting.dataLimits
-            const filteredData = curPlot.data.filter(item => item.Enabled && item.Unit === action.payload.unit);
+                const filteredData = curPlot.data.filter(item => item.Enabled && item.Unit === action.payload.unit);
 
                 //handle autoUnit case
-            let unitIndex = updateActiveUnits(curPlot.yLimits, action.payload.unit, filteredData, state.startTime, state.endTime, null);
+                let unitIndex = updateActiveUnits(curPlot.yLimits, action.payload.unit, filteredData, state.startTime, state.endTime, null);
                 if (unitIndex) {
-                curPlot.yLimits[action.payload.unit].current = unitIndex
+                    curPlot.yLimits[action.payload.unit].current = unitIndex
                     newUnitIndex = unitIndex
                 }
 
-            if (curPlot.key.DataType != 'FFT' && curPlot.key.DataType != 'OverlappingWave') {
-                const limits = recomputeDataLimits(state.startTime, state.endTime, filteredData, curPlot.yLimits[action.payload.unit].current);
-                axisSetting.dataLimits = limits;
+                if (curPlot.key.DataType != 'FFT' && curPlot.key.DataType != 'OverlappingWave') {
+                    const limits = recomputeDataLimits(state.startTime, state.endTime, filteredData, curPlot.yLimits[action.payload.unit].current);
+                    axisSetting.dataLimits = limits;
                     if (isPU) {
                         axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
                         axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-            }
+                    }
                     else {
                         axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
                         axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
                     }
                 }
-            else if (curPlot.key.DataType == 'FFT') {
-                const limits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], filteredData, curPlot.yLimits[action.payload.unit].current)
-                axisSetting.dataLimits = limits;
+                else if (curPlot.key.DataType == 'FFT') {
+                    const limits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], filteredData, curPlot.yLimits[action.payload.unit].current)
+                    axisSetting.dataLimits = limits;
                     if (isPU) {
                         axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
                         axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-            }
+                    }
                     else {
                         axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
                         axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
                     }
                 }
-            else if (curPlot.key.DataType == 'OverlappingWave') {
-                const limits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], filteredData, curPlot.yLimits[action.payload.unit].current);
-                axisSetting.dataLimits = limits;
+                else if (curPlot.key.DataType == 'OverlappingWave') {
+                    const limits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], filteredData, curPlot.yLimits[action.payload.unit].current);
+                    axisSetting.dataLimits = limits;
                     if (isPU) {
                         axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
                         axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-            }
+                    }
                     else {
                         axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
                         axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
@@ -360,7 +361,7 @@ export const DataReducer = createSlice({
 
                 currentPlot.data.push(...action.payload.data);
                 const newLength = currentPlot.data.length
-            
+
                 let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV, currentPlot.data);
 
                 for (let i = orignalLength; i < newLength; i++) {
@@ -426,7 +427,7 @@ export const DataReducer = createSlice({
             action.payload.trace.forEach(traceIndex => {
                 if (traceIndex < curPlot.data.length) {
                     curPlot.data[traceIndex].Enabled = action.payload.enabled;
-            }
+                }
             });
 
             // Recompute limits and update units
@@ -463,9 +464,9 @@ export const DataReducer = createSlice({
 
                 if (plot?.data?.length > 0) {
                     let dataIndex = getIndex(action.payload.time, shortestDataObject.DataPoints)
-                plot.selectedIndixes.push(dataIndex);
+                    plot.selectedIndixes.push(dataIndex);
                 }
-                })
+            })
         },
         ClearSelectPoints: (state: OpenSee.IDataState) => {
             state.Plots.forEach(plot => plot.selectedIndixes = []);
@@ -480,11 +481,11 @@ export const DataReducer = createSlice({
                 RelevantAxis.forEach(axis => {
                     if (axis === getPrimaryAxis(action.payload.key))
                         curPlot.yLimits[axis].zoomedLimits = action.payload.newLimits
-                    else if (curPlot.yLimits[axis].isManual) 
+                    else if (curPlot.yLimits[axis].isManual)
                         curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].manualLimits);
-                     else if (curPlot.isZoomed) 
+                    else if (curPlot.isZoomed)
                         curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].zoomedLimits);
-                     else 
+                    else
                         curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].dataLimits);
                 })
 
@@ -496,7 +497,7 @@ export const DataReducer = createSlice({
             limits: [number, number],
             key: OpenSee.IGraphProps,
             axis: OpenSee.Unit,
-            auto: boolean 
+            auto: boolean
             factor?: number
         }>) => {
             const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
@@ -520,7 +521,7 @@ export const DataReducer = createSlice({
                     }
                 }
 
-                }
+            }
         },
         ResetZoom: (state: OpenSee.IDataState) => {
             state.Plots.forEach(plot => {
@@ -541,7 +542,11 @@ export const DataReducer = createSlice({
 
                     action.payload.data.forEach(d => {
                         let dIndex = plot.data.findIndex((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
-                        if (dIndex !== -1) {
+                        const data = plot.data.find((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
+                        if (dIndex !== -1) {  
+                            let detailedData = d;
+                            detailedData.Enabled = data.Enabled;
+                            detailedData.EventID = data.EventID;
                             updated.push(dIndex);
                             plot.data[dIndex] = d;
                         }
@@ -584,10 +589,10 @@ export const DataReducer = createSlice({
                 return state
 
             plot.loading = 'Idle'
-            
+
             const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
             if (singlePlot) {
-                const evtIDs = _.uniq(state.Plots.map(plot => plot.key.EventId).filter(id => id !== -1))
+                const evtIDs = _.uniq(state.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1))
                 const evtIDsPresent = _.uniq(singlePlot.data.map(data => data.EventID))
                 const allDataPresent = evtIDs.every(id => {
                     return evtIDsPresent.includes(id)
@@ -596,12 +601,12 @@ export const DataReducer = createSlice({
                 if (allDataPresent)
                     singlePlot.loading = 'Idle';
             }
-                
 
-                if (action.meta.arg.fftLimits)
-                    state.fftLimits = action.meta.arg.fftLimits
-                if (action.meta.arg.fftLimits)
-                    state.cycleLimit = action.meta.arg.cycleLimits
+
+            if (action.meta.arg.fftLimits)
+                state.fftLimits = action.meta.arg.fftLimits
+            if (action.meta.arg.fftLimits)
+                state.cycleLimit = action.meta.arg.cycleLimits
 
 
             return state
@@ -637,14 +642,14 @@ export const DataReducer = createSlice({
         builder.addCase(AddSingleOverlappingPlot.fulfilled, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
             if (plot) {
-                const evtIDs = _.uniq(state.Plots.map(plot => plot.key.EventId).filter(id => id !== -1))
+                const evtIDs = _.uniq(state.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1))
                 const evtIDsPresent = _.uniq(plot.data.map(data => data.EventID))
                 const allDataPresent = evtIDs.every(id => {
                     return evtIDsPresent.includes(id)
                 })
 
                 if (allDataPresent)
-                plot.loading = 'Idle';
+                    plot.loading = 'Idle';
             }
 
             return state
@@ -654,7 +659,7 @@ export const DataReducer = createSlice({
 });
 
 
-export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, UpdateActiveUnits, SetManualLimits, AppendData } = DataReducer.actions;
+export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, UpdateActiveUnits, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion
@@ -736,7 +741,7 @@ export const SelectAnalytics = createSelector(
 
 export const SelectData = (key: OpenSee.IGraphProps) => createSelector(
     (state: OpenSee.IRootState) => state.Data.Plots,
-        (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
     (plots, singlePlot) => {
         let plot = plots.find(item => item.key.DataType === key.DataType && item.key.EventId === key.EventId);
         let overlappingPlot = plots.find(item => item.key.DataType === key.DataType && item.key.EventId === -1)
@@ -744,7 +749,7 @@ export const SelectData = (key: OpenSee.IGraphProps) => createSelector(
             return overlappingPlot ? overlappingPlot.data : null
         return plot ? plot.data : null;
     }
-    );
+);
 
 
 export const SelectEnabled = (key: OpenSee.IGraphProps) =>
@@ -757,7 +762,7 @@ export const SelectEnabled = (key: OpenSee.IGraphProps) =>
                 return plot.data.map(item => item.Enabled)
             else
                 return []
-    }
+        }
     );
 
 
@@ -807,7 +812,7 @@ export const SelectEnabledUnits = (key: OpenSee.IGraphProps) => createSelector(
         }
         else {
             return []
-}
+        }
 
     }
 );
@@ -907,14 +912,14 @@ export const SelectYLabels = (key: OpenSee.IGraphProps) => {
                 labels[unit] = `${unit} [${short}]`
             })
             return labels;
-}
+        }
         else {
             Object.keys(defaultSettings.Units).forEach(unit => {
                 labels[unit] = ""
             })
             return labels;
         }
-};
+    };
 };
 
 
@@ -1033,9 +1038,9 @@ export const SelectHoverPoints = (hover: [number, number]) => createSelector(
                     Time: 0,
                 }
             }))
-    })
-    return result;
-});
+        })
+        return result;
+    });
 
 
 export const SelectDeltaHoverPoints = (hover: [number, number]) => createSelector(
@@ -1068,8 +1073,8 @@ export const SelectDeltaHoverPoints = (hover: [number, number]) => createSelecto
 
             }))
         })
-    return result;
-});
+        return result;
+    });
 
 
 
@@ -1104,16 +1109,16 @@ export const SelectVPhases = (hover: [number, number]) => createSelector(
                     let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
                     let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
 
-                result.push({
-                    Color: phaseChannel.Color,
+                    result.push({
+                        Color: phaseChannel.Color,
                         Unit: defaultSettings.Units.Voltage.options[activeUnits["Voltage"].current],
                         PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
-                    Phase: p,
-                    Asset: a,
+                        Phase: p,
+                        Asset: a,
                         Magnitude: magValue,
                         Angle: phaseValue,
-                    BaseValue: magnitudeChannel.BaseValue
-                });
+                        BaseValue: magnitudeChannel.BaseValue
+                    });
                 }
             });
         });
@@ -1149,16 +1154,16 @@ export const SelectIPhases = (hover: [number, number]) => createSelector(
                     let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
                     let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
 
-                result.push({
-                    Color: phaseChannel.Color,
+                    result.push({
+                        Color: phaseChannel.Color,
                         Unit: defaultSettings.Units.Current.options[activeUnits["Current"].current],
                         PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
-                    Phase: p,
-                    Asset: a,
+                        Phase: p,
+                        Asset: a,
                         Magnitude: magValue,
                         Angle: phaseValue,
-                    BaseValue: magnitudeChannel.BaseValue
-                });
+                        BaseValue: magnitudeChannel.BaseValue
+                    });
                 }
             });
         });
@@ -1196,7 +1201,7 @@ export const SelectSelectedPoints = createSelector(
 
         })
         return result;
-})
+    })
 
 
 // For FFT Table
@@ -1207,7 +1212,7 @@ export const SelectFFTData = createSelector(
         const activeUnits = defaultSettings.Units
         let asset = _.uniq(fftPlot.data.map(item => item.LegendGroup));
         let phase = _.uniq(fftPlot.data.map(item => item.LegendVertical));
-        
+
         if (fftPlot.data.length == 0) return []
 
         let result: OpenSee.IFFTSeries[] = [];
@@ -1266,7 +1271,7 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
     try {
         let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
         const unitSettings = settings.Units
-        console.log('isUnitSettings array',Array.isArray(unitSettings))
+        console.log('isUnitSettings array', Array.isArray(unitSettings))
 
         if (unitSettings && Array.isArray(unitSettings)) {
             const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
@@ -1274,9 +1279,9 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
             Object.keys(matchingPlot.Units).forEach(key => {
                 plot.yLimits[key].current = matchingPlot.Units[key].current
                 plot.yLimits[key].isAuto = matchingPlot.Units[key].isAuto
-})
+            })
         }
-        else if (!Array.isArray(unitSettings)){ //reset unit localstorage settings for old structure
+        else if (!Array.isArray(unitSettings)) { //reset unit localstorage settings for old structure
             settings.Units = []
             const serializedState = JSON.stringify(settings);
             localStorage.setItem('openSee.Settings', serializedState);
@@ -1315,7 +1320,7 @@ function saveSettings(state: OpenSee.IDataState) {
                 })
 
             }
-    });
+        });
 
         let currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
         if (currentSettings === null || currentSettings === undefined)
@@ -1368,8 +1373,8 @@ function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime:
             if (newLimits)
                 plot.yLimits[axis].dataLimits = newLimits;
 
-    });
-}
+        });
+    }
 
 }
 
@@ -1390,7 +1395,7 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
         let indexEnd = getIndex(end, dataPoints);
 
         let factor = defaultSettings.Units[item.Unit].options[activeUnit].factor;
-        
+
         if (factor === undefined) { //p.u case
             factor = 1.0 / item.BaseValue;
         }
@@ -1406,7 +1411,7 @@ function recomputeDataLimits(start: number, end: number, data: OpenSee.iD3DataSe
 
     const pad = (yMax - yMin) / 20;
     return [yMin - pad, yMax + pad];
-    
+
 }
 
 function recomputeNonAutoLimits(oldLimits: [number, number], newLimits: [number, number], currentLimits: [number, number]): [number, number] {
@@ -1464,7 +1469,7 @@ function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>
 
     let min = Math.min(...relevantData.map(d => Math.min(...d.map(p => p[1]))));
     let max = Math.max(...relevantData.map(d => Math.max(...d.map(p => p[1]))));
-   
+
     let autoFactor = 0.000001
 
     if (manualLimits) { // for the case of auto unit being selected with manualLimits applied
@@ -1522,14 +1527,14 @@ function GetDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType) {
 // Function to get Default Enabled Traces
 function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTrace, defaultVoltage: "L-L" | "L-N", data: OpenSee.iD3DataSeries[]): boolean[] {
 
-    if (type == 'Voltage') 
+    if (type == 'Voltage')
         return data.map(item => item.LegendVGroup == defaultVoltage &&
             ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
                 (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
                 (item.LegendHorizontal == 'Pk' && defaultTraces.Pk) ||
                 (item.LegendHorizontal == 'W' && defaultTraces.W)
             ))
-    
+
     if (type == 'Current')
         return data.map(item => ((item.LegendHorizontal == 'Ph' && defaultTraces.Ph) ||
             (item.LegendHorizontal == 'RMS' && defaultTraces.RMS) ||
@@ -1544,46 +1549,46 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
             item.LegendVertical == 'Takagi' ||
             item.LegendVertical == 'ModifiedTakagi' ||
             item.LegendVertical == 'Novosel')
-    
-    if (type == 'FirstDerivative') 
+
+    if (type == 'FirstDerivative')
         return data.map(item => ((item.LegendHorizontal == 'W' && defaultTraces.W) ||
             (item.LegendHorizontal == 'RMS' && defaultTraces.RMS))
             && item.LegendVertical != 'NG' && item.LegendVertical != 'RES')
-    
-    if (type == 'ClippedWaveforms') 
+
+    if (type == 'ClippedWaveforms')
         return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-    
-    if (type == 'Frequency') 
+
+    if (type == 'Frequency')
         return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-    
-    if (type == 'HighPassFilter' || type == 'LowPassFilter') 
+
+    if (type == 'HighPassFilter' || type == 'LowPassFilter')
         return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-    
-    if (type == 'MissingVoltage' || type == 'OverlappingWave') 
+
+    if (type == 'MissingVoltage' || type == 'OverlappingWave')
         return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
-    
-    if (type == 'Power') 
+
+    if (type == 'Power')
         return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'P')
-    
-    if (type == 'Impedance') 
+
+    if (type == 'Impedance')
         return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN') && item.LegendHorizontal == 'R')
-    
-    if (type == 'RapidVoltage') 
+
+    if (type == 'RapidVoltage')
         return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
-    
+
     if (type == 'Rectifier')
         return data.map(item => item.LegendHorizontal === 'V')
 
-    if (type == 'SymetricComp') 
+    if (type == 'SymetricComp')
         return data.map(item => (item.LegendVertical == 'Pos'))
-    
+
     if (type == 'THD')
         return data.map(item => (item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN'))
 
-    if (type == 'Unbalance') 
+    if (type == 'Unbalance')
         return data.map(item => (item.LegendVertical == 'S2/S1'))
-    
-    if (type == 'FFT') 
+
+    if (type == 'FFT')
         return data.map(item => (item.LegendHorizontal == 'Mag' && item.LegendVGroup == 'Volt.'))
 
     if (type == 'Harmonic')
