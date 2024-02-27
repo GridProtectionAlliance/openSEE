@@ -102,8 +102,8 @@ const LineChart = (props: iProps) => {
 
     const isZoomed = useAppSelector(SelectIsZoomed(props.dataKey));
 
-    const xScaleRef = React.useRef<any>();
-    const yScaleRef = React.useRef<OpenSee.IUnitCollection<any> | {}>({});
+    const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>();
+    const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
 
     const primaryAxis = getPrimaryAxis(props.dataKey)
 
@@ -114,7 +114,7 @@ const LineChart = (props: iProps) => {
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
-    const [selectedPointLocation, setSelectedPointLocation] = React.useState<number>(10);
+    const [selectedPointLocation, setSelectedPointLocation] = React.useState<number>(null);
     const [inceptionLocation, setInceptionLocation] = React.useState<number>(10);
     const [durationLocation, setDurationLocation] = React.useState<number>(10);
 
@@ -157,25 +157,17 @@ const LineChart = (props: iProps) => {
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
 
     const points = useAppSelector(SelectDeltaHoverPoints(hover));
-    //const [selectedPointTime, setSelectedPointTime] = React.useState<number>(points.length > 0 ? points[0].Time : NaN);
-
-    let selectedPointTime = points.length > 0 ? points[0].Time : NaN; //this needs to change to a state might fix issue with tooltip being off too..
 
     //Effect to update the Data 
     React.useEffect(() => {
-        if (loading == 'Loading')
-            return;
-        if (lineData && lineData?.length > 0) {
-        if (isCreated) {
+        if (lineData && lineData?.length > 0 && loading !== 'Loading') {
+            if (isCreated)
             UpdateData();
-            return () => { };
-        }
 
         createPlot();
         UpdateData();
         updateVisibility();
         setCreated(true);
-        return () => { }
         }
 
     }, [lineData, loading]);
@@ -185,8 +177,8 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (yScaleRef.current != undefined && xScaleRef.current != undefined)
             updateSize();
-    }, [props.height, props.width])
 
+    }, [props.height, props.width])
 
     React.useEffect(() => {
         if (lineData && lineData?.length > 0)
@@ -196,23 +188,20 @@ const LineChart = (props: iProps) => {
 
     //Effect to change location of tool tip
     React.useEffect(() => {
-        if (xScaleRef.current != undefined)
+        if (xScaleRef.current)
             setTooltipLocation(xScaleRef.current(hover?.[0]))
 
         updateHover();
-        return () => { };
     }, [hover])
 
     //Effect to change location of tool tip
     React.useEffect(() => {
-        if (xScaleRef.current != undefined) {
-            if (!isNaN(selectedPointTime))
-                setSelectedPointLocation(xScaleRef.current(selectedPointTime))
+        if (xScaleRef.current) {
+            const newTime = points.length > 0 ? points[0].Time : null
+            if (newTime && selectedPointLocation !== xScaleRef.current(newTime)) 
+                setSelectedPointLocation(xScaleRef.current(newTime))
         }
-
-        return () => { };
-    }, [selectedPointTime])
-
+    }, [points, startTime, endTime])
 
 
     // For performance Combine a bunch of Hooks that call updateLimits() since that is what re-renders the Lines
@@ -288,20 +277,20 @@ const LineChart = (props: iProps) => {
 
 
     React.useEffect(() => {
-        updateFFTWindow()
+        updateFFTWindow();
     }, [fftWindow, showFFT, currentFFTWindow])
 
     React.useEffect(() => {
-        if (xScaleRef.current === undefined)
-            return
-        updateDurationWindow()
+        if (xScaleRef.current)
+            updateDurationWindow();
     }, [plotMarkers, startTime, endTime, props.width, props.height, timeUnit])
 
     React.useEffect(() => {
-        if (xScaleRef.current != null) {
+        if (xScaleRef.current)
             setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
         }
     }, [fftWindow])
+
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
@@ -311,6 +300,7 @@ const LineChart = (props: iProps) => {
             setCreated(false);
             return;
         }
+
         if (lineData?.length == 0) {
             setCreated(false);
             return;
@@ -320,8 +310,6 @@ const LineChart = (props: iProps) => {
         UpdateData();
         updateVisibility();
 
-        return () => { }
-      
     }, [props.dataKey, options]);
 
     React.useEffect(() => {
@@ -358,7 +346,7 @@ const LineChart = (props: iProps) => {
 
     }, [props.height, yLabels])
 
-    function createLineGen(unit = null, base = null) {
+    function createLineGen(unit: OpenSee.Unit = null, base = null) {
         let factor = 1.0
 
         // Calculate factor if unit and base are provided
@@ -374,10 +362,10 @@ const LineChart = (props: iProps) => {
             })
             .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
             .defined(d => {
-                let tx = !isNaN(parseFloat(xScaleRef.current ? xScaleRef.current(d[0]) : 0));
-                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
-                tx = tx && isFinite(parseFloat(xScaleRef.current ? xScaleRef.current(d[0]) : 0));
-                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                let tx = !isNaN(parseFloat(xScaleRef.current ? xScaleRef.current(d[0])?.toString() : '0'));
+                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
+                tx = tx && isFinite(parseFloat(xScaleRef.current ? xScaleRef.current(d[0])?.toString() : '0'));
+                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
                 return tx && ty;
             });
     }
@@ -567,7 +555,7 @@ const LineChart = (props: iProps) => {
         svg.append("rect").classed("DurationWindow", true)
             .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
             .attr("stroke", "#d3d3d3")
-            .attr("x", (xScaleRef.current as any)(eventInfo?.Inception))
+            .attr("x", xScaleRef.current(eventInfo?.Inception))
             .attr("width", eventInfo?.DurationEndTime - eventInfo?.Inception)
             .style("opacity", (plotMarkers ? 0.25 : 0))
                 .attr("y", 20).attr("height", props.height - 60)
@@ -602,7 +590,7 @@ const LineChart = (props: iProps) => {
                 .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
                 .attr("stroke", "#000")
                 .style("z-index", 9999)
-                .attr("x", (xScaleRef.current as any)(fftWindow[0]))
+                .attr("x", xScaleRef.current(fftWindow[0]))
                 .attr("width", currentFFTWindow[1] - currentFFTWindow[0])
                 .style("opacity", (showFFT ? 0.5 : 0))
                 .style('cursor', (mouseMode === 'fftMove' && showFFT ? 'grab' : 'default'))
@@ -760,24 +748,21 @@ const LineChart = (props: iProps) => {
         if (y0 > (props.height - 40))
             y0 = props.height - 40;
 
-        let t0: number = (xScaleRef.current as any).invert(x0) as number
-        let d0: number = (yScaleRef.current[primaryAxis] as any).invert(y0) as number;
+        let t0 = xScaleRef.current.invert(x0)
+        let d0 = yScaleRef.current[primaryAxis].invert(y0);
         setHover([t0, d0])
     }
 
-
     function MouseDown(evt) {
-        setMouseDown(true);
-
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
-        let t0 = (xScaleRef.current as any).invert(x0);
-        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
+        let t0 = xScaleRef.current.invert(x0);
+        let d0 = yScaleRef.current[primaryAxis].invert(y0);
 
+        setMouseDown(true);
         setPointMouse([t0, d0]);
-
 
         if (isOverlappingWaveform)
             return;
@@ -795,8 +780,8 @@ const LineChart = (props: iProps) => {
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
-        let t0 = (xScaleRef.current as any).invert(x0);
-        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
+        let t0 = xScaleRef.current.invert(x0);
+        let d0 = yScaleRef.current[primaryAxis].invert(y0);
 
         setPointMouse([t0, d0]);
 
@@ -829,24 +814,23 @@ const LineChart = (props: iProps) => {
         if (mouseMode == 'zoom' && mouseDown) {
             if (zoomMode == "x")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])))
-                    .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
+                    .attr("x", xScaleRef.current(Math.min(hover[0], pointMouse[0])))
+                    .attr("width", Math.abs(xScaleRef.current(hover[0]) - xScaleRef.current(pointMouse[0])))
                     .attr("height", props.height - 60)
                     .attr("y", 20)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(startTime))
-                    .attr("width", (xScaleRef.current as any)(endTime) - (xScaleRef.current as any)(startTime))
-                    .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
-                    .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
+                    .attr("x", xScaleRef.current(startTime))
+                    .attr("width", xScaleRef.current(endTime) - xScaleRef.current(startTime))
+                    .attr("height", Math.abs(yScaleRef.current[primaryAxis](pointMouse[1]) - yScaleRef.current[primaryAxis](hover[1])))
+                    .attr("y", Math.min(yScaleRef.current[primaryAxis](pointMouse[1]), yScaleRef.current[primaryAxis](hover[1])))
             else if (zoomMode == "xy")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(Math.min(hover[0], pointMouse[0])))
-                    .attr("width", Math.abs((xScaleRef.current as any)(hover[0]) - (xScaleRef.current as any)(pointMouse[0])))
-                    .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
-                    .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
+                    .attr("x", xScaleRef.current(Math.min(hover[0], pointMouse[0])))
+                    .attr("width", Math.abs(xScaleRef.current(hover[0]) - xScaleRef.current(pointMouse[0])))
+                    .attr("height", Math.abs(yScaleRef.current[primaryAxis](pointMouse[1]) - yScaleRef.current[primaryAxis](hover[1])))
+                    .attr("y", Math.min(yScaleRef.current[primaryAxis](pointMouse[1]), yScaleRef.current[primaryAxis](hover[1])))
         }
-        const curOverlappingEvt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId && props.dataKey.DataType === props.dataKey.DataType)
 
         let deltaT = hover[0] - pointMouse[0];
         let deltaData = hover[1] - pointMouse[1];
