@@ -76,6 +76,7 @@ declare var eventID: number;
 
 const OpenSeeHome = () => {
     const applicationRef = React.useRef(null);
+    const plotRef = React.useRef<HTMLDivElement>(null);
     const history = React.useRef<object>(createHistory());
     const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
@@ -139,7 +140,7 @@ const OpenSeeHome = () => {
 
         if (applicationProperties) {
             const newHeight = ((window.innerHeight - applicationProperties?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
-            const newWidth = applicationProperties?.mainDiv?.offsetWidth - 25
+            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
             if(newHeight !== plotHeight)
                 setPlotHeight(newHeight)
 
@@ -147,7 +148,7 @@ const OpenSeeHome = () => {
                 setPlotWidth(newWidth);
             }
 
-    }, [plotKeys, resizeCount, openDrawers])
+    }, [plotKeys, resizeCount, plotRef.current?.offsetWidth])
 
 
     //Effect to handle queryParams
@@ -309,7 +310,7 @@ const OpenSeeHome = () => {
                             </SplitDrawer>
 
                             <SplitSection MinWidth={70} MaxWidth={100} Width={75}>
-                                <div style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+                                <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
                                     {groupedKeys[eventID] != undefined ? (
                                         <>
                                             {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
