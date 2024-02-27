@@ -402,7 +402,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                     </ToolTip>
 
                     { /*Select*/}
-                    <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints && props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (props.mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                    <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints || props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (props.mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
                         disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
                         onMouseEnter={() => props.setHover('Select')}
                         onMouseLeave={() => props.setHover('None')} data-tooltip={'select-btn'}
