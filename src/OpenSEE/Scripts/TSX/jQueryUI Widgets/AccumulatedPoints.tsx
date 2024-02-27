@@ -58,7 +58,7 @@ const PointWidget = () => {
     return (
         <>
             <div className="d-flex flex-column" ref={flexRef} style={{ height: '100%', width: '100%', padding: '10px' }}>
-                <div style={{ height: '95%', width: '100%', maxWidth: flexSize.width, overflowX: 'auto', overflowY: 'auto', }}>
+                <div style={{ height: '93%', width: '100%', maxWidth: flexSize.width, overflowX: 'auto', overflowY: 'auto', }}>
                     <table className="table table-bordered" style={{ height: '100%', marginBottom: 0, width: "100%" }}>
                         <thead style={{ position: 'sticky', top: 0, zIndex: 200 }} >
                             <tr>
@@ -114,7 +114,7 @@ const PointWidget = () => {
                         </tbody>
                     </table>
                 </div>
-                <div style={{ height: '5%' }}>
+                <div style={{ height: '7%' }}>
                     <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dispatch(RemoveSelectPoints(selectedIndex)); setSelectedIndex(-1) }} />
                     <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
                     <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { dispatch(ClearSelectPoints()); setSelectedIndex(-1) }} />

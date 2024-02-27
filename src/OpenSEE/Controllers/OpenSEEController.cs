@@ -477,6 +477,7 @@ namespace OpenSEE
                 returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));
                 returnDict.Add("Inception", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds); //for non fault events we are using startTime as the inception time for now
+                returnDict.Add("InceptionDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff")); //for non fault events we are using startTime as the inception time for now
                 returnDict.Add("DurationEndTime", theEvent.EndTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);//for non fault events we are using endTime as the end of duration for now
 
                 if (new List<string>() { "Fault", "RecloseIntoFault" }.Contains(returnDict["EventName"]))
@@ -511,6 +512,7 @@ namespace OpenSEE
                         returnDict.Add("DurationCycles", thesummary.DurationCycles);
                         returnDict.Add("DurationSeconds", thesummary.DurationSeconds);
                         returnDict["Inception"] = thesummary.Inception.Subtract(m_epoch).TotalMilliseconds;
+                        returnDict["InceptionDate"] = thesummary.Inception.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                         returnDict["DurationEndTime"] = thesummary.Inception.AddSeconds(thesummary.DurationSeconds).Subtract(m_epoch).TotalMilliseconds;
                     }
                 }
@@ -533,6 +535,7 @@ namespace OpenSEE
                         returnDict.Add("DurationPeriod", firstDisturbance.DurationCycles.ToString("##.##", CultureInfo.InvariantCulture) + " cycles");
                         returnDict.Add("DurationSeconds", firstDisturbance.DurationSeconds);
                         returnDict["Inception"] = firstDisturbance.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                        returnDict["InceptionDate"] = firstDisturbance.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                         returnDict["DurationEndTime"] = lastDisturbance.EndTime.Subtract(m_epoch).TotalMilliseconds;
                         if (firstDisturbance.PerUnitMagnitude != -1.0e308)
                         {
@@ -683,13 +686,15 @@ namespace OpenSEE
                 foreach (DataRow row in dataTable.AsEnumerable())
                 {
                     int eventID = row.Field<int>("EventID");
-                    double Inception = row.Field<DateTime>("StartTime").Subtract(m_epoch).TotalMilliseconds;
+                    double Inception = row.Field<DateTime>("StartTime").Subtract(m_epoch).TotalMilliseconds;                    
+                    string InceptionDate = row.Field<DateTime>("StartTime").ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                     double DurationEndTime = row.Field<DateTime>("EndTime").Subtract(m_epoch).TotalMilliseconds;
-
+                    
                     FaultSummary faultSummary = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND IsSelectedAlgorithm = 1", eventID).OrderBy(row => row.IsSuppressed).ThenBy(row => row.Inception).FirstOrDefault();
                     if (faultSummary != null)
                     {
                         Inception = faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds;
+                        InceptionDate = faultSummary.Inception.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                         DurationEndTime = faultSummary.Inception.AddSeconds(faultSummary.DurationSeconds).Subtract(m_epoch).TotalMilliseconds;
                     }
 
@@ -705,6 +710,7 @@ namespace OpenSEE
                     if(firstDisturbance != null)
                     {
                         Inception = firstDisturbance.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                        InceptionDate = firstDisturbance.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                         DurationEndTime = lastDisturbance.EndTime.Subtract(m_epoch).TotalMilliseconds;
                     }
 
@@ -716,6 +722,7 @@ namespace OpenSEE
                         StartTime = row.Field<DateTime>("StartTime"),
                         EventType = row.Field<string>("EventType"),
                         Inception,
+                        InceptionDate,
                         DurationEndTime,
                         EndTime = row.Field<DateTime>("EndTime")
                     });

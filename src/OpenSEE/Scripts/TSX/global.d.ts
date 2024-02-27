@@ -41,9 +41,9 @@ export namespace OpenSee {
         Analytic: IAnalyticStore,
         EventInfo: IEventStore,
         OverlappingEvents: IOverlappingEventsStore
-      }
+    }
 
-    interface IEventStore {
+    interface IEventStore { 
         EventInfo: IEventInfo,
         State: LoadingState,
         EventID: number,
@@ -124,6 +124,7 @@ export namespace OpenSee {
         SagDepth?: string,
         StartTime?: string,
         enableLightningData?: boolean,
+        InceptionDate: string
     }
 
     type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'NewAnalytic')
@@ -141,8 +142,8 @@ export namespace OpenSee {
     type Unit = ((keyof IUnitCollection<number>) | "Time");
 
     type Trace = "RMS" | "W" | "Pk" | "Ph";
-   
 
+   
     interface iD3DataSeries {
         LegendHorizontal: string,
         LegendVertical: string,
@@ -249,7 +250,7 @@ export namespace OpenSee {
         NewAnalytic: T,
     }
 
-    interface ISettingsState {
+    interface ISettingsState { 
         Colors: IColorCollection,
         TimeUnit: IUnitSetting,
         SinglePlot: boolean,
@@ -263,7 +264,7 @@ export namespace OpenSee {
         ZoomMode: ZoomMode,
         Units: { DataType: OpenSee.graphType, Units: OpenSee.IUnitCollection<{ current: number, isAuto: boolean }>}[]
     }
-
+    
 
     interface IGraphstate {
         key: OpenSee.IGraphProps,
@@ -324,6 +325,7 @@ export namespace OpenSee {
         EndTime: number,
         EventType: string,
         Inception: number, 
+        InceptionDate: string,
         DurationEndTime: number
     }
 
