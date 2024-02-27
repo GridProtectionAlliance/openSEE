@@ -288,7 +288,6 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (xScaleRef.current)
             setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
-        }
     }, [fftWindow])
 
 
@@ -538,7 +537,7 @@ const LineChart = (props: iProps) => {
         svg.append("defs").append("svg:clipPath")
             .attr("id", "clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId)
             .append("svg:rect").classed("clip", true)
-            .attr("width", props.width - 110)
+            .attr("width", props.width - 170)
             .attr("height", props.height - 60)
             .attr("x", 60)
             .attr("y", 20);
@@ -598,7 +597,7 @@ const LineChart = (props: iProps) => {
                 .attr("fill", "black")
                 .on('mousemove', (evt) => MouseMove(evt))
                 .on('mousedown', (evt) => FFTMouseDown(evt))
-                .on('mouseup', () => FFTMouseUp())
+                .on('mouseup', () => setFFTMouseDown(false))
 
     }
 
@@ -673,7 +672,6 @@ const LineChart = (props: iProps) => {
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
             let ms = d - (new Date(eventInfo?.InceptionDate + "Z").getTime());
-            let ms = d - originalStartTime - startOffset;
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
@@ -768,8 +766,11 @@ const LineChart = (props: iProps) => {
             return;
 
         if (x0 > 60 && x0 < props.width - 140 && mouseMode === 'select')
-            dispatch(SetSelectPoint([t0, d0]));
-        setOldFFTWindow(() => { return fftWindow });
+            dispatch(SetSelectPoint({ time: t0, key: props.dataKey }));
+
+        setOldFFTWindow(() => {
+            return fftWindow
+        });
 
     }
 
@@ -785,9 +786,9 @@ const LineChart = (props: iProps) => {
 
         setPointMouse([t0, d0]);
 
-        if (props.dataKey.DataType == 'OverlappingWave')
-            return;
-        setOldFFTWindow(() => { return fftWindow });
+        setOldFFTWindow(() => {
+            return fftWindow
+        });
 
     }
 
@@ -795,10 +796,6 @@ const LineChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
-    }
-
-    function FFTMouseUp() {
-        setFFTMouseDown(false);
     }
 
     // This function needs to be called if hover is updated
@@ -926,11 +923,11 @@ const LineChart = (props: iProps) => {
     }
 
     function updateDurationWindow() {
-        if (xScaleRef.current == undefined)
+        if (xScaleRef.current === undefined)
             return;
 
         setInceptionLocation(xScaleRef.current(eventInfo?.Inception))
-        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime ))
+        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime))
 
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
@@ -953,18 +950,17 @@ const LineChart = (props: iProps) => {
         })
         .on("zoom", (event) => {
             //need to scale here whenever since inception is enabled and overlapping stuff..
+            let newTime = event.transform.rescaleX(xScaleRef.current).domain();
+            let newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
 
-            const newTime = event.transform.rescaleX(xScaleRef.current).domain();
-            const newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
-
-            if (mouseMode == 'zoom' && zoomMode == "x" && props.dataKey.DataType != 'OverlappingWave')
+            if (mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
                 dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1] }))
 
-            if (mouseMode == 'zoom' && zoomMode == "y" && props.dataKey.DataType != 'OverlappingWave')
+            if (mouseMode == 'zoom' && zoomMode == "y" && !isOverlappingWaveform)
                 dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
 
-            if (mouseMode == 'zoom' && zoomMode == "xy" && props.dataKey.DataType != 'OverlappingWave') {
-                dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1]}))
+            if (mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
+                dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1] }))
                 dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
     }
 
@@ -991,7 +987,7 @@ const LineChart = (props: iProps) => {
                 h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
 
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && props.dataKey.DataType != 'OverlappingWave')
+            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && !isOverlappingWaveform)
                 return (timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short;
 
             if (isOverlappingWaveform) {
@@ -1048,7 +1044,7 @@ const LineChart = (props: iProps) => {
             let enabledUnit = enabledUnits?.includes(unit);
             let axisType = `[type='${unit}']`;
             if (enabledUnit) {
-                container.selectAll(`.yAxis${axisType}`).style("opacity", 1 );
+                container.selectAll(`.yAxis${axisType}`).style("opacity", 1);
                 container.selectAll(`.yAxisLabel${axisType}`).style("opacity", 1);
             } else {
                 container.selectAll(`.yAxis${axisType}`).remove();
@@ -1100,9 +1096,9 @@ const LineChart = (props: iProps) => {
 
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")")
 
-        container.select(".clip").attr("width", props.width - 210).attr("height", props.height - 60)
+        container.select(".clip").attr("width", props.width - 110).attr("height", props.height - 60)
         container.select(".fftwindow").attr("height", props.height - 60);
-        container.select(".Overlay").attr("width", props.width - 210)
+        container.select(".Overlay").attr("width", props.width - 110)
         updateLimits();
     }
 
@@ -1129,7 +1125,7 @@ const LineChart = (props: iProps) => {
         <div>
             <Container key={props.dataKey.DataType + props.dataKey.EventId + 'container'} dataKey={props.dataKey} height={props.height} loading={loading} hover={toolTipLocation} hasData={lineData?.length > 0} hasTrace={enabledLine?.some(i => i)}
                 selectedPointLocation={selectedPointLocation} showToolTip={props.showToolTip} inceptionLocation={inceptionLocation} durationLocation={durationLocation} plotMarkers={plotMarkers} />
-            {loading === 'Loading'|| lineData?.length == 0 ? null : <Legend key={props.dataKey.DataType + props.dataKey.EventId + 'legend'} height={props.height} dataKey={props.dataKey} />}
+            {loading === 'Loading' || lineData?.length == 0 ? null : <Legend key={props.dataKey.DataType + props.dataKey.EventId + 'legend'} height={props.height} dataKey={props.dataKey} />}
         </div>
     );
 }
@@ -1147,20 +1143,20 @@ const Container = React.memo((props: {
 
         <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
                 { /*PolyLine for the mouse position*/}
-                {props.loading == 'Loading' || !props.hasData ? null : <PolyLine class={"hover"} key={'hover'} height={props.height - 40} left={props.hover} style={{ stroke: "#000", opacity: 0.5 }} />}
+                {props.loading !== 'Loading' && props.hasData ? <PolyLine class={"hover"} key={'hover'} height={props.height - 40} left={props.hover} style={{ stroke: "#000", opacity: 0.5 }} /> : null}
                 { /*PolyLine for the position of Selected Point*/}
-                {!props.showToolTip ? null : <PolyLine class={"selectedPoint"} key={'selectedPoint'} height={props.height - 40} left={props.selectedPointLocation} style={{ stroke: "#000", opacity: 1, strokeDasharray: "5,5" }} />}
+                {props.showToolTip && props.selectedPointLocation ? <PolyLine class={"selectedPoint"} key={'selectedPoint'} height={props.height - 40} left={props.selectedPointLocation} style={{ stroke: "#000", opacity: 1, strokeDasharray: "5,5" }} /> : null}
 
                 { /*PolyLine for the inception of the event*/}
-                {props.loading == 'Loading' || !props.hasData || !props.plotMarkers ? null : <PolyLine class={"inception"} key={'inception'} height={props.height - 40} left={props.inceptionLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />}
+                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ? <PolyLine class={"inception"} key={'inception'} height={props.height - 40} left={props.inceptionLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} /> : null}
                 { /*PolyLine for the end of the duration of the event*/}
-                {props.loading == 'Loading' || !props.hasData || !props.plotMarkers ? null : <PolyLine class={"duration"} key={'duration'} height={props.height - 40} left={props.durationLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />}
-
+                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ? <PolyLine class={"duration"} key={'duration'} height={props.height - 40} left={props.durationLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} /> : null}
 
             {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
                 <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
         </svg>
-    </div>)
+        </div>
+    )
 })
 
 const PolyLine = (props: { height: number, left: number, style: React.CSSProperties, class: string }) => {
