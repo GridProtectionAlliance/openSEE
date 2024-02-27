@@ -31,9 +31,9 @@ import Legend from './LegendBase';
 import { SelectColor, SelectActiveUnit, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice'
 import {
     SelectData, SelectEnabled, SelectLoading, SelectYLimits, SetZoomedLimits, SelectFFTLimits,
-    SetFFTLimits, SelectRelevantUnits, SelectIsZoomed, getPrimaryAxis, SelectYLabels, SelectEnabledUnits
+    SetFFTLimits, SelectRelevantUnits, getPrimaryAxis, SelectYLabels, SelectEnabledUnits
 } from '../store/dataSlice';
-import { SelectAnalyticOptions, SelectFFTWindow } from '../store/analyticSlice';
+import { SelectAnalyticOptions } from '../store/analyticSlice';
 import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
@@ -65,14 +65,12 @@ const BarChart = (props: iProps) => {
     const MemoSelectNumUnits = React.useMemo(() => SelectRelevantUnits(dataKey), []);
     const yLimits = useAppSelector(SelectYLimits(dataKey));
 
-    const MemoSelectIsZoomed = React.useMemo(() => SelectIsZoomed(dataKey), [props.dataKey.EventId, props.dataKey.DataType, yLimits])
-
     const MemoSelectData = React.useMemo(() => SelectData(dataKey), []);
     const MemoSelecEnable = React.useMemo(() => SelectEnabled(dataKey), []);
 
-    const xScaleRef = React.useRef<any>();
+    const xScaleRef = React.useRef<d3.ScaleBand<number>>();
     const xScaleLblRef = React.useRef<any>();
-    const yScaleRef = React.useRef<OpenSee.IUnitCollection<any> | {}>({});
+    const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
@@ -88,7 +86,6 @@ const BarChart = (props: iProps) => {
     const yLabels = useAppSelector(SelectYLabels(dataKey));
 
     const xLimits = useAppSelector(SelectFFTLimits);
-    const fftWindow = useAppSelector(SelectFFTWindow);
 
     const loading = useAppSelector(SelectLoading(dataKey));
 
@@ -102,24 +99,18 @@ const BarChart = (props: iProps) => {
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
     const [yLblFontSize, setYLblFontSize] = React.useState<OpenSee.IUnitCollection<number> | {}>({});
-    const isZoomed = useAppSelector(MemoSelectIsZoomed);
     const primaryAxis = getPrimaryAxis(dataKey)
 
     React.useEffect(() => {
-        if (loading == 'Loading')
-            return;
-        if (barData && barData?.length > 0) {
-        if (isCreated) {
-            UpdateData();
-            return () => { };
-        }
 
-        createPlot();
-        UpdateData();
-        updateVisibility();
-        setCreated(true);
-        //setSelectedPoints([]);
-        return () => { }
+        if (barData && barData?.length > 0 && loading !== 'Loading') {
+            if (isCreated) 
+                UpdateData();
+            
+            createPlot();
+            UpdateData();
+            updateVisibility();
+            setCreated(true);
         }
 
     }, [barData, loading]);
@@ -154,15 +145,16 @@ const BarChart = (props: iProps) => {
             xScaleLblRef.current.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
         }
 
-        if (barData) {
-            UpdateData();
+        if (yLimits) 
             updateLimits();
-        }
+        
 
     }, [activeUnit, yLimits])
 
 
-    React.useEffect(() => { updateHover(); }, [hover]);
+    React.useEffect(() => {
+        updateHover();
+    }, [hover]);
 
     React.useEffect(() => {
         if (!mouseDownInit) {
@@ -258,20 +250,20 @@ const BarChart = (props: iProps) => {
                 factor = 1.0 / base
         }
 
-        if (enabledUnits?.length > 2) 
+        if (enabledUnits?.length > 2)
             xScaleRef.current.range([120, props.width - 110]);
 
-         if (enabledUnits?.length > 3) 
+        if (enabledUnits?.length > 3)
             xScaleRef.current.range([120, props.width - 170]);
-        
+
         return d3.line()
             .x(d => xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0)
             .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
             .defined(d => {
-                let tx = !isNaN(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0));
-                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
-                tx = tx && isFinite(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)) : 0));
-                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor) : 0));
+                let tx = !isNaN(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2)?.toString()) : '0'));
+                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
+                tx = tx && isFinite(parseFloat(xScaleRef.current ? (xScaleRef.current(d[0]) + (xScaleRef.current.bandwidth() / 2))?.toString() : '0'));
+                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
                 return tx && ty;
             });
     }
@@ -280,97 +272,76 @@ const BarChart = (props: iProps) => {
     function UpdateData() {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
-        //Draw all bars when selected type is not FFT
-        if (props.dataKey.DataType !== 'FFT') {
-            container.select(".DataContainer").selectAll(".Bar").data(barData).enter().append("g")
-                .classed("Bar", true)
-                .attr("fill", (d) => colors[d.Color])
-                .selectAll('rect')
-                .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue } }) as OpenSee.BarSeries[])
-                .enter().append('rect')
-                .attr("x", d => xScaleRef.current(d.data[0]))
-                .attr("y", d => yScaleRef.current[d.unit](d.data[1]))
-                .attr("width", xScaleRef.current.bandwidth())
-                .attr("height", d => { return Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0) })
-                .style("transition", 'x 0.5s')
-                .style("transition", 'y 0.5s')
-                .style("transition", 'width 0.5s')
-                .style("height", 'width 0.5s')
+        //draw bars for Mag 
+        const rectData = barData.filter(d => d.LegendHorizontal === "Mag")
 
-
-            container.select(".DataContainer").selectAll(".Bar").data(barData).exit().remove();
-        }
-        //condition for when selected type is FFT
-        else {
-            //draw bars for Mag 
-            const rectData = barData.filter(d => d.LegendHorizontal === "Mag")
-
-            let rectangles = container.select(".DataContainer").selectAll(".Bar")
-                .data(rectData)
-                .enter().append("g")
-                .classed("Bar", true)
-                .attr("stroke", d => colors[d.Color])
-                .selectAll('rect')
-                .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
-                .enter()
-                .append('rect')
-                .attr("x", d => { let x = xScaleRef.current(d.data[0]); return isNaN(x) ? 0 : x })
-                .attr("y", d => { let y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
-                .attr("width", xScaleRef.current.bandwidth())
-                .attr("height", d => {
-                    let h = yScaleRef.current[d.unit](d.data[1])
-                    if (isNaN(h))
-                        return 0
-                    return Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0)
-                })
-                .attr("fill", "none")
-                .attr("stroke-width", 2)
-                .style("transition", 'x 0.5s')
-                .style("transition", 'y 0.5s')
-                .style("transition", 'width 0.5s')
-                .style("height", 'width 0.5s')
+        let rectangles = container.select(".DataContainer").selectAll(".Bar")
+            .data(rectData)
+            .enter().append("g")
+            .classed("Bar", true)
+            .attr("stroke", d => colors[d.Color])
+            .selectAll('rect')
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
+            .enter()
+            .append('rect')
+            .attr("x", d => {
+                let x = xScaleRef.current(d.data[0]);
+                return isNaN(x) ? 0 : x
+            })
+            .attr("y", d => { let y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
+            .attr("width", xScaleRef.current.bandwidth())
+            .attr("height", d => {
+                let h = yScaleRef.current[d.unit](d.data[1])
+                return isNaN(h) ? 0 : Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0)
+            })
+            .attr("fill", "none")
+            .attr("stroke-width", 2)
+            .style("transition", 'x 0.5s')
+            .style("transition", 'y 0.5s')
+            .style("transition", 'width 0.5s')
+            .style("height", 'width 0.5s')
 
 
 
-            //draw circles for Ang
-            const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
-            let circles = container.select(".DataContainer").selectAll(".Point")
-                .data(pointData)
-                .enter().append("g")
-                .classed("Point", true)
-                .attr("fill", d => colors[d.Color])
-                .selectAll('circle')
-                .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
-                .enter().append('circle')
-                .attr("cx", d => isNaN(xScaleRef.current(d.data[0])) ? -1 : xScaleRef.current(d.data[0])) //set the circle cx position
-                .attr("cy", d => isNaN(yScaleRef.current[d.unit](d.data[1])) ? -1 : yScaleRef.current[d.unit](d.data[1])) //set the circle cy position
-                .attr("r", 5) //set the radius as 5
-                .attr("stroke", "none") //set the stroke as none
-                .style("transition", 'cx 0.5s')
-                .style("transition", 'cy 0.5s')
-                .style("transition", 'r 0.5s')
+        //draw circles for Ang
+        const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
+        let circles = container.select(".DataContainer").selectAll(".Point")
+            .data(pointData)
+            .enter().append("g")
+            .classed("Point", true)
+            .attr("fill", d => colors[d.Color])
+            .selectAll('circle')
+            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
+            .enter().append('circle')
+            .attr("cx", d => isNaN(xScaleRef.current(d.data[0])) ? -1 : xScaleRef.current(d.data[0])) //set the circle cx position
+            .attr("cy", d => isNaN(yScaleRef.current[d.unit](d.data[1])) ? -1 : yScaleRef.current[d.unit](d.data[1])) //set the circle cy position
+            .attr("r", 5) //set the radius as 5
+            .attr("stroke", "none") //set the stroke as none
+            .style("transition", 'cx 0.5s')
+            .style("transition", 'cy 0.5s')
+            .style("transition", 'r 0.5s')
 
 
-            //draw lines to connect Ang circles
-            let lines = container.select(".DataContainer").selectAll(".Line").data(pointData);
-            lines.enter().append("path").classed("Line", true)
-                .attr("type", d => `axis-${d.Unit}`)
-                .attr("fill", "none")
-                .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
-                .attr("stroke-dasharray", d => (d.LineType == undefined || d.LineType == "-" ? 0 : 5))
-                .attr("d", d => {
-                    let lineGen = createLineGen(d.Unit)
-                    if (d.SmoothDataPoints.length > 0)
-                        return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
-                    return lineGen(d.DataPoints);
-                })
+        //draw lines to connect Ang circles
+        let lines = container.select(".DataContainer").selectAll(".Line").data(pointData);
+        lines.enter().append("path").classed("Line", true)
+            .attr("type", d => `axis-${d.Unit}`)
+            .attr("fill", "none")
+            .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
+            .attr("stroke-dasharray", d => (d.LineType == undefined || d.LineType == "-" ? 0 : 5))
+            .attr("d", d => {
+                let lineGen = createLineGen(d.Unit)
+                if (d.SmoothDataPoints.length > 0)
+                    return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+                return lineGen(d.DataPoints);
+            })
 
-            lines.exit().remove();
+        lines.exit().remove();
 
 
-            container.select(".DataContainer").selectAll(".Bar").data(rectData).exit().remove();
-            container.select(".DataContainer").selectAll(".Point").data(pointData).exit().remove();
-        }
+        container.select(".DataContainer").selectAll(".Bar").data(rectData).exit().remove();
+        container.select(".DataContainer").selectAll(".Point").data(pointData).exit().remove();
+
 
         updateLimits();
 
@@ -392,13 +363,15 @@ const BarChart = (props: iProps) => {
         let barGen = (unit: OpenSee.Unit, base: number) => {
             //Determine Factors
             let factor = 1.0;
-            if (activeUnit[unit as string] != undefined) {
-                factor = activeUnit[unit as string].factor
+            if (activeUnit?.[unit]) {
+                factor = activeUnit[unit].factor
                 if (factor === undefined)  //p.u case
                     factor = 1.0 / base
             }
 
-            return (d) => { return yScaleRef.current[d.unit](d.data[1] * factor) }
+            return (d) => {
+                return yScaleRef.current[d.unit](d.data[1] * factor)
+            }
         }
 
         container.select(".DataContainer").selectAll(".Bar").selectAll('rect')
@@ -442,9 +415,8 @@ const BarChart = (props: iProps) => {
         }
 
         // We can assume consistent sampling rate for now
-        let domain = barData[0].DataPoints.filter(pt => pt[0] > xLimits[0] && pt[0] < xLimits[1]).map(pt => pt[0]);
-
-        xScaleRef.current = d3.scaleBand().domain(domain.map(d => d.toString())).range([60, props.width - 150])
+        let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
+        xScaleRef.current = d3.scaleBand(domain, [60, props.width - 150])
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
         const offsetRight = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * (1 - xScaleRef.current.align()) * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -515,7 +487,7 @@ const BarChart = (props: iProps) => {
         svg.append("defs").append("svg:clipPath")
             .attr("id", "clip-" + props.dataKey.DataType + "-" + props.dataKey.EventId)
             .append("svg:rect").classed("clip", true)
-            .attr("width", props.width - 110)
+            .attr("width", props.width - 170)
             .attr("height", props.height - 60)
             .attr("x", 60)
             .attr("y", 20);

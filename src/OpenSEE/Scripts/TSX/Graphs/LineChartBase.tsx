@@ -48,7 +48,7 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext'
 import { defaultSettings } from '../defaults';
 
-interface iProps {   
+interface iProps {
     height: number,
     width: number,
     showToolTip: boolean,
@@ -120,7 +120,7 @@ const LineChart = (props: iProps) => {
 
     const evtID = useAppSelector(SelectEventID);
     const isOriginalEvt = props.dataKey.EventId === evtID
-    
+
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
 
@@ -157,17 +157,17 @@ const LineChart = (props: iProps) => {
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
 
     const points = useAppSelector(SelectDeltaHoverPoints(hover));
-
+    
     //Effect to update the Data 
     React.useEffect(() => {
         if (lineData && lineData?.length > 0 && loading !== 'Loading') {
             if (isCreated)
-            UpdateData();
+                UpdateData();
 
-        createPlot();
-        UpdateData();
-        updateVisibility();
-        setCreated(true);
+            createPlot();
+            UpdateData();
+            updateVisibility();
+            setCreated(true);
         }
 
     }, [lineData, loading]);
@@ -182,7 +182,7 @@ const LineChart = (props: iProps) => {
 
     React.useEffect(() => {
         if (lineData && lineData?.length > 0)
-        updateVisibility();
+            updateVisibility();
     }, [enabledLine])
 
 
@@ -222,7 +222,7 @@ const LineChart = (props: iProps) => {
             xScaleRef.current.range([120, props.width - 170])
 
         if (yLimits)
-        updateLimits();
+            updateLimits();
 
 
     }, [activeUnit, yLimits, startTime, endTime, isZoomed, timeUnit, lineData, useRelevantTime])
@@ -237,7 +237,7 @@ const LineChart = (props: iProps) => {
         let handle = setTimeout(() => { MouseLeft(); }, 500);
         return () => { clearTimeout(handle) };
     }, [leftSelectCounter])
-    
+
 
     React.useEffect(() => { //mouseDown Effect
         if (!mouseDownInit) {
@@ -369,7 +369,7 @@ const LineChart = (props: iProps) => {
             });
     }
 
-            
+
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
         // Set x scale range based on the number of enabled units
@@ -394,7 +394,7 @@ const LineChart = (props: iProps) => {
                     return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
                 return lineGen(d.DataPoints);
             })
-            
+
         lines.exit().remove();
 
         let points = container.select(".DataContainer").selectAll(".Markers")
@@ -405,7 +405,7 @@ const LineChart = (props: iProps) => {
             .classed("Markers", true)
             .selectAll("circle")
             .data(d => d.DataMarker.map(v => ({
-                    x: v[0], y: v[1], unit: d.Unit as string, base: d.BaseValue
+                x: v[0], y: v[1], unit: d.Unit as string, base: d.BaseValue
             }) as IMarker)
             );
 
@@ -457,7 +457,7 @@ const LineChart = (props: iProps) => {
 
         if (xScaleRef.current != null && showFFT) {
             setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
-    }
+        }
 
     }
 
@@ -479,7 +479,7 @@ const LineChart = (props: iProps) => {
             })
         }
 
-            xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
+        xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
 
         //Create xAxis
         svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
@@ -490,7 +490,7 @@ const LineChart = (props: iProps) => {
         //Create yAxises that have enabled Units
         enabledUnits.forEach(unit => {
             let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
-            
+
             svg.append("g")
                 .classed(`yAxis`, true)
                 .attr("type", `${unit}`)
@@ -504,11 +504,11 @@ const LineChart = (props: iProps) => {
             svg.append("text")
                 .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
                 .attr("type", `${unit}`)
-            .attr("x", - (props.height / 2 - 20))
+                .attr("x", - (props.height / 2 - 20))
                 .attr("y", labelYPos)
-            .attr("dy", "1em")
+                .attr("dy", "1em")
                 .attr("transform", "rotate(-90)")
-            .style("text-anchor", "middle")
+                .style("text-anchor", "middle")
                 .style("opacity", 1)
                 .text(yLabels[unit]);
 
@@ -557,8 +557,8 @@ const LineChart = (props: iProps) => {
             .attr("x", xScaleRef.current(eventInfo?.Inception))
             .attr("width", eventInfo?.DurationEndTime - eventInfo?.Inception)
             .style("opacity", (plotMarkers ? 0.25 : 0))
-                .attr("y", 20).attr("height", props.height - 60)
-                .attr("fill", "black")
+            .attr("y", 20).attr("height", props.height - 60)
+            .attr("fill", "black")
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
@@ -627,7 +627,7 @@ const LineChart = (props: iProps) => {
                 else
                     return cyc.toFixed(1)
             }
-        
+
         }
         else if (timeUnit.options[timeUnit.current].short == 'auto') {
             if (h < 100)
@@ -800,7 +800,7 @@ const LineChart = (props: iProps) => {
 
     // This function needs to be called if hover is updated
     function updateHover() {
-        
+
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
@@ -833,17 +833,17 @@ const LineChart = (props: iProps) => {
         let deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode === 'pan' && mouseDown && (zoomMode === "x" || zoomMode === "xy")) {
-                if (!isOverlappingWaveform) {
-            dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
-                } else if (isOverlappingWaveform) {
-            dispatch(SetCycleLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
-        }
+            if (!isOverlappingWaveform) {
+                dispatch(SetTimeLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
+            } else if (isOverlappingWaveform) {
+                dispatch(SetCycleLimit({ start: (startTime - deltaT), end: (endTime - deltaT) }));
+            }
         }
 
         if (mouseMode === 'pan' && mouseDown && (zoomMode === "y" || zoomMode === "xy")) {
             dispatch(SetZoomedLimits({ limits: [(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], key: props.dataKey }));
         }
-        
+
 
         if (mouseMode == 'fftMove' && fftMouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
             setCurrentFFTWindow([xScaleRef.current(oldFFTWindow[0] + hover[0] - pointMouse[0]), xScaleRef.current(oldFFTWindow[1] + hover[0] - pointMouse[0])])
@@ -962,7 +962,7 @@ const LineChart = (props: iProps) => {
             if (mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
                 dispatch(SetTimeLimit({ start: newTime[0], end: newTime[1] }))
                 dispatch(SetZoomedLimits({ limits: newYLimits, key: props.dataKey }))
-    }
+            }
 
         });
 
@@ -1015,7 +1015,7 @@ const LineChart = (props: iProps) => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         function GetColor(col: OpenSee.Color) {
-                return colors[col as string]
+            return colors[col as string]
         }
 
         container.select(".DataContainer").selectAll(".Line").attr("stroke", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
@@ -1119,7 +1119,7 @@ const LineChart = (props: iProps) => {
         const width = Math.ceil(text.clientWidth);
         document.body.removeChild(text);
         return width;
-    } 
+    }
 
     return (
         <div>
@@ -1141,7 +1141,7 @@ const Container = React.memo((props: {
             {props.loading === 'Loading' ? <LoadingIcon /> : null}
             {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
 
-        <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
+            <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
                 { /*PolyLine for the mouse position*/}
                 {props.loading !== 'Loading' && props.hasData ? <PolyLine class={"hover"} key={'hover'} height={props.height - 40} left={props.hover} style={{ stroke: "#000", opacity: 0.5 }} /> : null}
                 { /*PolyLine for the position of Selected Point*/}
@@ -1152,9 +1152,9 @@ const Container = React.memo((props: {
                 { /*PolyLine for the end of the duration of the event*/}
                 {props.loading !== 'Loading' && props.hasData && props.plotMarkers ? <PolyLine class={"duration"} key={'duration'} height={props.height - 40} left={props.durationLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} /> : null}
 
-            {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
-                <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
-        </svg>
+                {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
+                    <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}
+            </svg>
         </div>
     )
 })
