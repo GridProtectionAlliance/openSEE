@@ -48,7 +48,7 @@ import { OpenSee } from './global';
 import { LoadSettings, SelectQueryString, SelectMouseMode, SetMouseMode, SelectSinglePlot } from './store/settingSlice';
 import { SelectCycles, UpdateAnalytic, SelectAnalytics } from './store/analyticSlice';
 import { SetTimeLimit, SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
-import { LoadEventInfo, SetEventID, SelectEventInfo, LoadLookupInfo, SelectEventID } from './store/eventInfoSlice'
+import { LoadEventInfo, SetEventID, SelectEventInfo, LoadLookupInfo } from './store/eventInfoSlice'
 import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
 
 import OverlappingEventWindow from './Components/OverlappingEvents';
@@ -75,8 +75,7 @@ declare var version: string;
 declare var eventID: number;
 
 const OpenSeeHome = () => {
-    const divRef = React.useRef<any>(null);
-    const plotRef = React.useRef(null);
+    const applicationRef = React.useRef(null);
     const history = React.useRef<object>(createHistory());
     const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
@@ -115,6 +114,7 @@ const OpenSeeHome = () => {
 
     const groupedKeys = useAppSelector(SelectListGraphs);
     const plotKeys = useAppSelector(SelectPlotKeys);
+    const singlePlot = useAppSelector(SelectSinglePlot);
 
     const eventList = useAppSelector(SelectEventList);
 
@@ -125,27 +125,30 @@ const OpenSeeHome = () => {
     const fftTime = useAppSelector(SelectFFTLimits);
     const query = useAppSelector(SelectQueryString);
 
-    const [plotContainerHeight, setPlotContainerHeight] = React.useState<number>(0);
-    const [plotHeight, setPlotHeight] = React.useState<number>(0);
+    const [plotHeight, setPlotHeight] = React.useState<number>(250);
 
-    const [navBarProperties, setNavBarProperties] = React.useState<HTMLDivElement>(null);
+    const [applicationProperties, setApplicationProperties] = React.useState<any>(null);
 
     React.useLayoutEffect(() => {
         setPlotContainerHeight(divRef.current.offsetHeight ?? 0);
     })
 
     React.useLayoutEffect(() => {
-        setPlotHeight(((window.innerHeight - navBarProperties?.offsetHeight) / Math.min(plotKeys.length, 3)) - 15)
-    }, [plotKeys, resizeCount])
+        if (applicationRef.current) 
+            setApplicationProperties(applicationRef.current)
 
-    //Effect to update width when a drawer opens
-    React.useLayoutEffect(() => {
-        setTimeout(() => {
-            if (plotRef.current) {
-                setPlotWidth(plotRef.current.offsetWidth);
+        if (applicationProperties) {
+            const newHeight = ((window.innerHeight - applicationProperties?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
+            const newWidth = applicationProperties?.mainDiv?.offsetWidth - 25
+            if(newHeight !== plotHeight)
+                setPlotHeight(newHeight)
+
+            if(newWidth !== plotWidth)
+                setPlotWidth(newWidth);
             }
-        }, 500);
-    }, [groupedKeys, openDrawers, resizeCount]);
+
+    }, [plotKeys, resizeCount, openDrawers])
+
 
     //Effect to handle queryParams
     React.useEffect(() => {
@@ -172,6 +175,15 @@ const OpenSeeHome = () => {
 
     }, []);
 
+    //Effect to push updatedQueryParams
+    React.useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            history.current['push'](`?${query}`);
+        }, 1000);
+
+        return () => clearTimeout(timeoutId);
+    }, [query]);
+
     React.useEffect(() => {
         window.addEventListener("resize", () => {
             setResizeCount(x => x + 1)
@@ -188,15 +200,6 @@ const OpenSeeHome = () => {
             dispatch(LoadOverlappingEvents())
         }
     }, [eventID]);
-
-    //Effect to push updatedQueryParams
-    React.useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            history.current['push'](`?${query}`);
-        }, 1000);
-
-        return () => clearTimeout(timeoutId);
-    }, [query]);
 
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
@@ -238,13 +241,13 @@ const OpenSeeHome = () => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navBarProperties?.offsetWidth} />}
-            NavBarCallBack={div => setNavBarProperties(div)}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={applicationProperties?.navBarDiv?.offsetWidth} />}
             UseLegacyNavigation={true}
-        ><div ref={divRef} style={{ position: 'relative', height: 'calc(100% - 40px)', width: '100%' }}>
-                <div className="d-flex flex-column" style={{ position: 'relative', top: '31px', height: '100%', width: '100%' }}>
+            ref={applicationRef}
+        ><div style={{ position: 'relative', height: `100%`, width: '100%' }}>
+                <div className="d-flex flex-column" style={{ position: 'relative', height: '100%', width: '100%' }}>
                     <HoverProvider>
-                        <VerticalSplit style={{height: '100%'}}>
+                        <VerticalSplit style={{ height: '100%' }}>
                             <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                                 <EventInfo />
                             </SplitDrawer>
@@ -306,7 +309,7 @@ const OpenSeeHome = () => {
                             </SplitDrawer>
 
                             <SplitSection MinWidth={70} MaxWidth={100} Width={75}>
-                                <div ref={plotRef} style={{ overflowY: 'auto', maxHeight: plotContainerHeight - 25, width: '100%', height: '100%' }}>
+                                <div style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
                                     {groupedKeys[eventID] != undefined ? (
                                         <>
                                             {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
@@ -355,15 +358,17 @@ const OpenSeeHome = () => {
                                                 </div>
                                             ) : null}
                                             <div className="card-body" style={{ padding: 0 }}>
-                                                {groupedKeys[key].sort(sortGraph).map(item => (
-                                                    item.DataType !== 'FFT' ?
+                                                {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
                                                         <LineChart
                                                             key={item.DataType + item.EventId}
                                                             width={plotWidth}
                                                             height={plotHeight}
                                                             showToolTip={openDrawers.ToolTipDelta}
                                                             dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                                        /> :
+                                                    />
+                                                ))}
+
+                                                {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
                                                         <BarChart
                                                             key={item.DataType + item.EventId}
                                                             width={plotWidth}
@@ -371,6 +376,7 @@ const OpenSeeHome = () => {
                                                             dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                                         />
                                                 ))}
+
                                             </div>
                                         </div>
                                     )}
