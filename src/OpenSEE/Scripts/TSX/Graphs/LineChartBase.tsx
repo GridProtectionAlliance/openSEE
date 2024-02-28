@@ -659,7 +659,7 @@ const LineChart = (props: iProps) => {
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
-                ms = d - evt.StartTime
+                ms = d - evt?.StartTime
             }
 
             if (h < 2)
@@ -675,7 +675,7 @@ const LineChart = (props: iProps) => {
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
-                ms = d - (new Date(evt.InceptionDate + "Z").getTime())
+                ms = d - evt?.Inception
             }
 
             if (h < 2)

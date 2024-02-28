@@ -325,7 +325,6 @@ export namespace OpenSee {
         EndTime: number,
         EventType: string,
         Inception: number, 
-        InceptionDate: string,
         DurationEndTime: number
     }
 
