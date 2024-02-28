@@ -127,28 +127,26 @@ const OpenSeeHome = () => {
     const query = useAppSelector(SelectQueryString);
 
     const [plotHeight, setPlotHeight] = React.useState<number>(250);
-
-    const [applicationProperties, setApplicationProperties] = React.useState<any>(null);
-
-    React.useLayoutEffect(() => {
-        setPlotContainerHeight(divRef.current.offsetHeight ?? 0);
-    })
+    const [navWidth, setNavWidth] = React.useState<number>(100);
 
     React.useLayoutEffect(() => {
-        if (applicationRef.current) 
-            setApplicationProperties(applicationRef.current)
+        const timeoutId = setTimeout(() => {
+            if (applicationRef.current) {
+                const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
+                const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
+                const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth
+                if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
+                    setPlotHeight(newHeight)
 
-        if (applicationProperties) {
-            const newHeight = ((window.innerHeight - applicationProperties?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
-            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
-            if(newHeight !== plotHeight)
-                setPlotHeight(newHeight)
+                if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
+                    setPlotWidth(newWidth);
 
-            if(newWidth !== plotWidth)
-                setPlotWidth(newWidth);
+                if (navWidth !== newNavBarWidth && !isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
+                    setNavWidth(newNavBarWidth)
             }
-
-    }, [plotKeys, resizeCount, plotRef.current?.offsetWidth])
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [plotKeys, openDrawers, resizeCount])
 
 
     //Effect to handle queryParams
@@ -206,11 +204,8 @@ const OpenSeeHome = () => {
         if (openDrawers.ToolTipDelta) {
             let oldMode = _.clone(mouseMode);
             dispatch(SetMouseMode('select'))
-            return () => {
-                dispatch(SetMouseMode(oldMode))
-            }
+            return () => { dispatch(SetMouseMode(oldMode))}
         }
-
     }, [openDrawers.ToolTipDelta])
 
     const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
@@ -242,7 +237,7 @@ const OpenSeeHome = () => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={applicationProperties?.navBarDiv?.offsetWidth} />}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
             UseLegacyNavigation={true}
             ref={applicationRef}
         ><div style={{ position: 'relative', height: `100%`, width: '100%' }}>
@@ -309,8 +304,8 @@ const OpenSeeHome = () => {
                                 <HarmonicStatsWidget exportCallback={() => exportData('harmonics')} />
                             </SplitDrawer>
 
-                            <SplitSection MinWidth={70} MaxWidth={100} Width={75}>
-                                <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+                            <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
+                                <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%'}}>
                                     {groupedKeys[eventID] != undefined ? (
                                         <>
                                             {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
@@ -320,7 +315,7 @@ const OpenSeeHome = () => {
                                                     height={plotHeight}
                                                     showToolTip={openDrawers.ToolTipDelta}
                                                     dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                                    />
+                                                />
                                             ))}
 
                                             {groupedKeys[eventID].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
@@ -332,10 +327,10 @@ const OpenSeeHome = () => {
                                                 />
                                             ))}
                                         </>
-                                    ) :  null}
+                                    ) : null}
 
                                     {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventID).map(key =>
-                                        <div className="card" key={key}> 
+                                        <div className="card" key={key}>
                                             {eventList.find(item => item.EventID === parseInt(key)) ? (
                                                 <div className="card-header">
                                                     <div className="row">
@@ -360,22 +355,22 @@ const OpenSeeHome = () => {
                                             ) : null}
                                             <div className="card-body" style={{ padding: 0 }}>
                                                 {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                                        <LineChart
-                                                            key={item.DataType + item.EventId}
-                                                            width={plotWidth}
-                                                            height={plotHeight}
-                                                            showToolTip={openDrawers.ToolTipDelta}
-                                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                                                    <LineChart
+                                                        key={item.DataType + item.EventId}
+                                                        width={plotWidth}
+                                                        height={plotHeight}
+                                                        showToolTip={openDrawers.ToolTipDelta}
+                                                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                                     />
                                                 ))}
 
                                                 {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                                        <BarChart
-                                                            key={item.DataType + item.EventId}
-                                                            width={plotWidth}
-                                                            height={plotHeight}
-                                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                                        />
+                                                    <BarChart
+                                                        key={item.DataType + item.EventId}
+                                                        width={plotWidth}
+                                                        height={plotHeight}
+                                                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                                                    />
                                                 ))}
 
                                             </div>
