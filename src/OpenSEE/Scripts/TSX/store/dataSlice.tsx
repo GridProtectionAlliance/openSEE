@@ -716,11 +716,12 @@ export const SelectListGraphs = createSelector(
     (plots, singlePlot) => {
         let keys = plots.map(p => p.key)
 
-        if (singlePlot)
+        if (singlePlot) 
             return _.groupBy(keys.filter(item => item.EventId === -1), "EventId");
-
-        return _.groupBy(keys, "EventId");
-    })
+        
+        return _.groupBy(keys.filter(item => item.EventId !== -1), "EventId");
+    }
+)
 
 //Returns the DataType of plots that are Analytics
 export const SelectAnalytics = createSelector(
@@ -1271,7 +1272,6 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
     try {
         let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
         const unitSettings = settings.Units
-        console.log('isUnitSettings array', Array.isArray(unitSettings))
 
         if (unitSettings && Array.isArray(unitSettings)) {
             const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
