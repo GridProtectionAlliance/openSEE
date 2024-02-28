@@ -36,7 +36,6 @@ export const plotTypes = ["Voltage", "Current", "TripCoil", "Digitals", "Analogs
 // Thunk To Enable All Overlapping events on a single plot
 export const EnableSinglePlot = createAsyncThunk('Settings/enableSinglePlot', (arg: boolean, thunkAPI) => {
     const state = (thunkAPI.getState() as OpenSee.IRootState)
-    thunkAPI.dispatch(SettingsReducer.actions.SetSinglePlot(arg))
     const singleOverlappingPlots = state.Data.Plots.filter(plot => plot.key.EventId === -1)
 
     if (arg) 
@@ -148,10 +147,13 @@ export const SettingsReducer = createSlice({
             if (state.MouseMode !== "zoom")
                 state.MouseMode = "zoom"
             saveSettings(state);
-
         },
     },
     extraReducers: (builder) => {
+        builder.addCase(EnableSinglePlot.pending, (state, action) => {
+            state.SinglePlot = action.meta.arg
+            saveSettings(state);
+        });
     }
 
 });
