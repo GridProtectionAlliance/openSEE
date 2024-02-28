@@ -80,9 +80,8 @@ const OverlappingEventWindow = () => {
                     {Object.entries(groupedEvents).map(([meterName, events]) => (
                         <fieldset key={meterName} className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>{meterName}</legend>
-                            {events.map(event => (
-                                <>
-                                    <div className="form-row" style={{ marginBottom: '10px' }}>
+                            {events.map((event, idx) => (
+                                <div key={idx} className="form-row" style={{ marginBottom: '10px' }}>
                                         <div className="col-12">
                                             <CheckBox
                                                 Record={event}
@@ -92,7 +91,6 @@ const OverlappingEventWindow = () => {
                                             />
                                         </div>
                                     </div>
-                                </>
                             ))}
                         </fieldset>
                     ))}
