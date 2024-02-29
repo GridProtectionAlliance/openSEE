@@ -131,7 +131,7 @@ const AnalyticOptions = () => {
             <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
                 <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', height: '100%', width: '100%', overflowY: 'auto', padding: '10px', marginTop: 0 }}>
                     <div style={{marginBottom: '20px'}}>
-                    <BtnDropdown // why is this refreshing the page if i click the button  itself..??
+                    <BtnDropdown
                             Label={analyticBtns[0].Label}
                             Callback={() => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: analyticBtns[0].DataType, EventId: id } })))}
                             Options={analyticBtns}

@@ -243,7 +243,7 @@ export const SelectQueryString = createSelector(
                         yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
                         isZoomed: matchingPlot.isZoomed,
                         key: matchingPlot.key
-    });
+                    });
 
                     plotCount++;
                 }
@@ -273,11 +273,17 @@ export const SelectQueryString = createSelector(
             singlePlot: singlePlot,
         }
 
-        const query = queryString.stringify(queryObj)
+        let query = queryString.stringify(queryObj);
+
+        // Temporary patch to check queryString length and remove plot objects if necessary
+        while (query?.length > 3070 && plotQuery?.length > 0) {
+            plotQuery.pop(); 
+            queryObj.plots = JSON.stringify(plotQuery); 
+            query = queryString.stringify(queryObj);
+        }
 
         return query
-        }
-);
+        });
 
 
 export const SelectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
