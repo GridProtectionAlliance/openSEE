@@ -728,7 +728,7 @@ export const SelectAnalytics = createSelector(
     (state: RootState) => state.Data.Plots,
     (state: RootState) => state.EventInfo.EventID,
     (plots, evtID) => {
-        const analytics = ['FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'NewAnalytic'] as OpenSee.graphType[];
+        const analytics = ['FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'I2T'] as OpenSee.graphType[];
         let plotTypes = plots.filter(plot => plot.key.EventId === evtID && analytics.includes(plot.key.DataType)).map(plot => plot.key.DataType)
 
         plotTypes = _.uniq(plotTypes)
@@ -1354,6 +1354,8 @@ export function getPrimaryAxis(key: OpenSee.IGraphProps) {
         return "Freq"
     else if (key.DataType === "FaultDistance")
         return "Distance"
+    else if (key.DataType === "I2T")
+        return "Current"
     else
         return "Voltage" as OpenSee.Unit
 
@@ -1596,6 +1598,9 @@ function GetDefaults(type: OpenSee.graphType, defaultTraces: OpenSee.IDefaultTra
 
     if (type == 'RemoveCurrent')
         return data.map(item => (item.LegendHorizontal == 'Pre'))
+
+    if (type == 'I2T')
+        return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
 
     return data.map(item => false);
 }
