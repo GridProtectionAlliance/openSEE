@@ -560,8 +560,9 @@ export const DataReducer = createSlice({
         builder.addCase(AddPlot.pending, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
 
-            if (plot == null) {
+            if (plot === undefined) {
                 plot = _.cloneDeep(emptygraph);
+                plot.loading = 'Loading';
                 state.Plots.push(plot)
             }
 
@@ -574,8 +575,6 @@ export const DataReducer = createSlice({
                 plot.isZoomed = action.meta.arg.isZoomed
 
             plot.key = action.meta.arg.key;
-            plot.loading = 'Loading';
-
 
             const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
             if (singlePlot)
@@ -628,7 +627,7 @@ export const DataReducer = createSlice({
         builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
 
-            if (plot == null) {
+            if (plot === undefined) {
                 plot = _.cloneDeep(emptygraph);
                 state.Plots.push(plot)
             }

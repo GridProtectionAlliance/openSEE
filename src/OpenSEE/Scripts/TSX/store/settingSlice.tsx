@@ -219,7 +219,6 @@ export const SelectQueryString = createSelector(
     (data, analyticInfo, evtID, overLappingEvents, singlePlot) => {
         let plotQuery: OpenSee.PlotQuery[] = [];
         let overlappingEvts = []
-        let plotCount = 0;
         let plotKeys = data.Plots.map(plot => plot.key)
         plotKeys = _.uniq(plotKeys)
 
@@ -237,15 +236,12 @@ export const SelectQueryString = createSelector(
                             yLimits[key] = { ...matchingPlot.yLimits[key] };
                     })
 
-                    //This might be able to be increased
-                    if(plotCount < 8)
                     plotQuery.push({
                         yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
                         isZoomed: matchingPlot.isZoomed,
                         key: matchingPlot.key
                     });
 
-                    plotCount++;
                 }
             });
 
@@ -276,7 +272,7 @@ export const SelectQueryString = createSelector(
         let query = queryString.stringify(queryObj);
 
         // Temporary patch to check queryString length and remove plot objects if necessary
-        while (query?.length > 3070 && plotQuery?.length > 0) {
+        while (query?.length > 3000 && plotQuery?.length > 0) {
             plotQuery.pop(); 
             queryObj.plots = JSON.stringify(plotQuery); 
             query = queryString.stringify(queryObj);
