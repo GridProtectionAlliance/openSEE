@@ -968,33 +968,13 @@ namespace OpenSEE
             List<D3Series> dataLookup = new List<D3Series>();
            
 
-            List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
-            List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
-            List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
-
-
-            iAN.ForEach(item => {
-
-                dataLookup.Add(new D3Series()
-                {
-
-                    LegendVGroup = "",
-                    LegendHorizontal = "",
-                    LegendVertical = DisplayPhaseName(item.SeriesInfo.Channel.Phase),
-                    ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " I2t",
-                    Unit = "Current",
-                    Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
-                    DataMarker = new List<double[]>(),
-                    BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataPoints = ComputeI2T(item.DataPoints.Select((point) => point.Value),1.0/(double)item.SampleRate).ToList()
-                });
-               
-            });
-
-            iBN.ForEach(item =>
+            List<DataSeries> current = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" &&
+             x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && 
+             (x.SeriesInfo.Channel.Phase.Name == "AN" || x.SeriesInfo.Channel.Phase.Name == "BN" || x.SeriesInfo.Channel.Phase.Name == "CN")).ToList();
+       
+            
+            current.ForEach(item =>
             {
-
                   dataLookup.Add(new D3Series()
                 {
 
@@ -1007,39 +987,21 @@ namespace OpenSEE
                     LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataPoints = ComputeI2T(item.DataPoints.Select((point) => point.Value),1.0/(double)item.SampleRate).ToList()
+                    DataPoints = ComputeI2T(item.DataPoints,1.0/(double)item.SampleRate).ToList()
                 });
             });
 
-            iCN.ForEach(item =>
-            {
-                dataLookup.Add(new D3Series()
-                {
-
-                    LegendVGroup = "",
-                    LegendHorizontal = "",
-                    LegendVertical = DisplayPhaseName(item.SeriesInfo.Channel.Phase),
-                    ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " I2t",
-                    Unit = "Current",
-                    Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
-                    DataMarker = new List<double[]>(),
-                    BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataPoints = ComputeI2T(item.DataPoints.Select((point) => point.Value),1.0/(double)item.SampleRate).ToList()
-                });
-                
-            });
-
+            
             return dataLookup;
         }
 
-        private IEnumerable<double?> ComputeI2T(IEnumerable<double?> current, double timeStep)
+        private IEnumerable<double[]> ComputeI2T(IEnumerable<DataPoint> current, double timeStep)
         {
-            double? sum = 0;
-            foreach(double i in current)
+            double sum = 0;
+            foreach(DataPoint i in current)
             {
-                sum += i*i*timeStep;
-                yield return sum;
+                sum += p.Value*p.Value*timeStep;
+                yield return new double[] {point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
             }        
         }
 
