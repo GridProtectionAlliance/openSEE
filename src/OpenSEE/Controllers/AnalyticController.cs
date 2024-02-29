@@ -998,9 +998,9 @@ namespace OpenSEE
         private IEnumerable<double[]> ComputeI2T(IEnumerable<DataPoint> current, double timeStep)
         {
             double sum = 0;
-            foreach(DataPoint i in current)
+            foreach(DataPoint point in current)
             {
-                sum += p.Value*p.Value*timeStep;
+                sum += point.Value * point.Value * timeStep;
                 yield return new double[] {point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
             }        
         }
@@ -2434,32 +2434,6 @@ namespace OpenSEE
             return output;
         }
         #endregion
-
-        #region [ NewAnalytic ]
-
-        [Route("GetNewAnalytic"), HttpGet]
-        public async Task<JsonReturn> GetNewAnalyticData()
-        {
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
-            {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
-
-                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
-                List<D3Series> returnList = GetFrequencyLookup(viDataGroup);
-
-                JsonReturn returnDict = new JsonReturn();
-                returnDict.Data = returnList;
-                DownSample(returnDict);
-                return returnDict;
-            }
-        }
-
-        #endregion
-
 
         #region [ THD ]
 
