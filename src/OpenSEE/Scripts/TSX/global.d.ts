@@ -127,9 +127,9 @@ export namespace OpenSee {
         InceptionDate: string
     }
 
-    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'NewAnalytic')
+    type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'I2T')
 
-    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'NewAnalytic')
+    type Analytic = ('none' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'I2T')
 
     type MouseMode = ("zoom" | "select" | 'pan' | 'none' | 'fftMove')
 
@@ -247,7 +247,7 @@ export namespace OpenSee {
         FaultDistance: T,
         Restrike: T,
         FFT: T,
-        NewAnalytic: T,
+        I2T: T,
     }
 
     interface ISettingsState { 

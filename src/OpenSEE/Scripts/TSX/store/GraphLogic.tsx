@@ -389,6 +389,21 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
             });
             result.push(fftAnalyticDataHandle);
             break
+        case ('I2T'):
+            let i2tDataHandle = $.ajax({
+                type: "GET",
+                url: `${homePath}api/Analytic/GetI2tData?eventId=${key.EventId}`,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                cache: true,
+                async: true
+            });
+            i2tDataHandle.then((data) => {
+                appendCallBack(data.Data, 'time')
+                detailedCallBack(key);
+            });
+            result.push(i2tDataHandle);
+            break
         default:
             return []
             break;

@@ -259,6 +259,6 @@ export const defaultSettings = {
     ColorSelection: ['#A30000', '#0029A3', '#007A29', '#a3a3a3', "#BD9B33",
         "#cb4b4b", '#0066CC', "#4da74d", '#d3d3d3', '#edc240',
         '#FF0000', '#afd8f8', '#33CC33', "#9440ed"],
-    PlotOrder: ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil', 'FaultDistance', 'FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'Impedance', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'RapidVoltage', 'Rectifier', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'NewAnalytic', 'FFT']
+    PlotOrder: ['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil', 'ClippedWaveforms', 'FaultDistance', 'FirstDerivative', 'Frequency', 'HighPassFilter', 'Impedance', 'I2T', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'RapidVoltage', 'Rectifier', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FFT']
 }
 

@@ -67,7 +67,7 @@ const AnalyticOptions = () => {
         { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'SymetricComp', EventId: id } }))), DataType: 'SymetricComp' },
         { Label: 'THD', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'THD', EventId: id } }))), DataType: 'THD' },
         { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Unbalance', EventId: id } }))), DataType: 'Unbalance' },
-        { Label: 'NewAnalytic', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'NewAnalytic', EventId: id } }))), DataType: 'NewAnalytic' }
+        { Label: 'i2t', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'I2T', EventId: id } }))), DataType: 'I2T' }
     ];
 
     const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(defaultAnalyticBtns)
