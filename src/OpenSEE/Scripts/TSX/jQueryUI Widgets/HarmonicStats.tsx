@@ -23,8 +23,8 @@
 
 import * as React from 'react';
 import { useAppSelector } from '../hooks';
-import { outerDiv, handle, closeButton, WidgetWindow } from './Common';
-import { SelectEventID} from '../store/eventInfoSlice'
+import { SelectEventID } from '../store/eventInfoSlice'
+
 interface Iprops {
     exportCallback: () => void,
 }
