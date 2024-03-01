@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { Modal } from '@gpa-gemstone/react-interactive'
 
 interface Iprops {
     closeCallback: () => void,
@@ -30,51 +31,45 @@ interface Iprops {
 
 const About = (props: Iprops) => {
     return (
-        <div>
-            <div className="modal fade show" style={{ display: (props.isOpen ? 'block' : 'none') }} role="dialog">
-                <div className="modal-dialog" style={{ maxWidth: 1200 }} role="document">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3 className="modal-title">About openSEE -- System Event Explorer</h3>
-                            <button type="button" className="close" onClick={() => { props.closeCallback() }}>
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div className="modal-body" style={{ textAlign: 'left', maxHeight: 800 }}>
-                            <p>Version 3.0</p>
+        <>
+            <Modal Show={props.isOpen} Title={'About openSEE -- System Event Explorer'} Size={'xlg'} CallBack={() => {
+                props.closeCallback()
+            }}
+                ShowX={true}
+                ShowCancel={true}
+                CancelBtnClass={"btn btn-danger"}
+                ShowConfirm={false}
+            >
+                <p>Version 3.0</p>
 
-                            <p>openSEE is a browser-based waveform display and analytics tool that is used to view waveforms recorded by DFRs, Power Quality meters, relays and other substation devices that are stored in the openXDA database.
-                                The link in the URL window of openSEE can be embedded in emails so that recipients can quickly access the waveforms being studied.</p>
+                <p>openSEE is a browser-based waveform display and analytics tool that is used to view waveforms recorded by DFRs, Power Quality meters, relays and other substation devices that are stored in the openXDA database.
+                    The link in the URL window of openSEE can be embedded in emails so that recipients can quickly access the waveforms being studied.</p>
 
-                            <p><b>General Navigation Features</b></p>
+                <p><b>General Navigation Features</b></p>
 
-                            <p>The navigational context of openSEE is relative to the "waveform-of-focus" -- the waveform displayed in the top-most collection of charts that is displayed when openSEE is first opened --
-                                typically after clicking a link to drill down into a specific waveform in the Open PQ Dashboard.
-                                Tools in openSEE allow the user to dig deeper and understand more about this waveform-of-focus.
-                                Tools in openSEE also enable users to easily change the waveform-of-focus from the initially loaded -- moving forward or back sequentially in time.
-                            </p>
+                <p>The navigational context of openSEE is relative to the "waveform-of-focus" -- the waveform displayed in the top-most collection of charts that is displayed when openSEE is first opened --
+                    typically after clicking a link to drill down into a specific waveform in the Open PQ Dashboard.
+                    Tools in openSEE allow the user to dig deeper and understand more about this waveform-of-focus.
+                    Tools in openSEE also enable users to easily change the waveform-of-focus from the initially loaded -- moving forward or back sequentially in time.
+                </p>
 
-                            <ul>
-                                <li><u>Region Select Zooming</u> - The waveform initially loads with the the time-scale set to the full length of the waveform capture. With the mouse, the user can select a region of the waveform to zoom in and see more detail.</li>
-                                <li><u>Forward and Back Navigation</u> - Using the collection of controls in the upper-right of the openSEE display, the user can select the basis for changing to a new waveform-of-focus.  A selection of "system" means that user can step forward or back
-                                    to next event in the openXDA base globally (for all DFRs, PQ Meters, etc.),
-                                    i.e., what happened immediately previously or next on the system relative to the current waveform-of-focus.  A selection of "asset" (or "line") limits this navigation to just events on this asset.
-                                    A selection of "meter" limits this navigation to just events recorded by this substation device.</li>
-                                <li><u>Chart Trace Section</u> - To the right of each chart, the user has the ability to turn on and off individual traces.  Tabs are provided to organize these selections by data type.</li>
-                            </ul>
+                <ul>
+                    <li><u>Region Select Zooming</u> - The waveform initially loads with the the time-scale set to the full length of the waveform capture. With the mouse, the user can select a region of the waveform to zoom in and see more detail.</li>
+                    <li><u>Forward and Back Navigation</u> - Using the collection of controls in the upper-right of the openSEE display, the user can select the basis for changing to a new waveform-of-focus.  A selection of "system" means that user can step forward or back
+                        to next event in the openXDA base globally (for all DFRs, PQ Meters, etc.),
+                        i.e., what happened immediately previously or next on the system relative to the current waveform-of-focus.  A selection of "asset" (or "line") limits this navigation to just events on this asset.
+                        A selection of "meter" limits this navigation to just events recorded by this substation device.</li>
+                    <li><u>Chart Trace Section</u> - To the right of each chart, the user has the ability to turn on and off individual traces.  Tabs are provided to organize these selections by data type.</li>
+                </ul>
 
-                            <p>
-                                The open-source code for openSEE can be found on GitHub. See: <a href="https://github.com/GridProtectionAlliance/openSEE">https://github.com/GridProtectionAlliance/openSEE</a>
-                            </p>
+                <p>
+                    The open-source code for openSEE can be found on GitHub. See: <a href="https://github.com/GridProtectionAlliance/openSEE">https://github.com/GridProtectionAlliance/openSEE</a>
+                </p>
 
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-danger" onClick={() => { props.closeCallback() }}>Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </Modal>
+
+        </>
+
     );
 
 }
