@@ -61,6 +61,7 @@
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
     <None Include="Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="Images\openSEELogo.png" />
+    <Content Include="openSEE.jpg" />
     <Content Include="Scripts\OpenSee.js" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
@@ -108,9 +109,6 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Web.config" />
     <None Include="tsconfig.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Scripts\TS\Services\OpenSee.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\TSX\openSee.tsx" />
@@ -246,9 +244,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\TSX\Graphs\LegendBase.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\jQueryUI Widgets\Common.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\TSX\store\settingSlice.tsx" />
