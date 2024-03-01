@@ -56,10 +56,6 @@ namespace OpenSEE.Model
 
         #region [ Properties ]
         /// <summary>
-        /// Vertical axis to be used 
-        /// </summary>
-        public int Axis; 
-        /// <summary>
         /// Label of this Channel
         /// </summary>
         public string ChartLabel; // -> not sure We need this one

@@ -334,7 +334,6 @@ namespace OpenSEE
                     LegendVGroup = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
                     BaseValue = 1.0, 
-                    Axis = 1
                 };
             
                 dataLookup.Add(flotSeriesPolarAngle);
