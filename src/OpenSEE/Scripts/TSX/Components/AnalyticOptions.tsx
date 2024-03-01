@@ -46,6 +46,7 @@ const AnalyticOptions = () => {
     const eventIDs = useAppSelector(SelectEventIDs)
 
     const [isHarmonicValid, setIsHarmonicValid] = React.useState<boolean>(true)
+    const [isFFTCyclesValid, setIsFFTCyclesValid] = React.useState<boolean>(true)
 
 
     const defaultAnalyticBtns = [
@@ -72,19 +73,32 @@ const AnalyticOptions = () => {
 
     const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(defaultAnalyticBtns)
 
-    const handleHarmonicChange = (harmonic: number) => {
-        if (harmonic) {
-            eventIDs.forEach(id => {
-                setTimeout(() => {
-                    dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic) }, key: { DataType: "Harmonic", EventId: id } }));
-                }, 500);
-            });
-            setIsHarmonicValid(true)
+    const handleAnalyticChange = (analyticParam: number, analytic: 'Harmonic' | 'FFT') => {
+        if (analytic === "Harmonic") {
+            if (analyticParam) {
+                eventIDs.forEach(id => {
+                    setTimeout(() => {
+                        dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic) }, key: { DataType: "Harmonic", EventId: id } }));
+                    }, 500);
+                });
+                setIsHarmonicValid(true)
+            }
+            else
+                setIsHarmonicValid(false)
+        } else if (analytic === "FFT") {
+            if (analyticParam) {
+                eventIDs.forEach(id => {
+                    setTimeout(() => {
+                        dispatch(UpdateAnalytic({ settings: { ...analytics, FFTCycles: ToInt(analyticParam) }, key: { DataType: "FFT", EventId: id } }));
+                    }, 500);
+                });
+                setIsFFTCyclesValid(true)
+            }
+            else
+                setIsFFTCyclesValid(false)
         }
-        else 
-            setIsHarmonicValid(false)
-    }
 
+    }
 
     const options = {
         order: [
@@ -146,7 +160,7 @@ const AnalyticOptions = () => {
                                         <Input
                                             Record={{ harmonic }}
                                             Field={'harmonic'}
-                                            Setter={(harmonic) => handleHarmonicChange(ToInt(harmonic.harmonic))}
+                                            Setter={(harmonic) => handleAnalyticChange(ToInt(harmonic.harmonic), 'Harmonic')}
                                             Label={"Harmonic:"}
                                             Valid={() => isHarmonicValid}
                                             Feedback="Harmonic value can not be empty"
@@ -228,12 +242,13 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Select
+                                        <Input
                                             Record={{ cycles }}
                                             Field={'cycles'}
-                                            Options={options.cycles}
-                                            Setter={(cycles) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, FFTCycles: ToInt(cycles.cycles) }, key: { DataType: "FFT" , EventId: id}  }))) }
+                                            Setter={cycles => handleAnalyticChange(ToInt(cycles.cycles), 'FFT')}
                                             Label={"Length(Cycles):"}
+                                            Valid={() => isFFTCyclesValid}
+                                            Feedback="FFT Cycles value can not be empty"
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
