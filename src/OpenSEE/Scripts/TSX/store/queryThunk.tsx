@@ -39,10 +39,14 @@ export const updatedURL = createAsyncThunk('Settings/newURL', (arg: { query: str
     let parsedQuery = queryString.parse(arg.query);
 
     if (parsedQuery) {
-        if (parsedQuery.plots)
-            parsedQuery.plots = JSON.parse(parsedQuery.plots)
-        if (parsedQuery.overlappingInfo)
-            parsedQuery.overlappingInfo = JSON.parse(parsedQuery.overlappingInfo)
+        if (parsedQuery.plots) {
+            const plotString = atob(parsedQuery.plots)
+            parsedQuery.plots = JSON.parse(plotString)
+        }
+        if (parsedQuery.overlappingInfo) {
+            const overlapppingString = atob(parsedQuery.overlappingInfo)
+            parsedQuery.overlappingInfo = JSON.parse(overlapppingString)
+        }
     }
 
 
