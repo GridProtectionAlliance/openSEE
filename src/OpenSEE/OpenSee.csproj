@@ -60,6 +60,7 @@
     <Content Include="Images\2-Line - 500.png" />
     <Content Include="Images\openSEE - Waveform Viewer Header.png" />
     <None Include="Scripts\jquery-3.6.0.intellisense.js" />
+    <Content Include="Images\openSEE.jpg" />
     <Content Include="Images\openSEELogo.png" />
     <Content Include="openSEE.jpg" />
     <Content Include="Scripts\OpenSee.js" />
