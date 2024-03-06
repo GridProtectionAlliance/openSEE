@@ -68,8 +68,8 @@ const EventInfo = () => {
             {eventData ?
                 <div className="d-flex" style={{ marginTop: '10px', width: '100%', height: '100%', textAlign: 'center', padding: '10px' }}>
                     <div style={{ height: '100%', overflow: 'auto' }}>
-                        <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`, margin: '3%' }}>
-                            <tbody style={{ overflow: 'auto' }}>
+                        <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`}}>
+                            <tbody>
                                 <tr><td>Meter:</td><td>{eventData.MeterName}</td></tr>
                                 <tr><td>Station:</td><td>{eventData.StationName}</td></tr>
                                 <tr><td>Asset:</td><td>{eventData.AssetName}</td></tr>
