@@ -62,7 +62,6 @@
     <None Include="Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="Images\openSEE.jpg" />
     <Content Include="Images\openSEELogo.png" />
-    <Content Include="openSEE.jpg" />
     <Content Include="Scripts\OpenSee.js" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
