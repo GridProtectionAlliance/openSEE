@@ -24,7 +24,7 @@ import React from 'react';
 import { useAppSelector } from '../hooks';
 import { SelectEventInfo } from '../store/eventInfoSlice'
 import queryString from 'querystring';
-import moment from 'moment'; SelectEventInfo
+import moment from 'moment'; 
 
 const EventInfo = () => {
     const eventData = useAppSelector(SelectEventInfo)
@@ -50,7 +50,7 @@ const EventInfo = () => {
     }
 
     React.useEffect(() => {
-        const time = moment.utc(eventData.Date, timeFormat).format(timeFormat)
+        const time = moment.utc(eventData.EventDate, timeFormat).format(timeFormat)
         const date = moment.utc(eventData.Date, dateFormat).format(dateFormat)
         const queryParams = {
             eventid: eventID,
