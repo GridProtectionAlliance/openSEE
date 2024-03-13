@@ -89,8 +89,7 @@ const EventInfo = () => {
                                 {(eventData.BreakerSpeed ? <tr><td>Speed:</td><td>{eventData.BreakerSpeed}</td></tr> : null)}
                                 {(eventData.BreakerOperation ? <tr><td>Operation:</td><td>{eventData.BreakerOperation}</td></tr> : null)}
                                 <tr>
-                                    {<td><button className="btn btn-link" onClick={() => { window.open(eventData.xdaInstance + '/Workbench/Event.cshtml?EventID=' + eventID) }}>Edit</button></td>}
-                                    {<td><button className="btn btn-link" onClick={() => { window.open(pqBrowserURL + '/eventsearch?' + pqBrowserParams) }}>Manage Notes</button></td>}
+                                    {<td><button className="btn btn-link" onClick={() => { window.open(pqBrowserURL + '/eventsearch?' + pqBrowserParams) }}>Edit Event and Manage Notes</button></td>}
                                     <td></td>
                                 </tr>
                             </tbody>
