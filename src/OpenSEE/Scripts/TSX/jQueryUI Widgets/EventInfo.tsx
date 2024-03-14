@@ -26,11 +26,12 @@ import { SelectEventInfo } from '../store/eventInfoSlice'
 import queryString from 'querystring';
 import moment from 'moment'; 
 
+const eventDateFormat = "YYYY-MM-DD HH:mm:ss.fffffff";
+const dateFormat = "MM/DD/YYYY";
+const timeFormat = "HH:mm:ss.SSS";
 const EventInfo = () => {
     const eventData = useAppSelector(SelectEventInfo)
     const [pqBrowserURL, setPqBrowserURL] = React.useState<string>('http://localhost:44368')
-    const dateFormat = "MM/DD/YYYY"
-    const timeFormat = "HH:mm:ss:SSS"
     const [pqBrowserParams, setPQBrowserParams] = React.useState<string>("")
 
     React.useEffect(() => {
@@ -50,8 +51,8 @@ const EventInfo = () => {
     }
 
     React.useEffect(() => {
-        const time = moment.utc(eventData.EventDate, timeFormat).format(timeFormat)
-        const date = moment.utc(eventData.Date, dateFormat).format(dateFormat)
+        const time = moment.utc(eventData.EventDate, eventDateFormat).format(timeFormat)
+        const date = moment.utc(eventData.EventDate, eventDateFormat).format(dateFormat)
         const queryParams = {
             eventid: eventID,
             time: time,
