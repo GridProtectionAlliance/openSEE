@@ -48,7 +48,7 @@
     "typestyle": "2.0.1"
   },
   "scripts": {
-    "build": "npm prune && npm install && webpack --mode=development",
+    "build": "npm prune && npm ci && webpack --mode=development",
     "watch": "webpack --watch --color --mode=development",
     "update": "npx npm-check-updates"
   }
