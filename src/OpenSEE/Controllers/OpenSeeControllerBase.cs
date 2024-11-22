@@ -59,7 +59,7 @@ namespace OpenSEE
             {
                 if (m_Sbase != null)
                     return (double)m_Sbase;
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
                     m_Sbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'") ?? 100.0;
                 return (double)m_Sbase;
             }
@@ -71,7 +71,7 @@ namespace OpenSEE
             {
                 if (m_Fbase != null)
                     return (double)m_Fbase;
-                using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
                     m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
                 return (double)m_Fbase;
             }
@@ -423,7 +423,7 @@ namespace OpenSEE
 
             try
             {
-                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("dbOpenXDA"));
+                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("systemSettings"));
                 DataGroup dataGroup = ToDataGroup(meter, data);
                 taskCompletionSource.SetResult(dataGroup);
                 return dataGroup;

@@ -220,11 +220,11 @@ namespace OpenSEE
         {
             int eventID = int.Parse(requestParameters["eventID"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
                 Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
 
                 // only get Single Voltage and Single Current Data for This....
                 List<PQDS.DataSeries> data = new List<PQDS.DataSeries>();
@@ -280,7 +280,7 @@ namespace OpenSEE
 
             Asset asset;
             double systemFrequency;
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
                 asset = (new TableOperations<Asset>(connection)).QueryRecordWhere("ID = {0}", evt.AssetID);
                 systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
@@ -397,7 +397,7 @@ namespace OpenSEE
         public void ExportStatsToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
             int eventId = int.Parse(requestParameters["eventId"]);
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 DataTable dataTable = connection.RetrieveData("SELECT * FROM OpenSEEScalarStatView WHERE EventID = {0}", eventId);
@@ -416,7 +416,7 @@ namespace OpenSEE
         {
             int eventID = int.Parse(requestParameters["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 double timeTolerance = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'TimeTolerance'");
@@ -454,7 +454,7 @@ namespace OpenSEE
         {
             int eventId = int.Parse(requestParameters["eventID"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 double startTime = requestParameters["startDate"] == null ? 0.0 : double.Parse(requestParameters["startDate"]);
@@ -462,7 +462,7 @@ namespace OpenSEE
 
                 Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
 
                 AnalyticController ctrl = new AnalyticController();
 
@@ -493,7 +493,7 @@ namespace OpenSEE
         public void ExportHarmonicsToCSV(Stream returnStream, NameValueCollection requestParameters)
         {
             int eventId = int.Parse(requestParameters["eventId"]);
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             using (StreamWriter writer = new StreamWriter(returnStream))
             {
                 DataTable dataTable = connection.RetrieveData(@"
@@ -557,11 +557,11 @@ namespace OpenSEE
             int harmonic = requestParameters["harmonic"] == null ? 1 : int.Parse(requestParameters["harmonic"]);
             List<string> displayAnalytics = requestParameters["displayAnalytics"] == null ? new List<string>() : requestParameters["displayAnalytics"].Split(',').ToList();
             
-            using (AdoDataConnection connection = new AdoDataConnection("dbOpenXDA"))
+            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
                 Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("dbOpenXDA");
+                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
 
                 IEnumerable<D3Series> returnList = new List<D3Series>();
                 if (displayVolt)
