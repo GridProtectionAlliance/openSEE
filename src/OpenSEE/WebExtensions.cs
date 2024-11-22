@@ -25,18 +25,22 @@
 
 using GSF.Data.Model;
 using GSF.Web.Model;
-using OpenSEE.Model.System;
 using System.Collections.Generic;
 
 namespace OpenSEE
 {
+
+    [TableName("OpenSEE.Setting")]
+    [UseEscapedName]
+    public class OpenSEESetting : openXDA.Model.Setting { };
+
     public static class WebExtensions
     {
         public static Dictionary<string, string> LoadDatabaseSettings(this DataContext dataContext, string scope)
         {
             Dictionary<string, string> settings = new Dictionary<string, string>();
 
-            foreach (Settings setting in dataContext.Table<Settings>().QueryRecords("Name", new RecordRestriction("Scope = {0}", scope)))
+            foreach (OpenSEESetting setting in dataContext.Table<OpenSEESetting>().QueryRecords("Name"))
             {
                 if (!string.IsNullOrEmpty(setting.Name))
                     settings.Add(setting.Name, setting.Value);

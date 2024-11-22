@@ -93,10 +93,10 @@ namespace OpenSEE
                 
                 // Load global web settings
                 Dictionary<string, string> appSetting = dataContext.LoadDatabaseSettings("app.setting");
-                global.ApplicationName = appSetting["applicationName"];
-                global.ApplicationDescription = appSetting["applicationDescription"];
-                global.ApplicationKeywords = appSetting["applicationKeywords"];
-                global.BootstrapTheme = appSetting["bootstrapTheme"];
+                global.ApplicationName = appSetting.TryGetValue("applicationName", out string setting)? setting : "OpenSEE";
+                global.ApplicationDescription = appSetting.TryGetValue("applicationDescription", out setting) ? setting : "Event Viewing Engine";
+                global.ApplicationKeywords = appSetting.TryGetValue("applicationKeywords", out setting) ? setting : "open source, utility, browser, power quality, management";
+                global.BootstrapTheme = appSetting.TryGetValue("bootstrapTheme", out setting) ? setting : "~/Content/bootstrap-theme.css";
 
                 // Cache application settings
                 foreach (KeyValuePair<string, string> item in appSetting)
