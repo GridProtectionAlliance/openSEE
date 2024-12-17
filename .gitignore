@@ -232,3 +232,5 @@ readme.txt
 **/src/OpenSEE/Logs
 **/src/OpenSEE/NUglify.dll
 **/src/OpenSEE/web.config.backup
+
+**/src/OpenSee/scripts/*.js
