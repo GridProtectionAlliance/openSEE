@@ -67,7 +67,7 @@ namespace OpenSEE
 
             using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
             {
-                m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM Settings WHERE Scope = 'app.setting' AND Name = 'SlidingCacheExpiration'") ?? 2.0;
+                m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
             }
         }
         #endregion
@@ -2793,7 +2793,7 @@ namespace OpenSEE
             
             int maxHarmonic;
             using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'maxFFTHarmonic'") ?? "50");
+                maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxFFTHarmonic'") ?? "50");
 
             List<D3Series> dataLookup = new List<D3Series>();
 
