@@ -85,7 +85,7 @@ namespace OpenSEE
                     return (int)m_MaxSampleRate;
 
                 using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                    m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'maxSampleRate'") ?? "-1");
+                    m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxSampleRate'") ?? "-1");
                 return (int)m_MaxSampleRate;
             }
         }
@@ -98,7 +98,7 @@ namespace OpenSEE
                     return (int)m_MinSampleRate;
 
                 using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                    m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM Settings WHERE Name = 'minSampleRate'") ?? "-1");
+                    m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OPenSee.Setting] WHERE Name = 'minSampleRate'") ?? "-1");
                 return (int)m_MinSampleRate;
             }
         }
