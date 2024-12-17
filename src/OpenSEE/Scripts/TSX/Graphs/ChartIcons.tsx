@@ -24,7 +24,7 @@
 
 import * as React from 'react';
 import styled, { keyframes, css } from "styled-components";
-
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols'
 
 const spin = keyframes`
  0% { transform: rotate(0deg); }
@@ -76,6 +76,18 @@ export const NoDataIcon = () => {
 	);
 }
 
+export const ErrorIcon = () => {
+	return (
+		<div className="d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%', zIndex: 9999 }}>
+			<div style={{ width: '250px', margin: 'auto' }}>
+				<div style={{ width: '5em', margin: 'auto' }}>
+					<ReactIcons.CircledX Size={'5rem'} Color={'red'} />
+				</div>
+				<p style={{ textAlign: 'center' }}>OpenSEE encountered an error when loading the waveform.</p>
+			</div>
+		</div>
+	);
+}
 
 export const WaveformViews = '👁'; 
 export const ShowPoints = '✏'; 
