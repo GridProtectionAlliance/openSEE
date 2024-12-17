@@ -19,6 +19,7 @@
   "dependencies": {
     "@gpa-gemstone/react-forms": "1.1.75",
     "@gpa-gemstone/react-interactive": "1.0.135",
+    "@gpa-gemstone/gpa-symbols": "0.0.43",
     "@reduxjs/toolkit": "1.8.3",
     "@types/d3": "7.0.0",
     "@types/eonasdan-bootstrap-datetimepicker": "4.17.26",
