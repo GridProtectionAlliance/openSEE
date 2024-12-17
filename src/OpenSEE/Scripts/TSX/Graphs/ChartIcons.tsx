@@ -23,45 +23,20 @@
 
 
 import * as React from 'react';
-import styled, { keyframes, css } from "styled-components";
 import { ReactIcons } from '@gpa-gemstone/gpa-symbols'
-
-const spin = keyframes`
- 0% { transform: rotate(0deg); }
- 100% { transform: rotate(360deg); }
-`;
-
-const Icon = styled.div`
-	animation: ${spin} 1s linear infinite;
-	border: 10px solid #f3f3f3;
-	border-Top: 10px solid #555;
-	border-Radius: 50%;
-	width: 30px;
-	height: 30px;
-	margin: auto;
-`;
-
-export const SmallLoadingIcon = styled.div`
-	animation: ${spin} 1s linear infinite;
-	border: 3px solid #f3f3f3;
-	border-Top: 3px solid #555;
-	border-Radius: 50%;
-	width: 14px;
-	height: 14px;
-	margin: auto;
-`;
 
 export const LoadingIcon = () => {
 	return (
 		<div className="d-flex justify-content-center align-items-center" style={{ height: '100%', width: '100%', zIndex: 9999 }}>
 			<div style={{ width: '200px' }} >
-				<Icon />
+				<div style={{ width: 30, margin: 'auto' }}>
+					<ReactIcons.SpiningIcon Size={30} />
+				</div>
 				<p style={{ textAlign: 'center' }}>Loading...</p>
 			</div>
 		</div>
 	);
 }
-
 
 export const NoDataIcon = () => {
 	return (
