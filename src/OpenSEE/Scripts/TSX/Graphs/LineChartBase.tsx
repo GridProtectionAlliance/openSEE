@@ -42,11 +42,12 @@ import { SelectEventID, SelectEventInfo } from '../store/eventInfoSlice'
 import { SelectEventList } from '../store/overlappingEventsSlice'
 
 import { SelectAnalyticOptions, SelectCycles, SelectFFTWindow, SelectShowFFTWindow, SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
-import { LoadingIcon, NoDataIcon } from './ChartIcons';
+import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
 import HoverContext from '../Context/HoverContext'
 import { defaultSettings } from '../defaults';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 interface iProps {
     height: number,
@@ -1139,7 +1140,8 @@ const Container = React.memo((props: {
     return (
         <div data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
             {props.loading === 'Loading' ? <LoadingIcon /> : null}
-            {props.loading != 'Loading' && !props.hasData ? <NoDataIcon /> : null}
+            {props.loading != 'Loading' && props.loading != 'Error' && !props.hasData ? <NoDataIcon /> : null}
+            {props.loading === 'Error' ? <ErrorIcon /> : null}
 
             <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
                 { /*PolyLine for the mouse position*/}

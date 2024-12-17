@@ -610,6 +610,16 @@ export const DataReducer = createSlice({
 
             return state
         });
+        builder.addCase(AddPlot.rejected, (state, action) => {
+            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
+            if (plot === undefined)
+                return state
+
+            plot.loading = 'Error'
+          
+            return state
+        });
+
         builder.addCase(UpdateAnalyticPlot.pending, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
             if (plot)
