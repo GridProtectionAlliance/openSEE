@@ -321,6 +321,12 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\Dependencies\NuGet\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\Dependencies\NuGet\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PreBuildEvent>CALL cd "$(ProjectDir)"
+if $(ConfigurationName) == Debug npm run build
+if $(ConfigurationName) == Release npm run build
+</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
