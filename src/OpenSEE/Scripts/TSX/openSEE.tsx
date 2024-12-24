@@ -30,7 +30,7 @@
 import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 import moment from 'moment'
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import * as ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import createHistory from "history/createBrowserHistory"
 
@@ -385,5 +385,8 @@ const OpenSeeHome = () => {
 //Load Settings for settings Slice
 store.dispatch(LoadSettings());
 
-ReactDOM.render(<Provider store={store}><OpenSeeHome /></Provider>, document.getElementById('DockCharts'));
+// After
+const container = document.getElementById('DockCharts');
+const root = ReactDOM.createRoot(container!); // createRoot(container!) if you use TypeScript
+root.render(<Provider store={store}><OpenSeeHome /></Provider>);
 
