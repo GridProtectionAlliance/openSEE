@@ -20,7 +20,6 @@
     "no-empty-pattern": "warn",
     "no-case-declarations": "warn",
     "@typescript-eslint/no-empty-function": "warn",
-    "@typescript-eslint/no-extra-semi": "warn",
-    "@typescript-eslint/no-inferrable-types": "warn"
+    "@typescript-eslint/no-extra-semi": "warn"
   }
 }
