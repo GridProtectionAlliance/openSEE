@@ -101,7 +101,9 @@ const SettingsWidget = (props) => {
             newDate = new Date(endTime);
 
         if (time && time !== 'Invalid date') {
-            let [hours, minutes, seconds] = time.split(':');
+            const timeString = time.split(':');
+            const [hours, minutes] = [timeString[0], timeString[1]];
+            let seconds = timeString[2];
             let milliseconds = '';
             [seconds, milliseconds] = seconds.split('.')
             newDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), parseInt(milliseconds))
@@ -145,9 +147,9 @@ const SettingsWidget = (props) => {
                 const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
                 const curStartMS = isCycles ? startMS / (60.0 / 1000.0) : startMS
                 const curEndMS = isCycles ? endMS / (60.0 / 1000.0) : endMS
-                let newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
-                let endOffset = curEndMS - (endTime - originalStartTime)
-                let newEndTime = isSinceInception ? endTime + endOffset + inceptionOffset : endTime + endOffset
+                const newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
+                const endOffset = curEndMS - (endTime - originalStartTime)
+                const newEndTime = isSinceInception ? endTime + endOffset + inceptionOffset : endTime + endOffset
 
 
                 if (newStartTime !== startTime && timeSinceChanged)
@@ -169,13 +171,12 @@ const SettingsWidget = (props) => {
             if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
                 const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
                 const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
-                let newStartMS = isSinceInception ? startTime - originalStartTime - inceptionOffset : startTime - originalStartTime
-                let newEndMS = isSinceInception ? endTime - originalStartTime - inceptionOffset : endTime - originalStartTime
-
+                const newStartMS = isSinceInception ? startTime - originalStartTime - inceptionOffset : startTime - originalStartTime
+                const newEndMS = isSinceInception ? endTime - originalStartTime - inceptionOffset : endTime - originalStartTime
 
                 if (isCycles) {
-                    let newStartCycles = newStartMS * 60.0 / 1000.0
-                    let newEndCycles = newEndMS * 60.0 / 1000.0
+                    const newStartCycles = newStartMS * 60.0 / 1000.0
+                    const newEndCycles = newEndMS * 60.0 / 1000.0
 
                     if (Math.abs(newStartCycles - startMS) > 0.1)
                         setStartMS(newStartCycles)
@@ -213,7 +214,7 @@ const SettingsWidget = (props) => {
 
     React.useEffect(() => {
         const handleScroll = () => {
-            let offset = document.getElementById("settingScrollContainer").scrollTop;
+            const offset = document.getElementById("settingScrollContainer").scrollTop;
             setScrollOffset(offset);
         }
         document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
@@ -394,7 +395,7 @@ export const ColorButton = (props: { label: string, statesetter: (col: string) =
     function updateColor(color) {
         props.statesetter(color.hex);
         setDisplayColorPicker(false)
-    };
+    }
 
     return (
         <div style={{ margin: ' 5px 10px 5px 10px' }}>
