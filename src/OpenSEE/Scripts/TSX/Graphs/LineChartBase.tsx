@@ -22,7 +22,6 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import * as _ from "lodash";
 import * as d3 from "d3";
 import { OpenSee } from '../global';
 
@@ -47,16 +46,20 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 
 import HoverContext from '../Context/HoverContext'
 import { defaultSettings } from '../defaults';
-import { Alert } from '@gpa-gemstone/react-interactive';
 
 interface iProps {
     height: number,
     width: number,
     showToolTip: boolean,
     dataKey: OpenSee.IGraphProps
-};
+}
 
-interface IMarker { x: number, y: number, unit: string, base: number }
+interface IMarker { 
+    x: number,
+    y: number,
+    unit: string,
+    base: number
+}
 
 // The following Classes are used in this 
 // xAxis, yaxis => The axis Labels
@@ -235,7 +238,7 @@ const LineChart = (props: iProps) => {
             return;
         if (leftSelectCounter == 1)
             return;
-        let handle = setTimeout(() => { MouseLeft(); }, 500);
+        const handle = setTimeout(() => { MouseLeft(); }, 500);
         return () => { clearTimeout(handle) };
     }, [leftSelectCounter])
 
@@ -253,11 +256,6 @@ const LineChart = (props: iProps) => {
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
             dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-            dispatch(SetTimeLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
-            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
-        }
-        else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-            dispatch(SetCycleLimit({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
             dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         }
         else if (!fftMouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
