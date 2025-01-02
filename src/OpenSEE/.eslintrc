@@ -11,6 +11,17 @@
   ],
   "rules": {
     "@typescript-eslint/no-namespace": "off",
-    "@typescript-eslint/no-empty-interface": "warn"
+    "@typescript-eslint/no-empty-interface": "warn",
+    "@typescript-eslint/ban-types": "off",
+    "prefer-const": "warn",
+    "no-var": "warn",
+    "no-self-assign": "warn",
+    "no-empty": "off",
+    "no-empty-pattern": "warn",
+    "no-case-declarations": "warn",
+    "@typescript-eslint/no-empty-function": "warn",
+    "@typescript-eslint/no-extra-semi": "warn",
+    "@typescript-eslint/no-inferrable-types": "warn",
+    "no-dupe-else-if": "warn"
   }
 }
