@@ -47,7 +47,7 @@ import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-import { DatePicker, Input, CheckBox } from '@gpa-gemstone/react-forms'
+import { DatePicker, Input, CheckBox, ColorPicker } from '@gpa-gemstone/react-forms'
 
 interface TimeLimit {
     start: string,
@@ -383,33 +383,6 @@ const SettingsWidget = (props) => {
 
 export default SettingsWidget;
 
-export const ColorButton = (props: { label: string, statesetter: (col: string) => void, color: string, scrollOffset: number }) => {
-    const [displayColorPicker, setDisplayColorPicker] = React.useState<boolean>(false);
-
-    const popover: React.CSSProperties =
-    {
-        position: "absolute",
-        zIndex: 1010,
-    }
-
-    function updateColor(color) {
-        props.statesetter(color.hex);
-        setDisplayColorPicker(false)
-    }
-
-    return (
-        <div style={{ margin: ' 5px 10px 5px 10px' }}>
-            <button className="btn btn-primary" onClick={() => setDisplayColorPicker(!displayColorPicker)} style={{ backgroundColor: props.color }}>{props.label}</button>
-            {displayColorPicker ? <div style={popover}>
-                    <div style={{ position: 'fixed', transform: `translate(0px,-${props.scrollOffset}px)` }}>
-                    <BlockPicker onChangeComplete={updateColor} color={props.color} triangle={"hide"} colors={defaultSettings.ColorSelection} />
-                </div>
-            </div> : null}
-        </div>
-    )
-
-}
-
 export const AxisUnitSelector = (props: { label: string, setter: (index: number) => void, unitType: OpenSee.Unit, axisSetting: OpenSee.IAxisSettings }) => {
     let entries;
     let buttonLabel;
@@ -544,12 +517,6 @@ const PlotCard = (props: ICardProps) => {
             auto = false
         dispatch(SetUnit({ unit: unit, value: index, auto: auto, key: key }))
     }
-
-
-    let colCol1: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 0);
-    let colCol2: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 1);
-    let colCol3: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 2);
-    let colCol4: OpenSee.Color[] = colorSettings.filter((item, index) => index % 4 == 3);
 
     const getLabel = (unit: OpenSee.Unit, key?: OpenSee.IGraphProps) => {
 
@@ -719,47 +686,18 @@ const PlotCard = (props: ICardProps) => {
                     <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
                         <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
                         <div className="row">
-                            <div className="col-3">
-                                {colCol1.map((c: OpenSee.Color, i: number) =>
-                                    <ColorButton
-                                        key={i}
-                                        label={c as string}
-                                        color={colors[c]}
-                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                        scrollOffset={props.scrollOffset}
-                                    />)}
-                            </div>
-                            <div className="col-3">
-                                {colCol2.map((c: OpenSee.Color, i: number) =>
-                                    <ColorButton
-                                        key={i}
-                                        label={c as string}
-                                        color={colors[c]}
-                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                        scrollOffset={props.scrollOffset}
-                                    />)}
-                            </div>
-                            <div className="col-3">
-                                {colCol3.map((c: OpenSee.Color, i: number) =>
-                                    <ColorButton
-                                        key={i}
-                                        label={c as string}
-                                        color={colors[c]}
-                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                        scrollOffset={props.scrollOffset}
-                                    />)}
-                            </div>
-                            <div className="col-3">
-                                {colCol4.map((c: OpenSee.Color, i: number) =>
-                                    <ColorButton
-                                        key={i}
-                                        label={c as string}
-                                        color={colors[c]}
-                                        statesetter={(col) => dispatch(SetColor({ color: c, value: col }))}
-                                        scrollOffset={props.scrollOffset}
-                                    />)}
-                            </div>
-                        </div>
+                                {colorSettings.map((c: OpenSee.Color, i: number) =>
+                                    <div className="col-3">
+                                        <ColorPicker<OpenSee.IColorCollection>
+                                            Record={colors}
+                                            Field={c}
+                                            key={i}
+                                            Label={c as string}
+                                            Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
+                                            Style={{ background: colors[c], marginBottom: 5 }}
+                                        />
+                                    </div>)}
+                            </div>                           
                     </fieldset> : null}
 
 
