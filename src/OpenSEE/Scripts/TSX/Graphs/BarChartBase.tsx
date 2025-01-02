@@ -22,10 +22,8 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import * as _ from "lodash";
 import * as d3 from "d3";
 import { OpenSee } from '../global';
-
 
 import Legend from './LegendBase';
 import { SelectColor, SelectActiveUnit, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice'
@@ -41,7 +39,7 @@ interface iProps {
     height: number,
     width: number,
     dataKey: OpenSee.IGraphProps
-};
+}
 
 // The following Classes are used in this 
 // xAxis, yaxis => The axis Labels

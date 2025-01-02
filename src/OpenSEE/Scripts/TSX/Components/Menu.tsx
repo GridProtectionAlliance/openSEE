@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 
-declare var homePath: string
+declare const homePath: string
 
 export default class Menu extends React.Component<any, any>{
     props: {
