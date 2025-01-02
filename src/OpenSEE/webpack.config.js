@@ -70,7 +70,7 @@ function buildConfig(env, argv) {
 
     if (argv.mode == 'production') {
         config.mode = argv.mode;
-        config.devtool = "";
+        config.devtool = "eval";
     }
    
     return config;
