@@ -259,7 +259,7 @@ const LineChart = (props: iProps) => {
             dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: props.dataKey }));
         }
         else if (!fftMouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
-            let deltaT = pointMouse[0] - oldFFTWindow[0];
+            const deltaT = pointMouse[0] - oldFFTWindow[0];
             const deltaData = oldFFTWindow[1] - oldFFTWindow[0];
             let Tstart = hover[0] - deltaT;
 
@@ -311,7 +311,7 @@ const LineChart = (props: iProps) => {
     }, [props.dataKey, options]);
 
     React.useEffect(() => {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         if (container == null || container.select(".yAxisLabel") == null)
             return;
@@ -326,7 +326,7 @@ const LineChart = (props: iProps) => {
     }, [yLabels, yLblFontSize]);
 
     React.useEffect(() => {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (container == null || container.select(".yAxisLabel") == null)
             return;
 
@@ -379,16 +379,16 @@ const LineChart = (props: iProps) => {
             xScaleRef.current.range([120, props.width - 170]);
 
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
-        let lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
+        const lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
 
         lines.enter().append("path").classed(`Line`, true)
             .attr("type", d => `${d.Unit}`)
             .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", d => singlePlot && evtID !== d.EventID ? 5 : 0)
             .attr("d", d => {
-                let lineGen = createLineGen(d.Unit)
+                const lineGen = createLineGen(d.Unit)
                 if (d.SmoothDataPoints.length > 0)
                     return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
                 return lineGen(d.DataPoints);
@@ -396,7 +396,7 @@ const LineChart = (props: iProps) => {
 
         lines.exit().remove();
 
-        let points = container.select(".DataContainer").selectAll(".Markers")
+        const points = container.select(".DataContainer").selectAll(".Markers")
             .data(lineData)
             .enter()
             .append("g")
@@ -426,8 +426,8 @@ const LineChart = (props: iProps) => {
 
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
-        let svg = container.select(".DataContainer");
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const svg = container.select(".DataContainer");
 
         svg.selectAll(".Line").attr("d", function (d: OpenSee.iD3DataSeries) {
             const scopedLineGen = createLineGen(d.Unit, d.BaseValue);
@@ -441,7 +441,7 @@ const LineChart = (props: iProps) => {
                 return isNaN(xScaleRef.current(d.x)) ? null : xScaleRef.current(d.x);
             })
             .attr("cy", function (d: IMarker) {
-                let factor: number = 1.0;
+                let factor = 1.0;
                 if (activeUnit?.[d.unit] != undefined)
                     factor = activeUnit?.[d.unit].factor === undefined ? (1.0 / d.base) : factor;
 
@@ -463,7 +463,7 @@ const LineChart = (props: iProps) => {
     function createPlot() {
         d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
 
-        let svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
+        const svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
             .append("g").classed("root", true)
             .attr("transform", "translate(10,0)");
 
@@ -481,14 +481,13 @@ const LineChart = (props: iProps) => {
         xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
 
         //Create xAxis
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d, i) => formatTimeTick(d as number)));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d) => formatTimeTick(d as number)));
 
         let isAxisLeft = true;
-        let axisCount = 0;
 
         //Create yAxises that have enabled Units
         enabledUnits.forEach(unit => {
-            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
+            const axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
 
             svg.append("g")
                 .classed(`yAxis`, true)
@@ -498,7 +497,7 @@ const LineChart = (props: iProps) => {
                 .style("opacity", 1)
 
             // Create axis label
-            let labelYPos = isAxisLeft ? 2 : props.width - 70;
+            const labelYPos = isAxisLeft ? 2 : props.width - 70;
 
             svg.append("text")
                 .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
@@ -512,9 +511,6 @@ const LineChart = (props: iProps) => {
                 .text(yLabels[unit]);
 
             isAxisLeft = !isAxisLeft;
-            axisCount++;
-
-
         });
 
         //Create Axis Labels
