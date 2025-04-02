@@ -366,6 +366,7 @@ export namespace OpenSee {
         Distance: T,
         Unbalance: T,
         THD: T,
+        [""]: T
     }
 
     interface IAxisSettings {
