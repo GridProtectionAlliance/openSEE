@@ -143,7 +143,6 @@ namespace OpenSEE
                 meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
 
                 List<D3Series> returnList = new List<D3Series>();
-                List<D3Series> temp = new List<D3Series>();
 
                 if (dataType == "Time")
                 {
@@ -363,6 +362,8 @@ namespace OpenSEE
                 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = resultList;
+                returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
                 DownSample(returnDict);
                 return returnDict;
             }

@@ -55,7 +55,8 @@ export const emptygraph: OpenSee.IGraphstate = {
         TCE: defaultLimits,
         Distance: defaultLimits,
         Unbalance: defaultLimits,
-        THD: defaultLimits
+        THD: defaultLimits,
+        [""]: defaultLimits
     },
     selectedIndixes: [],
 }
