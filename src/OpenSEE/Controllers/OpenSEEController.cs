@@ -202,20 +202,20 @@ namespace OpenSEE
                                         DateTime Tc = tripInitiate.AddTicks((int)(relayPerformance.ExtinctionTimeC ?? 0));
 
 
-                                        dataMarkers.Add(new double[] { tripInitiate.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripInitiate).FirstOrDefault()?.Value ?? 0 });
+                                        dataMarkers.Add(new double[] { tripInitiate.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < tripInitiate).Select(d => d.Value).FirstOrDefault() });
                                         dataMarkers.Add(new double[] { TImax.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Imax1 ?? 0.0D });
                                         dataMarkers.Add(new double[] { TplungerLatch.Subtract(m_epoch).TotalMilliseconds, relayPerformance.IplungerLatch });
                                         dataMarkers.Add(new double[] { pickuptime.Subtract(m_epoch).TotalMilliseconds, relayPerformance.PickupTimeCurrent ?? 0.0D });
                                         dataMarkers.Add(new double[] { tripTime.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Imax2 ?? 0 });
                                         dataMarkers.Add(new double[] { Tdrop.Subtract(m_epoch).TotalMilliseconds, relayPerformance.Idrop ?? 0 });
-                                        dataMarkers.Add(new double[] { Tend.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tend).FirstOrDefault()?.Value  ?? 0 });
+                                        dataMarkers.Add(new double[] { Tend.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tend).Select(d => d.Value).FirstOrDefault() });
 
                                         if (Ta > tripInitiate)
-                                            dataMarkers.Add(new double[] { Ta.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Ta).FirstOrDefault()?.Value ?? 0 });
+                                            dataMarkers.Add(new double[] { Ta.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Ta).Select(d => d.Value).FirstOrDefault() });
                                         if (Tb > tripInitiate)
-                                            dataMarkers.Add(new double[] { Tb.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tb).FirstOrDefault()?.Value ?? 0 });
+                                            dataMarkers.Add(new double[] { Tb.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tb).Select(d => d.Value).FirstOrDefault() });
                                         if (Tc > tripInitiate)
-                                            dataMarkers.Add(new double[] { Tc.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tc).FirstOrDefault()?.Value ?? 0 });
+                                            dataMarkers.Add(new double[] { Tc.Subtract(m_epoch).TotalMilliseconds, ds.DataPoints.SkipWhile(d => d.Time < Tc).Select(d => d.Value).FirstOrDefault() });
 
                                     }
                                 }
