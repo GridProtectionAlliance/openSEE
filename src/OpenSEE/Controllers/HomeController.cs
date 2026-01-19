@@ -29,6 +29,7 @@ using Gemstone.Identity;
 using Gemstone.Web.Model;
 using OpenSEE.Model;
 using openXDA.Model;
+using Gemstone.Configuration;
 
 namespace OpenSEE.Controllers
 {
@@ -58,7 +59,7 @@ namespace OpenSEE.Controllers
             if (Request.QueryString.Get("eventid") != null)
                 eventID = int.Parse(Request.QueryString["eventid"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 TableOperations<Event> eventTable = new TableOperations<Event>(connection);
 

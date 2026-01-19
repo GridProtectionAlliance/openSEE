@@ -52,16 +52,16 @@ public static class Common
         GetSettingValue("SecurityProvider", "ApplicationName", "GSF Authentication");
 
     private static string GetAnonymousResourceExpression() =>
-        GetSettingValue("SystemSettings", "AnonymousResourceExpression", AuthenticationOptions.DefaultAnonymousResourceExpression);
+        GetSettingValue(Settings.Default, "AnonymousResourceExpression", AuthenticationOptions.DefaultAnonymousResourceExpression);
 
     private static bool GetLogEnabled() =>
-        GetSettingValue("SystemSettings", "LogEnabled", AssemblyInfo.ExecutingAssembly.Debuggable.ToString()).ParseBoolean();
+        GetSettingValue(Settings.Default, "LogEnabled", AssemblyInfo.ExecutingAssembly.Debuggable.ToString()).ParseBoolean();
 
     private static string GetLogPath() =>
-        GetSettingValue("SystemSettings", "LogPath", string.Format("{0}{1}Logs{1}", FilePath.GetAbsolutePath(""), Path.DirectorySeparatorChar));
+        GetSettingValue(Settings.Default, "LogPath", string.Format("{0}{1}Logs{1}", FilePath.GetAbsolutePath(""), Path.DirectorySeparatorChar));
 
     private static int GetMaxLogFiles() =>
-        int.TryParse(GetSettingValue("SystemSettings", "MaxLogFiles", "300"), out int maxLogFiles) ? maxLogFiles : 300;
+        int.TryParse(GetSettingValue(Settings.Default, "MaxLogFiles", "300"), out int maxLogFiles) ? maxLogFiles : 300;
 
     private static string GetSettingValue(string section, string keyName, string defaultValue)
     {

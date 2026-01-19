@@ -35,6 +35,7 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
+using Gemstone.Configuration;
 using Gemstone.Data;
 using Gemstone.Data.Model;
 using Gemstone.Web;
@@ -106,7 +107,7 @@ namespace OpenSEE
         {
             s_memoryCache = new MemoryCache("openSEE");
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
             }
@@ -120,7 +121,7 @@ namespace OpenSEE
         [Route("GetData"),HttpGet]
         public async Task<JsonReturn> GetData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
 
@@ -140,7 +141,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 List<D3Series> returnList = new List<D3Series>();
 
@@ -178,7 +179,7 @@ namespace OpenSEE
                 ds => {
                     if (type == "TripCoilCurrent")
                     {
-                        using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                        using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                         {
                             RelayPerformance relayPerformance = new TableOperations<RelayPerformance>(connection).QueryRecordWhere("EventID = {0} AND ChannelID = {1}", evtID, ds.SeriesInfo.ChannelID);
                             List<double[]> dataMarkers = new List<double[]>();
@@ -282,7 +283,7 @@ namespace OpenSEE
         {
             //Determine Sbase
             double Sbase = 0;
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
 
             IEnumerable<string> names = vICycleDataGroup.CycleDataGroups.Where(ds => ds.RMS.SeriesInfo.Channel.MeasurementType.Name == type).Select(ds => ds.RMS.SeriesInfo.Channel.Phase.Name);
@@ -348,7 +349,7 @@ namespace OpenSEE
         [Route("GetBreakerData"),HttpGet]
         public async Task<JsonReturn> GetBreakerData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -407,7 +408,7 @@ namespace OpenSEE
         [Route("GetAnalogsData"), HttpGet]
         public async Task<JsonReturn> GetAnalogsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -461,7 +462,7 @@ namespace OpenSEE
 
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
 
@@ -596,7 +597,7 @@ namespace OpenSEE
 
         };
 
-        using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+        using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
         {
             EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
             using (IDbCommand cmd = connection.Connection.CreateCommand())
@@ -646,7 +647,7 @@ namespace OpenSEE
         [Route("GetOverlappingEvents"),HttpGet]
         public DataTable GetOverlappingEvents()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -713,7 +714,7 @@ namespace OpenSEE
             Dictionary<string, string> query = Request.QueryParameters();
             int eventId = int.Parse(query["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 DataTable dataTable = connection.RetrieveData("SELECT * FROM OpenSEEScalarStatView WHERE EventID = {0}", eventId);
                 if (dataTable.Rows.Count == 0) return new Dictionary<string, string>();
@@ -730,7 +731,7 @@ namespace OpenSEE
             Dictionary<string, string> query = Request.QueryParameters();
             int eventId = int.Parse(query["eventId"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 DataTable dataTable = connection.RetrieveData(@"
                     SELECT 
@@ -755,7 +756,7 @@ namespace OpenSEE
             int eventID = int.Parse(query["eventId"]);
 
             if (eventID <= 0) return new DataTable();
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 double timeTolerance = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'TimeTolerance'");
                 DateTime startTime = connection.ExecuteScalar<DateTime>("SELECT StartTime FROM Event WHERE ID = {0}", eventID);
@@ -773,7 +774,7 @@ namespace OpenSEE
             Dictionary<string, string> query = Request.QueryParameters();
             int eventID = int.Parse(query["eventID"]);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 const string QueryFormat =
                     "SELECT * " +
@@ -820,7 +821,7 @@ namespace OpenSEE
             try
             {
                 if (eventID <= 0) return BadRequest("Invalid EventID");
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 {
                     int count = connection.ExecuteScalar<int>(@"
                 SELECT 
@@ -850,7 +851,7 @@ namespace OpenSEE
         [Route("GetPQBrowser"), HttpGet]
         public IHttpActionResult GetPQBrowser()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 string pqBrowserURl = connection.ExecuteScalar<string>(@"
                 SELECT 

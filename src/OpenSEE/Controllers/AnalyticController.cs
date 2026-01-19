@@ -35,6 +35,7 @@ using MathNet.Numerics.IntegralTransforms;
 using OpenSEE.Model;
 using Microsoft.AspNetCore.Mvc;
 using Gemstone.Data.Model;
+using Gemstone.Configuration;
 
 namespace OpenSEE
 {
@@ -60,7 +61,7 @@ namespace OpenSEE
         {
             s_memoryCache = new MemoryCache("Analytics");
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
             }
@@ -410,7 +411,7 @@ namespace OpenSEE
         [Route("GetFaultDistanceData"),HttpGet]
         public JsonReturn GetFaultDistanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
 
@@ -439,7 +440,7 @@ namespace OpenSEE
 
         private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter, Asset asset, int evtID)
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 FaultCurve faultCurve = new TableOperations<FaultCurve>(connection).QueryRecordWhere("ID = {0}", faultCurveID);
                 DataGroup dataGroup = new DataGroup();
@@ -479,13 +480,13 @@ namespace OpenSEE
         [Route("GetFirstDerivativeData"), HttpGet]
         public async Task<JsonReturn> GetFirstDerivativeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 List<D3Series> returnList = new List<D3Series>();
                 DataTable table = connection.RetrieveData("SELECT ID, StartTime FROM Event WHERE ID = {0}", evt.ID);
@@ -595,14 +596,14 @@ namespace OpenSEE
         [Route("GetImpedanceData"), HttpGet]
         public async Task<JsonReturn> GetImpedanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetImpedanceLookup(viCycleDataGroup);
@@ -785,13 +786,13 @@ namespace OpenSEE
         [Route("GetRemoveCurrentData"), HttpGet]
         public async Task<JsonReturn> GetRemoveCurrentData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetRemoveCurrentLookup(dataGroup);
@@ -940,13 +941,13 @@ namespace OpenSEE
         [Route("GetI2tData"), HttpGet]
         public async Task<JsonReturn> GetI2tData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetI2tLookup(dataGroup);
@@ -1007,14 +1008,14 @@ namespace OpenSEE
         [Route("GetPowerData"), HttpGet]
         public async Task<JsonReturn> GetPowerData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetPowerLookup(vICycleDataGroup);
@@ -1304,13 +1305,13 @@ namespace OpenSEE
         [Route("GetMissingVoltageData"), HttpGet]
         public async Task<JsonReturn> GetMissingVoltageData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetMissingVoltageLookup(dataGroup);
@@ -1385,13 +1386,13 @@ namespace OpenSEE
         [Route("GetClippedWaveformsData"), HttpGet]
         public async Task<JsonReturn> GetClippedWaveformsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetClippedWaveformsLookup(dataGroup);
@@ -1527,7 +1528,7 @@ namespace OpenSEE
         [Route("GetLowPassFilterData"), HttpGet]
         public async Task<JsonReturn> GetLowPassFilterData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int filterOrder = int.Parse(query["filter"]);
@@ -1535,7 +1536,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetLowPassFilterLookup(dataGroup, filterOrder);
@@ -1602,7 +1603,7 @@ namespace OpenSEE
         [Route("GetHighPassFilterData"), HttpGet]
         public async Task<JsonReturn> GetHighPassFilterData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int filterOrder = int.Parse(query["filter"]);
@@ -1610,7 +1611,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetHighPassFilterLookup(dataGroup, filterOrder);
@@ -1655,13 +1656,13 @@ namespace OpenSEE
         [Route("GetOverlappingWaveformData"), HttpGet]
         public async Task<JsonReturn> GetOverlappingWaveformData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetOverlappingWaveformLookup(dataGroup);
@@ -1751,14 +1752,14 @@ namespace OpenSEE
         [Route("GetRapidVoltageChangeData"), HttpGet]
         public async Task<JsonReturn> GetRapidVoltageChangeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetRapidVoltageChangeLookup(vICycleDataGroup);
@@ -1833,14 +1834,14 @@ namespace OpenSEE
         [Route("GetSymmetricalComponentsData"), HttpGet]
         public async Task<JsonReturn> GetSymmetricalComponentsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetSymmetricalComponentsLookup(vICycleDataGroup);
@@ -2018,14 +2019,14 @@ namespace OpenSEE
         [Route("GetUnbalanceData"), HttpGet]
         public async Task<JsonReturn> GetUnbalanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetUnbalanceLookup(vICycleDataGroup);
@@ -2169,14 +2170,14 @@ namespace OpenSEE
         [Route("GetRectifierData"), HttpGet]
         public async Task<JsonReturn> GetRectifierData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 double TRC = double.Parse(query["Trc"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
                 VIDataGroup dataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
@@ -2266,13 +2267,13 @@ namespace OpenSEE
         [Route("GetFrequencyData"), HttpGet]
         public async Task<JsonReturn> GetFrequencyData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 VIDataGroup viDataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetFrequencyLookup(viDataGroup);
@@ -2435,7 +2436,7 @@ namespace OpenSEE
         [Route("GetTHDData"), HttpGet]
         public async Task<JsonReturn> GetTHDData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -2443,7 +2444,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes==1);
 
@@ -2537,7 +2538,7 @@ namespace OpenSEE
         [Route("GetSpecifiedHarmonicData"), HttpGet]
         public async Task<JsonReturn> GetSpecifiedHarmonicData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -2546,7 +2547,7 @@ namespace OpenSEE
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 int specifiedHarmonic = int.Parse(query["specifiedHarmonic"]);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes==1);
@@ -2662,14 +2663,14 @@ namespace OpenSEE
         [Route("GetBreakerRestrikeData"), HttpGet]
         public async Task<JsonReturn> GetBreakerRestrikeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
                 List<D3Series> returnList = GetBreakerRestrikeData(evt.ID, dataGroup);
@@ -2682,7 +2683,7 @@ namespace OpenSEE
 
         private List<D3Series> GetBreakerRestrikeData(int eventID, DataGroup dataGroup)
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 List<D3Series> currents;
                 List<D3Series> voltages;
@@ -2763,7 +2764,7 @@ namespace OpenSEE
         [Route("GetFFTData"), HttpGet]
         public async Task<JsonReturn> GetFFTData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 Dictionary<string, string> query = Request.QueryParameters();
                 int eventId = int.Parse(query["eventId"]);
@@ -2771,7 +2772,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
                 DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
@@ -2787,7 +2788,7 @@ namespace OpenSEE
         {
             
             int maxHarmonic;
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxFFTHarmonic'") ?? "50");
 
             List<D3Series> dataLookup = new List<D3Series>();

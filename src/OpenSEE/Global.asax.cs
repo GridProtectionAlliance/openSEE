@@ -65,7 +65,7 @@ namespace OpenSEE
             GlobalSettings global = DefaultModel.Global;
 
             // Make sure LSCVSReport specific default config file service settings exist
-            CategorizedSettingsElementCollection systemSettings = ConfigurationFile.Current.Settings["systemSettings"];
+            CategorizedSettingsElementCollection systemSettings = ConfigurationFile.Current.Settings[Settings.Default];
             CategorizedSettingsElementCollection securityProvider = ConfigurationFile.Current.Settings["securityProvider"];
 
             systemSettings.Add("ConnectionString", "Data Source=localhost; Initial Catalog=OpenSee; Integrated Security=SSPI", "Configuration connection string.");

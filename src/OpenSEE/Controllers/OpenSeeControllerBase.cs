@@ -28,6 +28,7 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
+using Gemstone.Configuration;
 using Gemstone.Data;
 using Gemstone.NumericalAnalysis;
 using OpenSEE.Model;
@@ -59,7 +60,7 @@ namespace OpenSEE
             {
                 if (m_Sbase != null)
                     return (double)m_Sbase;
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_Sbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'") ?? 100.0;
                 return (double)m_Sbase;
             }
@@ -71,7 +72,7 @@ namespace OpenSEE
             {
                 if (m_Fbase != null)
                     return (double)m_Fbase;
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
                 return (double)m_Fbase;
             }
@@ -84,7 +85,7 @@ namespace OpenSEE
                 if (m_MaxSampleRate != null)
                     return (int)m_MaxSampleRate;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxSampleRate'") ?? "-1");
                 return (int)m_MaxSampleRate;
             }
@@ -97,7 +98,7 @@ namespace OpenSEE
                 if (m_MinSampleRate != null)
                     return (int)m_MinSampleRate;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OPenSee.Setting] WHERE Name = 'minSampleRate'") ?? "-1");
                 return (int)m_MinSampleRate;
             }
@@ -130,7 +131,7 @@ namespace OpenSEE
                 return "random";
             }
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
 
                 if (channel.MeasurementType.Name == "Voltage")
@@ -423,7 +424,7 @@ namespace OpenSEE
 
             try
             {
-                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("systemSettings"));
+                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection(Settings.Default));
                 DataGroup dataGroup = ToDataGroup(meter, data);
                 taskCompletionSource.SetResult(dataGroup);
                 return dataGroup;
