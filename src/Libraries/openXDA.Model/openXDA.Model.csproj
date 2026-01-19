@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Gemstone.Data" Version="1.0.157" />
+    <PackageReference Include="Gemstone.IO" Version="1.0.157" />
+    <PackageReference Include="Gemstone.PQDIF" Version="1.0.157" />
+  </ItemGroup>
+
+</Project>

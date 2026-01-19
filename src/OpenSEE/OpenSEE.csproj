@@ -111,6 +111,11 @@ if $(ConfigurationName) == Release npm run buildrelease
     <Content Include="Scripts\TSX\hooks.ts" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Libraries\FaultAlgorithms\FaultAlgorithms.csproj" />
+    <ProjectReference Include="..\Libraries\FaultData\FaultData.csproj" />
+    <ProjectReference Include="..\Libraries\openXDA.Model\openXDA.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <TypeScriptCompile Include="Scripts\TSX\Context\HoverContext.tsx" />
     <TypeScriptCompile Include="Scripts\TSX\Context\HoverProvider.tsx" />
     <TypeScriptCompile Include="Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
