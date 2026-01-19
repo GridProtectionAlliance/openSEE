@@ -28,8 +28,8 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.NumericalAnalysis;
+using Gemstone.Data;
+using Gemstone.NumericalAnalysis;
 using OpenSEE.Model;
 using openXDA.Model;
 

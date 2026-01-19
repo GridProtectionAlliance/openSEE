@@ -35,9 +35,9 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Web;
+using Gemstone.Data;
+using Gemstone.Data.Model;
+using Gemstone.Web;
 using OpenSEE.Model;
 using openXDA.Model;
 

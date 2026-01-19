@@ -31,14 +31,14 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
-using GSF;
-using GSF.Configuration;
-using GSF.Data;
-using GSF.Identity;
-using GSF.IO;
-using GSF.Security;
-using GSF.Web.Embedded;
-using GSF.Web.Model;
+using Gemstone;
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Identity;
+using Gemstone.IO;
+using Gemstone.Security;
+using Gemstone.Web.Embedded;
+using Gemstone.Web.Model;
 using OpenSEE.Model;
 
 namespace OpenSEE

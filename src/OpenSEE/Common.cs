@@ -22,11 +22,11 @@
 //******************************************************************************************************
 
 using System.IO;
-using GSF;
-using GSF.Configuration;
-using GSF.IO;
-using GSF.Reflection;
-using GSF.Web.Security;
+using Gemstone;
+using Gemstone.Configuration;
+using Gemstone.IO;
+using Gemstone.Reflection;
+using Gemstone.Web.Security;
 
 namespace OpenSEE;
 

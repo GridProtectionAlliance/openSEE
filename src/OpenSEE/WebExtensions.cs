@@ -23,8 +23,8 @@
 
 
 
-using GSF.Data.Model;
-using GSF.Web.Model;
+using Gemstone.Data.Model;
+using Gemstone.Web.Model;
 using System.Collections.Generic;
 
 namespace OpenSEE

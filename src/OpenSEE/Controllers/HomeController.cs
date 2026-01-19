@@ -22,11 +22,11 @@
 //******************************************************************************************************
 
 using System;
-using System.Web.Mvc;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Identity;
-using GSF.Web.Model;
+using Microsoft.AspNetCore.Mvc;
+using Gemstone.Data;
+using Gemstone.Data.Model;
+using Gemstone.Identity;
+using Gemstone.Web.Model;
 using OpenSEE.Model;
 using openXDA.Model;
 

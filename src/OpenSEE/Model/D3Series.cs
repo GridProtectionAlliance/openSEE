@@ -22,10 +22,10 @@
 //******************************************************************************************************
 
 
-using GSF;
-using GSF.Data.Model;
-using GSF.Web;
-using GSF.Web.Model;
+using Gemstone;
+using Gemstone.Data.Model;
+using Gemstone.Web;
+using Gemstone.Web.Model;
 using System;
 using System.Web;
 using System.Collections.Generic;

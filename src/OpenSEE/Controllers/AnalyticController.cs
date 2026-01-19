@@ -29,21 +29,16 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
-using FaultData.DataAnalysis;
-using GSF;
-using GSF.Console;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.NumericalAnalysis;
-using GSF.Web;
+using Gemstone.Data;
+using Gemstone.Web;
 using MathNet.Numerics.IntegralTransforms;
 using OpenSEE.Model;
-using openXDA.Model;
+using Microsoft.AspNetCore.Mvc;
+using Gemstone.Data.Model;
 
 namespace OpenSEE
 {
-    [RoutePrefix("api/Analytic")]
+    [Route("api/Analytic")]
     public class AnalyticController : OpenSEEBaseController
     {
         #region [ Members ]
