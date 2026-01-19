@@ -29,8 +29,9 @@ if $(ConfigurationName) == Release npm run buildrelease
     <Content Include="Shared\Content\Images\ui-icons_777777_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_cc0000_256x240.png" />
     <Content Include="Shared\Scripts\default.ployfill.js" />
-    <PackageReference Include="MathNet.Numerics" Version="5.0.0-alpha02" />
-    <PackageReference Include="WebGrease" Version="1.5.2" />
+    <PackageReference Include="Gemstone.Web" Version="1.0.161" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="WebGrease" Version="1.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
   </ItemGroup>
