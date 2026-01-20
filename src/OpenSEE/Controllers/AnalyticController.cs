@@ -36,6 +36,11 @@ using OpenSEE.Model;
 using Microsoft.AspNetCore.Mvc;
 using Gemstone.Data.Model;
 using Gemstone.Configuration;
+using openXDA.Model;
+using FaultData.DataAnalysis;
+using Microsoft.Extensions.Primitives;
+using Gemstone.Data.DataExtensions;
+using Gemstone.Numeric.Analysis;
 
 namespace OpenSEE
 {
@@ -413,13 +418,11 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 Asset asset = new TableOperations<Asset>(connection).QueryRecordWhere("ID = {0}", evt.AssetID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 List<D3Series> returnList = new List<D3Series>();
 
@@ -482,8 +485,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -598,8 +600,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -788,8 +789,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -943,8 +943,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -1010,8 +1009,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -1307,8 +1305,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -1388,8 +1385,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -1530,9 +1526,8 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int filterOrder = int.Parse(query["filter"]);
-                int eventId = int.Parse(query["eventId"]);
+                int filterOrder = int.Parse(Request.Query["filter"].ToString());
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -1605,9 +1600,8 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int filterOrder = int.Parse(query["filter"]);
-                int eventId = int.Parse(query["eventId"]);
+                int filterOrder = int.Parse(Request.Query["filter"].ToString());
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -1658,8 +1652,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -1754,8 +1747,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -1836,8 +1828,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -2021,8 +2012,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -2172,9 +2162,8 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                double TRC = double.Parse(query["Trc"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                double TRC = double.Parse(Request.Query["Trc"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -2269,8 +2258,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
@@ -2438,11 +2426,12 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int forceFullRes = 0;
+                if (Request.Query.TryGetValue("fullRes", out StringValues fullRes))
+                    forceFullRes = int.Parse(fullRes.ToString());
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+                    Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
@@ -2540,13 +2529,14 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int forceFullRes = 0;
+                if (Request.Query.TryGetValue("fullRes", out StringValues fullRes))
+                    forceFullRes = int.Parse(fullRes.ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                int specifiedHarmonic = int.Parse(query["specifiedHarmonic"]);
+                int specifiedHarmonic = int.Parse(Request.Query["specifiedHarmonic"].ToString());
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
@@ -2665,8 +2655,7 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
@@ -2766,15 +2755,20 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int cycles = query.ContainsKey("cycles") ? int.Parse(query["cycles"]) : 1;
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int cycles = 1;
+                if (Request.Query.TryGetValue("cycles", out StringValues cycleString))
+                    cycles = int.Parse(cycleString.ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
-                double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                double startTime;
+                if (Request.Query.TryGetValue("startDate", out StringValues start))
+                    startTime = double.Parse(start.ToString());
+                else
+                    startTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
                 DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
                 List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, cycles);
 
