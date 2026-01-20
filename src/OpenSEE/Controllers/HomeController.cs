@@ -22,14 +22,13 @@
 //******************************************************************************************************
 
 using System;
-using Microsoft.AspNetCore.Mvc;
+using Gemstone.Configuration;
 using Gemstone.Data;
 using Gemstone.Data.Model;
-using Gemstone.Identity;
-using Gemstone.Web.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using OpenSEE.Model;
 using openXDA.Model;
-using Gemstone.Configuration;
 
 namespace OpenSEE.Controllers
 {
@@ -56,8 +55,8 @@ namespace OpenSEE.Controllers
             int eventID = -1;
             Event evt;
 
-            if (Request.QueryString.Get("eventid") != null)
-                eventID = int.Parse(Request.QueryString["eventid"]);
+            if (Request.Query.TryGetValue("eventid", out StringValues evtString))
+                eventID = int.Parse(evtString.ToString());
 
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
