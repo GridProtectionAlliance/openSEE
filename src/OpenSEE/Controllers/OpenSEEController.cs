@@ -28,23 +28,24 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
 using FaultData.DataAnalysis;
 using Gemstone.Configuration;
 using Gemstone.Data;
+using Gemstone.Data.DataExtensions;
 using Gemstone.Data.Model;
-using Gemstone.Web;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Primitives;
 using OpenSEE.Model;
 using openXDA.Model;
 
 namespace OpenSEE
 {
-    [RoutePrefix("api/OpenSEE")]
+    [Route("api/OpenSEE")]
     public class OpenSEEController : OpenSEEBaseController
     {
         #region [ Members ]       
@@ -123,20 +124,18 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-
-                int eventId = int.Parse(query["eventId"]);
-                string type = query["type"];
-                string dataType = query["dataType"];
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                string type = Request.Query["type"].ToString();
+                string dataType = Request.Query["dataType"].ToString();
 
                 bool forceFullRes =
-                    query.TryGetValue("fullRes", out string fullResSetting) &&
-                    int.TryParse(fullResSetting, out int fullResNum) &&
+                    Request.Query.TryGetValue("fullRes", out StringValues fullResSetting) &&
+                    int.TryParse(fullResSetting.ToString(), out int fullResNum) &&
                     fullResNum != 0;
 
                 bool dbgNocompress =
-                    query.TryGetValue("dbgNocompress", out string dbgNocompressSetting) &&
-                    int.TryParse(dbgNocompressSetting, out int dbgNocompressNum) &&
+                    Request.Query.TryGetValue("dbgNocompress", out StringValues dbgNocompressSetting) &&
+                    int.TryParse(dbgNocompressSetting.ToString(), out int dbgNocompressNum) &&
                     dbgNocompressNum != 0;
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
@@ -350,13 +349,12 @@ namespace OpenSEE
         public async Task<JsonReturn> GetBreakerData()
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
-            {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+            {;
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
            
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> resultList = GetBreakerLookup(dataGroup);
@@ -410,12 +408,11 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
                 List<D3Series> returnList = GetAnalogsLookup(dataGroup);
@@ -456,9 +453,8 @@ namespace OpenSEE
         [Route("GetHeaderData"),HttpGet]
         public Dictionary<string, dynamic> GetHeaderData()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
-            string breakerOperationID = (query.ContainsKey("breakeroperation") ? query["breakeroperation"] : "-1");
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
+            string breakerOperationID = (Request.Query.ContainsKey("breakeroperation") ? Request.Query["breakeroperation"].ToString() : "-1");
 
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
 
@@ -571,8 +567,7 @@ namespace OpenSEE
     [Route("GetNavData"), HttpGet]
     public Dictionary<string, Tuple<EventView, EventView>> GetNavData()
     {
-        Dictionary<string, string> query = Request.QueryParameters();
-        int eventId = int.Parse(query["eventId"]);
+        int eventId = int.Parse(Request.Query["eventId"].ToString());
 
         Dictionary<string, Tuple<EventView, EventView>> nextBackLookup = new Dictionary<string, Tuple<EventView, EventView>>()
             {
@@ -649,12 +644,13 @@ namespace OpenSEE
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-                DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
+                DateTime startTime = (Request.Query.ContainsKey("startDate") && Request.Query["startDate"].ToString()  != "null") ? 
+                    DateTime.Parse(Request.Query["startDate"].ToString()) : evt.StartTime;
+                DateTime endTime = (Request.Query.ContainsKey("endDate") && Request.Query["endDate"].ToString() != "null") ?
+                    DateTime.Parse(Request.Query["endDate"].ToString()) : evt.EndTime;
 
 
                 DataTable dataTable = connection.RetrieveData(@"
@@ -711,8 +707,7 @@ namespace OpenSEE
         [Route("GetScalarStats"),HttpGet]
         public Dictionary<string, string> GetScalarStats()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
@@ -728,8 +723,7 @@ namespace OpenSEE
         [Route("GetHarmonics"),HttpGet]
         public DataTable GetHarmonics()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
@@ -752,8 +746,7 @@ namespace OpenSEE
         [Route("GetTimeCorrelatedSags"), HttpGet]
         public DataTable GetTimeCorrelatedSags()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventId"]);
+            int eventID = int.Parse(Request.Query["eventId"].ToString());
 
             if (eventID <= 0) return new DataTable();
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
@@ -771,8 +764,7 @@ namespace OpenSEE
         [Route("GetLightningData"), HttpGet]
         public IEnumerable<object> GetLightningData()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventID"]);
+            int eventID = int.Parse(Request.Query["eventID"].ToString());
 
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
@@ -816,14 +808,12 @@ namespace OpenSEE
         }
 
         [Route("GetOutputChannelCount/{eventID}"), HttpGet]
-        public IHttpActionResult GetOutputChannelCount(int eventID)
+        public ActionResult GetOutputChannelCount(int eventID)
         {
-            try
+            if (eventID <= 0) return BadRequest("Invalid EventID");
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                if (eventID <= 0) return BadRequest("Invalid EventID");
-                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
-                {
-                    int count = connection.ExecuteScalar<int>(@"
+                int count = connection.ExecuteScalar<int>(@"
                 SELECT 
 	                COUNT(*) 
                 FROM 
@@ -834,12 +824,7 @@ namespace OpenSEE
                 WHERE
                     Event.ID = {0}
                 ", eventID);
-                    return Ok(count);
-                }
-            }
-            catch(Exception ex)
-            {
-                return InternalServerError(ex);
+                return Ok(count);
             }
 
         }
@@ -849,7 +834,7 @@ namespace OpenSEE
 
         #region [ Note Management ]
         [Route("GetPQBrowser"), HttpGet]
-        public IHttpActionResult GetPQBrowser()
+        public ActionResult GetPQBrowser()
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
