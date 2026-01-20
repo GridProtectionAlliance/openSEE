@@ -24,22 +24,15 @@
 //       Moved OpenSee out of PQ Dashboard
 //
 //*****************************************************************************************************@
-@using GSF.IO;
-@using GSF.IO.Checksums;
+@using Gemstone.IO;
+@using Gemstone.IO.Checksums;
+@using System.IO
 
 @{
     Layout = "";
 
     Version assemblyVersionInfo = typeof(OpenSEE.MvcApplication).Assembly.GetName().Version;
     string applicationVersion = assemblyVersionInfo.Major + "." + assemblyVersionInfo.Minor + "." + assemblyVersionInfo.Build;
-}
-
-@helper ReferenceScript(string path)
-{
-    string fullPath = FilePath.GetAbsolutePath(path.Substring(2));
-    byte[] bytes = File.ReadAllBytes(fullPath);
-    uint checksum = Crc32.Compute(bytes, 0, bytes.Length);
-    <script src="@Url.Content(path)?v=@checksum"></script>
 }
 <!DOCTYPE html>
 
@@ -92,11 +85,6 @@
         var analyticHandle = null;
         var version = '@applicationVersion';
     </script>
-    @if (Request.Browser.Browser == "InternetExplorer" || Request.Browser.Browser == "IE")
-    {
-        @*<script src="https://polyfill.io/v3/polyfill.min.js?features=default%2Ces2015%2Ces2016%2Ces2017%2Ces5%2Ces6%2Ces7"></script>*@
-        <script src="@Url.Content("~/Scripts/default.polyfill.min.js")"></script>
-    }
 
     <script src="@Url.Content("~/@GSF/Web/Shared/Scripts/jquery.js")"></script>
     <script src="@Url.Content("~/@GSF/Web/Shared/Scripts/jquery-ui.js")"></script>
