@@ -23,8 +23,8 @@
 
 using System;
 using System.Threading;
-using System.Web.Mvc;
-using Gemstone.Web.Security;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace OpenSEE.Controllers;
 
@@ -40,7 +40,6 @@ public class LoginController : Controller
     }
 
     [Route("~/AuthTest")]
-    [AuthorizeControllerRole]
     public ActionResult AuthTest()
     {
         return View();
@@ -54,7 +53,6 @@ public class LoginController : Controller
     }
 
     [Route("~/UserInfo")]
-    [AuthorizeControllerRole]
     public ActionResult UserInfo()
     {
         Thread.CurrentPrincipal = ViewBag.SecurityPrincipal = User;
