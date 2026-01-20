@@ -26,17 +26,17 @@ using System.Data;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
 using FaultData.DataAnalysis;
 using Gemstone.Configuration;
 using Gemstone.Data;
-using Gemstone.NumericalAnalysis;
+using Gemstone.Numeric.Interpolation;
+using Microsoft.AspNetCore.Mvc;
 using OpenSEE.Model;
 using openXDA.Model;
 
 namespace OpenSEE
 {
-    public class OpenSEEBaseController : ApiController
+    public class OpenSEEBaseController : Controller
     {
         #region [ Members ]
 
