@@ -1,5 +1,5 @@
 ﻿//******************************************************************************************************
-//  Event.cs - Gbtc
+//  Disturbance.cs - Gbtc
 //
 //  Copyright © 2017, Grid Protection Alliance.  All Rights Reserved.
 //
@@ -21,71 +21,47 @@
 //
 //******************************************************************************************************
 
-using System.Data;
-using Gemstone.Data;
+using System;
 using Gemstone.Data.Model;
 
 namespace openXDA.Model
 {
-    [TableName("Event")]
-    public class Event
+    public class Disturbance
     {
         [PrimaryKey(true)]
         public int ID { get; set; }
-
-        public int FileGroupID { get; set; }
-
-        public int MeterID { get; set; }
-
-        public int AssetID { get; set; }
-
+        public int EventID { get; set; }
         public int EventTypeID { get; set; }
+        public int PhaseID { get; set; }
+        public double Magnitude { get; set; }
+        public double PerUnitMagnitude { get; set; }
 
-        public int? EventDataID { get; set; }
-
-        public string Name { get; set; }
-
-        public string Alias { get; set; }
-
-        public string ShortName { get; set; }
-
-        [FieldDataType(DbType.DateTime2, DatabaseType.SQLServer)]
+        [FieldDataType(System.Data.DbType.DateTime2, Gemstone.Data.DatabaseType.SQLServer)]
         public DateTime StartTime { get; set; }
 
-        [FieldDataType(DbType.DateTime2, DatabaseType.SQLServer)]
+        [FieldDataType(System.Data.DbType.DateTime2, Gemstone.Data.DatabaseType.SQLServer)]
         public DateTime EndTime { get; set; }
 
-        public int Samples { get; set; }
-
-        public int TimeZoneOffset { get; set; }
-
-        public int SamplesPerSecond { get; set; }
-
-        public int SamplesPerCycle { get; set; }
-
-        public string Description { get; set; }
-
-        public int FileVersion { get; set; }
-
+        public double DurationSeconds { get; set; }
+        public double DurationCycles { get; set; }
+        public int StartIndex { get; set; }
+        public int EndIndex { get; set; }
         public string UpdatedBy { get; set; }
     }
 
-    [TableName("EventView")]
-    public class EventView : Event
+    [TableName("DisturbanceView")]
+    public class DisturbanceView: Disturbance
     {
-        [PrimaryKey(true)]
-        public new int ID
-        {
-            get => base.ID;
-            set => base.ID = value;
-        }
-
-        public string AssetName { get; set; }
-
+        public int MeterID { get; set; }
+        public int LineID { get; set; }
+        public int? SeverityCode { get; set; }
         public string MeterName { get; set; }
-
-        public string StationName { get; set; }
-
-        public string EventTypeName { get; set; }
+        public string PhaseName { get; set; }
     }
+
+    [TableName("DisturbanceView")]
+    public class DisturbancesForDay : DisturbanceView { }
+
+    [TableName("DisturbanceView")]
+    public class DisturbancesForMeter : DisturbanceView { }
 }
