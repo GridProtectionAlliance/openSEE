@@ -21,10 +21,9 @@
 //
 //******************************************************************************************************
 
-using System;
 using System.Data;
-using GSF.Data;
-using GSF.Data.Model;
+using Gemstone.Data;
+using Gemstone.Data.Model;
 
 namespace openXDA.Model
 {
@@ -91,10 +90,8 @@ namespace openXDA.Model
 
         public string Energized { get; set; }
 
-        [Searchable]
         public int BreakerNumber { get; set; }
 
-        [Searchable]
         public string LineName { get; set; }
 
         public string PhaseName { get; set; }
@@ -103,7 +100,6 @@ namespace openXDA.Model
 
         public int Speed { get; set; }
 
-        [Searchable]
         public string OperationType { get; set; }
 
         public string UpdatedBy { get; set; }
