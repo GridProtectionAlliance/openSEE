@@ -30,7 +30,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <Content Include="Shared\Scripts\default.ployfill.js" />
     <PackageReference Include="Gemstone.Web" Version="1.0.161" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="WebGrease" Version="1.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
   </ItemGroup>
@@ -103,9 +102,6 @@ if $(ConfigurationName) == Release npm run buildrelease
   <ItemGroup>
     <Reference Include="MathNet.Numerics, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\Dependencies\NuGet\MathNet.Numerics.5.0.0-alpha02\lib\net48\MathNet.Numerics.dll</HintPath>
-    </Reference>
-    <Reference Include="WebGrease, Version=1.5.2.14234, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\Dependencies\NuGet\WebGrease.1.5.2\lib\WebGrease.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
