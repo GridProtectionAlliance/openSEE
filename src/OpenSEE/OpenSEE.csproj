@@ -20,7 +20,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Images\openSEELogo.png" />
     <None Include="wwwroot\Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="FaultSpecifics.aspx" />
-    <Content Include="Global.asax" />
     <Content Include="CSVDownload.ashx" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
@@ -40,9 +39,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <Compile Update="FaultSpecifics.aspx.cs">
       <DependentUpon>FaultSpecifics.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Update="Global.asax.cs">
-      <DependentUpon>Global.asax</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
