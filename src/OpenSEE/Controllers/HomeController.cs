@@ -37,18 +37,7 @@ namespace OpenSEE.Controllers
     /// </summary>
     public class HomeController : Controller
     {
-        #region [ Constructors ]
-
-        public HomeController()
-        {
-            ViewData.Model = new AppModel();
-        }
-
-        #endregion
-
-        #region [ Methods ]
-
-        public ActionResult Home()
+        public IActionResult Index()
         {
             ViewBag.IsAdmin = User.IsInRole("Administrator");
 
@@ -75,7 +64,5 @@ namespace OpenSEE.Controllers
             ViewBag.Cycles = Math.Floor((evt.EndTime - evt.StartTime).TotalSeconds * 60.0D);
             return View("Index");
         }
-
-        #endregion
     }
 }
