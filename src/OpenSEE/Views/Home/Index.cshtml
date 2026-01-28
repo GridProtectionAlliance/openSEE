@@ -27,11 +27,12 @@
 @using Gemstone.IO;
 @using Gemstone.IO.Checksums;
 @using System.IO
+@using Gemstone.Reflection
 
 @{
     Layout = "";
 
-    Version assemblyVersionInfo = typeof(OpenSEE.MvcApplication).Assembly.GetName().Version;
+    Version assemblyVersionInfo = AssemblyInfo.EntryAssembly.Version;
     string applicationVersion = assemblyVersionInfo.Major + "." + assemblyVersionInfo.Minor + "." + assemblyVersionInfo.Build;
 }
 <!DOCTYPE html>
