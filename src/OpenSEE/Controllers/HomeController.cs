@@ -25,6 +25,7 @@ using System;
 using Gemstone.Configuration;
 using Gemstone.Data;
 using Gemstone.Data.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using openXDA.Model;
@@ -34,6 +35,7 @@ namespace OpenSEE.Controllers
     /// <summary>
     /// Represents a MVC controller for the site's main pages.
     /// </summary>
+    [Authorize]
     public class HomeController : Controller
     {
         public IActionResult Index()
