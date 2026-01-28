@@ -23,95 +23,88 @@
 
 using System;
 using System.IO;
-using System.Reflection;
-using System.Web.Http;
 using Gemstone.Diagnostics;
 using Gemstone.IO;
-using Gemstone.Web.Security;
-using Gemstone.Web.Shared;
-using Microsoft.Owin;
-using Owin;
-using static OpenSEE.Common;
-
-[assembly: OwinStartup(typeof(OpenSEE.Startup))]
+using Gemstone.Web;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Serialization;
+using OpenSEE.Security;
 namespace OpenSEE;
 
 public class Startup
 {
-    public void Configuration(IAppBuilder app)
-    {
-        // Enable GSF role-based security authentication
-        app.UseAuthentication(s_authenticationOptions);
-
-        OwinLoaded = true;
-
-        // Configure Web API for self-host
-        HttpConfiguration config = new HttpConfiguration();
-
-        // Enable GSF session management
-        config.EnableSessions(s_authenticationOptions);
-
-        // Set configuration to use reflection to setup routes
-        config.MapHttpAttributeRoutes();
-
-        app.UseWebApi(config);
-    }
-
-    private static readonly AuthenticationOptions s_authenticationOptions;
-
-    static Startup()
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
         SetupTempPath();
-
-        s_authenticationOptions = new AuthenticationOptions
-        {
-            LoginPage = "~/Login",
-            LogoutPage = "~/Security/logout",
-            LoginHeader = $"<h3><img src=\"{Resources.Root}/Shared/Images/gpa-smalllock.png\"/> {ApplicationName}</h3>",
-            AuthTestPage = "~/AuthTest",
-            AnonymousResourceExpression = AnonymousResourceExpression,
-            AuthFailureRedirectResourceExpression = @"^/$|^/.+$"
-        };
-
-        AuthenticationOptions = CreateInstance<ReadonlyAuthenticationOptions>(s_authenticationOptions);
-
-        if (!LogEnabled)
-            return;
-
-        // Retrieve application log path as defined in the config file
-        string logPath = LogPath;
-
-        // Make sure log directory exists
-        try
-        {
-            if (!Directory.Exists(logPath))
-                Directory.CreateDirectory(logPath);
-        }
-        catch
-        {
-            logPath = FilePath.GetAbsolutePath("");
-        }
-
-        try
-        {
-            Logger.FileWriter.SetPath(logPath);
-            Logger.FileWriter.SetLoggingFileCount(MaxLogFiles);
-        }
-        catch
-        {
-            // ignored
-        }
+        Configuration = configuration;
+        Env = env;
     }
 
-    public static bool OwinLoaded { get; private set; }
+    public IWebHostEnvironment Env { get; set; }
+    public IConfiguration Configuration { get; }
 
-    public static ReadonlyAuthenticationOptions AuthenticationOptions { get; }
-
-    private static T CreateInstance<T>(params object[] args)
+    public void ConfigureServices(IServiceCollection services)
     {
-        Type type = typeof(T);
-        object instance = type.Assembly.CreateInstance(type.FullName!, false, BindingFlags.Instance | BindingFlags.NonPublic, null, args, null, null);
-        return (T)instance;
+        IMvcBuilder builder = services
+            .AddControllersWithViews()
+            .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+            });
+
+        // Todo: Temp Auth
+        services.AddAuthentication(TestAuthHandler.AuthenticationScheme)
+            .AddScheme<TestAuthHandlerOptions, TestAuthHandler>(TestAuthHandler.AuthenticationScheme, (options) => { });
+
+
+        services.AddMvc();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Error");
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            app.UseHsts();
+        }
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions()
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+        });
+
+        app.UseStaticFiles(WebExtensions.StaticFileEmbeddedResources());
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller}/{newaction?}/{id?}",
+            defaults: new
+            {
+                controller = "Home",
+                action = "Index"
+            });
+
+            endpoints.MapControllers();
+        });
     }
 
     private static void SetupTempPath()
