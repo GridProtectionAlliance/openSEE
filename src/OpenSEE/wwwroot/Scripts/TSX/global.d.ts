@@ -25,7 +25,6 @@
 // global variables declared in openSEE.cshtml scripts section
 declare global {
     var homePath: string;
-    var userIsAdmin: boolean;
     var eventID: number;
     var eventStartTime: string;
     var eventEndTime: string;

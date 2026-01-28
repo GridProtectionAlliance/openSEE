@@ -17,5 +17,5 @@
   "exclude": [
     "node_modules"
   ],
-  "include": [ "Scripts/TSX", "Scripts/TS/*" ]
+  "include": [ "wwwroot/Scripts/TSX", "wwwroot/Scripts/TS/*" ]
 }

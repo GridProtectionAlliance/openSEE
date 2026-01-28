@@ -12,17 +12,16 @@ if $(ConfigurationName) == Release npm run buildrelease
     <OutputPath>bin\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Content\bootstrap4-datetimepicker.css" />
-    <Content Include="Content\FaultSpecifics.css" />
+    <None Include="wwwroot\Content\bootstrap4-datetimepicker.css" />
+    <None Include="wwwroot\Content\FaultSpecifics.css" />
+    <None Include="wwwroot\Images\2-Line - 500.png" />
+    <None Include="wwwroot\Images\openSEE - Waveform Viewer Header.png" />
+    <None Include="wwwroot\Images\openSEE.jpg" />
+    <None Include="wwwroot\Images\openSEELogo.png" />
+    <None Include="wwwroot\Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="FaultSpecifics.aspx" />
     <Content Include="Global.asax" />
     <Content Include="CSVDownload.ashx" />
-    <Content Include="Images\2-Line - 500.png" />
-    <Content Include="Images\openSEE - Waveform Viewer Header.png" />
-    <None Include="Scripts\jquery-3.6.0.intellisense.js" />
-    <Content Include="Images\openSEE.jpg" />
-    <Content Include="Images\openSEELogo.png" />
-    <Content Include="Scripts\OpenSee.js" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
@@ -50,6 +49,53 @@ if $(ConfigurationName) == Release npm run buildrelease
   <ItemGroup>
     <None Include="package.json" />
     <None Include="tsconfig.json" />
+    <None Include="wwwroot\Scripts\FFTTable.js" />
+    <None Include="wwwroot\Scripts\HarmonicStatsWidget.js" />
+    <None Include="wwwroot\Scripts\LightningDataWidget.js" />
+    <None Include="wwwroot\Scripts\OpenSee.js" />
+    <None Include="wwwroot\Scripts\PhasorChartWidget.js" />
+    <None Include="wwwroot\Scripts\PointWidget.js" />
+    <None Include="wwwroot\Scripts\ScalarStatsWidget.js" />
+    <None Include="wwwroot\Scripts\SettingsWidget.js" />
+    <None Include="wwwroot\Scripts\TimeCorrelatedSagsWidget.js" />
+    <None Include="wwwroot\Scripts\ToolTipDeltaWidget.js" />
+    <None Include="wwwroot\Scripts\ToolTipWidget.js" />
+    <None Include="wwwroot\Scripts\TSX\Components\About.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Components\AnalyticOptions.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Components\Menu.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Components\OpenSEENavbar.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Components\OverlappingEvents.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Context\HoverProvider.tsx" />
+    <None Include="wwwroot\Scripts\TSX\defaults.ts" />
+    <None Include="wwwroot\Scripts\TSX\global.d.ts" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\BarChartBase.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\ChartIcons.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\LegendBase.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\LineChartBase.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Utilities.tsx" />
+    <None Include="wwwroot\Scripts\TSX\hooks.ts" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\FFTTable.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\HarmonicStats.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\LightningData.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\PhasorChart.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\ScalarStats.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\SettingWindow.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\TimeCorrelatedSags.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\Tooltip.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\TooltipWithDelta.tsx" />
+    <None Include="wwwroot\Scripts\TSX\openSEE.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\analyticSlice.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\dataSlice.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\eventInfoSlice.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\GraphLogic.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\overlappingEventsSlice.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\queryThunk.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\RequestHandler.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\settingSlice.tsx" />
+    <None Include="wwwroot\Scripts\TSX\store\store.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
@@ -63,62 +109,14 @@ if $(ConfigurationName) == Release npm run buildrelease
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\TSX\jQueryUI Widgets\SettingWindow.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\global.d.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\defaults.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\Graphs\LegendBase.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\settingSlice.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\store.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\dataSlice.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\analyticSlice.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\overlappingEventsSlice.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\GraphLogic.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\Graphs\BarChartBase.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\queryThunk.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\Graphs\ChartIcons.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\store\RequestHandler.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\Graphs\Utilities.tsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\TSX\hooks.ts" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Libraries\FaultAlgorithms\FaultAlgorithms.csproj" />
     <ProjectReference Include="..\Libraries\FaultData\FaultData.csproj" />
     <ProjectReference Include="..\Libraries\openXDA.Model\openXDA.Model.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\TSX\Context\HoverContext.tsx" />
-    <TypeScriptCompile Include="Scripts\TSX\Context\HoverProvider.tsx" />
-    <TypeScriptCompile Include="Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
-    <TypeScriptCompile Include="Scripts\TSX\store\eventInfoSlice.tsx" />
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverProvider.tsx" />
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\store\eventInfoSlice.tsx" />
   </ItemGroup>
 </Project>

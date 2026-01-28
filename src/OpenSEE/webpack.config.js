@@ -12,20 +12,20 @@ function buildConfig(env, argv) {
         context: path.resolve(__dirname),
         cache: true,
         entry: {
-            OpenSee: "./Scripts/TSX/OpenSee.tsx",
-            ToolTipDeltaWidget: "./Scripts/TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
-            ToolTipWidget: "./Scripts/TSX/jQueryUI Widgets/Tooltip.tsx",
-            TimeCorrelatedSagsWidget: "./Scripts/TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
-            PointWidget: "./Scripts/TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
-            PhasorChartWidget: "./Scripts/TSX/jQueryUI Widgets/PhasorChart.tsx",
-            ScalarStatsWidget: "./Scripts/TSX/jQueryUI Widgets/ScalarStats.tsx",
-            LightningDataWidget: "./Scripts/TSX/jQueryUI Widgets/LightningData.tsx",
-            SettingsWidget: "./Scripts/TSX/jQueryUI Widgets/SettingWindow.tsx",
-            FFTTable: "./Scripts/TSX/jQueryUI Widgets/FFTTable.tsx",
-            HarmonicStatsWidget: "./Scripts/TSX/jQueryUI Widgets/HarmonicStats.tsx",
+            OpenSee: "./wwwroot/Scripts/TSX/OpenSee.tsx",
+            ToolTipDeltaWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
+            ToolTipWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/Tooltip.tsx",
+            TimeCorrelatedSagsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
+            PointWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
+            PhasorChartWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/PhasorChart.tsx",
+            ScalarStatsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/ScalarStats.tsx",
+            LightningDataWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/LightningData.tsx",
+            SettingsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/SettingWindow.tsx",
+            FFTTable: "./wwwroot/Scripts/TSX/jQueryUI Widgets/FFTTable.tsx",
+            HarmonicStatsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/HarmonicStats.tsx",
         },
         output: {
-            path: path.resolve(__dirname, 'Scripts'),
+            path: path.resolve(__dirname, './wwwroot/Scripts'),
             filename: "[name].js",
         },
         // Enable sourcemaps for debugging webpack's output.
@@ -39,7 +39,7 @@ function buildConfig(env, argv) {
                 // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
                 {
                     test: /\.tsx?$/,
-                    include: path.resolve(__dirname, "Scripts"),
+                    include: path.resolve(__dirname, 'wwwroot', "Scripts"),
                     loader: "ts-loader", options: { transpileOnly: true }
                 },
                 {
