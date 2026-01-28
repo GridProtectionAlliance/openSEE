@@ -27,7 +27,6 @@ using Gemstone.Data;
 using Gemstone.Data.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using OpenSEE.Model;
 using openXDA.Model;
 
 namespace OpenSEE.Controllers
@@ -39,8 +38,6 @@ namespace OpenSEE.Controllers
     {
         public IActionResult Index()
         {
-            ViewBag.IsAdmin = User.IsInRole("Administrator");
-
             int eventID = -1;
             Event evt;
 
