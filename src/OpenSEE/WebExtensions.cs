@@ -21,32 +21,27 @@
 //
 //******************************************************************************************************
 
+using System.Reflection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
 
-
-using Gemstone.Data.Model;
-using Gemstone.Web.Model;
-using System.Collections.Generic;
-
-namespace OpenSEE
+namespace Gesmtone.Web
 {
-
-    [TableName("OpenSEE.Setting")]
-    [UseEscapedName]
-    public class OpenSEESetting : openXDA.Model.Setting { };
-
     public static class WebExtensions
     {
-        public static Dictionary<string, string> LoadDatabaseSettings(this DataContext dataContext, string scope)
+        /// <summary>
+        /// Used to create <see cref="StaticFileOptions"/> for serving Gemstone.Web embedded javascript and css stylesheets.
+        /// </summary>
+        /// <returns><see cref="StaticFileOptions"/></returns>
+        public static StaticFileOptions StaticFileEmbeddedResources()
         {
-            Dictionary<string, string> settings = new Dictionary<string, string>();
-
-            foreach (OpenSEESetting setting in dataContext.Table<OpenSEESetting>().QueryRecords("Name"))
+            ManifestEmbeddedFileProvider embeddedFileProvider = new(Assembly.GetExecutingAssembly(), "Shared");
+            return new StaticFileOptions
             {
-                if (!string.IsNullOrEmpty(setting.Name))
-                    settings.Add(setting.Name, setting.Value);
-            }
-
-            return settings;
+                FileProvider = embeddedFileProvider,
+                RequestPath = new PathString("/@Gemstone")
+            };
         }
     }
 }
