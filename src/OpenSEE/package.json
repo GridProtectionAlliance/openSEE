@@ -54,6 +54,7 @@
   },
   "scripts": {
     "build": "npm prune && npm ci && webpack --mode=development",
+    "builddev": "webpack --mode=development",
     "buildrelease": "npm prune && npm ci && webpack --mode=production",
     "watch": "webpack --watch --color --mode=development",
     "update": "npx npm-check-updates",
