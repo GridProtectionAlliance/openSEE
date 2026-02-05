@@ -82,10 +82,10 @@ const OpenSeeNavBar = (props: IProps) => {
         }
         return () => { }
 
-    }, [props.OpenDrawers.AccumulatedPoints])
+    }, [props.OpenDrawers.AccumulatedPoints]);
 
     function exportData(type) {
-        window.open(homePath + `CSVDownload.ashx?type=${type}&eventID=${eventID}` +
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${eventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
@@ -99,9 +99,9 @@ const OpenSeeNavBar = (props: IProps) => {
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
             `&Meter=${eventInfo.MeterName}` +
-            `&EventType=${eventInfo.EventName}`
-        );
-    }
+            `&EventType=${eventInfo.EventName}`;
+        window.open(uri, '_blank');
+    };
 
     return (
         <>
