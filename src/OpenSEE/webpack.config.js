@@ -3,6 +3,7 @@ const path = require("path");
 const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+var webpack = require('webpack');
 
 function buildConfig(env, argv) {
     if (env.NODE_ENV == undefined) env.NODE_ENV = 'development';
@@ -63,7 +64,11 @@ function buildConfig(env, argv) {
         },
         plugins: [
             new NodePolyfillPlugin(),
-            new ForkTsCheckerWebpackPlugin()
+            new ForkTsCheckerWebpackPlugin(),
+            new webpack.ProvidePlugin({
+                $: "jquery",
+                "window.jQuery": "jquery",
+            })
         ]
     };
 
