@@ -3,6 +3,8 @@
   "name": "opensee",
   "private": true,
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
     "css-loader": "6.2.0",
     "eslint": "^8.43.0",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
