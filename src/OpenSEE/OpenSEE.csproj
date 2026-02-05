@@ -10,6 +10,8 @@ if $(ConfigurationName) == Release npm run buildrelease
 </PreBuildEvent>
     <TargetFramework>net9.0</TargetFramework>
     <OutputPath>bin\</OutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
   </PropertyGroup>
   <ItemGroup>
     <None Include="wwwroot\Content\bootstrap4-datetimepicker.css" />
