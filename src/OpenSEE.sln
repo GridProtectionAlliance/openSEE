@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaultData", "Libraries\Faul
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openXDA.Model", "Libraries\openXDA.Model\openXDA.Model.csproj", "{F463A000-041D-CC7D-0954-3942A5D4A946}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PQDS", "Libraries\PQDS\PQDS.csproj", "{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{F463A000-041D-CC7D-0954-3942A5D4A946}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F463A000-041D-CC7D-0954-3942A5D4A946}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F463A000-041D-CC7D-0954-3942A5D4A946}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,6 +54,7 @@ Global
 		{79E70E44-FB78-B280-97D7-1650186161DF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{1C77C616-BE00-A5A0-8109-C0D9F7C0202E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{F463A000-041D-CC7D-0954-3942A5D4A946} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C6E64BA2-DCA7-4A34-973A-2306A1F9EFFC} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3E81769A-8E91-4DE2-AD77-438C680437A5}
