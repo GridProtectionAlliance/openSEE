@@ -29,6 +29,8 @@ if $(ConfigurationName) == Release npm run buildrelease
     <Content Include="Shared\Scripts\default.ployfill.js" />
     <PackageReference Include="Gemstone.Web" Version="1.0.161" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.12" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
   </ItemGroup>
