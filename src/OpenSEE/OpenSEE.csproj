@@ -18,7 +18,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Images\openSEE - Waveform Viewer Header.png" />
     <None Include="wwwroot\Images\openSEE.jpg" />
     <None Include="wwwroot\Images\openSEELogo.png" />
-    <None Include="wwwroot\Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="FaultSpecifics.aspx" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
@@ -40,17 +39,7 @@ if $(ConfigurationName) == Release npm run buildrelease
   <ItemGroup>
     <None Include="package.json" />
     <None Include="tsconfig.json" />
-    <None Include="wwwroot\Scripts\FFTTable.js" />
-    <None Include="wwwroot\Scripts\HarmonicStatsWidget.js" />
-    <None Include="wwwroot\Scripts\LightningDataWidget.js" />
     <None Include="wwwroot\Scripts\OpenSee.js" />
-    <None Include="wwwroot\Scripts\PhasorChartWidget.js" />
-    <None Include="wwwroot\Scripts\PointWidget.js" />
-    <None Include="wwwroot\Scripts\ScalarStatsWidget.js" />
-    <None Include="wwwroot\Scripts\SettingsWidget.js" />
-    <None Include="wwwroot\Scripts\TimeCorrelatedSagsWidget.js" />
-    <None Include="wwwroot\Scripts\ToolTipDeltaWidget.js" />
-    <None Include="wwwroot\Scripts\ToolTipWidget.js" />
     <None Include="wwwroot\Scripts\TSX\Components\About.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\AnalyticOptions.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\Menu.tsx" />
