@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 using FaultData.DataAnalysis;
 using Gemstone.Configuration;
 using Gemstone.Data;
+using Gemstone.Data.Model;
 using Gemstone.Numeric.Interpolation;
 using Microsoft.AspNetCore.Mvc;
 using OpenSEE.Model;
@@ -409,7 +410,7 @@ namespace OpenSEE
 
         #region [ Shared Functions ]
 
-        public static async Task<DataGroup> QueryDataGroupAsync(int eventID, Meter meter)
+        public static async Task<DataGroup> QueryDataGroupAsync(int eventID, AdoDataConnection connection)
         {
             string target = $"DataGroup-{eventID}";
 
@@ -424,8 +425,14 @@ namespace OpenSEE
 
             try
             {
+                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventID);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
+                Asset asset = new TableOperations<Asset>(connection).QueryRecordWhere("ID = {0}", evt.AssetID);
+                asset.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
+
                 List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection(Settings.Default));
-                DataGroup dataGroup = ToDataGroup(meter, data);
+                DataGroup dataGroup = ToDataGroup(meter, asset, data);
                 taskCompletionSource.SetResult(dataGroup);
                 return dataGroup;
             }
@@ -437,7 +444,7 @@ namespace OpenSEE
             }
         }
 
-        public static async Task<VIDataGroup> QueryVIDataGroupAsync(int eventID, Meter meter)
+        public static async Task<VIDataGroup> QueryVIDataGroupAsync(int eventID, AdoDataConnection connection)
         {
             string target = $"VIDataGroup-{eventID}";
 
@@ -452,7 +459,7 @@ namespace OpenSEE
 
             try
             {
-                DataGroup dataGroup = await QueryDataGroupAsync(eventID, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventID, connection);
                 VIDataGroup viDataGroup = new VIDataGroup(dataGroup);
                 taskCompletionSource.SetResult(viDataGroup);
                 return viDataGroup;
@@ -465,7 +472,7 @@ namespace OpenSEE
             }
         }
 
-        public static async Task<VICycleDataGroup> QueryVICycleDataGroupAsync(int eventID, Meter meter, bool compress = true)
+        public static async Task<VICycleDataGroup> QueryVICycleDataGroupAsync(int eventID, AdoDataConnection connection, bool compress = true)
         {
             string compression = compress ? "compressed" : "uncompressed";
             string target = $"VICycleDataGroup-{eventID}-{compression}";
@@ -481,7 +488,7 @@ namespace OpenSEE
 
             try
             {
-                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(eventID, meter);
+                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(eventID, connection);
                 VICycleDataGroup viCycleDataGroup = Transform.ToVICycleDataGroup(viDataGroup, Fbase, compress);
                 taskCompletionSource.SetResult(viCycleDataGroup);
                 return viCycleDataGroup;
@@ -494,9 +501,9 @@ namespace OpenSEE
             }
         }
 
-        public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
+        public static DataGroup ToDataGroup(Meter meter, Asset asset, List<byte[]> data)
         {
-            DataGroup dataGroup = new DataGroup();
+            DataGroup dataGroup = new DataGroup(asset);
             dataGroup.FromData(meter, data);
             VIDataGroup vIDataGroup = new VIDataGroup(dataGroup);
             return vIDataGroup.ToDataGroup();

@@ -139,19 +139,17 @@ namespace OpenSEE
                     dbgNocompressNum != 0;
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 List<D3Series> returnList = new List<D3Series>();
 
                 if (dataType == "Time")
                 {
-                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
+                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                     returnList = GetD3DataLookup(dataGroup, type, evt.ID);
                 }
                 else
                 {
-                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, meter, !dbgNocompress);
+                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection, !dbgNocompress);
                     returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !forceFullRes);
                 }
 
@@ -353,10 +351,7 @@ namespace OpenSEE
                 int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
-           
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, connection);
                 List<D3Series> resultList = GetBreakerLookup(dataGroup);
                 
                 JsonReturn returnDict = new JsonReturn();
@@ -409,12 +404,7 @@ namespace OpenSEE
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 int eventId = int.Parse(Request.Query["eventId"].ToString());
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetAnalogsLookup(dataGroup);
               
                 JsonReturn returnDict = new JsonReturn();

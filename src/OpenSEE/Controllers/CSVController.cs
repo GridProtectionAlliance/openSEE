@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using FaultData.DataAnalysis;
 using Gemstone.Configuration;
 using Gemstone.Data;
@@ -163,16 +162,12 @@ namespace OpenSEE
 
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
-
                 // only get Single Voltage and Single Current Data for This....
                 List<PQDS.DataSeries> data = new List<PQDS.DataSeries>();
                 List<PQDS.MetaDataTag> metaData = new List<PQDS.MetaDataTag>();
 
                 VIDataGroup dataGroup = OpenSEEBaseController
-                    .QueryVIDataGroupAsync(evt.ID, meter)
+                    .QueryVIDataGroupAsync(eventID, connection)
                     .GetAwaiter()
                     .GetResult();
 
@@ -196,7 +191,8 @@ namespace OpenSEE
                     return;
 
                 // Add MetaData Information
-                metaData = PQDSMetaData(evt, meter);
+                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
+                metaData = PQDSMetaData(evt, connection);
 
                 PQDS.PQDSFile file = new PQDS.PQDSFile(metaData, data, evt.StartTime);
 
@@ -204,9 +200,12 @@ namespace OpenSEE
             }
         }
 
-        private List<PQDS.MetaDataTag> PQDSMetaData(Event evt, Meter meter)
+        private List<PQDS.MetaDataTag> PQDSMetaData(Event evt, AdoDataConnection connection)
         {
             List<PQDS.MetaDataTag> result = new List<PQDS.MetaDataTag>();
+            Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+            Asset asset = (new TableOperations<Asset>(connection)).QueryRecordWhere("ID = {0}", evt.AssetID);
+            meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
             result.Add(new PQDS.MetaDataTag<string>("DeviceName", meter.Name));
             result.Add(new PQDS.MetaDataTag<string>("DeviceAlias", meter.ShortName));
@@ -215,85 +214,79 @@ namespace OpenSEE
             result.Add(new PQDS.MetaDataTag<string>("Latitude", Convert.ToString(meter.Location.Latitude)));
             result.Add(new PQDS.MetaDataTag<string>("Longitude", Convert.ToString(meter.Location.Longitude)));
 
-            Asset asset;
-            double systemFrequency;
-            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
+            double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+
+            if (asset != null)
             {
-                asset = (new TableOperations<Asset>(connection)).QueryRecordWhere("ID = {0}", evt.AssetID);
-                systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
+                result.Add(new PQDS.MetaDataTag<double>("NominalVoltage-LG", asset.VoltageKV));
+                result.Add(new PQDS.MetaDataTag<double>("NominalFrequency", systemFrequency));
+                result.Add(new PQDS.MetaDataTag<string>("AssetName", asset.AssetKey));
 
-                if (asset != null)
-                {
-                    result.Add(new PQDS.MetaDataTag<double>("NominalVoltage-LG", asset.VoltageKV));
-                    result.Add(new PQDS.MetaDataTag<double>("NominalFrequency", systemFrequency));
-                    result.Add(new PQDS.MetaDataTag<string>("AssetName", asset.AssetKey));
-
-                    if (asset.AssetTypeID == connection.ExecuteScalar<int>("SELECT ID FROM AssetType WHERE Name = 'Line'"))
-                        result.Add(new PQDS.MetaDataTag<double>("LineLength", connection.ExecuteScalar<double>("SELECT Length FROM LineView WHERE ID = {0}", asset.ID)));
-                }
-
-
-                result.Add(new PQDS.MetaDataTag<string>("EventID", evt.Name));
-                result.Add(new PQDS.MetaDataTag<string>("EventGUID", Guid.NewGuid().ToString()));
-                result.Add(new PQDS.MetaDataTag<double>("EventDuration", (evt.EndTime - evt.StartTime).TotalMilliseconds));
-                result.Add(new PQDS.MetaDataTag<int>("EventTypeCode", PQDSEventTypeCode(evt.EventTypeID)));
-
-                EventStat stat = (new TableOperations<EventStat>(connection)).QueryRecordWhere("EventID = {0}", evt.ID);
-
-                if (stat != null)
-                {
-                    if (stat.VAMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVA", (double)stat.VAMax));
-                    }
-                    if (stat.VBMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVB", (double)stat.VBMax));
-                    }
-                    if (stat.VCMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxVC", (double)stat.VCMax));
-                    }
-                    if (stat.VAMin != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMinVA", (double)stat.VAMin));
-                    }
-                    if (stat.VBMin != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMinVB", (double)stat.VBMin));
-                    }
-                    if (stat.VCMin != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMinVC", (double)stat.VCMin));
-                    }
-
-                    if (stat.IAMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIA", (double)stat.IAMax));
-                    }
-                    if (stat.IBMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIB", (double)stat.IBMax));
-                    }
-                    if (stat.ICMax != null)
-                    {
-                        result.Add(new PQDS.MetaDataTag<double>("EventMaxIC", (double)stat.ICMax));
-                    }
-                }
-
-                result.Add(new PQDS.MetaDataTag<int>("EventYear", ((DateTime)evt.StartTime).Year));
-                result.Add(new PQDS.MetaDataTag<int>("EventMonth", (evt.StartTime).Month));
-                result.Add(new PQDS.MetaDataTag<int>("EventDay", (evt.StartTime).Day));
-                result.Add(new PQDS.MetaDataTag<int>("EventHour", (evt.StartTime).Hour));
-                result.Add(new PQDS.MetaDataTag<int>("EventMinute", (evt.StartTime).Minute));
-                result.Add(new PQDS.MetaDataTag<int>("EventSecond", (evt.StartTime).Second));
-                result.Add(new PQDS.MetaDataTag<int>("EventNanoSecond", Get_nanoseconds(evt.StartTime)));
-
-                String date = String.Format("{0:D2}/{1:D2}/{2:D4}", (evt.StartTime).Month, (evt.StartTime).Day, (evt.StartTime).Year);
-                String time = String.Format("{0:D2}:{1:D2}:{2:D2}", (evt.StartTime).Hour, (evt.StartTime).Minute, (evt.StartTime).Second);
-                result.Add(new PQDS.MetaDataTag<string>("EventDate", date));
-                result.Add(new PQDS.MetaDataTag<string>("EventTime", time));
+                if (asset.AssetTypeID == connection.ExecuteScalar<int>("SELECT ID FROM AssetType WHERE Name = 'Line'"))
+                    result.Add(new PQDS.MetaDataTag<double>("LineLength", connection.ExecuteScalar<double>("SELECT Length FROM LineView WHERE ID = {0}", asset.ID)));
             }
+
+
+            result.Add(new PQDS.MetaDataTag<string>("EventID", evt.Name));
+            result.Add(new PQDS.MetaDataTag<string>("EventGUID", Guid.NewGuid().ToString()));
+            result.Add(new PQDS.MetaDataTag<double>("EventDuration", (evt.EndTime - evt.StartTime).TotalMilliseconds));
+            result.Add(new PQDS.MetaDataTag<int>("EventTypeCode", PQDSEventTypeCode(evt.EventTypeID)));
+
+            EventStat stat = (new TableOperations<EventStat>(connection)).QueryRecordWhere("EventID = {0}", evt.ID);
+
+            if (stat != null)
+            {
+                if (stat.VAMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxVA", (double)stat.VAMax));
+                }
+                if (stat.VBMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxVB", (double)stat.VBMax));
+                }
+                if (stat.VCMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxVC", (double)stat.VCMax));
+                }
+                if (stat.VAMin != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMinVA", (double)stat.VAMin));
+                }
+                if (stat.VBMin != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMinVB", (double)stat.VBMin));
+                }
+                if (stat.VCMin != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMinVC", (double)stat.VCMin));
+                }
+
+                if (stat.IAMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxIA", (double)stat.IAMax));
+                }
+                if (stat.IBMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxIB", (double)stat.IBMax));
+                }
+                if (stat.ICMax != null)
+                {
+                    result.Add(new PQDS.MetaDataTag<double>("EventMaxIC", (double)stat.ICMax));
+                }
+            }
+
+            result.Add(new PQDS.MetaDataTag<int>("EventYear", ((DateTime)evt.StartTime).Year));
+            result.Add(new PQDS.MetaDataTag<int>("EventMonth", (evt.StartTime).Month));
+            result.Add(new PQDS.MetaDataTag<int>("EventDay", (evt.StartTime).Day));
+            result.Add(new PQDS.MetaDataTag<int>("EventHour", (evt.StartTime).Hour));
+            result.Add(new PQDS.MetaDataTag<int>("EventMinute", (evt.StartTime).Minute));
+            result.Add(new PQDS.MetaDataTag<int>("EventSecond", (evt.StartTime).Second));
+            result.Add(new PQDS.MetaDataTag<int>("EventNanoSecond", Get_nanoseconds(evt.StartTime)));
+
+            String date = String.Format("{0:D2}/{1:D2}/{2:D4}", (evt.StartTime).Month, (evt.StartTime).Day, (evt.StartTime).Year);
+            String time = String.Format("{0:D2}:{1:D2}:{2:D2}", (evt.StartTime).Hour, (evt.StartTime).Minute, (evt.StartTime).Second);
+            result.Add(new PQDS.MetaDataTag<string>("EventDate", date));
+            result.Add(new PQDS.MetaDataTag<string>("EventTime", time));
             return result;
         }
 
@@ -381,14 +374,10 @@ namespace OpenSEE
                 double startTime = requestParameters["startDate"].Any() ? double.Parse(requestParameters["startDate"].ToString()) : 0.0;
                 int cycles = requestParameters["cycles"].Any() ? int.Parse(requestParameters["cycles"].ToString()) : 0;
 
-                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
-
                 AnalyticController ctrl = new AnalyticController();
 
                 DataGroup dataGroup = OpenSEEBaseController
-                    .QueryDataGroupAsync(evt.ID, meter)
+                    .QueryDataGroupAsync(eventId, connection)
                     .GetAwaiter()
                     .GetResult();
 
@@ -479,30 +468,44 @@ namespace OpenSEE
             
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Event evt = (new TableOperations<Event>(connection)).QueryRecordWhere("ID = {0}", eventID);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
+                DataGroup dataGroup = OpenSEEBaseController
+                    .QueryDataGroupAsync(eventID, connection)
+                    .GetAwaiter()
+                    .GetResult();
+
+                VICycleDataGroup viCycleDataGroup = OpenSEEBaseController
+                    .QueryVICycleDataGroupAsync(eventID, connection)
+                    .GetAwaiter()
+                    .GetResult();
+
+                Lazy<VIDataGroup> lazyVIDataGroup = new Lazy<VIDataGroup>(() =>
+                {
+                    return OpenSEEBaseController
+                        .QueryVIDataGroupAsync(eventID, connection)
+                        .GetAwaiter()
+                        .GetResult();
+                });
 
                 IEnumerable<D3Series> returnList = new List<D3Series>();
                 if (displayVolt)
-                    returnList = returnList.Concat(QueryVoltageData(meter, evt));
+                    returnList = returnList.Concat(QueryVoltageData(dataGroup, viCycleDataGroup));
 
                 if(displayCur)
-                    returnList = returnList.Concat(QueryCurrentData(meter, evt));
+                    returnList = returnList.Concat(QueryCurrentData(dataGroup, viCycleDataGroup));
 
                 if(displayTCE)
-                    returnList = returnList.Concat(QueryTCEData(meter, evt));
+                    returnList = returnList.Concat(QueryTCEData(dataGroup));
 
                 if (displayAnalogs)
-                    returnList = returnList.Concat(QueryAnalogData(meter, evt));
+                    returnList = returnList.Concat(QueryAnalogData(dataGroup));
 
                 if (breakerdigitals)
-                    returnList = returnList.Concat(QueryDigitalData(meter, evt));
+                    returnList = returnList.Concat(QueryDigitalData(dataGroup));
 
                 foreach (var analytics in displayAnalytics)
                 {
                     if (!string.IsNullOrEmpty(analytics))
-                        returnList = returnList.Concat(QueryAnalyticData(meter, evt, analytics, lpfOrder, hpfOrder, Trc, harmonic));
+                        returnList = returnList.Concat(QueryAnalyticData(dataGroup, viCycleDataGroup, lazyVIDataGroup, analytics, lpfOrder, hpfOrder, Trc, harmonic));
                 }
 
                 returnList = AlignData(returnList.ToList());
@@ -511,82 +514,54 @@ namespace OpenSEE
             }
         }
 
-        private List<D3Series> QueryAnalyticData(Meter meter, Event evt, string analytic, int lowPassOrder, int highPassOrder, double Trc, int harmonic)
+        private List<D3Series> QueryAnalyticData(DataGroup dataGroup, VICycleDataGroup viCycleData, Lazy<VIDataGroup> lazyVIDataGroup, string analytic, int lowPassOrder, int highPassOrder, double Trc, int harmonic)
         {
-            Lazy<DataGroup> lazyDataGroup = new Lazy<DataGroup>(() =>
-            {
-                return OpenSEEBaseController
-                    .QueryDataGroupAsync(evt.ID, meter)
-                    .GetAwaiter()
-                    .GetResult();
-            });
-
-            Lazy<VIDataGroup> lazyVIDataGroup = new Lazy<VIDataGroup>(() =>
-            {
-                return OpenSEEBaseController
-                    .QueryVIDataGroupAsync(evt.ID, meter)
-                    .GetAwaiter()
-                    .GetResult();
-            });
-
-            Lazy<VICycleDataGroup> lazyVICycleDataGroup = new Lazy<VICycleDataGroup>(() =>
-            {
-                return OpenSEEBaseController
-                    .QueryVICycleDataGroupAsync(evt.ID, meter)
-                    .GetAwaiter()
-                    .GetResult();
-            });
 
             AnalyticController controller = new AnalyticController();
 
             if (analytic == "FirstDerivative")
-                return controller.GetFirstDerivativeLookup(lazyDataGroup.Value, lazyVICycleDataGroup.Value);
+                return controller.GetFirstDerivativeLookup(dataGroup, viCycleData);
             if (analytic == "ClippedWaveforms")
-                return controller.GetClippedWaveformsLookup(lazyDataGroup.Value);
+                return controller.GetClippedWaveformsLookup(dataGroup);
             if (analytic == "Frequency")
                 return controller.GetFrequencyLookup(lazyVIDataGroup.Value);
             if (analytic == "Impedance")
-                return controller.GetImpedanceLookup(lazyVICycleDataGroup.Value);
+                return controller.GetImpedanceLookup(viCycleData);
             if (analytic == "Power")
-                return controller.GetPowerLookup(lazyVICycleDataGroup.Value);
+                return controller.GetPowerLookup(viCycleData);
             if (analytic == "RemoveCurrent")
-                return controller.GetRemoveCurrentLookup(lazyDataGroup.Value);
+                return controller.GetRemoveCurrentLookup(dataGroup);
             if (analytic == "MissingVoltage")
-                return controller.GetMissingVoltageLookup(lazyDataGroup.Value);
+                return controller.GetMissingVoltageLookup(dataGroup);
             if (analytic == "LowPassFilter")
-                return controller.GetLowPassFilterLookup(lazyDataGroup.Value, lowPassOrder);
+                return controller.GetLowPassFilterLookup(dataGroup, lowPassOrder);
             if (analytic == "HighPassFilter")
-                return controller.GetHighPassFilterLookup(lazyDataGroup.Value, highPassOrder);
+                return controller.GetHighPassFilterLookup(dataGroup, highPassOrder);
             if (analytic == "SymmetricalComponents")
-                return controller.GetSymmetricalComponentsLookup(lazyVICycleDataGroup.Value);
+                return controller.GetSymmetricalComponentsLookup(viCycleData);
             if (analytic == "Unbalance")
-                return controller.GetUnbalanceLookup(lazyVICycleDataGroup.Value);
+                return controller.GetUnbalanceLookup(viCycleData);
             if (analytic == "Rectifier")
                 return controller.GetRectifierLookup(lazyVIDataGroup.Value, Trc);
             if (analytic == "RapidVoltageChange")
-                return controller.GetRapidVoltageChangeLookup(lazyVICycleDataGroup.Value);
+                return controller.GetRapidVoltageChangeLookup(viCycleData);
             if (analytic == "THD")
-                return controller.GetTHDLookup(lazyDataGroup.Value, true);
+                return controller.GetTHDLookup(dataGroup, true);
             if (analytic == "SpecifiedHarmonic")
-                return controller.GetSpecifiedHarmonicLookup(lazyDataGroup.Value, harmonic, true);
+                return controller.GetSpecifiedHarmonicLookup(dataGroup, harmonic, true);
             if (analytic == "OverlappingWaveform")
-                return controller.GetOverlappingWaveformLookup(lazyDataGroup.Value);
+                return controller.GetOverlappingWaveformLookup(dataGroup);
 
             return new List<D3Series>();
         }
 
-        private List<D3Series> QueryVoltageData(Meter meter, Event evt)
+        private List<D3Series> QueryVoltageData(DataGroup dataGroup, VICycleDataGroup viCycleDataGroup)
         {
             bool useLL;
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 useLL = bool.Parse(new TableOperations<OpenSEESetting>(connection).QueryRecordWhere("Name = {0}", "useLLVoltage")?.Value ?? bool.FalseString);
             }
-
-            DataGroup dataGroup = OpenSEEBaseController
-                .QueryDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
 
             List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && (
                 (useLL && !(ds.SeriesInfo.Channel.Phase.Name == "AB" || ds.SeriesInfo.Channel.Phase.Name == "BC" || ds.SeriesInfo.Channel.Phase.Name == "CA")) ||
@@ -607,11 +582,6 @@ namespace OpenSEE
                     }
                     return a.LegendGroup.CompareTo(b.LegendGroup);
                 });
-
-            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController
-                .QueryVICycleDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
 
             List<D3Series> result = new List<D3Series>();
 
@@ -644,12 +614,8 @@ namespace OpenSEE
             return result;
         }
 
-        private List<D3Series> QueryCurrentData(Meter meter, Event evt)
+        private List<D3Series> QueryCurrentData(DataGroup dataGroup, VICycleDataGroup viCycleDataGroup)
         {
-            DataGroup dataGroup = OpenSEEBaseController
-                .QueryDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
 
             List<D3Series> WaveForm = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Current"                 
                 ).Select(
@@ -668,11 +634,6 @@ namespace OpenSEE
                 }
                 return a.LegendGroup.CompareTo(b.LegendGroup);
             });
-
-            VICycleDataGroup viCycleDataGroup = OpenSEEBaseController
-                .QueryVICycleDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
 
             List<D3Series> result = new List<D3Series>();
 
@@ -705,44 +666,34 @@ namespace OpenSEE
             return result;
         }
 
-        private List<D3Series> QueryTCEData(Meter meter, Event evt)
+        private List<D3Series> QueryTCEData(DataGroup dataGroup)
         {
-            DataGroup dataGroup = OpenSEEBaseController
-                .QueryDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
-
-            List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "TripCoilCurrent"
-                ).Select(
+            return dataGroup.DataSeries
+                .Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "TripCoilCurrent")
+                .Select(
                     ds => new D3Series()
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
                         ChartLabel = OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                    }).ToList();
-
-            return result;
+                    })
+                .ToList();
         }
 
-        private List<D3Series> QueryDigitalData(Meter meter, Event evt)
+        private List<D3Series> QueryDigitalData(DataGroup dataGroup)
         {
-            DataGroup dataGroup = OpenSEEBaseController
-                .QueryDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
-
-            List<D3Series> result = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital"
-                ).Select(
+            return dataGroup.DataSeries
+                .Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital")
+                .Select(
                     ds => new D3Series()
                     {
                         ChannelID = ds.SeriesInfo.Channel.ID,
                         ChartLabel = OpenSEEController.GetChartLabel(ds.SeriesInfo.Channel),
                         LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
                         DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                    }).ToList();
-
-            return result;
+                    })
+                .ToList();
         }
 
         private List<D3Series> AlignData(List<D3Series> data)
@@ -774,32 +725,25 @@ namespace OpenSEE
                 return item;
             });
 
-            
             return result.ToList();
-
         }
 
-        private List<D3Series> QueryAnalogData(Meter meter, Event evt)
+        private List<D3Series> QueryAnalogData(DataGroup dataGroup)
         {
-            DataGroup dataGroup = OpenSEEBaseController
-                .QueryDataGroupAsync(evt.ID, meter)
-                .GetAwaiter()
-                .GetResult();
-
-            List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds =>
-               ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" &&
-               ds.SeriesInfo.Channel.MeasurementType.Name != "Voltage" &&
-               ds.SeriesInfo.Channel.MeasurementType.Name != "Current" &&
-               ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds =>
-                  new D3Series()
-                  {
-                      ChannelID = ds.SeriesInfo.Channel.ID,
-                      ChartLabel = ds.SeriesInfo.Channel.Description ?? OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
-                      LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                      DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
-                  }).ToList();
-
-            return dataLookup;
+            return dataGroup.DataSeries
+                .Where(ds =>
+                    ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" &&
+                    ds.SeriesInfo.Channel.MeasurementType.Name != "Voltage" &&
+                    ds.SeriesInfo.Channel.MeasurementType.Name != "Current" &&
+                    ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds =>
+                        new D3Series()
+                        {
+                            ChannelID = ds.SeriesInfo.Channel.ID,
+                            ChartLabel = ds.SeriesInfo.Channel.Description ?? OpenSEEBaseController.GetChartLabel(ds.SeriesInfo.Channel),
+                            LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                            DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                        }
+                ).ToList();
         }
 
         #endregion
