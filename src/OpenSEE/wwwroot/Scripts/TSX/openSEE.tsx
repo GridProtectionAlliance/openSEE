@@ -27,6 +27,7 @@
 // # Fix Dowload.ash to include Analytics
 //
 
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
 import moment from 'moment'
 import * as React from 'react';

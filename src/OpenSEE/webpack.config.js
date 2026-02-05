@@ -44,7 +44,6 @@ function buildConfig(env, argv) {
                 },
                 {
                     test: /\.css$/,
-                    include: path.resolve(__dirname, 'wwwroot', "Content"),
                     use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
                 },
                 //{
