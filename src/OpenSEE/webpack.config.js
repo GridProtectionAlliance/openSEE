@@ -13,17 +13,7 @@ function buildConfig(env, argv) {
         context: path.resolve(__dirname),
         cache: true,
         entry: {
-            OpenSee: "./wwwroot/Scripts/TSX/OpenSee.tsx",
-            ToolTipDeltaWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/TooltipWithDelta.tsx",
-            ToolTipWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/Tooltip.tsx",
-            TimeCorrelatedSagsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/TimeCorrelatedSags.tsx",
-            PointWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/AccumulatedPoints.tsx",
-            PhasorChartWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/PhasorChart.tsx",
-            ScalarStatsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/ScalarStats.tsx",
-            LightningDataWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/LightningData.tsx",
-            SettingsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/SettingWindow.tsx",
-            FFTTable: "./wwwroot/Scripts/TSX/jQueryUI Widgets/FFTTable.tsx",
-            HarmonicStatsWidget: "./wwwroot/Scripts/TSX/jQueryUI Widgets/HarmonicStats.tsx",
+            OpenSee: "./wwwroot/Scripts/TSX/OpenSee.tsx"
         },
         output: {
             path: path.resolve(__dirname, './wwwroot/Scripts'),
