@@ -104,6 +104,7 @@ if $(ConfigurationName) == Release npm run buildrelease
     <ProjectReference Include="..\Libraries\FaultAlgorithms\FaultAlgorithms.csproj" />
     <ProjectReference Include="..\Libraries\FaultData\FaultData.csproj" />
     <ProjectReference Include="..\Libraries\openXDA.Model\openXDA.Model.csproj" />
+    <ProjectReference Include="..\Libraries\PQDS\PQDS.csproj" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
