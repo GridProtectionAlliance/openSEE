@@ -83,6 +83,7 @@ namespace OpenSEE
             {
                 // todo: this can probably be turned async
                 WriteTableToStream(writer, requestParameters);
+                stream.Position = 0;
                 return new FileStreamResult(stream, "text/csv")
                 {
                     FileDownloadName = fileName
