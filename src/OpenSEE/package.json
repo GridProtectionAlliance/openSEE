@@ -47,7 +47,6 @@
     "react-redux": "8.0.2",
     "react-router-dom": "6.2.1",
     "reselect": "^4.0.0",
-    "styled-components": "^5.3.3",
     "typestyle": "2.0.1"
   },
   "scripts": {
