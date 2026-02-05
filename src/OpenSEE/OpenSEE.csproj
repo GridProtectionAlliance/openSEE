@@ -20,7 +20,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Images\openSEELogo.png" />
     <None Include="wwwroot\Scripts\jquery-3.6.0.intellisense.js" />
     <Content Include="FaultSpecifics.aspx" />
-    <Content Include="CSVDownload.ashx" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
@@ -33,9 +32,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="CSVDownload.ashx.cs">
-      <DependentUpon>CSVDownload.ashx</DependentUpon>
-    </Compile>
     <Compile Update="FaultSpecifics.aspx.cs">
       <DependentUpon>FaultSpecifics.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
