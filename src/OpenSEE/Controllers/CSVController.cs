@@ -50,6 +50,22 @@ namespace OpenSEE
 
         #region [ Methods ]
 
+        /// <summary>
+        /// This is just <see cref="StreamWriter"/> with slightly different dispose logic.
+        /// </summary>
+        /// <remarks>
+        ///  MVC owns the <see cref="Stream"/> so we shouldn't close it.
+        /// </remarks>
+        private class NoCloseStreamWriter : StreamWriter
+        {
+            public NoCloseStreamWriter(Stream stream) : base(stream) { }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(false);
+            }
+        }
+
         [HttpGet, Route("Download")]
         public ActionResult GetCSV()
         {
@@ -63,7 +79,7 @@ namespace OpenSEE
 
             // No using block, asp.net takes care of it for us
             MemoryStream stream = new MemoryStream();
-            using (StreamWriter writer = new StreamWriter(stream))
+            using (StreamWriter writer = new NoCloseStreamWriter(stream))
             {
                 // todo: this can probably be turned async
                 WriteTableToStream(writer, requestParameters);
