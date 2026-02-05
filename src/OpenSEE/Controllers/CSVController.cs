@@ -563,7 +563,7 @@ namespace OpenSEE
             bool useLL;
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                useLL = connection.ExecuteScalar<bool?>("SELECT Value FROM Settings WHERE Name = 'useLLVoltage'") ?? false;
+                useLL = bool.Parse(new TableOperations<OpenSEESetting>(connection).QueryRecordWhere("Name = {0}", "useLLVoltage")?.Value ?? bool.FalseString);
             }
 
             DataGroup dataGroup = OpenSEEBaseController
