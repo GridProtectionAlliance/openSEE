@@ -4,6 +4,7 @@
   "private": true,
   "devDependencies": {
     "css-loader": "6.2.0",
+    "eslint": "^8.43.0",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "node-polyfill-webpack-plugin": "1.1.3",
     "path": "0.12.7",
@@ -14,15 +15,13 @@
     "typescript": "5.5.3",
     "url-loader": "4.1.1",
     "webpack": "^5.47.0",
-    "webpack-cli": "^4.7.2",
-    "@typescript-eslint/eslint-plugin": "^5.60.0",
-    "@typescript-eslint/parser": "^5.60.0",
-    "eslint": "^8.43.0"
+    "webpack-cli": "^4.7.2"
   },
   "dependencies": {
+    "@gpa-gemstone/gpa-symbols": "0.0.43",
     "@gpa-gemstone/react-forms": "1.1.75",
     "@gpa-gemstone/react-interactive": "1.0.135",
-    "@gpa-gemstone/gpa-symbols": "0.0.43",
+    "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "1.8.3",
     "@types/d3": "7.0.0",
     "@types/eonasdan-bootstrap-datetimepicker": "4.17.26",
