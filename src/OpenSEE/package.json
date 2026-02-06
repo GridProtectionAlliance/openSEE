@@ -20,9 +20,7 @@
     "webpack-cli": "^4.7.2"
   },
   "dependencies": {
-    "@gpa-gemstone/gpa-symbols": "0.0.43",
-    "@gpa-gemstone/react-forms": "1.1.75",
-    "@gpa-gemstone/react-interactive": "1.0.135",
+    "@gpa-gemstone/common-pages": "0.0.160",
     "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "1.8.3",
     "@types/d3": "7.0.0",
