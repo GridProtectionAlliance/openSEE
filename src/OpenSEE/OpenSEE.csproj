@@ -35,12 +35,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="FaultSpecifics.aspx.cs">
-      <DependentUpon>FaultSpecifics.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="package.json" />
     <None Include="tsconfig.json" />
     <None Include="wwwroot\Scripts\OpenSee.js" />
