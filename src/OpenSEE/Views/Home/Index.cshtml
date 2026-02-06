@@ -75,13 +75,6 @@
     <div id="DockCharts"></div>
     <script>
         var homePath = '@Html.Raw(Url.Content("~/"))';
-        var samplesPerCycle = @Html.Raw(ViewBag.SamplesPerCycle);
-        var eventID = @Html.Raw(ViewBag.EventID);
-        var eventStartTime = '@Html.Raw(ViewBag.EventStartTime)';
-        var eventEndTime = '@Html.Raw(ViewBag.EventEndTime)';
-        var cycles = @Html.Raw(ViewBag.Cycles ?? 0);
-        var userID = @Html.Raw(ViewBag.UserId ?? 0);
-        var analyticHandle = null;
         var version = '@applicationVersion';
     </script>
 

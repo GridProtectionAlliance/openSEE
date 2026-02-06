@@ -25,9 +25,7 @@
 // global variables declared in openSEE.cshtml scripts section
 declare global {
     var homePath: string;
-    var eventID: number;
-    var eventStartTime: string;
-    var eventEndTime: string;
+    var version: string;
 }
 
 declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
