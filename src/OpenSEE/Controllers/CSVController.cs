@@ -1,5 +1,5 @@
 ﻿//******************************************************************************************************
-//  OpenSEECSVDownload.ashx.cs - Gbtc
+//  CSVController.cs - Gbtc
 //
 //  Copyright © 2018, Grid Protection Alliance.  All Rights Reserved.
 //
@@ -18,6 +18,8 @@
 //  ----------------------------------------------------------------------------------------------------
 //  11/06/2018 - Billy Ernest
 //       Generated original version of source code.
+//  02/05/2026 - Gabriel Santos
+//      Refactored code to be in controller format for netcore upgrade.
 //
 //******************************************************************************************************
 
