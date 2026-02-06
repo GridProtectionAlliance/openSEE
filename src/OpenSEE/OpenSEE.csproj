@@ -15,12 +15,10 @@ if $(ConfigurationName) == Release npm run buildrelease
   </PropertyGroup>
   <ItemGroup>
     <None Include="wwwroot\Content\bootstrap4-datetimepicker.css" />
-    <None Include="wwwroot\Content\FaultSpecifics.css" />
     <None Include="wwwroot\Images\2-Line - 500.png" />
     <None Include="wwwroot\Images\openSEE - Waveform Viewer Header.png" />
     <None Include="wwwroot\Images\openSEE.jpg" />
     <None Include="wwwroot\Images\openSEELogo.png" />
-    <Content Include="FaultSpecifics.aspx" />
     <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
     <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
@@ -61,6 +59,7 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\PhasorChart.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\ScalarStats.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\SettingWindow.tsx" />
+    <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\FaultSpecificsModal.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\TimeCorrelatedSags.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\Tooltip.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\TooltipWithDelta.tsx" />

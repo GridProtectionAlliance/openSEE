@@ -30,7 +30,7 @@ declare var homePath: string;
 export const LoadEventInfo = createAsyncThunk("EventInfo/setEventInfo", async (arg: { breakeroperation: string }, thunkAPI) => {
     let state = (thunkAPI.getState() as OpenSee.IRootState);
     const eventID = state.EventInfo.EventID;
-    if (eventID && !isNaN(eventID) && eventID !== 0) {
+    if (eventID && !isNaN(eventID) && eventID >= 0) {
         const data = await $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHeaderData?eventId=${eventID}${arg.breakeroperation != undefined ? "&breakeroperation=" + arg.breakeroperation : ""}`,
@@ -65,7 +65,7 @@ const EventInfoReducer = createSlice({
         EventInfo: null,
         LookupInfo: null,
         State: 'Idle',
-        EventID: 1,
+        EventID: -1,
     } as OpenSee.IEventStore,
     reducers: {
         SetEventID: (state, action: PayloadAction<number>) => {
