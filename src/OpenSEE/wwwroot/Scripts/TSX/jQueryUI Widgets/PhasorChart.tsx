@@ -32,10 +32,10 @@ import HoverContext from '../Context/HoverContext'
 
 
 const PhasorChartWidget = () => {
-    const hover = React.useContext(HoverContext);
+    const [hover] = React.useContext(HoverContext);
 
-    const VVector = useSelector(SelectVPhases(hover.hover));
-    const IVector = useSelector(SelectIPhases(hover.hover));
+    const VVector = useSelector(SelectVPhases(hover));
+    const IVector = useSelector(SelectIPhases(hover));
     const colors = useSelector(SelectColor);
 
     const [AssetList, setAssetList] = React.useState<string[]>([]);

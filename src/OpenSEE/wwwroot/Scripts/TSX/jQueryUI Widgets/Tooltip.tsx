@@ -32,8 +32,8 @@ import HoverContext from '../Context/HoverContext'
 
 
 const ToolTipWidget = () => {
-    const hover = React.useContext(HoverContext);
-    const points = useSelector(SelectHoverPoints(hover.hover));
+    const [hover] = React.useContext(HoverContext);
+    const points = useSelector(SelectHoverPoints(hover));
     const colors = useSelector(SelectColor);
 
     return (
@@ -41,7 +41,7 @@ const ToolTipWidget = () => {
             <table className="table" style={{ height: '100%', marginBottom: 0, overflowY: 'auto', margin: "3%" }}>
                 <thead>
                     <td colSpan={3} style={{ textAlign: 'center' }}>
-                        <b>{moment(hover.hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
+                        <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
                     </td>
                 </thead>
                 <tbody>

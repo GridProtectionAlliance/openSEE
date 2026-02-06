@@ -154,7 +154,7 @@ const LineChart = (props: iProps) => {
     const fftWindow = useAppSelector(SelectFFTWindow);
     const showFFT = useAppSelector(SelectShowFFTWindow);
     const fftCycles = useAppSelector(SelectCycles);
-    const { hover, setHover } = React.useContext(HoverContext);
+    const [hover, setHover] = React.useContext(HoverContext);
 
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);

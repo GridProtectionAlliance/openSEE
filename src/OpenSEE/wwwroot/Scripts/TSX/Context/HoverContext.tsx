@@ -1,18 +1,38 @@
-// HoverContext.tsx
-
-
+//******************************************************************************************************
+//  HoverContext.tsx - Gbtc
+//
+//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//
+//  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
+//  the NOTICE file distributed with this work for additional information regarding copyright ownership.
+//  The GPA licenses this file to you under the MIT License (MIT), the "License"; you may not use this
+//  file except in compliance with the License. You may obtain a copy of the License at:
+//
+//      http://opensource.org/licenses/MIT
+//
+//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
+//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
+//  License for the specific language governing permissions and limitations.
+//
+//  Code Modification History:
+//  ----------------------------------------------------------------------------------------------------
+//  02/06/2026 - G. Santos
+//       Merged provider and context code into one document.
+//
+//******************************************************************************************************
 import * as React from 'react';
 
-interface HoverContextType {
-    hover: [number, number];
-    setHover: React.Dispatch<React.SetStateAction<[number, number]>>;
-}
+type HoverContextType = [[number, number], React.Dispatch<React.SetStateAction<[number, number]>>];
 
-const defaultState: HoverContextType = {
-    hover: [0, 0],
-    setHover: () => { }
+export const HoverContext = React.createContext<HoverContextType>([[0, 0], () => { }]);
+export const HoverProvider = ({ children }) => {
+    const hover = React.useState<[number, number]>([0, 0]);
+
+    return (
+        <HoverContext.Provider value={hover}>
+            {children}
+        </HoverContext.Provider>
+    );
 };
-
-const HoverContext = React.createContext<HoverContextType>(defaultState);
 
 export default HoverContext;

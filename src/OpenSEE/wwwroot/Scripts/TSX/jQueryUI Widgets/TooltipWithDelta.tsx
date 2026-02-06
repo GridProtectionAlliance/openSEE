@@ -32,8 +32,8 @@ import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext'
 
 const ToolTipDeltaWidget = () => {
-    const hover = React.useContext(HoverContext);
-    const points = useAppSelector(SelectDeltaHoverPoints(hover.hover));
+    const [hover] = React.useContext(HoverContext);
+    const points = useAppSelector(SelectDeltaHoverPoints(hover));
     const colors = useAppSelector(SelectColor);
     
     let data: Array<JSX.Element> = (points.map((p, i) => <tr key={i}>
@@ -45,7 +45,7 @@ const ToolTipDeltaWidget = () => {
     </tr>))
 
 
-    let firstDate = hover.hover[0];
+    let firstDate = hover[0];
     let secondDate = points.length > 0 ? points[0].Time : NaN;
 
     return (
