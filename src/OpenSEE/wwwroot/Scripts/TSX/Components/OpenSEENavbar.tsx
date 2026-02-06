@@ -31,7 +31,7 @@ import { SelectNavigation, SetNavigation, SetMouseMode, SetZoomMode, SelectMouse
 
 import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, Pan, FFT, Reset, Square, ValueRect, TimeRect, Settings, Help, ShowPoints, CorrelatedSags } from '../Graphs/ChartIcons';
 import { Point } from '@gpa-gemstone/gpa-symbols'
-import { ToolTip } from '@gpa-gemstone/react-interactive';
+import { ToolTip, BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
 
@@ -486,6 +486,38 @@ interface iWidgets {
 const WidgetSection = (props: iWidgets) => {
     const dispatch = useAppDispatch();
 
+    const optionList = React.useMemo(() => {
+        const optionList = [
+            {
+                Label: (
+                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                        Export CSV
+                    </a>
+                ),
+                Callback: () => props.exportData('csv')
+            },
+            {
+                Label: (
+                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                        Export PQDS
+                    </a>
+                ),
+                Callback: () => props.exportData('pqds')
+            }
+        ];
+
+        if (props.showFFT)
+            optionList.push({
+                Label: (
+                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                        Export FFT
+                    </a>
+                ),
+                Callback: () => props.exportData('fft')
+            });
+        return optionList;
+    }, [props.showFFT, props.exportData]);
+
     return (
         <>
             <li className="nav-item" style={{ width: 'calc(100% - 909px)', textAlign: 'center' }}>
@@ -601,29 +633,17 @@ const WidgetSection = (props: iWidgets) => {
                 </ToolTip>
             </li>
 
-            <li className="nav-item dropdown" style={{ width: '84px', position: "relative", marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Export')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'export-btn'}
-                    data-placement="bottom">
-                    < i style={{ fontStyle: "normal", fontSize: "25px" }} >{exportBtn}</i>
-                </button>
-                <div className="dropdown-menu" style={{ position: "absolute" }}>
-                    <a className="dropdown-item" onClick={() => { props.exportData('csv') }} style={{ cursor: 'pointer' }}>
-                        Export CSV
-                    </a>
-                    <a className="dropdown-item" onClick={() => { props.exportData('pqds') }} style={{ cursor: 'pointer' }}>
-                        Export PQDS
-                    </a>
-                    {props.showFFT ?
-                        <a className="dropdown-item" onClick={() => { props.exportData('fft') }} style={{ cursor: 'pointer' }}>
-                            Export FFT
-                        </a>
-                        : null}
+            <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
+                <div style={{ position: 'absolute' }}>
+                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{exportBtn}</i>}
+                        Callback={() => { }}
+                        Size={'sm'}
+                        Options={optionList}
+                        ShowToolTip={props.hover == "Export"}
+                        BtnClass={'btn-primary'}
+                        TooltipContent={<p>Export</p>}
+                    />
                 </div>
-                <ToolTip Show={props.hover == 'Export'} Position={'bottom'} Target={'export-btn'} Theme={'dark'}>
-                    <p>Export</p>
-                </ToolTip>
             </li>
         </>
     )
