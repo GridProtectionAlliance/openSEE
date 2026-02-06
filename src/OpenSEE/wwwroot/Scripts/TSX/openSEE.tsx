@@ -49,7 +49,6 @@ import { OpenSee } from './global';
 import { LoadSettings, SelectQueryString, SelectMouseMode, SetMouseMode, SelectSinglePlot } from './store/settingSlice';
 import { SelectCycles, UpdateAnalytic, SelectAnalytics } from './store/analyticSlice';
 import { SetTimeLimit, SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
-import { LoadEventInfo, SetEventID, SelectEventInfo, LoadLookupInfo } from './store/eventInfoSlice'
 import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
 
 import OverlappingEventWindow from './Components/OverlappingEvents';
@@ -67,9 +66,10 @@ import TimeCorrelatedSagsWidget from './jQueryUI Widgets/TimeCorrelatedSags';
 import LightningDataWidget from './jQueryUI Widgets/LightningData';
 import FFTTable from './jQueryUI Widgets/FFTTable';
 import EventInfo from './jQueryUI Widgets/EventInfo';
-import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats'
+import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 
-import HoverProvider from './Context/HoverProvider'
+// Providers
+import { HoverProvider } from './Context/HoverContext';
 
 declare var homePath: string;
 declare var version: string;
@@ -241,7 +241,8 @@ const OpenSeeHome = () => {
             NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
             UseLegacyNavigation={true}
             ref={applicationRef}
-        > <HoverProvider>
+        >
+            <HoverProvider>
                 <VerticalSplit style={{ height: '100%' }}>
                     <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                         <EventInfo />
@@ -380,7 +381,8 @@ const OpenSeeHome = () => {
                     </SplitSection>
                 </VerticalSplit>
             </HoverProvider>
-        </Application>);
+        </Application>
+    );
 }
 
 //Load Settings for settings Slice
