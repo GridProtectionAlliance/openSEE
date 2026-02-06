@@ -66,7 +66,6 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Scripts\TSX\openSEE.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\analyticSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\dataSlice.tsx" />
-    <None Include="wwwroot\Scripts\TSX\store\eventInfoSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\GraphLogic.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\overlappingEventsSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\queryThunk.tsx" />
@@ -92,6 +91,5 @@ if $(ConfigurationName) == Release npm run buildrelease
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverProvider.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
-    <TypeScriptCompile Include="wwwroot\Scripts\TSX\store\eventInfoSlice.tsx" />
   </ItemGroup>
 </Project>
