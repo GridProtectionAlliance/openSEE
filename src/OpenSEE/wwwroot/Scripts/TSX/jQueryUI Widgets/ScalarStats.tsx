@@ -24,7 +24,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import Table from '@gpa-gemstone/react-table'
+import { Table, Column } from '@gpa-gemstone/react-table'
 
 interface Iprops {
     exportCallback: () => void,
@@ -70,36 +70,37 @@ const ScalarStatsWidget = (props: Iprops) => {
             <div className="d-flex flex-column h-100 w-100" style={{padding: '10px'}}>
                 <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto'}}>
                     <Table<EventData>
-                        cols={[
-                            {
-                                field: 'Stat',
-                                key: 'Stat',
-                                label: 'Stat',
-                                headerStyle: { width: 'calc(30% - 8.25em - 130px)' },
-                                rowStyle: { width: 'calc(30% - 8.25em - 130px)' },
-                            },
-                            {
-                                field: 'Value',
-                                key: 'Value',
-                                label: 'Value',
-                                headerStyle: { width: 'calc(60% - 8.25em)' },
-                                rowStyle: { width: 'calc(60% - 8.25em)' },
-                            },
-                            {
-                                key: 'Export',
-                                label: <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>,
-                                headerStyle: { width: 'calc(60% - 8.25em)' },
-                                rowStyle: { width: 'calc(60% - 8.25em)' },
-                            },
-                        ]}
-                        tableClass="table table-hover w-100"
-                        data={stats}
-                        sortKey={""}
-                        ascending={true}
-                        onSort={() => { }}
-                        onClick={() => { }}
-                        selected={() => false}
-                    />
+                        TableClass="table table-hover w-100"
+                        Data={stats}
+                        SortKey={""}
+                        Ascending={true}
+                        OnSort={() => { }}
+                        OnClick={() => { }}
+                        Selected={() => false}
+                        KeySelector={(_, index) => index}
+                    >
+                        <Column<EventData>
+                            Key={'Stat'}
+                            AllowSort={false}
+                            HeaderStyle={{ width: "30%" }}
+                            RowStyle={{ width: "30%" }}
+                            Field={'Stat'}>
+                            Stat
+                        </Column>
+                        <Column<EventData>
+                            Key={'Value'}
+                            AllowSort={false}
+                            HeaderStyle={{ width: "60%" }}
+                            RowStyle={{ width: "60%" }}
+                            Field={'Value'}>
+                            Value
+                        </Column>
+                        <Column<EventData>
+                            Key={'Export'}
+                            AllowSort={false}>
+                            <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>
+                        </Column>
+                    </Table>
                 </div>
             </div>
         </>

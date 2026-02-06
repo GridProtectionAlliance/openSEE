@@ -40,7 +40,7 @@ interface iProps {
 
 interface ICategory {
     Value: number;
-    Text: string;
+    Label: string;
     Selected: boolean 
 }
 
@@ -94,10 +94,10 @@ const Legend = (props: iProps) => {
         let grid: Array<ILegendGrid> = [];
 
         data?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
-            let index = categories.findIndex(category => category.Text === item.LegendGroup);
+            let index = categories.findIndex(category => category.Label === item.LegendGroup);
             if (index === -1) {
-                categories.push({ Value: 0, Text: item.LegendGroup, Selected: false });
-                index = categories.findIndex(category => category.Text === item.LegendGroup);
+                categories.push({ Value: 0, Label: item.LegendGroup, Selected: false });
+                index = categories.findIndex(category => category.Label === item.LegendGroup);
             }
             if (enabled[dataIndex])
                 categories[index].Selected = true;
@@ -226,13 +226,13 @@ const Legend = (props: iProps) => {
 
             if (tmp[index].Selected)
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.Text) && data.enabled)
-                        traces = traces.concat(data.traces.get(item.Text));
+                    if (data.traces.has(item.Label) && data.enabled)
+                        traces = traces.concat(data.traces.get(item.Label));
                 }));
             else
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.Text))
-                        traces = traces.concat(data.traces.get(item.Text));
+                    if (data.traces.has(item.Label))
+                        traces = traces.concat(data.traces.get(item.Label));
                 }));
 
             dispatch(EnableTrace({ trace: traces, enabled: tmp[index].Selected, key: props.dataKey }));
@@ -283,7 +283,7 @@ const Legend = (props: iProps) => {
                     if (row.enabled) {
                         row.enabled = false;
                         categories.forEach((cat) => {
-                            updates.push(...row.traces.get(cat.Text));
+                            updates.push(...row.traces.get(cat.Label));
                         });
                     }
                 });
@@ -294,7 +294,7 @@ const Legend = (props: iProps) => {
                     row.enabled = true;
                     categories.forEach((cat) => {
                         if (cat.Selected)
-                            updates.push(...row.traces.get(cat.Text));
+                            updates.push(...row.traces.get(cat.Label));
                     });
 
                 });
@@ -310,7 +310,7 @@ const Legend = (props: iProps) => {
                         if (item.enabled && item.hLabel == group) {
                             item.enabled = false;
                             categories.forEach((cat) => {
-                                updates.push(...item.traces.get(cat.Text));
+                                updates.push(...item.traces.get(cat.Label));
                             });
                         }
                     })
@@ -323,7 +323,7 @@ const Legend = (props: iProps) => {
                             item.enabled = true;
                             categories.forEach((cat) => {
                                 if (cat.Selected)
-                                    updates.push(...item.traces.get(cat.Text));
+                                    updates.push(...item.traces.get(cat.Label));
                             });
                         }
                     })
@@ -343,7 +343,7 @@ const Legend = (props: iProps) => {
                             Options={categories}
                         OnChange={(evt, options) => {
                             options.forEach(o => {
-                                const i = categories.findIndex(c => c.Text == o.Text);
+                                const i = categories.findIndex(c => c.Label == o.Label);
                                     changeCategory(i, categories[i])
                                 })
                             }}
@@ -366,7 +366,7 @@ const Legend = (props: iProps) => {
                                     <Row
                                         dataKey={props.dataKey}
                                         category={value[1]}
-                                        activeCategories={categories.filter(item => item.Selected).map(item => item.Text)}
+                                        activeCategories={categories.filter(item => item.Selected).map(item => item.Label)}
                                         key={index}
                                         label={value[0]}
                                         data={grid?.get(value[0] + value[1])?.sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))}

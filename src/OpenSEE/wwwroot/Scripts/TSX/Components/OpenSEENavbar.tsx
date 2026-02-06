@@ -69,8 +69,7 @@ const OpenSeeNavBar = (props: IProps) => {
     const fftTime = useAppSelector(SelectFFTLimits);
 
     const [showAbout, setShowAbout] = React.useState<boolean>(false);
-    const [hover, setHover] = React.useState<Hover>('None')
-
+    const [hover, setHover] = React.useState<Hover>('None');
 
     React.useEffect(() => {
         if (props.OpenDrawers.AccumulatedPoints) {
@@ -118,14 +117,16 @@ const OpenSeeNavBar = (props: IProps) => {
                         {/* Bottom section */}
                         <ul className="navbar-nav navbar-expand justify-content-end" style={{marginRight: '105px', marginBottom: '10px'}}>
                             <WidgetSection eventInfo={eventInfo} hover={hover} setHover={(item) => setHover(item)} mouseMode={mouseMode} navigation={navigation}
-                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} showFFT={showFFT} lookupInfo={lookupInfo} exportData={(item) => exportData(item)} />
+                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} showFFT={showFFT} lookupInfo={lookupInfo}
+                                exportData={exportData} />
                         </ul>
                     </> :
                     <>
                         <ul className="navbar-nav navbar-expand">
                             {/* Left Section */}
                             <WidgetSection eventInfo={eventInfo} hover={hover} setHover={(item) => setHover(item)} mouseMode={mouseMode} navigation={navigation}
-                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} showFFT={showFFT} lookupInfo={lookupInfo} exportData={(item) => exportData(item)} />
+                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} showFFT={showFFT} lookupInfo={lookupInfo}
+                                exportData={exportData} />
                             {/* Right section */}
                             <PlotUtilitiesSection hover={hover} setHover={(item) => setHover(item)} lookupInfo={lookupInfo} showAbout={showAbout}
                                 showFFT={showFFT} setShowAbout={(item) => setShowAbout(item)} mouseMode={mouseMode} navigation={navigation} OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer}
@@ -157,7 +158,7 @@ const InfoSection = (props: InfoSectionProps) => {
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}> {props.eventInfo?.MeterName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Meter'} Position={'bottom'} Target={'meter'} Theme={'dark'} Zindex={9999}>
+                        <ToolTip Show={props.hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
                             <p>{props.eventInfo?.MeterName}</p>
                         </ToolTip>
                     </li>
@@ -165,7 +166,7 @@ const InfoSection = (props: InfoSectionProps) => {
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.StationName}</div>
-                        <ToolTip Show={props.hover == 'Station'} Position={'bottom'} Target={'station'} Theme={'dark'} Zindex={9999}>
+                        <ToolTip Show={props.hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
                             <p>{props.eventInfo?.StationName}</p>
                         </ToolTip>
                     </li>
@@ -173,7 +174,7 @@ const InfoSection = (props: InfoSectionProps) => {
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.AssetName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Asset'} Position={'bottom'} Target={'asset'} Theme={'dark'} Zindex={9999}>
+                        <ToolTip Show={props.hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
                             <p>{props.eventInfo?.AssetName}</p>
                         </ToolTip>
                     </li>
@@ -181,7 +182,7 @@ const InfoSection = (props: InfoSectionProps) => {
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.EventName}</div>
-                        <ToolTip Show={props.hover == 'EType'} Position={'bottom'} Target={'etype'} Theme={'dark'} Zindex={9999}>
+                        <ToolTip Show={props.hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
                             <p>{props.eventInfo?.EventName}</p>
                         </ToolTip>
                     </li>
@@ -192,7 +193,7 @@ const InfoSection = (props: InfoSectionProps) => {
                             <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {moment(props.eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                             </div>
-                            <ToolTip Show={props.hover == 'EInception'} Position={'bottom'} Target={'einception'} Theme={'dark'} Zindex={9999}>
+                            <ToolTip Show={props.hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
                                 <p>{moment(props.eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
                             </ToolTip>
                         </li> : null}
@@ -311,7 +312,7 @@ const Navigation = (props: NavigationProps) => {
                 <li className="nav-item" style={{ width: '210px', marginTop: "10px", minWidth: '155px' }}>
                     <div className="input-group mb-3">
                         <div className="input-group-prepend">
-                            <ToolTip Show={props.hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'} Theme={'dark'}>
+                            <ToolTip Show={props.hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'}>
                                 <p>Navigate to Previous Event in the {props.navigation}</p>
                                 {props.navigation === "system" && (<p style={{ textAlign: "center" }}>({(props.lookupInfo.System.m_Item1 != null ? props.lookupInfo.System.m_Item1.StartTime : '')})</p>)}
                                 {props.navigation === "station" && (<p style={{ textAlign: "center" }}>({(props.lookupInfo.Station.m_Item1 != null ? props.lookupInfo.Station.m_Item1.StartTime : '')})</p>)}
@@ -330,7 +331,7 @@ const Navigation = (props: NavigationProps) => {
                             <option value="asset">Asset</option>
                         </select>
                         <div className="input-group-append">
-                            <ToolTip Show={props.hover == 'NavRight'} Position={'bottom'} Target={'next-btn'} Theme={'dark'}>
+                            <ToolTip Show={props.hover == 'NavRight'} Position={'bottom'} Target={'next-btn'}>
                                 <p>Navigate to Next Event in the {props.navigation}</p>
                                 {props.navigation === "system" && (<p style={{ textAlign: "center" }}>({props.lookupInfo.System.m_Item2 != null ? props.lookupInfo.System.m_Item2.StartTime : ''})</p>)}
                                 {props.navigation === "station" && (<p style={{ textAlign: "center" }}>({(props.lookupInfo.Station.m_Item2 != null ? props.lookupInfo.Station.m_Item2.StartTime : '')})</p>)}
@@ -386,7 +387,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         </a>
                     </div>
 
-                    <ToolTip Show={props.hover == 'Zoom Mode'} Position={'bottom'} Target={'zoom-btn'} Theme={'dark'}>
+                    <ToolTip Show={props.hover == 'Zoom Mode'} Position={'bottom'} Target={'zoom-btn'}>
                         <p>Zoom</p>
                     </ToolTip>
 
@@ -397,7 +398,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
                         <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Pan'} Position={'bottom'} Target={'pan-btn'} Theme={'dark'}>
+                    <ToolTip Show={props.hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
                         <p>Pan</p>
                     </ToolTip>
 
@@ -409,7 +410,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
                         <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Select'} Position={'bottom'} Target={'select-btn'} Theme={'dark'}>
+                    <ToolTip Show={props.hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
                         <p>Select</p>
                     </ToolTip>
 
@@ -422,7 +423,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         data-toggle="tooltip" data-placement="bottom">
                         <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'} Theme={'dark'}>
+                    <ToolTip Show={props.hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
                         <p>FFT Move</p>
                     </ToolTip>
 
@@ -431,7 +432,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                         onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'} Theme={'dark'}>
+                    <ToolTip Show={props.hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
                         <p>Reset Zoom</p>
                     </ToolTip>
 
@@ -446,7 +447,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                 >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Settings'} Position={'bottom'} Target={'settings-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Settings'} Position={'bottom'} Target={'settings-btn'}>
                     <p>Settings</p>
                 </ToolTip>
             </li>
@@ -460,7 +461,7 @@ const PlotUtilitiesSection = (props: iPlotUtilities) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => props.setShowAbout(true)}>
                     <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Help'} Position={'bottom'} Target={'help-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
                     <p>Help</p>
                 </ToolTip>
                 <About isOpen={props.showAbout} closeCallback={() => props.setShowAbout(false)} />
@@ -546,7 +547,7 @@ const WidgetSection = (props: iWidgets) => {
                     }}>
                     <PlotTable />
                 </div>
-                <ToolTip Show={props.hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'}>
                     <p>Waveform Views</p>
                 </ToolTip>
             </li>
@@ -558,7 +559,7 @@ const WidgetSection = (props: iWidgets) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints); }}>
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Show Points'} Position={'bottom'} Target={'points-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
                     <p>Show Points</p>
                 </ToolTip>
             </li>
@@ -570,7 +571,7 @@ const WidgetSection = (props: iWidgets) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart); }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }} >{PhasorClock}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
                 </ToolTip>
             </li>
@@ -591,7 +592,7 @@ const WidgetSection = (props: iWidgets) => {
                         </a>
                         : null}
                 </div>
-                <ToolTip Show={props.hover == 'Stat'} Position={'bottom'} Target={'stats-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Stat'} Position={'bottom'} Target={'stats-btn'}>
                     <p>Stats</p>
                 </ToolTip>
             </li>
@@ -603,7 +604,7 @@ const WidgetSection = (props: iWidgets) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags); }}>
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Sags'} Position={'bottom'} Target={'sags-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
                     <p>Correlated Sags</p>
                 </ToolTip>
             </li>
@@ -616,7 +617,7 @@ const WidgetSection = (props: iWidgets) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable) }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{FFT}</i>
                 </button>
-                <ToolTip Show={props.hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
                     <p>FFT Table</p>
                 </ToolTip>
             </li>
@@ -628,7 +629,7 @@ const WidgetSection = (props: iWidgets) => {
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning); }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'} Theme={'dark'}>
+                <ToolTip Show={props.hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>
                     <p>Lightning Data</p>
                 </ToolTip>
             </li>

@@ -22,8 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { ConfigTable } from '@gpa-gemstone/react-interactive';
-import { ReactTable } from '@gpa-gemstone/react-table'
+import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
     exportCallback: () => void,
@@ -71,7 +70,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
         <>
             {sagsData ?
                 <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
-                    <ConfigTable.Table<ICorrelatedSags>
+                    <ConfigurableTable<ICorrelatedSags>
                         LocalStorageKey={"OpenSee.Correlated.TableCols"}
                         TableClass={"table table-hover"}
                         Data={sagsData}
@@ -83,8 +82,8 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                         TableStyle={{ height: '100%', width: '100%', margin: '3%' }}
                         Ascending={false}
                     >
-                        <ConfigTable.Configurable Key={'EventID'} Label={'Event ID'} Default={true}>
-                            <ReactTable.Column<ICorrelatedSags>
+                        <ConfigurableColumn Key={'EventID'} Label={'Event ID'} Default={true}>
+                            <Column<ICorrelatedSags>
                                 Key={'EventID'}
                                 AllowSort={true}
                                 Field={'EventID'}
@@ -95,81 +94,72 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                                 )}
                             >
                                 Event ID
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'AssetName'} Label={'Asset Name'} Default={false}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'AssetName'} Label={'Asset Name'} Default={false}>
+                            <Column<ICorrelatedSags>
                                 Key={'AssetName'}
                                 AllowSort={true}
                                 Field={'AssetName'}>
                                 Asset Name
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'EventType'} Label={'Event Type'} Default={false}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'EventType'} Label={'Event Type'} Default={false}>
+                            <Column<ICorrelatedSags>
                                 Key={'EventType'}
                                 AllowSort={true}
                                 Field={'EventType'}>
                                 Event Type
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'MeterName'} Label={'MeterName'} Default={false}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'MeterName'} Label={'MeterName'} Default={false}>
+                            <Column<ICorrelatedSags>
                                 Key={'MeterName'}
                                 AllowSort={true}
                                 Field={'MeterName'}>
                                 Meter Name
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'SagDurationCycles'} Label={'Sag Duration Cycles'} Default={true}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'SagDurationCycles'} Label={'Sag Duration Cycles'} Default={true}>
+                            <Column<ICorrelatedSags>
                                 Key={'SagDurationCycles'}
                                 AllowSort={true}
                                 Field={'SagDurationCycles'}>
                                 Sag Duration Cycles
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'SagDurationMilliseconds'} Label={'Sag Duration Milliseconds'} Default={true}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'SagDurationMilliseconds'} Label={'Sag Duration Milliseconds'} Default={true}>
+                            <Column<ICorrelatedSags>
                                 Key={'SagDurationMilliseconds'}
                                 AllowSort={true}
                                 Field={'SagDurationMilliseconds'}>
                                 Sag Duration Milliseconds
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'SagMagnitudePercent'} Label={'Magnitude'} Default={true}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'SagMagnitudePercent'} Label={'Magnitude'} Default={true}>
+                            <Column<ICorrelatedSags>
                                 Key={'SagMagnitudePercent'}
                                 AllowSort={true}
                                 Field={'SagMagnitudePercent'}>
                                 Sag Magnitude Percent
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ConfigTable.Configurable Key={'StartTime'} Label={'Start Time'} Default={false}>
-                            <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <ConfigurableColumn Key={'StartTime'} Label={'Start Time'} Default={false}>
+                            <Column<ICorrelatedSags>
                                 Key={'StartTime'}
                                 AllowSort={true}
                                 Field={'StartTime'}>
                                 Start Time
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-
-                        <ReactTable.Column<ICorrelatedSags>
+                            </Column>
+                        </ConfigurableColumn>
+                        <Column<ICorrelatedSags>
                             Key={'Export'}
                             AllowSort={false}
                             RowStyle={{ width: 0 }}
                         >
                             <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>
-                        </ReactTable.Column>
-
-                    </ConfigTable.Table>
+                        </Column>
+                    </ConfigurableTable>
                 </div>
 
                 : null}

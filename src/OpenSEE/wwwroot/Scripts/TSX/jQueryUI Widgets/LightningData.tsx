@@ -22,8 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { ConfigTable } from '@gpa-gemstone/react-interactive';
-import { ReactTable } from '@gpa-gemstone/react-table'
+import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table'
 
 
 interface Column {
@@ -90,7 +89,7 @@ const LightningDataWidget = () => {
         <>
             {lightningData ?
                 <div style={{ width: '100%', height: '100%', maxHeight: '100%', overflowY: 'hidden' }}>
-                    <ConfigTable.Table<LightningData>
+                    <ConfigurableTable<LightningData>
                         LocalStorageKey={"OpenSee.Lightning.TableCols"}
                         TableClass={"table table-hover"}
                         Data={lightningData}
@@ -102,204 +101,204 @@ const LightningDataWidget = () => {
                         TableStyle={{ height: '100%', width: '100%', margin: '3%' }}
                         Ascending={false}
                     >
-                        <ConfigTable.Configurable Key={'Service'} Label={'Service'} Default={true}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Service'} Label={'Service'} Default={true}>
+                            <Column<LightningData>
                                 Key={'Service'}
                                 AllowSort={true}
                                 Field={'Service'}>
                                 Service
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'UTCTime'} Label={'UTC Time'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'UTCTime'} Label={'UTC Time'} Default={false}>
+                            <Column<LightningData>
                                 Key={'UTCTime'}
                                 AllowSort={true}
                                 Field={'UTCTime'}>
                                 UTC Time
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'DisplayTime'} Label={'Display Time'} Default={true}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'DisplayTime'} Label={'Display Time'} Default={true}>
+                            <Column<LightningData>
                                 Key={'DisplayTime'}
                                 AllowSort={true}
                                 Field={'DisplayTime'}>
                                 Display Time
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Amplitude'} Label={'Amplitude'} Default={true}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Amplitude'} Label={'Amplitude'} Default={true}>
+                            <Column<LightningData>
                                 Key={'Amplitude'}
                                 AllowSort={true}
                                 Field={'Amplitude'}>
                                 Amplitude
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Latitude'} Label={'Latitude'} Default={true}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Latitude'} Label={'Latitude'} Default={true}>
+                            <Column<LightningData>
                                 Key={'Latitude'}
                                 AllowSort={true}
                                 Field={'Latitude'}>
                                 Latitude
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Longitude'} Label={'Longitude'} Default={true}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Longitude'} Label={'Longitude'} Default={true}>
+                            <Column<LightningData>
                                 Key={'Longitude'}
                                 AllowSort={true}
                                 Field={'Longitude'}>
                                 Longitude
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'PeakCurrent'} Label={'Peak Current'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'PeakCurrent'} Label={'Peak Current'} Default={false}>
+                            <Column<LightningData>
                                 Key={'PeakCurrent'}
                                 AllowSort={true}
                                 Field={'PeakCurrent'}>
                                 Peak Current
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'FlashMultiplicity'} Label={'Flash Multiplicity'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'FlashMultiplicity'} Label={'Flash Multiplicity'} Default={false}>
+                            <Column<LightningData>
                                 Key={'FlashMultiplicity'}
                                 AllowSort={true}
                                 Field={'FlashMultiplicity'}>
                                 Flash Multiplicity
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'ParticipatingSensors'} Label={'Participating Sensors'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'ParticipatingSensors'} Label={'Participating Sensors'} Default={false}>
+                            <Column<LightningData>
                                 Key={'ParticipatingSensors'}
                                 AllowSort={true}
                                 Field={'ParticipatingSensors'}>
                                 Participating Sensors
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Degrees Of Freedom'} Label={'Degrees Of Freedom'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Degrees Of Freedom'} Label={'Degrees Of Freedom'} Default={false}>
+                            <Column<LightningData>
                                 Key={'DegreesOfFreedom'}
                                 AllowSort={true}
                                 Field={'DegreesOfFreedom'}>
                                 Degrees Of Freedom
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'EllipseAngle'} Label={'Ellipse Angle'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'EllipseAngle'} Label={'Ellipse Angle'} Default={false}>
+                            <Column<LightningData>
                                 Key={'EllipseAngle'}
                                 AllowSort={true}
                                 Field={'EllipseAngle'}>
                                 Ellipse Angle
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Semi Major Axis Length'} Label={'Semi Major Axis Length'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Semi Major Axis Length'} Label={'Semi Major Axis Length'} Default={false}>
+                            <Column<LightningData>
                                 Key={'SemiMajorAxisLength'}
                                 AllowSort={true}
                                 Field={'SemiMajorAxisLength'}>
                                 Semi Major Axis Length
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'SemiMinorAxisLength'} Label={'Semi Minor Axis Length'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'SemiMinorAxisLength'} Label={'Semi Minor Axis Length'} Default={false}>
+                            <Column<LightningData>
                                 Key={'SemiMinorAxisLength'}
                                 AllowSort={true}
                                 Field={'SemiMinorAxisLength'}>
                                 Semi Minor Axis Length
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'ChiSquared'} Label={'Chi Squared'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'ChiSquared'} Label={'Chi Squared'} Default={false}>
+                            <Column<LightningData>
                                 Key={'ChiSquared'}
                                 AllowSort={true}
                                 Field={'ChiSquared'}>
                                 Chi Squared
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'Risetime'} Label={'Rise time'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'Risetime'} Label={'Rise time'} Default={false}>
+                            <Column<LightningData>
                                 Key={'Risetime'}
                                 AllowSort={true}
                                 Field={'Risetime'}>
                                 Rise time
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'FlashMultiplicity'} Label={'Flash Multiplicity'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'FlashMultiplicity'} Label={'Flash Multiplicity'} Default={false}>
+                            <Column<LightningData>
                                 Key={'FlashMultiplicity'}
                                 AllowSort={true}
                                 Field={'FlashMultiplicity'}>
                                 Flash Multiplicity
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'PeakToZeroTime'} Label={'Peak To Zero Time'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'PeakToZeroTime'} Label={'Peak To Zero Time'} Default={false}>
+                            <Column<LightningData>
                                 Key={'PeakToZeroTime'}
                                 AllowSort={true}
                                 Field={'PeakToZeroTime'}>
                                 Peak To Zero Time
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'MaximumRateOfRise'} Label={'Maximum Rate Of Rise'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'MaximumRateOfRise'} Label={'Maximum Rate Of Rise'} Default={false}>
+                            <Column<LightningData>
                                 Key={'MaximumRateOfRise'}
                                 AllowSort={true}
                                 Field={'MaximumRateOfRise'}>
                                 Maximum Rate Of Rise
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'CloudIndicator'} Label={'Cloud Indicator'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'CloudIndicator'} Label={'Cloud Indicator'} Default={false}>
+                            <Column<LightningData>
                                 Key={'CloudIndicator'}
                                 AllowSort={true}
                                 Field={'CloudIndicator'}>
                                 Cloud Indicator
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'AngleIndicator'} Label={'Angle Indicator'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'AngleIndicator'} Label={'Angle Indicator'} Default={false}>
+                            <Column<LightningData>
                                 Key={'AngleIndicator'}
                                 AllowSort={true}
                                 Field={'AngleIndicator'}>
                                 Angle Indicator
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'SignalIndicator'} Label={'Signal Indicator'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'SignalIndicator'} Label={'Signal Indicator'} Default={false}>
+                            <Column<LightningData>
                                 Key={'SignalIndicator'}
                                 AllowSort={true}
                                 Field={'SignalIndicator'}>
                                 Signal Indicator
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
+                            </Column>
+                        </ConfigurableColumn>
 
-                        <ConfigTable.Configurable Key={'TimingIndicator'} Label={'Timing Indicator'} Default={false}>
-                            <ReactTable.Column<LightningData>
+                        <ConfigurableColumn Key={'TimingIndicator'} Label={'Timing Indicator'} Default={false}>
+                            <Column<LightningData>
                                 Key={'TimingIndicator'}
                                 AllowSort={true}
                                 Field={'TimingIndicator'}>
                                 Timing Indicator
-                            </ReactTable.Column>
-                        </ConfigTable.Configurable>
-                    </ConfigTable.Table>
+                            </Column>
+                        </ConfigurableColumn>
+                    </ConfigurableTable>
                 </div>
 
                 : null}
