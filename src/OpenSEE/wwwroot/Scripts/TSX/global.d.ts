@@ -455,4 +455,20 @@ export namespace OpenSee {
         Color: Color
     }
 
+    interface IFaultSpecifics {
+        ID: string,
+        FaultType: string,
+        Inception: string,
+        DurationMs: number,
+        DurationCycles: number,
+        DeltaTime: number,
+        CurrentMagnitude: number,
+        Algorithm: string,
+        Distance: number,
+        DoubleFaultDistance: number,
+        DoubleFaultAngle: number,
+        StartTime: string,
+        MeterName: string
+    }
+
 }
