@@ -32,15 +32,13 @@ interface IProps {
 interface EventContextType {
     EventInfo: OpenSee.IEventInfo,
     LookupInfo: OpenSee.INextBackLookup,
-    Status: Application.Types.Status,
-    EventID: number
+    Status: Application.Types.Status
 }
 
 const defaultState: EventContextType = {
     EventInfo: null,
     LookupInfo: null,
-    Status: 'uninitiated',
-    EventID: -1
+    Status: 'uninitiated'
 };
 
 export const EventContext = React.createContext<EventContextType>(defaultState);
@@ -74,7 +72,6 @@ export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
         });
         Promise.all([lookupHandle, eventHandle]).then(([evtResult, lookupResult]) => {
             setContextState({
-                EventID: props.EventID,
                 Status: 'idle',
                 EventInfo: evtResult,
                 LookupInfo: lookupResult
@@ -83,7 +80,6 @@ export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
             console.error("Unable to load event context data.");
             setContextState(state => ({
                 ...state,
-                EventID: props.EventID,
                 Status: 'error'
             }));
         });
