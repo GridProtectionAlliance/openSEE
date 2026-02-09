@@ -36,15 +36,7 @@ export namespace OpenSee {
         Settings: ISettingsState,
         Data: IDataState,
         Analytic: IAnalyticStore,
-        EventInfo: IEventStore,
         OverlappingEvents: IOverlappingEventsStore
-    }
-
-    interface IEventStore { 
-        EventInfo: IEventInfo,
-        State: LoadingState,
-        EventID: number,
-        LookupInfo: iNextBackLookup
     }
 
     interface IAnalyticStore {
