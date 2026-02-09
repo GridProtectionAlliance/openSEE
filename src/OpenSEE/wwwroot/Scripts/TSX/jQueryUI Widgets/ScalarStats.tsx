@@ -24,7 +24,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { Table, Column } from '@gpa-gemstone/react-table'
+import { Table, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
     exportCallback: () => void,
@@ -35,35 +35,32 @@ interface EventData {
     Value: string
 }
 
+interface Iprops {
+    EventID: number
+}
+
 const ScalarStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<EventData[]>([]);
 
     React.useEffect(() => {
-        let handle = getData();
-
-        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props])
-
-    function getData(): JQuery.jqXHR {
-
-        let handle = $.ajax({
+        const handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetScalarStats?eventId=${eventID}`,
+            url: `${homePath}api/OpenSEE/GetScalarStats?eventId=${props.EventID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
             async: true
         });
-
         handle.done((d) => {
             let t = []
             Object.keys(d).forEach(stat => {
                 t.push({ Stat: stat, Value: d[stat] })
             })
             setStats(t);
-        })
-        return handle;
-    }
+        });
+
+        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
+    }, [props.EventID]);
 
     return (
         <>

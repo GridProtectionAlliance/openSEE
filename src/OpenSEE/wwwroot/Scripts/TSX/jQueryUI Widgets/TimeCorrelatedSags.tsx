@@ -25,7 +25,7 @@ import * as React from 'react';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
-    exportCallback: () => void,
+    EventID: number
 }
 
 interface ICorrelatedSags {
@@ -43,28 +43,19 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>(null);
 
     React.useEffect(() => {
-        let handle = getData();
-
-        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [props])
-
-    function getData(): JQuery.jqXHR {
-
-        let handle = $.ajax({
+        const handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetTimeCorrelatedSags?eventId=${eventID}`,
+            url: `${homePath}api/OpenSEE/GetTimeCorrelatedSags?eventId=${props.EventID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
             async: true
         });
 
-        handle.done(d => {
-            setSagsData(d as ICorrelatedSags[])
-        });
+        handle.done(setSagsData);
 
-        return handle;
-    }
+        return () => { if (handle?.abort != null) handle.abort(); }
+    }, [props.EventID]);
 
     return (
         <>
@@ -157,7 +148,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             AllowSort={false}
                             RowStyle={{ width: 0 }}
                         >
-                            <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>
+                            <button className="btn btn-primary" onClick={() => props.exportCallback('correlatedsags')}>Export(csv)</button>
                         </Column>
                     </ConfigurableTable>
                 </div>

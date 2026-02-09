@@ -23,26 +23,18 @@
 
 import * as React from 'react';
 import { useAppSelector } from '../hooks';
-import { SelectEventID } from '../store/eventInfoSlice'
 
 interface Iprops {
-    exportCallback: () => void,
+    EventID: number
 }
 
 const HarmonicStatsWidget = (props: Iprops) => {
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
-    const evtID = useAppSelector(SelectEventID);
     
     React.useEffect(() => {
-        let handle = getData();
-
-        return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
-    }, [evtID])
-
-    function getData(): JQuery.jqXHR {
-        let handle = $.ajax({
+        const handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${evtID}`,
+            url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${props.EventID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
@@ -53,8 +45,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
             let rows = [];
             rows.push(
                 <tr>
-                    <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.exportCallback()}>Export</button></th>
-                    {data.map((key,i) => <th colSpan={2} scope='colgroup' key={i}>{key.Channel}</th>)}
+                    <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.exportCallback('harmonics')}>Export</button></th>
+                    {data.map((key, i) => <th colSpan={2} scope='colgroup' key={i}>{key.Channel}</th>)}
                 </tr>)
 
             rows.push(
@@ -67,7 +59,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
             let numChannels = data.length;
             let jsons = data.map(x => JSON.parse(x.SpectralData));
             let numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
-                        
+
             for (var index = 1; index <= numHarmonics; ++index) {
                 let tds = [];
                 let label = 'H' + index
@@ -91,8 +83,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
             setTblData(rows);
         });
 
-        return handle;
-    }
+        return () => { if (handle?.abort != null) handle.abort(); }
+    }, [props.EventID])
 
     return (
             <div className="d-flex" style={{ width: '100%', height: '100%' }}>
