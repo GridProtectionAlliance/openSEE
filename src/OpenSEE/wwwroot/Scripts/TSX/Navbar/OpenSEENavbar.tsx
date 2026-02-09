@@ -35,7 +35,7 @@ import { ToolTip, BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import moment from "moment"
 
-import About from './About';
+import About from '../Components/About';
 
 
 declare var homePath: string;
