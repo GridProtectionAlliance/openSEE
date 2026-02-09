@@ -132,12 +132,6 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
     return await Promise.all(handles);
 })
 
-//Thunk to update Cycle Limits
-export const SetCycleLimit = createAsyncThunk('Data/SetCycleLimit', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateCycleLimits({ ...arg }))
-    return Promise.resolve();
-})
-
 
 //Thunk to update FFT Limits
 export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start: number, end: number }, thunkAPI) => {
@@ -375,19 +369,6 @@ export const DataReducer = createSlice({
             const fftPlot = state.Plots.find(plot => plot.key.DataType === "FFT")
             updateAutoLimits(fftPlot, state.fftLimits[0], state.fftLimits[1]);
             return state;
-        },
-        UpdateCycleLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
-            if (Math.abs(action.payload.start - action.payload.end) < 5)
-                return state;
-
-            state.cycleLimit[0] = action.payload.start
-            state.cycleLimit[1] = action.payload.end
-
-            const plot = state.Plots.find(plot => plot.key.DataType === "OverlappingWave")
-            updateAutoLimits(plot, state.cycleLimit[0], state.cycleLimit[1]);
-
-            return state;
-
         },
         UpdateTrace: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean }>) => {
             // Find the index of the plot in the state

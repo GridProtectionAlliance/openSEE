@@ -34,6 +34,7 @@ interface IProps {
 
 interface IDataFunctions {
     SetTimeLimit: (start: number, end: number) => void
+    SetCycleLimit: (start: number, end: number) => void
 }
 
 const defaultState: OpenSee.IDataContextType = {
@@ -51,16 +52,22 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const contextRef = React.useRef<IDataFunctions>();
 
     // Context State Functions
-    const SetTimeLimit = React.useCallback((start: number, end: number) => {
-        setContextState(c => func.UpdateTimeLimit(c, start, end));
-    }, []);
+    const SetTimeLimit = React.useCallback((start: number, end: number) =>
+        setContextState(c => func.UpdateTimeLimit(c, start, end))
+    , []);
+
+    //Thunk to update Cycle Limits
+    const SetCycleLimit = React.useCallback((start: number, end: number) => 
+        setContextState(c => func.UpdateCycleLimits(c, start, end))
+    , []);
 
     // Plot Array Functions
 
 
 
     contextRef.current = {
-        SetTimeLimit
+        SetTimeLimit,
+        SetCycleLimit
     }
     return (
         <DataContext.Provider value={contextState}>
@@ -135,6 +142,3 @@ function saveSettings(state: OpenSee.IDataContextType) {
 }
 
 export default DataContext;
-
-
-

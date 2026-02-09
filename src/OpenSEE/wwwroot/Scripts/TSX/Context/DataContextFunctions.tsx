@@ -26,6 +26,7 @@ import { defaultSettings } from '../defaults';
 import _ from "lodash";
 
 namespace DataContextFunctions {
+    /* Functions to Update Context objects */
     export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number) {
         const newContext = { ...context };
 
@@ -45,35 +46,21 @@ namespace DataContextFunctions {
         return newContext;
     }
 
+    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number) {
+        const newContext = { ...context };
 
-    export function getPrimaryAxis(key: OpenSee.IGraphProps) {
-        if (key.DataType === "Voltage")
-            return "Voltage" as OpenSee.Unit
-        else if (key.DataType === "Current")
-            return "Current" as OpenSee.Unit
-        else if (key.DataType === "FirstDerivative")
-            return "VoltageperSecond" //make sure this is correct 
-        else if (key.DataType === "Unbalance")
-            return "Unbalance"
-        else if (key.DataType === "THD")
-            return "THD"
-        else if (key.DataType === "RemoveCurrent")
-            return "Current"
-        else if (key.DataType === "Power")
-            return "PowerP"
-        else if (key.DataType === "Impedance")
-            return "Impedance"
-        else if (key.DataType === "Frequency")
-            return "Freq"
-        else if (key.DataType === "FaultDistance")
-            return "Distance"
-        else if (key.DataType === "I2T")
-            return "Current"
-        else
-            return "Voltage" as OpenSee.Unit
+        if (Math.abs(start - end) < 5)
+            return newContext;
 
+        newContext.StartTime = start;
+        newContext.EndTime = end;
+        const plotIndex = context.Plots.findIndex(plot => plot.key.DataType === "OverlappingWave");
+        newContext.Plots[plotIndex] = updateAutoLimits(newContext.Plots[plotIndex], start, end);
+
+        return newContext;
     }
 
+    /* Functions that deal with individual plots */
     export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): OpenSee.IGraphstate {
         const newPlot = { ...plot };
 
@@ -123,6 +110,35 @@ namespace DataContextFunctions {
 
         const pad = (yMax - yMin) / 20;
         return [yMin - pad, yMax + pad];
+
+    }
+
+    /* Functions that existed in slice */
+    export function getPrimaryAxis(key: OpenSee.IGraphProps) {
+        if (key.DataType === "Voltage")
+            return "Voltage" as OpenSee.Unit
+        else if (key.DataType === "Current")
+            return "Current" as OpenSee.Unit
+        else if (key.DataType === "FirstDerivative")
+            return "VoltageperSecond" //make sure this is correct 
+        else if (key.DataType === "Unbalance")
+            return "Unbalance"
+        else if (key.DataType === "THD")
+            return "THD"
+        else if (key.DataType === "RemoveCurrent")
+            return "Current"
+        else if (key.DataType === "Power")
+            return "PowerP"
+        else if (key.DataType === "Impedance")
+            return "Impedance"
+        else if (key.DataType === "Frequency")
+            return "Freq"
+        else if (key.DataType === "FaultDistance")
+            return "Distance"
+        else if (key.DataType === "I2T")
+            return "Current"
+        else
+            return "Voltage" as OpenSee.Unit
 
     }
 
