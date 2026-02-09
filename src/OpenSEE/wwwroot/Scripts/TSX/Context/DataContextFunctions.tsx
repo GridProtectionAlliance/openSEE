@@ -28,7 +28,7 @@ import _ from "lodash";
 namespace DataContextFunctions {
     /* Functions to Update Context objects */
     export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number) {
-        const newContext = { ...context };
+        const newContext = _.cloneDeep(context);
 
         if (Math.abs(start - end) < 10)
             return newContext;
@@ -47,7 +47,7 @@ namespace DataContextFunctions {
     }
 
     export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number) {
-        const newContext = { ...context };
+        const newContext = _.cloneDeep(context);
 
         if (Math.abs(start - end) < 5)
             return newContext;
@@ -76,7 +76,7 @@ namespace DataContextFunctions {
 
     /* Functions that deal with individual plots */
     export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): OpenSee.IGraphstate {
-        const newPlot = { ...plot };
+        const newPlot = _.cloneDeep(plot);
 
         //only update limits once there is data loaded
         if (newPlot?.data?.length <= 0)
