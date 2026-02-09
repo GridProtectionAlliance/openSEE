@@ -21,17 +21,17 @@
 //******************************************************************************************************
 
 import React from 'react';
-import { useAppSelector } from '../hooks';
-import { SelectEventInfo } from '../store/eventInfoSlice'
 import queryString from 'querystring';
 import moment from 'moment'; 
 import FaultSpecificsModal from './FaultSpecificsModal';
+import EventContext from '../Context/EventContext';
 
 const eventDateFormat = "YYYY-MM-DD HH:mm:ss.fffffff";
 const dateFormat = "MM/DD/YYYY";
 const timeFormat = "HH:mm:ss.SSS";
+
 const EventInfo = () => {
-    const eventData = useAppSelector(SelectEventInfo)
+    const evt = React.useContext(EventContext);
     const [pqBrowserURL, setPqBrowserURL] = React.useState<string>('http://localhost:44368')
     const [pqBrowserParams, setPQBrowserParams] = React.useState<string>("")
     const [showFaultSpecifics, setShowFaultSpecifics] = React.useState<boolean>(false)
@@ -39,7 +39,7 @@ const EventInfo = () => {
     React.useEffect(() => {
         const handle1 = getPQUrl();
         handle1.done((data) => setPqBrowserURL(data));
-    }, [])
+    }, []);
 
     function getPQUrl() {
         return $.ajax({
@@ -53,10 +53,10 @@ const EventInfo = () => {
     }
 
     React.useEffect(() => {
-        const time = moment.utc(eventData.EventDate, eventDateFormat).format(timeFormat)
-        const date = moment.utc(eventData.EventDate, eventDateFormat).format(dateFormat)
+        const time = moment.utc(evt.EventInfo.EventDate, eventDateFormat).format(timeFormat)
+        const date = moment.utc(evt.EventInfo.EventDate, eventDateFormat).format(dateFormat)
         const queryParams = {
-            eventid: eventID,
+            eventid: evt.EventID,
             time: time,
             date: date,
             windowSize: 1,
@@ -64,9 +64,9 @@ const EventInfo = () => {
         }
         setPQBrowserParams(queryString.stringify(queryParams))
 
-    }, [eventData])
+    }, [evt.EventInfo]);
 
-    if (eventData == null)
+    if (evt.EventInfo == null)
         return null;
 
     return (
@@ -74,14 +74,14 @@ const EventInfo = () => {
             <div style={{ height: '100%', overflow: 'auto' }}>
                 <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`}}>
                     <tbody>
-                        <tr><td>Meter:</td><td>{eventData.MeterName}</td></tr>
-                        <tr><td>Station:</td><td>{eventData.StationName}</td></tr>
-                        <tr><td>Asset:</td><td>{eventData.AssetName}</td></tr>
+                        <tr><td>Meter:</td><td>{evt.EventInfo.MeterName}</td></tr>
+                        <tr><td>Station:</td><td>{evt.EventInfo.StationName}</td></tr>
+                        <tr><td>Asset:</td><td>{evt.EventInfo.AssetName}</td></tr>
                         <tr>
                             <td>Event Type:</td>
                             <td>
                                 {
-                                    eventData.EventName != 'Fault' ? eventData.EventName :
+                                    evt.EventInfo.EventName != 'Fault' ? evt.EventInfo.EventName :
                                         <a
                                             href="#"
                                             title="Click for fault details"
@@ -90,17 +90,17 @@ const EventInfo = () => {
                                 }
                             </td>
                         </tr>
-                        <tr><td>Event Date:</td><td>{eventData.EventDate}</td></tr>
-                        <tr><td>Inception:</td><td>{moment(eventData.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</td></tr>
-                        {(eventData.StartTime ? <tr><td>Event Start:</td><td>{eventData.StartTime}</td></tr> : null)}
-                        {(eventData.Phase ? <tr><td>Phase:</td><td>{eventData.Phase}</td></tr> : null)}
-                        {(eventData.DurationPeriod ? <tr><td>Duration:</td><td>{eventData.DurationPeriod}</td></tr> : null)}
-                        {(eventData.Magnitude ? <tr><td>Magnitude:</td><td>{eventData.Magnitude}</td></tr> : null)}
-                        {(eventData.SagDepth ? <tr><td>Sag Depth:</td><td>{eventData.SagDepth}</td></tr> : null)}
-                        {(eventData.BreakerNumber ? <tr><td>Breaker:</td><td>{eventData.BreakerNumber}</td></tr> : null)}
-                        {(eventData.BreakerTiming ? <tr><td>Timing:</td><td>{eventData.BreakerTiming}</td></tr> : null)}
-                        {(eventData.BreakerSpeed ? <tr><td>Speed:</td><td>{eventData.BreakerSpeed}</td></tr> : null)}
-                        {(eventData.BreakerOperation ? <tr><td>Operation:</td><td>{eventData.BreakerOperation}</td></tr> : null)}
+                        <tr><td>Event Date:</td><td>{evt.EventInfo.EventDate}</td></tr>
+                        <tr><td>Inception:</td><td>{moment(evt.EventInfo.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</td></tr>
+                        {(evt.EventInfo.StartTime ? <tr><td>Event Start:</td><td>{evt.EventInfo.StartTime}</td></tr> : null)}
+                        {(evt.EventInfo.Phase ? <tr><td>Phase:</td><td>{evt.EventInfo.Phase}</td></tr> : null)}
+                        {(evt.EventInfo.DurationPeriod ? <tr><td>Duration:</td><td>{evt.EventInfo.DurationPeriod}</td></tr> : null)}
+                        {(evt.EventInfo.Magnitude ? <tr><td>Magnitude:</td><td>{evt.EventInfo.Magnitude}</td></tr> : null)}
+                        {(evt.EventInfo.SagDepth ? <tr><td>Sag Depth:</td><td>{evt.EventInfo.SagDepth}</td></tr> : null)}
+                        {(evt.EventInfo.BreakerNumber ? <tr><td>Breaker:</td><td>{evt.EventInfo.BreakerNumber}</td></tr> : null)}
+                        {(evt.EventInfo.BreakerTiming ? <tr><td>Timing:</td><td>{evt.EventInfo.BreakerTiming}</td></tr> : null)}
+                        {(evt.EventInfo.BreakerSpeed ? <tr><td>Speed:</td><td>{evt.EventInfo.BreakerSpeed}</td></tr> : null)}
+                        {(evt.EventInfo.BreakerOperation ? <tr><td>Operation:</td><td>{evt.EventInfo.BreakerOperation}</td></tr> : null)}
                         <tr>
                             {<td><button className="btn btn-link" onClick={() => { window.open(pqBrowserURL + '/eventsearch?' + pqBrowserParams) }}>Edit Event and Manage Notes</button></td>}
                             <td></td>
@@ -111,7 +111,7 @@ const EventInfo = () => {
             <FaultSpecificsModal
                 SetShow={setShowFaultSpecifics}
                 Show={showFaultSpecifics}
-                EventID={eventData.EventId}
+                EventID={evt.EventInfo.EventId}
             />
         </div>
     )
