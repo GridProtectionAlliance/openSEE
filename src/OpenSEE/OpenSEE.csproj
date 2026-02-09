@@ -92,6 +92,8 @@ if $(ConfigurationName) == Release npm run buildrelease
     <ProjectReference Include="..\Libraries\PQDS\PQDS.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\DataContextFunctions.tsx" />
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\DataContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\EventContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
