@@ -39,6 +39,10 @@ interface IDataFunctions {
     ResetZoom: (start: number, end: number) => void
 }
 
+interface IExtendedContextType extends OpenSee.IDataContextType {
+    Dispatch: React.MutableRefObject<IDataFunctions | undefined>
+}
+
 const defaultState: OpenSee.IDataContextType = {
     StartTime: 0 as number,
     EndTime: 0 as number,
@@ -47,7 +51,7 @@ const defaultState: OpenSee.IDataContextType = {
     CycleLimits: [0, 1000.0 / 60.0]
 };
 
-export const DataContext = React.createContext<OpenSee.IDataContextType>(defaultState);
+export const DataContext = React.createContext<IExtendedContextType>({ ...defaultState, Dispatch: { current: null } });
 
 export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const [contextState, setContextState] = React.useState<OpenSee.IDataContextType>(defaultState);
@@ -58,12 +62,10 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         setContextState(c => func.UpdateTimeLimit(c, start, end))
     , []);
 
-    //Thunk to update Cycle Limits
     const SetCycleLimit = React.useCallback((start: number, end: number) => 
         setContextState(c => func.UpdateCycleLimits(c, start, end))
     , []);
 
-    //Thunk to update Cycle Limits
     const SetFFTLimits = React.useCallback((start: number, end: number) => 
         setContextState(c => func.UpdateFFTLimits(c, start, end))
     , []);
@@ -76,13 +78,13 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             const fftPlotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == 'FFT');
             const wavePlotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == 'OverlappingWave');
             if (fftPlotIndex > -1) {
-                let start = Math.min(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
-                let end = Math.max(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
+                const start = Math.min(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
+                const end = Math.max(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
                 updatedContext = func.UpdateFFTLimits(updatedContext, start, end);
             }
             if (wavePlotIndex > -1) {
-                let start = Math.min(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
-                let end = Math.max(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+                const start = Math.min(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+                const end = Math.max(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
                 updatedContext = func.UpdateCycleLimits(updatedContext, start, end);
             }
 
@@ -103,15 +105,17 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     // Plot Array Functions
 
 
-
+    // Set context
     contextRef.current = {
         SetTimeLimit,
         SetCycleLimit,
         SetFFTLimits,
         ResetZoom
-    }
+    };
+    const contextStateWithRef = React.useMemo(() => ({ ...contextState, Dispatch: contextRef }), [contextState]);
+
     return (
-        <DataContext.Provider value={contextState}>
+        <DataContext.Provider value={contextStateWithRef}>
             {props.children}
         </DataContext.Provider>
     );
