@@ -21,7 +21,7 @@
 //
 //******************************************************************************************************
 
-import { ToolTip } from '@gpa-gemstone/react-interactive';
+import { ToolTip } from '@gpa-gemstone/react-forms';
 import moment from "moment";
 import React from "react";
 import { OpenSee } from "../global";
