@@ -444,7 +444,6 @@ namespace OpenSEE
         public Dictionary<string, dynamic> GetHeaderData()
         {
             int eventId = int.Parse(Request.Query["eventId"].ToString());
-            string breakerOperationID = (Request.Query.ContainsKey("breakeroperation") ? Request.Query["breakeroperation"].ToString() : "-1");
 
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
 
@@ -531,22 +530,17 @@ namespace OpenSEE
                     }
                 }
 
-                if (breakerOperationID != "")
+                if (Request.Query.ContainsKey("breakeroperation") && int.TryParse(Request.Query["breakeroperation"].ToString(), out int breakerOperationID))
                 {
-                    int id;
+                    BreakerOperation breakerRow = new TableOperations<BreakerOperation>(connection).QueryRecordWhere("ID = {0}", breakerOperationID);
 
-                    if (int.TryParse(breakerOperationID, out id))
+                    if (breakerRow != null)
                     {
-                        BreakerOperation breakerRow = new TableOperations<BreakerOperation>(connection).QueryRecordWhere("ID = {0}", id);
-
-                        if (breakerRow != null)
-                        {
-                            returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
-                            returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
-                            returnDict.Add("BreakerTiming", breakerRow.BreakerTiming.ToString());
-                            returnDict.Add("BreakerSpeed", breakerRow.BreakerSpeed.ToString());
-                            returnDict.Add("BreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
-                        }
+                        returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
+                        returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
+                        returnDict.Add("BreakerTiming", breakerRow.BreakerTiming.ToString());
+                        returnDict.Add("BreakerSpeed", breakerRow.BreakerSpeed.ToString());
+                        returnDict.Add("BreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
                     }
                 }
 
