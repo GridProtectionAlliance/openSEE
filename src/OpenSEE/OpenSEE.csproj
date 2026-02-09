@@ -39,7 +39,12 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Scripts\TSX\Components\About.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\AnalyticOptions.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\Menu.tsx" />
-    <None Include="wwwroot\Scripts\TSX\Components\OpenSEENavbar.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\WidgetSection.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\PlotUtilitiesSection.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\Navigation.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\PlotTable.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\InfoSection.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Navbar\OpenSEENavbar.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\OverlappingEvents.tsx" />
     <None Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
     <None Include="wwwroot\Scripts\TSX\defaults.ts" />
@@ -65,10 +70,10 @@ if $(ConfigurationName) == Release npm run buildrelease
     <None Include="wwwroot\Scripts\TSX\openSEE.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\analyticSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\dataSlice.tsx" />
-    <None Include="wwwroot\Scripts\TSX\store\GraphLogic.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Data\GraphLogic.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\overlappingEventsSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\queryThunk.tsx" />
-    <None Include="wwwroot\Scripts\TSX\store\RequestHandler.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Data\RequestHandler.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\settingSlice.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\store.tsx" />
   </ItemGroup>
@@ -87,6 +92,7 @@ if $(ConfigurationName) == Release npm run buildrelease
     <ProjectReference Include="..\Libraries\PQDS\PQDS.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\EventContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\Context\HoverContext.tsx" />
     <TypeScriptCompile Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />
   </ItemGroup>
