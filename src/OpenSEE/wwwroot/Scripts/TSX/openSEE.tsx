@@ -46,9 +46,9 @@ import store from './store/store';
 import { sortGraph } from './Graphs/Utilities'
 import { OpenSee } from './global';
 
-import { LoadSettings, SelectQueryString, SelectMouseMode, SetMouseMode, SelectSinglePlot } from './store/settingSlice';
-import { SelectCycles, UpdateAnalytic, SelectAnalytics } from './store/analyticSlice';
-import { SetTimeLimit, SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
+import { LoadSettings, SelectMouseMode, SetMouseMode } from './store/settingSlice';
+import { SelectCycles, SelectAnalytics } from './store/analyticSlice';
+import { SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
 import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
 
 import OverlappingEventWindow from './Components/OverlappingEvents';
@@ -118,7 +118,82 @@ const OpenSeeHome = () => {
     const cycles = useAppSelector(SelectCycles);
     const analytics = useAppSelector(SelectAnalytics);
     const fftTime = useAppSelector(SelectFFTLimits);
-    const query = useAppSelector(SelectQueryString);
+
+    /*
+       (state: OpenSee.IRootState) => state.Data,
+       (state: OpenSee.IRootState) => state.Analytic,
+       (state: OpenSee.IRootState) => state.OverlappingEvents,
+       (state: OpenSee.IRootState) => state.Settings.SinglePlot,
+       (data, analyticInfo, evtID, overLappingEvents, singlePlot) => */
+    const query = React.useMemo(() =>{
+            const overlappingEvts = []
+            const plotKeys = data.Plots.map(plot => plot.key)
+            const plotQuery: OpenSee.PlotQuery[] = _.uniq(plotKeys);
+
+            if (plotKeys.length > 0)
+                plotKeys.forEach(key => {
+                    const matchingPlot = data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+
+                    if (matchingPlot) {
+                        const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                        const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                        let yLimits = {}
+
+                        Object.keys(matchingPlot.yLimits).forEach(key => {
+                            if (enabledUnits.includes(key as OpenSee.Unit))
+                                yLimits[key] = { ...matchingPlot.yLimits[key] };
+                        })
+
+                        plotQuery.push({
+                            yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
+                            isZoomed: matchingPlot.isZoomed,
+                            key: matchingPlot.key
+                        });
+
+                    }
+                });
+
+            if (overLappingEvents.EventList.length > 0) {
+                overLappingEvents.EventList.forEach(evt => {
+                    if (evt.Selected)
+                        overlappingEvts.push(evt.EventID)
+                })
+            }
+            const plotString = JSON.stringify(plotQuery);
+            const overlappingString = JSON.stringify(overlappingEvts);
+            const plotBase64 = btoa(plotString);
+            const overlappingBase64 = btoa(overlappingString);
+
+            const queryObj = {
+                eventID: eventId,
+                startTime: data.startTime,
+                endTime: data.endTime,
+                Trc: analyticInfo.Trc,
+                HPFOrder: analyticInfo.HPFOrder,
+                LPFOrder: analyticInfo.LPFOrder,
+                CycleLimits: data.cycleLimit as [number, number],
+                FFTLimits: data.fftLimits as [number, number],
+                FFTCycles: analyticInfo.FFTCycles,
+                FFTStartTime: analyticInfo.FFTStartTime,
+                Harmonic: analyticInfo.Harmonic,
+                singlePlot: singlePlot,
+                plots: plotBase64,
+                overlappingInfo: overlappingBase64
+            }
+
+            let query = queryString.stringify(queryObj);
+
+            // Temporary patch to check queryString length and remove plot objects if necessary
+            while (query?.length > 3000 && plotQuery?.length > 0) {
+                plotQuery.pop();
+                const plotString = JSON.stringify(plotQuery)
+                const plotBase64 = btoa(plotString);
+                queryObj.plots = plotBase64;
+                query = queryString.stringify(queryObj);
+            }
+
+            return query
+        }, [eventId]); 
 
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -223,17 +298,17 @@ const OpenSeeHome = () => {
     */
 
     return (
-        <Application
-            HomePath={""}
-            DefaultPath={""}
-            HideSideBar={true}
-            Version={version}
-            Logo={`${homePath}Images/openSEE.jpg`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
-            UseLegacyNavigation={true}
-            ref={applicationRef}
-        >
-            <EventProvider EventID={eventId}>
+        <EventProvider EventID={eventId}>
+            <Application
+                HomePath={""}
+                DefaultPath={""}
+                HideSideBar={true}
+                Version={version}
+                Logo={`${homePath}Images/openSEE.jpg`}
+                NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
+                UseLegacyNavigation={true}
+                ref={applicationRef}
+            >
                 <HoverProvider>
                     <VerticalSplit style={{ height: '100%' }}>
                         <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
@@ -373,8 +448,8 @@ const OpenSeeHome = () => {
                         </SplitSection>
                     </VerticalSplit>
                 </HoverProvider>
-            </EventProvider>
-        </Application>
+            </Application>
+        </EventProvider>
     );
 }
 

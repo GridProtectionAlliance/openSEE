@@ -20,14 +20,13 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { OpenSee } from '../global';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as _ from 'lodash';
-import { defaultSettings } from '../defaults';
 import { createSelector } from 'reselect';
-import * as queryString from "query-string";
+import { defaultSettings } from '../defaults';
+import { OpenSee } from '../global';
+import { AddSingleOverlappingPlot, RemovePlot } from './dataSlice';
 import { RootState } from './store';
-import { AddSingleOverlappingPlot, RemovePlot } from './dataSlice'
 
 export const plotTypes = ["Voltage", "Current", "TripCoil", "Digitals", "Analogs", 'FirstDerivative', 'ClippedWaveforms', 'Frequency',
     'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent',
@@ -208,85 +207,6 @@ export const SelectEnabledPlots = createSelector(
         return enabledPlots;
     }
 );
-
-
-export const SelectQueryString = createSelector(
-    (state: OpenSee.IRootState) => state.Data,
-    (state: OpenSee.IRootState) => state.Analytic,
-    (state: OpenSee.IRootState) => state.EventInfo.EventID,
-    (state: OpenSee.IRootState) => state.OverlappingEvents,
-    (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-    (data, analyticInfo, evtID, overLappingEvents, singlePlot) => {
-        let plotQuery: OpenSee.PlotQuery[] = [];
-        let overlappingEvts = []
-        let plotKeys = data.Plots.map(plot => plot.key)
-        plotKeys = _.uniq(plotKeys)
-
-        if (plotKeys.length > 0)
-            plotKeys.forEach(key => {
-                const matchingPlot = data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
-
-                if (matchingPlot) {
-                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
-                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
-                    let yLimits = {}
-
-                    Object.keys(matchingPlot.yLimits).forEach(key => {
-                        if (enabledUnits.includes(key as OpenSee.Unit))
-                            yLimits[key] = { ...matchingPlot.yLimits[key] };
-                    })
-
-                    plotQuery.push({
-                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
-                        isZoomed: matchingPlot.isZoomed,
-                        key: matchingPlot.key
-                    });
-
-                }
-            });
-
-        if (overLappingEvents.EventList.length > 0) {
-            overLappingEvents.EventList.forEach(evt => {
-                if (evt.Selected)
-                    overlappingEvts.push(evt.EventID)
-            })
-        }
-        const plotString = JSON.stringify(plotQuery);
-        const overlappingString = JSON.stringify(overlappingEvts);
-        const plotBase64 = btoa(plotString);
-        const overlappingBase64 = btoa(overlappingString);
-
-        const queryObj = {
-            eventID: evtID,
-            startTime: data.startTime,
-            endTime: data.endTime,
-            Trc: analyticInfo.Trc,
-            HPFOrder: analyticInfo.HPFOrder,
-            LPFOrder: analyticInfo.LPFOrder,
-            CycleLimits: data.cycleLimit as [number, number],
-            FFTLimits: data.fftLimits as [number, number],
-            FFTCycles: analyticInfo.FFTCycles,
-            FFTStartTime: analyticInfo.FFTStartTime,
-            Harmonic: analyticInfo.Harmonic,
-            singlePlot: singlePlot,
-            plots: plotBase64,
-            overlappingInfo: overlappingBase64
-        }
-
-        let query = queryString.stringify(queryObj);
-
-        // Temporary patch to check queryString length and remove plot objects if necessary
-        while (query?.length > 3000 && plotQuery?.length > 0) {
-            plotQuery.pop();
-            const plotString = JSON.stringify(plotQuery)
-            const plotBase64 = btoa(plotString);
-            queryObj.plots = plotBase64;
-            query = queryString.stringify(queryObj);
-        }
-
-        return query
-    });
-
 
 export const SelectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
     (state: OpenSee.IRootState) => state.Data,
