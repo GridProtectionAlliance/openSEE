@@ -26,57 +26,82 @@ import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import React from "react";
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
-import { useAppDispatch } from '../hooks';
-import { SetMouseMode } from '../store/settingSlice';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { SelectNavigation, SetMouseMode } from '../store/settingSlice';
 import PlotTable from './PlotTable';
+import { SelectHarmonic, SelectTRC, SelectLPF, SelectHPF, SelectCycles } from '../store/analyticSlice';
+import { SelectAnalytics, SelectDisplayed, SelectFFTEnabled, SelectFFTLimits } from '../store/dataSlice';
+import EventContext from '../Context/EventContext';
 
 interface IWidgets {
     hover: OpenSee.Hover,
     setHover: (hover: OpenSee.Hover) => void,
-    mouseMode: OpenSee.MouseMode,
     OpenDrawers: OpenSee.Drawers,
-    navigation: OpenSee.EventNavigation,
-    showFFT: boolean,
-    lookupInfo: OpenSee.INextBackLookup,
-    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
-    exportData: (type: string) => void,
-    eventInfo: OpenSee.IEventInfo
+    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void
 }
 
 const WidgetSection = (props: IWidgets) => {
     const dispatch = useAppDispatch();
+    const harmonic = useAppSelector(SelectHarmonic);
+    const trc = useAppSelector(SelectTRC);
+    const lpf = useAppSelector(SelectLPF);
+    const hpf = useAppSelector(SelectHPF);
+    const cycles = useAppSelector(SelectCycles);
 
-    const optionList = React.useMemo(() => {
-        const optionList = [
-            {
-                Label: (
-                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                        Export CSV
-                    </a>
-                ),
-                Callback: () => props.exportData('csv')
-            },
-            {
-                Label: (
-                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                        Export PQDS
-                    </a>
-                ),
-                Callback: () => props.exportData('pqds')
-            }
-        ];
+    const showPlots = useAppSelector(SelectDisplayed);
+    const fftTime = useAppSelector(SelectFFTLimits);
+    const analytics = useAppSelector(SelectAnalytics);
+    const showFFT = useAppSelector(SelectFFTEnabled);
 
-        if (props.showFFT)
-            optionList.push({
-                Label: (
-                    <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                        Export FFT
-                    </a>
-                ),
-                Callback: () => props.exportData('fft')
-            });
-        return optionList;
-    }, [props.showFFT, props.exportData]);
+    const evt = React.useContext(EventContext);
+
+    const exportData = (type) => {
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.EventInfo.EventId}` +
+            `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
+            `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
+            `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
+            `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
+            `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
+            `${`&displayAnalytics=${analytics}`}` +
+            `${`&lpfOrder=${lpf}`}` +
+            `${`&hpfOrder=${hpf}`}` +
+            `${`&Trc=${trc}`}` +
+            `${`&harmonic=${harmonic}`}` +
+            `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
+            `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
+            `&Meter=${evt.EventInfo.MeterName}` +
+            `&EventType=${evt.EventInfo.EventName}`;
+        window.open(uri, '_blank');
+    }
+
+    const optionList = [
+        {
+            Label: (
+                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                    Export CSV
+                </a>
+            ),
+            Callback: () => exportData('csv')
+        },
+        {
+            Label: (
+                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                    Export PQDS
+                </a>
+            ),
+            Callback: () => exportData('pqds')
+        }
+    ];
+
+    if (showFFT)
+        optionList.push({
+            Label: (
+                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
+                    Export FFT
+                </a>
+            ),
+            Callback: () => exportData('fft')
+        });
 
     return (
         <>
@@ -145,7 +170,7 @@ const WidgetSection = (props: IWidgets) => {
                     <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)} style={{ cursor: 'pointer' }}>
                         <i style={{ fontStyle: "normal" }}>Scalar Stats</i>
                     </a>
-                    {props.eventInfo?.EventName === "Snapshot" ?
+                    {evt.EventInfo?.EventName === "Snapshot" ?
                         <a key={"option-harmonic"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.HarmonicStats)} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>Harmonic Stats</i>
                         </a>
@@ -169,8 +194,8 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className={"btn btn-" + (props.showFFT ? "primary" : "secondary")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    disabled={!props.showFFT}
+                <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                    disabled={!showFFT}
                     onMouseEnter={() => props.setHover('FFTTable')}
                     onMouseLeave={() => props.setHover('None')} data-tooltip={'fftTable-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable) }}>
