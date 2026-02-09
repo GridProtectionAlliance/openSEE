@@ -49,6 +49,9 @@ export namespace OpenSee {
     // For navigation
     type EventNavigation = ('system' | 'station' | 'meter' | 'asset')
 
+    // For Navbar
+    type Hover = ('None' | 'Waveform' | 'Show Points' | 'Polar Chart' | 'Stat' | 'Sags' | 'Lightning' | 'Export' | 'Tooltip' | 'Clock' | 'Zoom Mode' | 'Pan' | 'FFTTable' | 'FFTMove' | 'Reset Zoom' | 'Settings' | 'NavLeft' | 'NavRight' | 'Help' | 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception' | 'Select')
+
     interface iXDAEvent {
         Alias?: string;
         Description?: string;

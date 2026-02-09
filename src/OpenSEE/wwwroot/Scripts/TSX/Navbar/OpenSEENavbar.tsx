@@ -33,7 +33,6 @@ import { WaveformViews, PhasorClock, statsIcon, lightningData, exportBtn, Zoom, 
 import { Point } from '@gpa-gemstone/gpa-symbols'
 import { ToolTip, BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import moment from "moment"
 
 import About from '../Components/About';
 
@@ -47,8 +46,6 @@ interface IProps {
     OpenDrawers: OpenSee.Drawers
     Width: number
 }
-
-type Hover = ('None' | 'Waveform' | 'Show Points' | 'Polar Chart' | 'Stat' | 'Sags' | 'Lightning' | 'Export' | 'Tooltip' | 'Clock' | 'Zoom Mode' | 'Pan' | 'FFTTable' | 'FFTMove' | 'Reset Zoom' | 'Settings' | 'NavLeft' | 'NavRight' | 'Help' | 'Meter' | 'Station' | 'Asset' | 'EType' | 'EInception' | 'Select')
 
 const OpenSeeNavBar = (props: IProps) => {
     const dispatch = useAppDispatch();
@@ -139,68 +136,6 @@ const OpenSeeNavBar = (props: IProps) => {
         </>
 
     );
-
-}
-
-interface InfoSectionProps {
-    eventInfo: OpenSee.IEventInfo,
-    hover: Hover,
-    setHover: (hover: Hover) => void,
-    width: number
-}
-
-const InfoSection = (props: InfoSectionProps) => {
-    return (
-        <>
-            <div className="d-none d-xl-block col-xl-4">
-                <ul className="navbar-nav navbar-expand">
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Meter')} onMouseLeave={() => props.setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
-                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
-                        <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}> {props.eventInfo?.MeterName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
-                            <p>{props.eventInfo?.MeterName}</p>
-                        </ToolTip>
-                    </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Station')} onMouseLeave={() => props.setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"
-                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
-                        <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.StationName}</div>
-                        <ToolTip Show={props.hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
-                            <p>{props.eventInfo?.StationName}</p>
-                        </ToolTip>
-                    </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Asset')} onMouseLeave={() => props.setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"
-                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
-                        <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.AssetName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
-                            <p>{props.eventInfo?.AssetName}</p>
-                        </ToolTip>
-                    </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('EType')} onMouseLeave={() => props.setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"
-                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
-                        <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{props.eventInfo?.EventName}</div>
-                        <ToolTip Show={props.hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
-                            <p>{props.eventInfo?.EventName}</p>
-                        </ToolTip>
-                    </li>
-                    {props.width > 1695 ? 
-                        <li className="nav-item" onMouseEnter={() => props.setHover('EInception')} onMouseLeave={() => props.setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"
-                            style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}>
-                            <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
-                            <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {moment(props.eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
-                            </div>
-                            <ToolTip Show={props.hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
-                                <p>{moment(props.eventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
-                            </ToolTip>
-                        </li> : null}
-                </ul>
-            </div>
-        </>
-    )
 
 }
 
