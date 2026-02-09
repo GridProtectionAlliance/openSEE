@@ -26,6 +26,25 @@ import { defaultSettings } from '../defaults';
 import _ from "lodash";
 
 namespace DataContextFunctions {
+    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number) {
+        const newContext = { ...context };
+
+        if (Math.abs(start - end) < 10)
+            return newContext;
+
+        newContext.StartTime = start;
+        newContext.EndTime = end;
+        newContext.Plots.map(graph => {
+            if (graph.key.DataType === "FFT")
+                return updateAutoLimits(graph, newContext.FftLimits[0], newContext.FftLimits[1]);
+            if (graph.key.DataType === "OverlappingWave")
+                return updateAutoLimits(graph, newContext.CycleLimits[0], newContext.CycleLimits[1]);
+            return updateAutoLimits(graph, start, end);
+        });
+
+        return newContext;
+    }
+
 
     export function getPrimaryAxis(key: OpenSee.IGraphProps) {
         if (key.DataType === "Voltage")
@@ -209,10 +228,7 @@ namespace DataContextFunctions {
             return d.LegendGroup + ' ' + d.LegendHorizontal + ' HPF ' + d.LegendVertical;
         if (type == 'LowPassFilter')
             return d.LegendGroup + ' ' + d.LegendHorizontal + ' LPF ' + d.LegendVertical;
-
-        else
-            return type;
-
+        return type;
     }
 
     // Function to get Default Enabled Traces

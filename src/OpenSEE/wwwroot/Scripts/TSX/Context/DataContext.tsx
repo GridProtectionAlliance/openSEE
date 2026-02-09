@@ -36,15 +36,7 @@ interface IDataFunctions {
     SetTimeLimit: (start: number, end: number) => void
 }
 
-interface IDataContextType {
-    StartTime: number,
-    EndTime: number,
-    Plots: OpenSee.IGraphstate[],
-    FftLimits: [number, number],
-    CycleLimits: [number, number]
-}
-
-const defaultState: IDataContextType = {
+const defaultState: OpenSee.IDataContextType = {
     StartTime: 0 as number,
     EndTime: 0 as number,
     Plots: [] as OpenSee.IGraphstate[],
@@ -52,32 +44,16 @@ const defaultState: IDataContextType = {
     CycleLimits: [0, 1000.0 / 60.0]
 };
 
-export const DataContext = React.createContext<IDataContextType>(defaultState);
+export const DataContext = React.createContext<OpenSee.IDataContextType>(defaultState);
 
 export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
-    const [contextState, setContextState] = React.useState<IDataContextType>(defaultState);
+    const [contextState, setContextState] = React.useState<OpenSee.IDataContextType>(defaultState);
     const contextRef = React.useRef<IDataFunctions>();
 
     // Context State Functions
     const SetTimeLimit = React.useCallback((start: number, end: number) => {
-        if (Math.abs(start - end) < 10)
-            return;
-
-        setContextState(c => {
-            const newContext = { ...c };
-            newContext.StartTime = start;
-            newContext.EndTime = end;
-            newContext.Plots.map(graph => {
-                if (graph.key.DataType === "FFT")
-                    return func.updateAutoLimits(graph, c.FftLimits[0], c.FftLimits[1]);
-                if (graph.key.DataType === "OverlappingWave")
-                    return func.updateAutoLimits(graph, c.CycleLimits[0], c.CycleLimits[1]);
-                return func.updateAutoLimits(graph, start, end);
-            });
-
-            return newContext;
-        });
-    }, [setContextState]);
+        setContextState(c => func.UpdateTimeLimit(c, start, end));
+    }, []);
 
     // Plot Array Functions
 
@@ -115,7 +91,7 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
     } catch { }
 }
 
-function saveSettings(state: IDataContextType) {
+function saveSettings(state: OpenSee.IDataContextType) {
     try {
         //lets type currentSettings to prevent errors in future
         const settings = JSON.parse(localStorage.getItem("openSee.Settings"))

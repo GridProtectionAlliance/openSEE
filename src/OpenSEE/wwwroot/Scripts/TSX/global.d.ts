@@ -32,7 +32,6 @@ export namespace OpenSee {
 
     interface IRootState {
         Settings: ISettingsState,
-        Data: IDataState,
         Analytic: IAnalyticStore,
         OverlappingEvents: IOverlappingEventsStore
     }
@@ -44,6 +43,14 @@ export namespace OpenSee {
         Trc: number,
         FFTCycles: number,
         FFTStartTime: number
+    }
+
+    interface IDataContextType {
+        StartTime: number,
+        EndTime: number,
+        Plots: OpenSee.IGraphstate[],
+        FftLimits: [number, number],
+        CycleLimits: [number, number]
     }
     
     // For navigation
@@ -288,15 +295,6 @@ export namespace OpenSee {
         DataType: graphType,
         EventId: number,
         NoCompress?: boolean
-    }
-
-    // Data For plots
-    interface IDataState {
-        startTime: number,
-        endTime: number,
-        Plots: OpenSee.IGraphstate[],
-        fftLimits: [number, number],
-        cycleLimit: [number, number],
     }
 
     type LoadingState = ('Idle' | 'Loading' | 'Partial' | 'Error' | 'Uninitiated');
