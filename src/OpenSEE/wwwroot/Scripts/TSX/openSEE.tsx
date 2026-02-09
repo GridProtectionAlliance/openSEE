@@ -70,7 +70,7 @@ import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 
 // Providers
 import { HoverProvider } from './Context/HoverContext';
-
+import { EventProvider } from './Context/EventContext';
 declare var homePath: string;
 declare var version: string;
 declare var eventID: number;
@@ -209,6 +209,7 @@ const OpenSeeHome = () => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
     };
 
+    /*
     function exportData(type) {
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${eventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
@@ -222,6 +223,7 @@ const OpenSeeHome = () => {
             `&EventType=${eventInfo.MeterName}`;
         window.open(uri, "_blank");
     }
+    */
 
     return (
         <Application
@@ -234,6 +236,7 @@ const OpenSeeHome = () => {
             UseLegacyNavigation={true}
             ref={applicationRef}
         >
+            <EventProvider EventID={eventId}>
             <HoverProvider>
                 <VerticalSplit style={{ height: '100%' }}>
                     <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
@@ -373,6 +376,7 @@ const OpenSeeHome = () => {
                     </SplitSection>
                 </VerticalSplit>
             </HoverProvider>
+            </EventProvider>
         </Application>
     );
 }
