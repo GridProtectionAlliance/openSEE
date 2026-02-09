@@ -1,0 +1,157 @@
+﻿//******************************************************************************************************
+//  PlotUtilitiesSection.tsx - Gbtc
+//
+//  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
+//
+//  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
+//  the NOTICE file distributed with this work for additional information regarding copyright ownership.
+//  The GPA licenses this file to you under the MIT License (MIT), the "License"; you may not use this
+//  file except in compliance with the License. You may obtain a copy of the License at:
+//
+//      http://opensource.org/licenses/MIT
+//
+//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
+//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
+//  License for the specific language governing permissions and limitations.
+//
+//  Code Modification History:
+//  ----------------------------------------------------------------------------------------------------
+//  02/09/2026 - Gabriel Santos
+//       Moved code to here from OpenSEENavbar.tsx
+//
+//******************************************************************************************************
+
+import { Point } from '@gpa-gemstone/gpa-symbols';
+import { ToolTip } from '@gpa-gemstone/react-forms';
+import React from "react";
+import About from '../Components/About';
+import { OpenSee } from "../global";
+import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } from '../Graphs/ChartIcons';
+import { useAppDispatch } from '../hooks';
+import { ResetZoom } from '../store/dataSlice';
+import { SetMouseMode, SetZoomMode } from '../store/settingSlice';
+import Navigation from './Navigation';
+
+interface iPlotUtilities {
+    hover: OpenSee.Hover,
+    setHover: (hover: OpenSee.Hover) => void,
+    mouseMode: OpenSee.MouseMode,
+    OpenDrawers: OpenSee.Drawers,
+    navigation: OpenSee.EventNavigation,
+    showAbout: boolean,
+    showFFT: boolean,
+    lookupInfo: OpenSee.INextBackLookup,
+    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
+    setShowAbout: (about: boolean) => void
+}
+
+const PlotUtilitiesSection = (props: iPlotUtilities) => {
+    const dispatch = useAppDispatch();
+
+    return (
+        <>
+            <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
+                <div className="btn-group d-flex" role="group">
+                    {/*Zoom*/}
+                    <button type="button" className={"btn btn-primary" + (props.mouseMode == "zoom" ? " active" : "")} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: '0.195rem' }}
+                        onMouseEnter={() => props.setHover('Zoom Mode')} onMouseLeave={() => props.setHover('None')} data-tooltip={'zoom-btn'}
+                        data-placement="bottom" onClick={() => dispatch(SetMouseMode("zoom"))}>
+                        < i style={{ fontStyle: "normal", fontSize: "25px" }} >{Zoom}</i>
+                    </button>
+                    <div className="dropdown-menu" style={{ position: "absolute" }}>
+                        <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))} style={{ cursor: 'pointer' }}>
+                            <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
+                        </a>
+                        <a key={"option-y"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('y'))} style={{ cursor: 'pointer' }}>
+                            <i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value
+                        </a>
+                        <a key={"option-xy"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('xy'))} style={{ cursor: 'pointer' }}>
+                            <i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle
+                        </a>
+                    </div>
+
+                    <ToolTip Show={props.hover == 'Zoom Mode'} Position={'bottom'} Target={'zoom-btn'}>
+                        <p>Zoom</p>
+                    </ToolTip>
+
+                    {/*Pan*/}
+                    <button type="button" className={"btn btn-primary" + (props.mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
+                        onMouseEnter={() => props.setHover('Pan')}
+                        onMouseLeave={() => props.setHover('None')} data-tooltip={'pan-btn'}
+                        data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
+                        <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
+                    </button>
+                    <ToolTip Show={props.hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
+                        <p>Pan</p>
+                    </ToolTip>
+
+                    { /*Select*/}
+                    <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints || props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (props.mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                        disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
+                        onMouseEnter={() => props.setHover('Select')}
+                        onMouseLeave={() => props.setHover('None')} data-tooltip={'select-btn'}
+                        data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
+                        <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
+                    </button>
+                    <ToolTip Show={props.hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
+                        <p>Select</p>
+                    </ToolTip>
+
+                    {/*FFT Move*/}
+                    <button type="button" className={"btn btn-" + (props.showFFT ? "primary" : "secondary") + (props.mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
+                        onClick={() => dispatch(SetMouseMode("fftMove"))}
+                        disabled={!props.showFFT}
+                        onMouseEnter={() => props.setHover('FFTMove')}
+                        onMouseLeave={() => props.setHover('None')} data-tooltip={'fftMove-btn'}
+                        data-toggle="tooltip" data-placement="bottom">
+                        <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
+                    </button>
+                    <ToolTip Show={props.hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
+                        <p>FFT Move</p>
+                    </ToolTip>
+
+                    {/*reset*/}
+                    <button className="btn btn-primary" style={{ padding: '0.195rem' }}
+                        onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
+                        <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
+                    </button>
+                    <ToolTip Show={props.hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
+                        <p>Reset Zoom</p>
+                    </ToolTip>
+
+                </div>
+            </li>
+
+            <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
+                <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                    onMouseEnter={() => props.setHover('Settings')}
+                    onMouseLeave={() => props.setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
+                    onClick={() => { props.ToggleDrawer('Settings', !props.OpenDrawers.Settings); }}
+                >
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
+                </button>
+                <ToolTip Show={props.hover == 'Settings'} Position={'bottom'} Target={'settings-btn'}>
+                    <p>Settings</p>
+                </ToolTip>
+            </li>
+
+            <Navigation hover={props.hover} setHover={(item) => props.setHover(item)} lookupInfo={props.lookupInfo} navigation={props.navigation} />
+
+            <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
+                <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }}
+                    onMouseEnter={() => props.setHover('Help')}
+                    onMouseLeave={() => props.setHover('None')} data-tooltip={'help-btn'}
+                    data-toggle="tooltip" data-placement="bottom" onClick={() => props.setShowAbout(true)}>
+                    <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
+                </button>
+                <ToolTip Show={props.hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
+                    <p>Help</p>
+                </ToolTip>
+                <About isOpen={props.showAbout} closeCallback={() => props.setShowAbout(false)} />
+
+            </li>
+        </>
+    )
+}
+
+export default PlotUtilitiesSection;
