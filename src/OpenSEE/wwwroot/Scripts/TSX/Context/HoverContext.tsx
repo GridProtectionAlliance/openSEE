@@ -25,12 +25,12 @@ import * as React from 'react';
 type HoverContextType = [[number, number], React.Dispatch<React.SetStateAction<[number, number]>>];
 
 export const HoverContext = React.createContext<HoverContextType>([[0, 0], () => { }]);
-export const HoverProvider = ({ children }) => {
+export const HoverProvider = (props: React.PropsWithChildren<{}>) => {
     const hover = React.useState<[number, number]>([0, 0]);
 
     return (
         <HoverContext.Provider value={hover}>
-            {children}
+            {props.children}
         </HoverContext.Provider>
     );
 };
