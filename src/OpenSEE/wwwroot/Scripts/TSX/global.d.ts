@@ -28,8 +28,6 @@ declare global {
     var version: string;
 }
 
-declare const MOMENT_DATETIME_FORMAT = 'MM/DD/YYYYTHH:mm:ss.SSSSSSSS';
-
 export namespace OpenSee {
 
     interface IRootState {
