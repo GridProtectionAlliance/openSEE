@@ -76,10 +76,11 @@ declare var version: string;
 declare var eventID: number;
 
 const OpenSeeHome = () => {
+    const dispatch = useAppDispatch();
+
     const applicationRef = React.useRef(null);
     const plotRef = React.useRef<HTMLDivElement>(null);
     const history = React.useRef<object>(createHistory());
-    const dispatch = useAppDispatch();
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
         Settings: () => { },
         AccumulatedPoints: () => { },
@@ -105,30 +106,22 @@ const OpenSeeHome = () => {
         ToolTip: false,
         ToolTipDelta: false,
         HarmonicStats: false
-    })
-
+    });
     const [resizeCount, setResizeCount] = React.useState<number>(0);
     const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
+    const [eventId, setEventId] = React.useState<number>(-1);
+    const [plotHeight, setPlotHeight] = React.useState<number>(250);
+    const [navWidth, setNavWidth] = React.useState<number>(100);
 
     const mouseMode = useAppSelector(SelectMouseMode);
-
-    const eventInfo = useAppSelector(SelectEventInfo);
-
     const groupedKeys = useAppSelector(SelectListGraphs);
     const plotKeys = useAppSelector(SelectPlotKeys);
-    const singlePlot = useAppSelector(SelectSinglePlot);
-
     const eventList = useAppSelector(SelectEventList);
-
     const showPlots = useAppSelector(SelectDisplayed);
     const cycles = useAppSelector(SelectCycles);
     const analytics = useAppSelector(SelectAnalytics);
-
     const fftTime = useAppSelector(SelectFFTLimits);
     const query = useAppSelector(SelectQueryString);
-
-    const [plotHeight, setPlotHeight] = React.useState<number>(250);
-    const [navWidth, setNavWidth] = React.useState<number>(100);
 
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -154,16 +147,18 @@ const OpenSeeHome = () => {
     React.useEffect(() => {
         const query = queryString.parse(history.current['location'].search);
 
+        /*
         const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
         const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
 
         const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
-        dispatch(LoadEventInfo({ breakeroperation: ""/*not really sure what breakeroperation is..*/ }))
-        dispatch(SetEventID(eventID))
         dispatch(SetTimeLimit({ start: startTime, end: endTime }));
         dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: startTime } }));
+        */
+
+        setEventId(Number(query['eventId']));
 
         dispatch(updatedURL({ query: history.current['location'].search, initial: true }));
 
@@ -193,13 +188,10 @@ const OpenSeeHome = () => {
 
     //Effect to update EventID
     React.useEffect(() => {
-        if (eventID && !isNaN(eventID) && eventID !== 0) {
-            dispatch(SetEventID(eventID))
-            dispatch(LoadEventInfo({ breakeroperation: "" }))
-            dispatch(LoadLookupInfo())
+        if (eventId && !isNaN(eventId) && eventId > -1) {
             dispatch(LoadOverlappingEvents())
         }
-    }, [eventID]);
+    }, [eventId]);
 
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
@@ -207,7 +199,7 @@ const OpenSeeHome = () => {
             dispatch(SetMouseMode('select'))
             return () => { dispatch(SetMouseMode(oldMode)) }
         }
-    }, [openDrawers.ToolTipDelta])
+    }, [openDrawers.ToolTipDelta]);
 
     const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
         overlayHandles.current[drawer](open);
@@ -306,9 +298,9 @@ const OpenSeeHome = () => {
 
                     <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
                         <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
-                            {groupedKeys[eventID] != undefined ? (
+                                {groupedKeys[eventId] != undefined ? (
                                 <>
-                                    {groupedKeys[eventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
+                                        {groupedKeys[eventId].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
                                         <LineChart
                                             key={item.DataType + item.EventId}
                                             width={plotWidth}
@@ -318,7 +310,7 @@ const OpenSeeHome = () => {
                                         />
                                     ))}
 
-                                    {groupedKeys[eventID].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
+                                        {groupedKeys[eventId].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
                                         <BarChart
                                             key={item.DataType + item.EventId}
                                             width={plotWidth}
@@ -329,7 +321,7 @@ const OpenSeeHome = () => {
                                 </>
                             ) : null}
 
-                            {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventID).map(key =>
+                                {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventId).map(key =>
                                 <div className="card" key={key}>
                                     {eventList.find(item => item.EventID === parseInt(key)) ? (
                                         <div className="card-header">
