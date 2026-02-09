@@ -35,17 +35,14 @@ import {
     SelectEndTime, SelectLoading, SelectYLimits, SetZoomedLimits, SetSelectPoint, SetTimeLimit, SelectEnabledUnits,
     SetCycleLimit, SelectYLabels, SelectDeltaHoverPoints, getPrimaryAxis, SelectCycleLimits
 } from '../store/dataSlice';
-
-import { SelectEventID, SelectEventInfo } from '../store/eventInfoSlice'
-
-import { SelectEventList } from '../store/overlappingEventsSlice'
-
+import { SelectEventList } from '../store/overlappingEventsSlice';
 import { SelectAnalyticOptions, SelectCycles, SelectFFTWindow, SelectShowFFTWindow, SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
 import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
 import HoverContext from '../Context/HoverContext'
 import { defaultSettings } from '../defaults';
+import EventContext from '../Context/EventContext';
 
 interface iProps {
     height: number,
@@ -78,7 +75,7 @@ interface IMarker {
 const LineChart = (props: iProps) => {
     const dispatch = useAppDispatch();
     const cycleLimits = useAppSelector(SelectCycleLimits);
-    const isOverlappingWaveform = props.dataKey.DataType === "OverlappingWave"
+    const isOverlappingWaveform = props.dataKey.DataType === "OverlappingWave";
 
     const MemoSelectActiveUnit = React.useMemo(() => SelectActiveUnit(props.dataKey), [props.dataKey])
     const activeUnit = useAppSelector(MemoSelectActiveUnit);
@@ -106,10 +103,12 @@ const LineChart = (props: iProps) => {
 
     const isZoomed = useAppSelector(SelectIsZoomed(props.dataKey));
 
+    const evt = React.useContext(EventContext);
+
     const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>();
     const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
 
-    const primaryAxis = getPrimaryAxis(props.dataKey)
+    const primaryAxis = getPrimaryAxis(props.dataKey);
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
@@ -122,8 +121,7 @@ const LineChart = (props: iProps) => {
     const [inceptionLocation, setInceptionLocation] = React.useState<number>(10);
     const [durationLocation, setDurationLocation] = React.useState<number>(10);
 
-    const evtID = useAppSelector(SelectEventID);
-    const isOriginalEvt = props.dataKey.EventId === evtID
+    const isOriginalEvt = props.dataKey.EventId === evt.EventInfo.EventId;
 
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
@@ -147,9 +145,7 @@ const LineChart = (props: iProps) => {
 
     const mouseMode = useAppSelector(SelectMouseMode);
     const zoomMode = useAppSelector(SelectZoomMode);
-
-    const eventInfo = useAppSelector(SelectEventInfo);
-    const originalStartTime = new Date(eventInfo?.EventDate + "Z").getTime()
+    const originalStartTime = new Date(evt.EventInfo?.EventDate + "Z").getTime()
 
     const fftWindow = useAppSelector(SelectFFTWindow);
     const showFFT = useAppSelector(SelectShowFFTWindow);
@@ -265,7 +261,7 @@ const LineChart = (props: iProps) => {
 
             Tstart = (Tstart < xScaleRef.current.domain()[0] ? xScaleRef.current.domain()[0] : Tstart)
             Tstart = ((Tstart + deltaData) > xScaleRef.current.domain()[1] ? xScaleRef.current.domain()[1] - deltaData : Tstart);
-            dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: Tstart, FFTCycles: fftCycles }, key: { DataType: "FFT", EventId: evtID } }));
+            dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: Tstart, FFTCycles: fftCycles }, key: { DataType: "FFT", EventId: evt.EventInfo.EventId } }));
         }
     }, [mouseDown, fftMouseDown])
 
@@ -386,7 +382,7 @@ const LineChart = (props: iProps) => {
         lines.enter().append("path").classed(`Line`, true)
             .attr("type", d => `${d.Unit}`)
             .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
-            .attr("stroke-dasharray", d => singlePlot && evtID !== d.EventID ? 5 : 0)
+            .attr("stroke-dasharray", d => singlePlot && evt.EventInfo.EventId !== d.EventID ? 5 : 0)
             .attr("d", d => {
                 const lineGen = createLineGen(d.Unit)
                 if (d.SmoothDataPoints.length > 0)
@@ -549,8 +545,8 @@ const LineChart = (props: iProps) => {
         svg.append("rect").classed("DurationWindow", true)
             .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
             .attr("stroke", "#d3d3d3")
-            .attr("x", xScaleRef.current(eventInfo?.Inception))
-            .attr("width", eventInfo?.DurationEndTime - eventInfo?.Inception)
+            .attr("x", xScaleRef.current(evt.EventInfo?.Inception))
+            .attr("width", evt.EventInfo?.DurationEndTime - evt.EventInfo?.Inception)
             .style("opacity", (plotMarkers ? 0.25 : 0))
             .attr("y", 20).attr("height", props.height - 60)
             .attr("fill", "black")
@@ -666,7 +662,7 @@ const LineChart = (props: iProps) => {
         }
 
         else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
-            let ms = d - (new Date(eventInfo?.InceptionDate + "Z").getTime());
+            let ms = d - (new Date(evt.EventInfo?.InceptionDate + "Z").getTime());
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = overlappingEvents.find(evt => evt.EventID === props.dataKey.EventId)
@@ -921,16 +917,16 @@ const LineChart = (props: iProps) => {
         if (xScaleRef.current === undefined)
             return;
 
-        setInceptionLocation(xScaleRef.current(eventInfo?.Inception))
-        setDurationLocation(xScaleRef.current(eventInfo?.DurationEndTime))
+        setInceptionLocation(xScaleRef.current(evt.EventInfo?.Inception))
+        setDurationLocation(xScaleRef.current(evt.EventInfo?.DurationEndTime))
 
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         let width = 1
         let x = 1
 
-        width = xScaleRef.current(eventInfo?.DurationEndTime) - xScaleRef.current(eventInfo?.Inception)
-        x = xScaleRef.current(eventInfo?.Inception)
+        width = xScaleRef.current(evt.EventInfo?.DurationEndTime) - xScaleRef.current(evt.EventInfo?.Inception)
+        x = xScaleRef.current(evt.EventInfo?.Inception)
 
 
         container.select(".DurationWindow")
