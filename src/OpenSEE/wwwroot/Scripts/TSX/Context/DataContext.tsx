@@ -33,6 +33,7 @@ interface IProps {
 }
 
 interface IDataFunctions {
+    SetTimeLimit: (start: number, end: number) => void
 }
 
 interface IDataContextType {
@@ -53,14 +54,12 @@ const defaultState: IDataContextType = {
 
 export const DataContext = React.createContext<IDataContextType>(defaultState);
 
-export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
+export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const [contextState, setContextState] = React.useState<IDataContextType>(defaultState);
-    const contextRef = React.useRef<IDataContextType>(defaultState);
-
-    const singlePlot = useAppSelector(SelectSinglePlot);
+    const contextRef = React.useRef<IDataFunctions>();
 
     // Context State Functions
-    function SetTimeLimit(start: number, end: number): void {
+    const SetTimeLimit = React.useCallback((start: number, end: number) => {
         if (Math.abs(start - end) < 10)
             return;
 
@@ -68,22 +67,25 @@ export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
             const newContext = { ...c };
             newContext.StartTime = start;
             newContext.EndTime = end;
-            newContext.Plots.forEach(graph => {
+            newContext.Plots.map(graph => {
                 if (graph.key.DataType === "FFT")
-                    func.updateAutoLimits(graph, c.FftLimits[0], c.FftLimits[1]);
-                else if (graph.key.DataType === "OverlappingWave")
-                    func.updateAutoLimits(graph, c.CycleLimits[0], c.CycleLimits[1]);
-                else
-                    func.updateAutoLimits(graph, start, end);
+                    return func.updateAutoLimits(graph, c.FftLimits[0], c.FftLimits[1]);
+                if (graph.key.DataType === "OverlappingWave")
+                    return func.updateAutoLimits(graph, c.CycleLimits[0], c.CycleLimits[1]);
+                return func.updateAutoLimits(graph, start, end);
             });
 
             return newContext;
         });
-
-    }
+    }, [setContextState]);
 
     // Plot Array Functions
 
+
+
+    contextRef.current = {
+        SetTimeLimit
+    }
     return (
         <DataContext.Provider value={contextState}>
             {props.children}

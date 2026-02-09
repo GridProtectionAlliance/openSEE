@@ -55,23 +55,25 @@ namespace DataContextFunctions {
 
     }
 
-    export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number) {
+    export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): OpenSee.IGraphstate {
+        const newPlot = { ...plot };
+
         //only update limits once there is data loaded
-        if (plot?.data?.length > 0) {
-            const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
-            RelevantAxis.forEach(axis => {
-                const autoLimits = !plot.isZoomed && !plot.yLimits[axis].isManual;
-                if (!autoLimits)
-                    return;
+        if (newPlot?.data?.length <= 0)
+            return newPlot;
 
-                let filteredData = plot.data.filter(item => item.Unit === axis && item.Enabled);
-                const newLimits = recomputeDataLimits(startTime, endTime, filteredData, plot.yLimits[axis].current);
-                if (newLimits)
-                    plot.yLimits[axis].dataLimits = newLimits;
+        const RelevantAxis = _.uniq(newPlot.data.map(s => s.Unit));
+        RelevantAxis.forEach(axis => {
+            const autoLimits = !newPlot.isZoomed && !newPlot.yLimits[axis].isManual;
+            if (!autoLimits)
+                return;
 
-            });
-        }
-
+            let filteredData = newPlot.data.filter(item => item.Unit === axis && item.Enabled);
+            const newLimits = recomputeDataLimits(startTime, endTime, filteredData, newPlot.yLimits[axis].current);
+            if (newLimits)
+                newPlot.yLimits[axis].dataLimits = newLimits;
+        });
+        return newPlot;
     }
 
     //This Function Recomputes y Limits based on X limits for all states

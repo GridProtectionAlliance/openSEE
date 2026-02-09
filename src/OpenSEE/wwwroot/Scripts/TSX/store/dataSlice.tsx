@@ -132,13 +132,6 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
     return await Promise.all(handles);
 })
 
-
-//Thunk to update Time Limits
-export const SetTimeLimit = createAsyncThunk('Data/setTimeLimit', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg }))
-    return Promise.resolve();
-})
-
 //Thunk to update Cycle Limits
 export const SetCycleLimit = createAsyncThunk('Data/SetCycleLimit', (arg: { start: number, end: number }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateCycleLimits({ ...arg }))
@@ -323,26 +316,6 @@ export const DataReducer = createSlice({
                 plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].zoomedLimits
             else if (!invalidDataLimits)
                 plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].dataLimits
-
-            return state;
-        },
-
-        UpdateTimeLimit: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
-            if (Math.abs(action.payload.start - action.payload.end) < 10)
-                return state;
-
-            state.startTime = action.payload.start;
-            state.endTime = action.payload.end;
-
-            state.Plots.forEach(graph => {
-                if (graph.key.DataType === "FFT")
-                    updateAutoLimits(graph, state.fftLimits[0], state.fftLimits[1]);
-                else if (graph.key.DataType === "OverlappingWave")
-                    updateAutoLimits(graph, state.cycleLimit[0], state.cycleLimit[1]);
-                else
-                    updateAutoLimits(graph, state.startTime, state.endTime);
-
-            });
 
             return state;
         },
