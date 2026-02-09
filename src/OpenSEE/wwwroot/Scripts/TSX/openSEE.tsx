@@ -71,9 +71,6 @@ import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 // Providers
 import { HoverProvider } from './Context/HoverContext';
 import { EventProvider } from './Context/EventContext';
-declare var homePath: string;
-declare var version: string;
-declare var eventID: number;
 
 const OpenSeeHome = () => {
     const dispatch = useAppDispatch();
@@ -237,119 +234,73 @@ const OpenSeeHome = () => {
             ref={applicationRef}
         >
             <EventProvider EventID={eventId}>
-            <HoverProvider>
-                <VerticalSplit style={{ height: '100%' }}>
-                    <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
-                        <EventInfo />
-                    </SplitDrawer>
+                <HoverProvider>
+                    <VerticalSplit style={{ height: '100%' }}>
+                        <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
+                            <EventInfo />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                        <OverlappingEventWindow />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
+                            <OverlappingEventWindow />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                        <AnalyticOptions />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
+                            <AnalyticOptions />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
-                        <ToolTipWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
+                            <ToolTipWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
-                        <ToolTipDeltaWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
+                            <ToolTipDeltaWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("Settings", item)} >
-                        <SettingsWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("Settings", item)} >
+                            <SettingsWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
-                        <PointWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
+                            <PointWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
+                        <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
                             <ScalarStatsWidget EventID={eventId} />
-                    </SplitDrawer>
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
+                        <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
                             <TimeCorrelatedSagsWidget EventID={eventId} />
-                    </SplitDrawer>
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("Lightning", item)}>
-                        <LightningDataWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("Lightning", item)}>
+                            <LightningDataWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("FFTTable", item)}>
-                        <FFTTable />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("FFTTable", item)}>
+                            <FFTTable />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("PolarChart", item)}>
-                        <PhasorChartWidget />
-                    </SplitDrawer>
+                        <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("PolarChart", item)}>
+                            <PhasorChartWidget />
+                        </SplitDrawer>
 
-                    <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
-                        OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
+                        <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
+                            OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
                             <HarmonicStatsWidget EventID={eventId} />
-                    </SplitDrawer>
+                        </SplitDrawer>
 
-                    <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
-                        <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+                        <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
+                            <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
                                 {groupedKeys[eventId] != undefined ? (
-                                <>
+                                    <>
                                         {groupedKeys[eventId].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                        <LineChart
-                                            key={item.DataType + item.EventId}
-                                            width={plotWidth}
-                                            height={plotHeight}
-                                            showToolTip={openDrawers.ToolTipDelta}
-                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                        />
-                                    ))}
-
-                                        {groupedKeys[eventId].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                        <BarChart
-                                            key={item.DataType + item.EventId}
-                                            width={plotWidth}
-                                            height={plotHeight}
-                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                        />
-                                    ))}
-                                </>
-                            ) : null}
-
-                                {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventId).map(key =>
-                                <div className="card" key={key}>
-                                    {eventList.find(item => item.EventID === parseInt(key)) ? (
-                                        <div className="card-header">
-                                            <div className="row">
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                    {eventList.find(item => item.EventID === parseInt(key)).MeterName}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                    {eventList.find(item => item.EventID === parseInt(key)).AssetName}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                    {eventList.find(item => item.EventID === parseInt(key)).EventType}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                    {moment(eventList.find(item => item.EventID === parseInt(key)).Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                    <div className="card-body" style={{ padding: 0 }}>
-                                        {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
                                             <LineChart
                                                 key={item.DataType + item.EventId}
                                                 width={plotWidth}
@@ -359,7 +310,7 @@ const OpenSeeHome = () => {
                                             />
                                         ))}
 
-                                        {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
+                                        {groupedKeys[eventId].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
                                             <BarChart
                                                 key={item.DataType + item.EventId}
                                                 width={plotWidth}
@@ -367,15 +318,61 @@ const OpenSeeHome = () => {
                                                 dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                             />
                                         ))}
+                                    </>
+                                ) : null}
 
+                                {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventId).map(key =>
+                                    <div className="card" key={key}>
+                                        {eventList.find(item => item.EventID === parseInt(key)) ? (
+                                            <div className="card-header">
+                                                <div className="row">
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Meter:</span><br />
+                                                        {eventList.find(item => item.EventID === parseInt(key)).MeterName}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Asset:</span><br />
+                                                        {eventList.find(item => item.EventID === parseInt(key)).AssetName}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Type:</span><br />
+                                                        {eventList.find(item => item.EventID === parseInt(key)).EventType}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Inception:</span><br />
+                                                        {moment(eventList.find(item => item.EventID === parseInt(key)).Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
+                                                <LineChart
+                                                    key={item.DataType + item.EventId}
+                                                    width={plotWidth}
+                                                    height={plotHeight}
+                                                    showToolTip={openDrawers.ToolTipDelta}
+                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                                                />
+                                            ))}
+
+                                            {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
+                                                <BarChart
+                                                    key={item.DataType + item.EventId}
+                                                    width={plotWidth}
+                                                    height={plotHeight}
+                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                                                />
+                                            ))}
+
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                        </div>
-                    </SplitSection>
-                </VerticalSplit>
-            </HoverProvider>
+                            </div>
+                        </SplitSection>
+                    </VerticalSplit>
+                </HoverProvider>
             </EventProvider>
         </Application>
     );
