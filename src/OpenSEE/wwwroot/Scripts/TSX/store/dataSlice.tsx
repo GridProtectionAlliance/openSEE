@@ -133,47 +133,11 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
 })
 
 
-//Thunk to update FFT Limits
-export const SetFFTLimits = createAsyncThunk('Data/SetFFTLimits', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateFFTLimits({ ...arg }))
-    return Promise.resolve();
-})
-
-
 //Thunk to Enable or Disable Trace
 export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
     thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg }))
     return Promise.resolve();
 });
-
-
-//Thunk to Reset Zoom
-export const ResetZoom = createAsyncThunk('Data/Reset', (arg: { start: number, end: number }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTimeLimit({ ...arg }));
-
-    // FFT Limits get updated base on values not eventTime
-    let state = (thunkAPI.getState() as OpenSee.IRootState);
-    let fftPlot = state.Data.Plots.find(item => item.key.DataType == 'FFT');
-    let overlappingWaveform = state.Data.Plots.find(item => item.key.DataType == 'OverlappingWave');
-
-    if (fftPlot) {
-        let start = Math.min(...fftPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
-        let end = Math.max(...fftPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
-        thunkAPI.dispatch(SetFFTLimits({ start: start, end: end }));
-    }
-
-    if (overlappingWaveform) {
-        let start = Math.min(...overlappingWaveform.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
-        let end = Math.max(...overlappingWaveform.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
-        thunkAPI.dispatch(SetCycleLimit({ start: start, end: end }));
-    }
-
-
-    thunkAPI.dispatch(DataReducer.actions.ResetZoom());
-
-    return Promise.resolve();
-})
-
 
 // Thunk to Set Zoomed YLimits
 export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { limits: [number, number], key: OpenSee.IGraphProps }, thunkAPI) => {
@@ -359,17 +323,6 @@ export const DataReducer = createSlice({
             return state
 
         },
-        UpdateFFTLimits: (state: OpenSee.IDataState, action: PayloadAction<{ start: number, end: number }>) => {
-            if (Math.abs(action.payload.start - action.payload.end) < 1)
-                return state;
-
-            state.fftLimits[0] = action.payload.start
-            state.fftLimits[1] = action.payload.end
-
-            const fftPlot = state.Plots.find(plot => plot.key.DataType === "FFT")
-            updateAutoLimits(fftPlot, state.fftLimits[0], state.fftLimits[1]);
-            return state;
-        },
         UpdateTrace: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean }>) => {
             // Find the index of the plot in the state
             let curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
@@ -475,16 +428,6 @@ export const DataReducer = createSlice({
                 }
 
             }
-        },
-        ResetZoom: (state: OpenSee.IDataState) => {
-            state.Plots.forEach(plot => {
-                plot.isZoomed = false;
-                const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
-                RelevantAxis.forEach(axis => {
-                    plot.yLimits[axis].zoomedLimits = [0, 1];
-                })
-
-            })
         },
         ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
             let plot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)

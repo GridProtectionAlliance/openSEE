@@ -60,6 +60,20 @@ namespace DataContextFunctions {
         return newContext;
     }
 
+    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number) {
+        const newContext = _.cloneDeep(context);
+
+        if (Math.abs(start - end) < 1)
+            return newContext;
+
+        newContext.StartTime = start;
+        newContext.EndTime = end;
+        const plotIndex = context.Plots.findIndex(plot => plot.key.DataType === "FFT");
+        newContext.Plots[plotIndex] = updateAutoLimits(newContext.Plots[plotIndex], start, end);
+
+        return newContext;
+    }
+
     /* Functions that deal with individual plots */
     export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): OpenSee.IGraphstate {
         const newPlot = { ...plot };

@@ -33,8 +33,10 @@ interface IProps {
 }
 
 interface IDataFunctions {
-    SetTimeLimit: (start: number, end: number) => void
-    SetCycleLimit: (start: number, end: number) => void
+    SetTimeLimit: (start: number, end: number) => void,
+    SetCycleLimit: (start: number, end: number) => void,
+    SetFFTLimits: (start: number, end: number) => void,
+    ResetZoom: (start: number, end: number) => void
 }
 
 const defaultState: OpenSee.IDataContextType = {
@@ -61,13 +63,52 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         setContextState(c => func.UpdateCycleLimits(c, start, end))
     , []);
 
+    //Thunk to update Cycle Limits
+    const SetFFTLimits = React.useCallback((start: number, end: number) => 
+        setContextState(c => func.UpdateFFTLimits(c, start, end))
+    , []);
+
+    const ResetZoom = React.useCallback((start: number, end: number) => {
+        setContextState(c => {
+            let updatedContext = func.UpdateTimeLimit(c, start, end);
+
+            // FFT Limits get updated base on values not eventTime
+            const fftPlotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == 'FFT');
+            const wavePlotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == 'OverlappingWave');
+            if (fftPlotIndex > -1) {
+                let start = Math.min(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
+                let end = Math.max(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
+                updatedContext = func.UpdateFFTLimits(updatedContext, start, end);
+            }
+            if (wavePlotIndex > -1) {
+                let start = Math.min(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+                let end = Math.max(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
+                updatedContext = func.UpdateCycleLimits(updatedContext, start, end);
+            }
+
+            for (let plotIndex = 0; plotIndex < updatedContext.Plots.length; plotIndex++) {
+                updatedContext.Plots[plotIndex].isZoomed = false;
+                const RelevantAxis = _.uniq(updatedContext.Plots[plotIndex].data.map(s => s.Unit));
+                RelevantAxis.forEach(axis => {
+                    updatedContext.Plots[plotIndex].yLimits[axis].zoomedLimits = [0, 1];
+                });
+            }
+
+            return updatedContext;
+        });
+    }, []);
+
+
+
     // Plot Array Functions
 
 
 
     contextRef.current = {
         SetTimeLimit,
-        SetCycleLimit
+        SetCycleLimit,
+        SetFFTLimits,
+        ResetZoom
     }
     return (
         <DataContext.Provider value={contextState}>
