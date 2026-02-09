@@ -26,11 +26,7 @@
 import * as React from 'react';
 import { Table, Column } from '@gpa-gemstone/react-table';
 
-interface Iprops {
-    exportCallback: () => void,
-}
-
-interface EventData {
+interface IEventData {
     Stat: string,
     Value: string
 }
@@ -40,7 +36,7 @@ interface Iprops {
 }
 
 const ScalarStatsWidget = (props: Iprops) => {
-    const [stats, setStats] = React.useState<EventData[]>([]);
+    const [stats, setStats] = React.useState<IEventData[]>([]);
 
     React.useEffect(() => {
         const handle = $.ajax({
@@ -66,7 +62,7 @@ const ScalarStatsWidget = (props: Iprops) => {
         <>
             <div className="d-flex flex-column h-100 w-100" style={{padding: '10px'}}>
                 <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto'}}>
-                    <Table<EventData>
+                    <Table<IEventData>
                         TableClass="table table-hover w-100"
                         Data={stats}
                         SortKey={""}
@@ -76,7 +72,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                         Selected={() => false}
                         KeySelector={(_, index) => index}
                     >
-                        <Column<EventData>
+                        <Column<IEventData>
                             Key={'Stat'}
                             AllowSort={false}
                             HeaderStyle={{ width: "30%" }}
@@ -84,7 +80,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                             Field={'Stat'}>
                             Stat
                         </Column>
-                        <Column<EventData>
+                        <Column<IEventData>
                             Key={'Value'}
                             AllowSort={false}
                             HeaderStyle={{ width: "60%" }}
@@ -92,10 +88,10 @@ const ScalarStatsWidget = (props: Iprops) => {
                             Field={'Value'}>
                             Value
                         </Column>
-                        <Column<EventData>
+                        <Column<IEventData>
                             Key={'Export'}
                             AllowSort={false}>
-                            <button className="btn btn-primary" onClick={() => props.exportCallback()}>Export(csv)</button>
+                            <button className="btn btn-primary" onClick={() => props.exportCallback('stats')}>Export(csv)</button>
                         </Column>
                     </Table>
                 </div>

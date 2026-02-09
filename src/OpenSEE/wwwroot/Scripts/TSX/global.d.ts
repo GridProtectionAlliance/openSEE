@@ -73,7 +73,7 @@ export namespace OpenSee {
         UpdateBy?: string;
     }
 
-    interface iNextBackLookup {
+    interface INextBackLookup {
         Asset: iEventTuple;
         Meter: iEventTuple;
         Station: iEventTuple;
