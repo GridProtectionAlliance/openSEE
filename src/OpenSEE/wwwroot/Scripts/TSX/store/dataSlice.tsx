@@ -139,29 +139,6 @@ export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: Ope
     return Promise.resolve();
 });
 
-// Thunk to Set Zoomed YLimits
-export const SetZoomedLimits = createAsyncThunk('Data/SetZoomedLimits', (arg: { limits: [number, number], key: OpenSee.IGraphProps }, thunkAPI) => {
-    const state = (thunkAPI.getState() as OpenSee.IRootState);
-    const plot = state.Data.Plots.find(plot => plot.key.DataType == arg.key.DataType && plot.key.EventId == arg.key.EventId);
-    const primaryAxis = getPrimaryAxis(plot.key)
-    let oldLimits: [number, number] = [0, 1]
-
-    if (plot.yLimits[primaryAxis].isManual)
-        oldLimits = plot.yLimits[primaryAxis].manualLimits
-    else if (plot.isZoomed)
-        oldLimits = plot.yLimits[primaryAxis].zoomedLimits
-    else
-        oldLimits = plot.yLimits[primaryAxis].dataLimits
-
-
-    thunkAPI.dispatch(DataReducer.actions.SetZoomedLimits({ oldLimits: oldLimits, key: arg.key, newLimits: arg.limits }));
-    return Promise.resolve();
-})
-
-export const SetUnit = createAsyncThunk('Data/SetUnit', (arg: { unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }, thunkAPI) => {
-    thunkAPI.dispatch(UpdateActiveUnits({ unit: arg.unit, value: arg.value, auto: arg.auto, key: arg.key }));
-})
-
 
 // #endregion
 
@@ -194,72 +171,6 @@ export const DataReducer = createSlice({
                     state.Plots.splice(plotIndex, 1);
                 }
             }
-        },
-        UpdateActiveUnits: (state: OpenSee.IDataState, action: PayloadAction<{ unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps }>) => {
-
-            state.Plots.filter(plot => plot.key.DataType === action.payload.key.DataType).forEach(curPlot => {
-
-                const oldUnitIndex = curPlot.yLimits[action.payload.unit].current
-                let newUnitIndex = action.payload.value
-                const oldFactor = defaultSettings.Units[action.payload.unit].options[oldUnitIndex].factor
-                const newFactor = defaultSettings.Units[action.payload.unit].options[newUnitIndex].factor
-                const isPU = oldFactor === undefined || newFactor === undefined ? true : false
-
-                curPlot.yLimits[action.payload.unit].isAuto = action.payload.auto
-                curPlot.yLimits[action.payload.unit].current = action.payload.value
-
-                const axisSetting: OpenSee.IAxisSettings = curPlot.yLimits[action.payload.unit];
-                const oldLimits = axisSetting.dataLimits
-                const filteredData = curPlot.data.filter(item => item.Enabled && item.Unit === action.payload.unit);
-
-                //handle autoUnit case
-                let unitIndex = updateActiveUnits(curPlot.yLimits, action.payload.unit, filteredData, state.startTime, state.endTime, null);
-                if (unitIndex) {
-                    curPlot.yLimits[action.payload.unit].current = unitIndex
-                    newUnitIndex = unitIndex
-                }
-
-                if (curPlot.key.DataType != 'FFT' && curPlot.key.DataType != 'OverlappingWave') {
-                    const limits = recomputeDataLimits(state.startTime, state.endTime, filteredData, curPlot.yLimits[action.payload.unit].current);
-                    axisSetting.dataLimits = limits;
-                    if (isPU) {
-                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
-                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-                    }
-                    else {
-                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
-                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
-                    }
-                }
-                else if (curPlot.key.DataType == 'FFT') {
-                    const limits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], filteredData, curPlot.yLimits[action.payload.unit].current)
-                    axisSetting.dataLimits = limits;
-                    if (isPU) {
-                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
-                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-                    }
-                    else {
-                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
-                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
-                    }
-                }
-                else if (curPlot.key.DataType == 'OverlappingWave') {
-                    const limits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], filteredData, curPlot.yLimits[action.payload.unit].current);
-                    axisSetting.dataLimits = limits;
-                    if (isPU) {
-                        axisSetting.zoomedLimits = scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
-                        axisSetting.manualLimits = scaleLimits(oldLimits, limits, axisSetting.manualLimits)
-                    }
-                    else {
-                        axisSetting.manualLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.manualLimits)
-                        axisSetting.zoomedLimits = scaleLimitsByFactor(oldUnitIndex, newUnitIndex, action.payload.unit, axisSetting.zoomedLimits)
-                    }
-                }
-
-            })
-            saveSettings(state);
-
-            return state;
         },
         SetIsManual: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean }>) => {
             let plot = state.Plots.find(plot => plot.key.DataType === action.payload.key.DataType && plot.key.EventId === action.payload.key.EventId);
@@ -379,25 +290,6 @@ export const DataReducer = createSlice({
         },
         RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.Plots.forEach(plot => plot.selectedIndixes.splice(action.payload, 1));
-        },
-        SetZoomedLimits: (state: OpenSee.IDataState, action: PayloadAction<{ oldLimits: [number, number], key: OpenSee.IGraphProps, newLimits: [number, number] }>) => {
-            const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
-            if (curPlot) {
-                const RelevantAxis = _.uniq(curPlot.data.filter(item => item.Enabled).map(s => s.Unit));
-                RelevantAxis.forEach(axis => {
-                    if (axis === getPrimaryAxis(action.payload.key))
-                        curPlot.yLimits[axis].zoomedLimits = action.payload.newLimits
-                    else if (curPlot.yLimits[axis].isManual)
-                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].manualLimits);
-                    else if (curPlot.isZoomed)
-                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].zoomedLimits);
-                    else
-                        curPlot.yLimits[axis].zoomedLimits = recomputeNonAutoLimits(action.payload.oldLimits, action.payload.newLimits, curPlot.yLimits[axis].dataLimits);
-                })
-
-
-                curPlot.isZoomed = true;
-            }
         },
         SetManualLimits: (state: OpenSee.IDataState, action: PayloadAction<{
             limits: [number, number],
@@ -564,7 +456,7 @@ export const DataReducer = createSlice({
 });
 
 
-export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, UpdateActiveUnits, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
+export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion

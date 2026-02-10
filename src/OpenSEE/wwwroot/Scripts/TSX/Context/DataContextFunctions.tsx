@@ -24,6 +24,7 @@
 import { OpenSee } from "../global";
 import { defaultSettings } from '../defaults';
 import _ from "lodash";
+import { plotTypes } from "../store/settingSlice";
 
 namespace DataContextFunctions {
     /* Functions to Update Context objects */
@@ -72,6 +73,49 @@ namespace DataContextFunctions {
         newContext.Plots[plotIndex] = updateAutoLimits(newContext.Plots[plotIndex], start, end);
 
         return newContext;
+    }
+
+    export function saveSettings(state: OpenSee.IDataContextType) {
+        try {
+            //lets type currentSettings to prevent errors in future
+            const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
+            let unitSettings = settings.Units
+            if (unitSettings === null || unitSettings === undefined)
+                unitSettings = []
+
+            plotTypes.forEach(plotType => {
+                const matchingPlot = state.Plots.find(plot => plot.key.DataType === plotType);
+
+                if (matchingPlot) {
+                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                    const plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
+
+                    if (plot === undefined)
+                        unitSettings.push({ DataType: matchingPlot.key.DataType, Units: null })
+
+                    Object.keys(matchingPlot.yLimits).forEach(key => {
+                        if (enabledUnits.includes(key as OpenSee.Unit)) {
+                            let plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
+                            const yLimits = matchingPlot.yLimits[key]
+                            if (plot.Units === undefined || plot.Units === null)
+                                plot.Units = {}
+                            plot.Units[key] = { current: yLimits.current, isAuto: yLimits.isAuto }
+                        }
+                    })
+
+                }
+            });
+
+            let currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
+            if (currentSettings === null || currentSettings === undefined)
+                currentSettings = {}
+            currentSettings.Units = unitSettings
+            const serializedState = JSON.stringify(currentSettings)
+            localStorage.setItem('openSee.Settings', serializedState);
+        } catch {
+            // ignore write errors
+        }
     }
 
     /* Functions that deal with individual plots */
@@ -337,7 +381,7 @@ namespace DataContextFunctions {
         if (type == 'I2T')
             return data.map(item => item.LegendVertical == 'AN' || item.LegendVertical == 'BN' || item.LegendVertical == 'CN')
 
-        return data.map(item => false);
+        return data.map(_item => false);
     }
 
     export function getIndex(t: number, data: Array<[number, number]>): number {

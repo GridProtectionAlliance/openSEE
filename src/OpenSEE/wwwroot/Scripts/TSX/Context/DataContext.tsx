@@ -28,6 +28,7 @@ import { useAppSelector } from '../hooks';
 import { SelectSinglePlot, plotTypes } from '../store/settingSlice';
 import _ from 'lodash';
 import func from './DataContextFunctions';
+import { defaultSettings } from '../defaults';
 
 interface IProps {
 }
@@ -36,7 +37,9 @@ interface IDataFunctions {
     SetTimeLimit: (start: number, end: number) => void,
     SetCycleLimit: (start: number, end: number) => void,
     SetFFTLimits: (start: number, end: number) => void,
-    ResetZoom: (start: number, end: number) => void
+    ResetZoom: (start: number, end: number) => void,
+    SetZoomedLimits: (limits: [number, number], key: OpenSee.IGraphProps) => void,
+    SetUnit: (unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) => void
 }
 
 interface IExtendedContextType extends OpenSee.IDataContextType {
@@ -100,9 +103,116 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         });
     }, []);
 
+    const SetZoomedLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps) => {
+        setContextState(c => {
+            const plot = c.Plots.find(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+            const primaryAxis = func.getPrimaryAxis(plot.key);
+            let oldLimits: [number, number] = [0, 1];
+
+            if (plot.yLimits[primaryAxis].isManual)
+                oldLimits = plot.yLimits[primaryAxis].manualLimits;
+            else if (plot.isZoomed)
+                oldLimits = plot.yLimits[primaryAxis].zoomedLimits;
+            else
+                oldLimits = plot.yLimits[primaryAxis].dataLimits;
 
 
-    // Plot Array Functions
+            const plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+            if (plotIndex <= -1)
+                return c;
+
+            const RelevantAxis = _.uniq(c.Plots[plotIndex].data.filter(item => item.Enabled).map(s => s.Unit));
+            const newContext = _.cloneDeep(c);
+
+            RelevantAxis.forEach(axis => {
+                if (axis === func.getPrimaryAxis(key))
+                    newContext.Plots[plotIndex].yLimits[axis].zoomedLimits = limits;
+                else if (newContext.Plots[plotIndex].yLimits[axis].isManual)
+                    newContext.Plots[plotIndex].yLimits[axis].zoomedLimits = func.recomputeNonAutoLimits(oldLimits, limits, newContext.Plots[plotIndex].yLimits[axis].manualLimits);
+                else if (newContext.Plots[plotIndex].isZoomed)
+                    newContext.Plots[plotIndex].yLimits[axis].zoomedLimits = func.recomputeNonAutoLimits(oldLimits, limits, newContext.Plots[plotIndex].yLimits[axis].zoomedLimits);
+                else
+                    newContext.Plots[plotIndex].yLimits[axis].zoomedLimits = func.recomputeNonAutoLimits(oldLimits, limits, newContext.Plots[plotIndex].yLimits[axis].dataLimits);
+            });
+            newContext.Plots[plotIndex].isZoomed = true;
+            return newContext;
+        });
+    }, []);
+
+    const SetUnit = React.useCallback((unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) => {
+        setContextState(c => {
+            const newContext = _.cloneDeep(c);
+
+            for (let plotIndex = 0; plotIndex < newContext.Plots.length; plotIndex++) {
+                if (newContext.Plots[plotIndex].key.DataType !== key.DataType)
+                    continue;
+
+                const oldUnitIndex = newContext.Plots[plotIndex].yLimits[unit].current
+                let newUnitIndex = value
+                const oldFactor = defaultSettings.Units[unit].options[oldUnitIndex].factor
+                const newFactor = defaultSettings.Units[unit].options[newUnitIndex].factor
+                const isPU = oldFactor === undefined || newFactor === undefined ? true : false
+
+                newContext.Plots[plotIndex].yLimits[unit].isAuto = auto
+                newContext.Plots[plotIndex].yLimits[unit].current = value
+
+                const axisSetting: OpenSee.IAxisSettings = newContext.Plots[plotIndex].yLimits[unit];
+                const oldLimits = axisSetting.dataLimits
+                const filteredData = newContext.Plots[plotIndex].data.filter(item => item.Enabled && item.Unit === unit);
+
+                //handle autoUnit case
+                let unitIndex = func.updateActiveUnits(newContext.Plots[plotIndex].yLimits, unit, filteredData, newContext.StartTime, newContext.EndTime, null);
+                if (unitIndex) {
+                    newContext.Plots[plotIndex].yLimits[unit].current = unitIndex
+                    newUnitIndex = unitIndex
+                }
+
+                let limits: [number, number];
+                switch (newContext.Plots[plotIndex].key.DataType) {
+                    case 'FFT':
+                        limits = func.recomputeDataLimits(newContext.FftLimits[0], newContext.FftLimits[1], filteredData, newContext.Plots[plotIndex].yLimits[unit].current);
+                        axisSetting.dataLimits = limits;
+                        if (isPU) {
+                            axisSetting.zoomedLimits = func.scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                            axisSetting.manualLimits = func.scaleLimits(oldLimits, limits, axisSetting.manualLimits)
+                        }
+                        else {
+                            axisSetting.manualLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.manualLimits)
+                            axisSetting.zoomedLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.zoomedLimits)
+                        }
+                        break;
+                    case 'OverlappingWave':
+                        limits = func.recomputeDataLimits(newContext.CycleLimits[0], newContext.CycleLimits[1], filteredData, newContext.Plots[plotIndex].yLimits[unit].current);
+                        axisSetting.dataLimits = limits;
+                        if (isPU) {
+                            axisSetting.zoomedLimits = func.scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                            axisSetting.manualLimits = func.scaleLimits(oldLimits, limits, axisSetting.manualLimits)
+                        }
+                        else {
+                            axisSetting.manualLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.manualLimits)
+                            axisSetting.zoomedLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.zoomedLimits)
+                        }
+                        break;
+                    default:
+                        limits = func.recomputeDataLimits(newContext.StartTime, newContext.EndTime, filteredData, newContext.Plots[plotIndex].yLimits[unit].current);
+                        axisSetting.dataLimits = limits;
+                        if (isPU) {
+                            axisSetting.zoomedLimits = func.scaleLimits(oldLimits, limits, axisSetting.zoomedLimits)
+                            axisSetting.manualLimits = func.scaleLimits(oldLimits, limits, axisSetting.manualLimits)
+                        }
+                        else {
+                            axisSetting.manualLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.manualLimits)
+                            axisSetting.zoomedLimits = func.scaleLimitsByFactor(oldUnitIndex, newUnitIndex, unit, axisSetting.zoomedLimits)
+                        }
+                        break;
+                }
+            }
+            func.saveSettings(newContext);
+            return newContext;
+        });
+    }, []);
+
+
 
 
     // Set context
@@ -110,7 +220,9 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         SetTimeLimit,
         SetCycleLimit,
         SetFFTLimits,
-        ResetZoom
+        ResetZoom,
+        SetZoomedLimits,
+        SetUnit
     };
     const contextStateWithRef = React.useMemo(() => ({ ...contextState, Dispatch: contextRef }), [contextState]);
 
@@ -141,49 +253,6 @@ function applyLocalSettings(plot: OpenSee.IGraphstate) {
             localStorage.setItem('openSee.Settings', serializedState);
         }
     } catch { }
-}
-
-function saveSettings(state: OpenSee.IDataContextType) {
-    try {
-        //lets type currentSettings to prevent errors in future
-        const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
-        let unitSettings = settings.Units
-        if (unitSettings === null || unitSettings === undefined)
-            unitSettings = []
-
-        plotTypes.forEach(plotType => {
-            const matchingPlot = state.Plots.find(plot => plot.key.DataType === plotType);
-
-            if (matchingPlot) {
-                const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
-                const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
-                const plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
-
-                if (plot === undefined)
-                    unitSettings.push({ DataType: matchingPlot.key.DataType, Units: null })
-
-                Object.keys(matchingPlot.yLimits).forEach(key => {
-                    if (enabledUnits.includes(key as OpenSee.Unit)) {
-                        let plot = unitSettings.find(plot => plot.DataType === matchingPlot.key.DataType)
-                        const yLimits = matchingPlot.yLimits[key]
-                        if (plot.Units === undefined || plot.Units === null)
-                            plot.Units = {}
-                        plot.Units[key] = { current: yLimits.current, isAuto: yLimits.isAuto }
-                    }
-                })
-
-            }
-        });
-
-        let currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
-        if (currentSettings === null || currentSettings === undefined)
-            currentSettings = {}
-        currentSettings.Units = unitSettings
-        const serializedState = JSON.stringify(currentSettings)
-        localStorage.setItem('openSee.Settings', serializedState);
-    } catch {
-        // ignore write errors
-    }
 }
 
 export default DataContext;
