@@ -28,7 +28,7 @@ import { plotTypes } from "../store/settingSlice";
 
 namespace DataContextFunctions {
     /* Functions to Update Context objects */
-    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number) {
+    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
         const newContext = _.cloneDeep(context);
 
         if (Math.abs(start - end) < 10)
@@ -47,7 +47,7 @@ namespace DataContextFunctions {
         return newContext;
     }
 
-    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number) {
+    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
         const newContext = _.cloneDeep(context);
 
         if (Math.abs(start - end) < 5)
@@ -61,7 +61,7 @@ namespace DataContextFunctions {
         return newContext;
     }
 
-    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number) {
+    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
         const newContext = _.cloneDeep(context);
 
         if (Math.abs(start - end) < 1)
@@ -75,7 +75,7 @@ namespace DataContextFunctions {
         return newContext;
     }
 
-    export function saveSettings(state: OpenSee.IDataContextType) {
+    export function saveSettings(state: OpenSee.IDataContextType): void {
         try {
             //lets type currentSettings to prevent errors in future
             const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
@@ -242,9 +242,9 @@ namespace DataContextFunctions {
     }
 
     // function that Updates the Current Units if they are on auto 
-    export function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number]) {
+    export function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number]): number {
         if (!units[unit].isAuto)
-            return;
+            return -1;
 
         let relevantData = data.filter(d => d.Unit == unit).map(d => {
             let startIndex = getIndex(startTime, d.DataPoints);
