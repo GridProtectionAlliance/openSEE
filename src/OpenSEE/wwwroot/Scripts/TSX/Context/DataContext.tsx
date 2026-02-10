@@ -21,14 +21,11 @@
 //
 //******************************************************************************************************
 
-import * as React from 'react';
-import { OpenSee } from '../global';
-import { Application } from '@gpa-gemstone/application-typings';
-import { useAppSelector } from '../hooks';
-import { SelectSinglePlot, plotTypes } from '../store/settingSlice';
 import _ from 'lodash';
-import func from './DataContextFunctions';
+import * as React from 'react';
 import { defaultSettings } from '../defaults';
+import { OpenSee } from '../global';
+import func from './DataContextFunctions';
 
 interface IProps {
 }
@@ -39,7 +36,13 @@ interface IDataFunctions {
     SetFFTLimits: (start: number, end: number) => void,
     ResetZoom: (start: number, end: number) => void,
     SetZoomedLimits: (limits: [number, number], key: OpenSee.IGraphProps) => void,
-    SetUnit: (unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) => void
+    SetUnit: (unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) => void,
+    EnableTrace: (key: OpenSee.IGraphProps, trace: number[], enabled: boolean) => void,
+    SetIsManual: (key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean) => void,
+    SetSelectPoint: (time: number) => void,
+    ClearSelectPoints: () => void,
+    RemoveSelectPoints: (index: number) => void,
+    SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) => void
 }
 
 interface IExtendedContextType extends OpenSee.IDataContextType {
@@ -73,7 +76,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         setContextState(c => func.UpdateFFTLimits(c, start, end))
     , []);
 
-    const ResetZoom = React.useCallback((start: number, end: number) => {
+    const ResetZoom = React.useCallback((start: number, end: number) =>
         setContextState(c => {
             let updatedContext = func.UpdateTimeLimit(c, start, end);
 
@@ -100,10 +103,10 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             }
 
             return updatedContext;
-        });
-    }, []);
+        })
+    , []);
 
-    const SetZoomedLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps) => {
+    const SetZoomedLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps) =>
         setContextState(c => {
             const plot = c.Plots.find(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
             const primaryAxis = func.getPrimaryAxis(plot.key);
@@ -136,10 +139,10 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             });
             newContext.Plots[plotIndex].isZoomed = true;
             return newContext;
-        });
-    }, []);
+        })
+    , []);
 
-    const SetUnit = React.useCallback((unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) => {
+    const SetUnit = React.useCallback((unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) =>
         setContextState(c => {
             const newContext = _.cloneDeep(c);
 
@@ -162,7 +165,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
                 //handle autoUnit case
                 let unitIndex = func.updateActiveUnits(newContext.Plots[plotIndex].yLimits, unit, filteredData, newContext.StartTime, newContext.EndTime, null);
-                if (unitIndex) {
+                if (unitIndex >= 0) {
                     newContext.Plots[plotIndex].yLimits[unit].current = unitIndex
                     newUnitIndex = unitIndex
                 }
@@ -209,9 +212,143 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             }
             func.saveSettings(newContext);
             return newContext;
-        });
-    }, []);
+        })
+    , []);
 
+    const EnableTrace = React.useCallback((key: OpenSee.IGraphProps, trace: number[], enabled: boolean) => 
+        setContextState(c => {
+            // Find the index of the plot in the state
+            let plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+            if (plotIndex < 0)
+                return;
+
+            const updatedContext = _.cloneDeep(c);
+
+            // Update only the selected plot
+            trace.forEach(traceIndex => {
+                if (traceIndex < updatedContext.Plots[plotIndex].data.length) {
+                    updatedContext.Plots[plotIndex].data[traceIndex].Enabled = enabled;
+                }
+        });
+
+            // Recompute limits and update units
+            const relevantTraces = trace.map(index => updatedContext.Plots[plotIndex].data[index])
+            const RelevantAxis = _.uniq(relevantTraces.map(s => s?.Unit));
+
+            if (RelevantAxis.length > 0)
+                RelevantAxis.forEach(axis => {
+                    if (axis === undefined)
+                        return
+                    const axisSetting = updatedContext.Plots[plotIndex].yLimits[axis];
+                    const relevantData = updatedContext.Plots[plotIndex].data.filter(item => item.Enabled && item.Unit === axis);
+
+                    let recomputedLimits: [number, number];
+                    switch (updatedContext.Plots[plotIndex].key.DataType) {
+                        case "FFT":
+                            recomputedLimits = func.recomputeDataLimits(updatedContext.FftLimits[0], updatedContext.FftLimits[1], relevantData, updatedContext.Plots[plotIndex].yLimits[axis].current);
+                            axisSetting.dataLimits = recomputedLimits;
+                            axisSetting.zoomedLimits = func.recomputeNonAutoLimits(updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].dataLimits, updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].zoomedLimits, recomputedLimits);
+                            break;
+                        case "OverlappingWave":
+                            recomputedLimits = func.recomputeDataLimits(updatedContext.CycleLimits[0], updatedContext.CycleLimits[1], relevantData, updatedContext.Plots[plotIndex].yLimits[axis].current);
+                            axisSetting.dataLimits = recomputedLimits;
+                            axisSetting.zoomedLimits = func.recomputeNonAutoLimits(updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].dataLimits, updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].zoomedLimits, recomputedLimits);
+                            break;
+                        default:
+                            recomputedLimits = func.recomputeDataLimits(updatedContext.StartTime, updatedContext.EndTime, relevantData, updatedContext.Plots[plotIndex].yLimits[axis].current);
+                            axisSetting.dataLimits = recomputedLimits;
+                            axisSetting.zoomedLimits = func.recomputeNonAutoLimits(updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].dataLimits, updatedContext.Plots[plotIndex].yLimits[func.getPrimaryAxis(key)].zoomedLimits, recomputedLimits);
+                            break;
+                    }
+                    // ToDo: Not sure this is doing anything remove if able
+                    func.updateActiveUnits(updatedContext.Plots[plotIndex].yLimits, axis, relevantData, updatedContext.StartTime, updatedContext.EndTime, null);
+                });
+            return updatedContext;
+        })
+    , []);
+
+    const SetIsManual = React.useCallback((key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean) =>
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            const plotIndex = updatedContext.Plots.findIndex(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+            updatedContext.Plots[plotIndex].yLimits[unit].isManual = manual;
+
+            const isValidNumber = (value) => !isNaN(value) && isFinite(value);
+
+            const invalidZoomedLimits = (updatedContext.Plots[plotIndex].yLimits[unit].zoomedLimits === null) || !isValidNumber(updatedContext.Plots[plotIndex].yLimits[unit].zoomedLimits[0]) || !isValidNumber(updatedContext.Plots[plotIndex].yLimits[unit].zoomedLimits[1]);
+            const invalidDataLimits = (updatedContext.Plots[plotIndex].yLimits[unit].dataLimits === null) || !isValidNumber(updatedContext.Plots[plotIndex].yLimits[unit].dataLimits[0]) || !isValidNumber(updatedContext.Plots[plotIndex].yLimits[unit].dataLimits[1]);
+
+            if (updatedContext.Plots[plotIndex].isZoomed && !invalidZoomedLimits)
+                updatedContext.Plots[plotIndex].yLimits[unit].manualLimits = updatedContext.Plots[plotIndex].yLimits[unit].zoomedLimits
+            else if (!invalidDataLimits)
+                updatedContext.Plots[plotIndex].yLimits[unit].manualLimits = updatedContext.Plots[plotIndex].yLimits[unit].dataLimits
+
+            return updatedContext;
+        })
+    , []);
+
+    const SetSelectPoint = React.useCallback((time: number) =>
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            for (let index = 0; index < updatedContext.Plots.length; index++) {
+                let shortestDataObject = _.minBy(updatedContext.Plots[index].data, dataObject => dataObject.DataPoints.length);
+
+                if (updatedContext.Plots[index]?.data?.length > 0) {
+                    let dataIndex = func.getIndex(time, shortestDataObject.DataPoints)
+                    updatedContext.Plots[index].selectedIndixes.push(dataIndex);
+                }
+            }
+            return updatedContext;
+        })
+    , []);
+
+    const ClearSelectPoints = React.useCallback(() => 
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            for (let index = 0; index < updatedContext.Plots.length; index++) {
+                updatedContext.Plots[index].selectedIndixes = []
+            }
+            return updatedContext;
+        })
+    , []);
+
+    const RemoveSelectPoints = React.useCallback((selectIndex: number) => 
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            for (let index = 0; index < updatedContext.Plots.length; index++) {
+                updatedContext.Plots[index].selectedIndixes.splice(selectIndex, 1);
+            }
+            return updatedContext;
+        })
+    , []);
+
+    const SetManualLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) =>
+        setContextState(c => {
+            const plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+            if (plotIndex < 0)
+                return c;
+
+            const updatedContext = _.cloneDeep(c);
+            updatedContext.Plots[plotIndex].yLimits[axis].isManual = true;
+
+            if (updatedContext.Plots[plotIndex].isZoomed) //cover case of user zooming first then manually editing those..
+                updatedContext.Plots[plotIndex].yLimits[axis].zoomedLimits = limits;
+
+            updatedContext.Plots[plotIndex].yLimits[axis].manualLimits = limits;
+
+            if (auto) {
+                let revelantData = updatedContext.Plots[plotIndex].data.filter(data => data.Enabled && data.Unit === axis);
+                let index = func.updateActiveUnits(updatedContext.Plots[plotIndex].yLimits, axis, revelantData, updatedContext.StartTime, updatedContext.EndTime, limits);
+                if (index >= 0) {
+                    updatedContext.Plots[plotIndex].yLimits[axis] = index;
+                    let newManualLimits = [limits[0] * factor, limits[1] * factor]
+                    updatedContext.Plots[plotIndex].yLimits[axis].manualLimits = newManualLimits;
+                }
+            }
+
+            return updatedContext;
+        })
+    , []);
 
 
 
@@ -222,7 +359,13 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         SetFFTLimits,
         ResetZoom,
         SetZoomedLimits,
-        SetUnit
+        SetUnit,
+        EnableTrace,
+        SetIsManual,
+        SetSelectPoint,
+        ClearSelectPoints,
+        RemoveSelectPoints,
+        SetManualLimits
     };
     const contextStateWithRef = React.useMemo(() => ({ ...contextState, Dispatch: contextRef }), [contextState]);
 

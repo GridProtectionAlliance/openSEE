@@ -133,24 +133,9 @@ export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', as
 })
 
 
-//Thunk to Enable or Disable Trace
-export const EnableTrace = createAsyncThunk('Data/EnableTrace', (arg: { key: OpenSee.IGraphProps, trace: number[], enabled: boolean }, thunkAPI) => {
-    thunkAPI.dispatch(DataReducer.actions.UpdateTrace({ ...arg }))
-    return Promise.resolve();
-});
-
-
 // #endregion
 
-export const DataReducer = createSlice({
-    name: 'Data',
-    initialState: {
-        startTime: 0 as number,
-        endTime: 0 as number,
-        Plots: [] as OpenSee.IGraphstate[],
-        fftLimits: [0, 0],
-        cycleLimit: [0, 1000.0 / 60.0],
-    } as OpenSee.IDataState,
+export const DataReducer = ({
     reducers: {
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.Plots.splice(action.payload, 1);
@@ -171,22 +156,6 @@ export const DataReducer = createSlice({
                     state.Plots.splice(plotIndex, 1);
                 }
             }
-        },
-        SetIsManual: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean }>) => {
-            let plot = state.Plots.find(plot => plot.key.DataType === action.payload.key.DataType && plot.key.EventId === action.payload.key.EventId);
-            plot.yLimits[action.payload.unit].isManual = action.payload.manual
-
-            const isValidNumber = (value) => !isNaN(value) && isFinite(value);
-
-            const invalidZoomedLimits = (plot.yLimits[action.payload.unit].zoomedLimits === null) || !isValidNumber(plot.yLimits[action.payload.unit].zoomedLimits[0]) || !isValidNumber(plot.yLimits[action.payload.unit].zoomedLimits[1]);
-            const invalidDataLimits = (plot.yLimits[action.payload.unit].dataLimits === null) || !isValidNumber(plot.yLimits[action.payload.unit].dataLimits[0]) || !isValidNumber(plot.yLimits[action.payload.unit].dataLimits[1]);
-
-            if (plot.isZoomed && !invalidZoomedLimits)
-                plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].zoomedLimits
-            else if (!invalidDataLimits)
-                plot.yLimits[action.payload.unit].manualLimits = plot.yLimits[action.payload.unit].dataLimits
-
-            return state;
         },
         AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
             key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
@@ -233,93 +202,6 @@ export const DataReducer = createSlice({
 
             return state
 
-        },
-        UpdateTrace: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, trace: number[], enabled: boolean }>) => {
-            // Find the index of the plot in the state
-            let curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
-            if (!curPlot)
-                return;
-
-            // Update only the selected plot
-            action.payload.trace.forEach(traceIndex => {
-                if (traceIndex < curPlot.data.length) {
-                    curPlot.data[traceIndex].Enabled = action.payload.enabled;
-                }
-            });
-
-            // Recompute limits and update units
-            const relevantTraces = action.payload.trace.map(index => curPlot.data[index])
-            const RelevantAxis = _.uniq(relevantTraces.map(s => s?.Unit));
-
-            if (RelevantAxis.length > 0)
-                RelevantAxis.forEach(axis => {
-                    if (axis === undefined)
-                        return
-                    const axisSetting = curPlot.yLimits[axis];
-                    const relevantData = curPlot.data.filter(item => item.Enabled && item.Unit === axis);
-
-                    if (curPlot.key.DataType !== 'FFT' && curPlot.key.DataType !== 'OverlappingWave') {
-                        let recomputedLimits = recomputeDataLimits(state.startTime, state.endTime, relevantData, curPlot.yLimits[axis].current)
-                        axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
-                    } else if (curPlot.key.DataType === 'FFT') {
-                        const recomputedLimits = recomputeDataLimits(state.fftLimits[0], state.fftLimits[1], relevantData, curPlot.yLimits[axis].current);
-                        axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
-                    } else if (curPlot.key.DataType === 'OverlappingWave') {
-                        const recomputedLimits = recomputeDataLimits(state.cycleLimit[0], state.cycleLimit[1], relevantData, curPlot.yLimits[axis].current);
-                        axisSetting.dataLimits = recomputedLimits;
-                        axisSetting.zoomedLimits = recomputeNonAutoLimits(curPlot.yLimits[getPrimaryAxis(action.payload.key)].dataLimits, curPlot.yLimits[getPrimaryAxis(action.payload.key)].zoomedLimits, recomputedLimits)
-
-                    }
-                    updateActiveUnits(curPlot.yLimits, axis, relevantData, state.startTime, state.endTime, null);
-                });
-        },
-        SetSelectPoint: (state: OpenSee.IDataState, action: PayloadAction<{ time: number, key: OpenSee.IGraphProps }>) => {
-            state.Plots.forEach(plot => {
-                let shortestDataObject = _.minBy(plot.data, dataObject => dataObject.DataPoints.length);
-
-                if (plot?.data?.length > 0) {
-                    let dataIndex = getIndex(action.payload.time, shortestDataObject.DataPoints)
-                    plot.selectedIndixes.push(dataIndex);
-                }
-            })
-        },
-        ClearSelectPoints: (state: OpenSee.IDataState) => {
-            state.Plots.forEach(plot => plot.selectedIndixes = []);
-        },
-        RemoveSelectPoints: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
-            state.Plots.forEach(plot => plot.selectedIndixes.splice(action.payload, 1));
-        },
-        SetManualLimits: (state: OpenSee.IDataState, action: PayloadAction<{
-            limits: [number, number],
-            key: OpenSee.IGraphProps,
-            axis: OpenSee.Unit,
-            auto: boolean
-            factor?: number
-        }>) => {
-            const curPlot = state.Plots.find(plot => plot.key.DataType == action.payload.key.DataType && plot.key.EventId == action.payload.key.EventId);
-            if (curPlot) {
-                curPlot.yLimits[action.payload.axis].isManual = true;
-
-                if (curPlot.isZoomed) //cover case of user zooming first then manually editing those..
-                    curPlot.yLimits[action.payload.axis].zoomedLimits = action.payload.limits;
-
-                curPlot.yLimits[action.payload.axis].manualLimits = action.payload.limits;
-
-                if (action.payload.auto) {
-                    let revelantData = curPlot.data.filter(data => data.Enabled && data.Unit === action.payload.axis)
-
-                    let index = updateActiveUnits(curPlot.yLimits, action.payload.axis, revelantData, state.startTime, state.endTime, action.payload.limits);
-                    if (index) {
-                        curPlot.yLimits[action.payload.axis] = index;
-                        let newManualLimits = [action.payload.limits[0] * action.payload.factor, action.payload.limits[1] * action.payload.factor]
-                        curPlot.yLimits[action.payload.axis].manualLimits = newManualLimits;
-
-                    }
-                }
-
-            }
         },
         ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
             let plot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
@@ -456,19 +338,10 @@ export const DataReducer = createSlice({
 });
 
 
-export const { SetIsManual, SetSelectPoint, RemoveSelectPoints, ClearSelectPoints, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
+export const { RemoveSelectPoints, ClearSelectPoints, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
 export default DataReducer.reducer;
 
 // #endregion
-
-// #region [ Individual Selectors ]
-export const SelectFFTLimits = (state: OpenSee.IRootState) => state.Data.fftLimits;
-export const SelectCycleLimits = (state: OpenSee.IRootState) => state.Data.cycleLimit;
-export const SelectStartTime = (state: OpenSee.IRootState) => state.Data.startTime;
-export const SelectEndTime = (state: OpenSee.IRootState) => state.Data.endTime;
-export const SelectCycleStart = (state: OpenSee.IRootState) => state.Data.cycleLimit[0]
-export const SelectCycleEnd = (state: OpenSee.IRootState) => state.Data.cycleLimit[1]
-
 
 export const SelectOverlappingEvents = (graphType: OpenSee.graphType) => createSelector(
     (state: RootState) => state.Data.Plots,
