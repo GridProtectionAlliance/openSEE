@@ -43,6 +43,7 @@ interface IDataFunctions {
     ClearSelectPoints: () => void,
     RemoveSelectPoints: (index: number) => void,
     SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) => void
+    SelectShowFFTWindow: (key: OpenSee.IGraphProps) => void,
 }
 
 interface IExtendedContextType extends OpenSee.IDataContextType {
@@ -352,6 +353,11 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
 
 
+
+    const SelectShowFFTWindow = React.useCallback(() => 
+        contextState.Plots.findIndex(plot => plot.key.DataType === "FFT") >= 0
+    , [contextState]);
+
     // Set context
     contextRef.current = {
         SetTimeLimit,
@@ -365,7 +371,8 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         SetSelectPoint,
         ClearSelectPoints,
         RemoveSelectPoints,
-        SetManualLimits
+        SetManualLimits,
+        SelectShowFFTWindow
     };
     const contextStateWithRef = React.useMemo(() => ({ ...contextState, Dispatch: contextRef }), [contextState]);
 
