@@ -67,20 +67,34 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     // Context State Functions
     const SetTimeLimit = React.useCallback((start: number, end: number) =>
-        setContextState(c => func.UpdateTimeLimit(c, start, end))
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            func.UpdateTimeLimit(updatedContext, start, end);
+            return updatedContext;
+        })
     , []);
 
     const SetCycleLimit = React.useCallback((start: number, end: number) => 
-        setContextState(c => func.UpdateCycleLimits(c, start, end))
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            func.UpdateCycleLimits(updatedContext, start, end);
+            return updatedContext;
+        })
     , []);
 
     const SetFFTLimits = React.useCallback((start: number, end: number) => 
-        setContextState(c => func.UpdateFFTLimits(c, start, end))
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+            func.UpdateFFTLimits(updatedContext, start, end);
+            return updatedContext;
+        })
     , []);
 
     const ResetZoom = React.useCallback((start: number, end: number) =>
         setContextState(c => {
-            let updatedContext = func.UpdateTimeLimit(c, start, end);
+            let updatedContext = _.cloneDeep(c);
+
+            func.UpdateTimeLimit(updatedContext, start, end);
 
             // FFT Limits get updated base on values not eventTime
             const fftPlotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == 'FFT');
@@ -88,12 +102,12 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             if (fftPlotIndex > -1) {
                 const start = Math.min(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]))));
                 const end = Math.max(...updatedContext.Plots[fftPlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))));
-                updatedContext = func.UpdateFFTLimits(updatedContext, start, end);
+                func.UpdateFFTLimits(updatedContext, start, end);
             }
             if (wavePlotIndex > -1) {
                 const start = Math.min(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
                 const end = Math.max(...updatedContext.Plots[wavePlotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]).filter(val => !isNaN(val)))));
-                updatedContext = func.UpdateCycleLimits(updatedContext, start, end);
+                func.UpdateCycleLimits(updatedContext, start, end);
             }
 
             for (let plotIndex = 0; plotIndex < updatedContext.Plots.length; plotIndex++) {
@@ -110,24 +124,23 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     const SetZoomedLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps) =>
         setContextState(c => {
-            const plot = c.Plots.find(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
-            const primaryAxis = func.getPrimaryAxis(plot.key);
-            let oldLimits: [number, number] = [0, 1];
-
-            if (plot.yLimits[primaryAxis].isManual)
-                oldLimits = plot.yLimits[primaryAxis].manualLimits;
-            else if (plot.isZoomed)
-                oldLimits = plot.yLimits[primaryAxis].zoomedLimits;
-            else
-                oldLimits = plot.yLimits[primaryAxis].dataLimits;
-
-
             const plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
             if (plotIndex <= -1)
                 return c;
 
-            const RelevantAxis = _.uniq(c.Plots[plotIndex].data.filter(item => item.Enabled).map(s => s.Unit));
             const newContext = _.cloneDeep(c);
+
+            const primaryAxis = func.getPrimaryAxis(newContext.Plots[plotIndex].key);
+            let oldLimits: [number, number] = [0, 1];
+
+            if (newContext.Plots[plotIndex].yLimits[primaryAxis].isManual)
+                oldLimits = newContext.Plots[plotIndex].yLimits[primaryAxis].manualLimits;
+            else if (newContext.Plots[plotIndex].isZoomed)
+                oldLimits = newContext.Plots[plotIndex].yLimits[primaryAxis].zoomedLimits;
+            else
+                oldLimits = newContext.Plots[plotIndex].yLimits[primaryAxis].dataLimits;
+
+            const RelevantAxis = _.uniq(newContext.Plots[plotIndex].data.filter(item => item.Enabled).map(s => s.Unit));
 
             RelevantAxis.forEach(axis => {
                 if (axis === func.getPrimaryAxis(key))
@@ -376,27 +389,5 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         </DataFunctionContext.Provider>
     );
 };
-
-function applyLocalSettings(plot: OpenSee.IGraphstate) {
-
-    try {
-        let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
-        const unitSettings = settings.Units
-
-        if (unitSettings && Array.isArray(unitSettings)) {
-            const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
-
-            Object.keys(matchingPlot.Units).forEach(key => {
-                plot.yLimits[key].current = matchingPlot.Units[key].current
-                plot.yLimits[key].isAuto = matchingPlot.Units[key].isAuto
-            })
-        }
-        else if (!Array.isArray(unitSettings)) { //reset unit localstorage settings for old structure
-            settings.Units = []
-            const serializedState = JSON.stringify(settings);
-            localStorage.setItem('openSee.Settings', serializedState);
-        }
-    } catch { }
-}
 
 export default DataContext;

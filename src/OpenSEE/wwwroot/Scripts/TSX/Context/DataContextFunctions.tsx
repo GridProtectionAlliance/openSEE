@@ -25,54 +25,111 @@ import { OpenSee } from "../global";
 import { defaultSettings } from '../defaults';
 import _ from "lodash";
 import { plotTypes } from "../store/settingSlice";
+import { getDetailedData } from "../Data/GraphLogic";
+import { AppendRequest } from "../Data/RequestHandler";
 
 namespace DataContextFunctions {
     /* Functions to Update Context objects */
-    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
-        const newContext = _.cloneDeep(context);
-
+    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number): void {
         if (Math.abs(start - end) < 10)
-            return newContext;
+            return;
 
-        newContext.StartTime = start;
-        newContext.EndTime = end;
-        newContext.Plots.map(graph => {
+        context.StartTime = start;
+        context.EndTime = end;
+        context.Plots.map(graph => {
             if (graph.key.DataType === "FFT")
-                return updateAutoLimits(graph, newContext.FftLimits[0], newContext.FftLimits[1]);
+                return updateAutoLimits(graph, context.FftLimits[0], context.FftLimits[1]);
             if (graph.key.DataType === "OverlappingWave")
-                return updateAutoLimits(graph, newContext.CycleLimits[0], newContext.CycleLimits[1]);
+                return updateAutoLimits(graph, context.CycleLimits[0], context.CycleLimits[1]);
             return updateAutoLimits(graph, start, end);
         });
-
-        return newContext;
     }
 
-    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
-        const newContext = _.cloneDeep(context);
-
+    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number): void {
         if (Math.abs(start - end) < 5)
-            return newContext;
+            return;
 
-        newContext.StartTime = start;
-        newContext.EndTime = end;
+        context.StartTime = start;
+        context.EndTime = end;
         const plotIndex = context.Plots.findIndex(plot => plot.key.DataType === "OverlappingWave");
-        newContext.Plots[plotIndex] = updateAutoLimits(newContext.Plots[plotIndex], start, end);
-
-        return newContext;
+        updateAutoLimits(context.Plots[plotIndex], start, end);
     }
 
-    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number): OpenSee.IDataContextType {
-        const newContext = _.cloneDeep(context);
-
+    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number): void {
         if (Math.abs(start - end) < 1)
-            return newContext;
+            return;
 
-        newContext.StartTime = start;
-        newContext.EndTime = end;
+        context.StartTime = start;
+        context.EndTime = end;
         const plotIndex = context.Plots.findIndex(plot => plot.key.DataType === "FFT");
-        newContext.Plots[plotIndex] = updateAutoLimits(newContext.Plots[plotIndex], start, end);
+        updateAutoLimits(context.Plots[plotIndex], start, end);
+    }
 
-        return newContext;
+    export function AppendData(context: OpenSee.IDataContextType, key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, defaultTraces: OpenSee.IDefaultTrace, defaultV: "L-L" | "L-N", eventID: number): void {
+        let plotIndex = context.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId)
+        if (plotIndex < 0)
+            return;
+
+        const orignalLength = context.Plots[plotIndex].data.length;
+
+        //update plot with unit settings from local storage
+        applyLocalSettings(context.Plots[plotIndex]);
+
+        context.Plots[plotIndex].data.push(...data);
+        const newLength = context.Plots[plotIndex].data.length
+
+        let extendEnabled = GetDefaults(key.DataType, defaultTraces, defaultV, context.Plots[plotIndex].data);
+
+        for (let i = orignalLength; i < newLength; i++) {
+            context.Plots[plotIndex].data[i].EventID = eventID
+        }
+
+        for (let i = 0; i < newLength; i++) {
+            context.Plots[plotIndex].data[i].Enabled = extendEnabled[i];
+        }
+
+        const RelevantAxises = _.uniq(context.Plots[plotIndex].data.map(s => s.Unit));
+
+        RelevantAxises.forEach(axis => {
+            let filteredData = context.Plots[plotIndex].data.filter(item => item.Unit === axis && item.Enabled);
+            let index = updateActiveUnits(context.Plots[plotIndex].yLimits, axis, filteredData, context.StartTime, context.EndTime, null);
+            if (index)
+                context.Plots[plotIndex].yLimits[axis].current = index;
+        })
+
+        switch (context.Plots[plotIndex].key.DataType) {
+            case "FFT":
+                context.FftLimits = [Math.min(...context.Plots[plotIndex].data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...context.Plots[plotIndex].data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))];
+                updateAutoLimits(context.Plots[plotIndex], context.FftLimits[0], context.FftLimits[1]);
+                break;
+            case "OverlappingWave":
+                updateAutoLimits(context.Plots[plotIndex], context.CycleLimits[0], context.CycleLimits[1]);
+                break;
+            default:
+                updateAutoLimits(context.Plots[plotIndex], context.StartTime, context.EndTime);
+                break;
+        }
+    }
+
+    export function applyLocalSettings(plot: OpenSee.IGraphstate) {
+        try {
+            let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
+            const unitSettings = settings.Units
+
+            if (unitSettings && Array.isArray(unitSettings)) {
+                const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
+
+                Object.keys(matchingPlot.Units).forEach(key => {
+                    plot.yLimits[key].current = matchingPlot.Units[key].current
+                    plot.yLimits[key].isAuto = matchingPlot.Units[key].isAuto
+                })
+            }
+            else if (!Array.isArray(unitSettings)) { //reset unit localstorage settings for old structure
+                settings.Units = []
+                const serializedState = JSON.stringify(settings);
+                localStorage.setItem('openSee.Settings', serializedState);
+            }
+        } catch { }
     }
 
     export function saveSettings(state: OpenSee.IDataContextType): void {
@@ -119,25 +176,22 @@ namespace DataContextFunctions {
     }
 
     /* Functions that deal with individual plots */
-    export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): OpenSee.IGraphstate {
-        const newPlot = _.cloneDeep(plot);
-
+    export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): void {
         //only update limits once there is data loaded
-        if (newPlot?.data?.length <= 0)
-            return newPlot;
+        if (plot?.data?.length <= 0)
+            return;
 
-        const RelevantAxis = _.uniq(newPlot.data.map(s => s.Unit));
+        const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
         RelevantAxis.forEach(axis => {
-            const autoLimits = !newPlot.isZoomed && !newPlot.yLimits[axis].isManual;
+            const autoLimits = !plot.isZoomed && !plot.yLimits[axis].isManual;
             if (!autoLimits)
                 return;
 
-            let filteredData = newPlot.data.filter(item => item.Unit === axis && item.Enabled);
-            const newLimits = recomputeDataLimits(startTime, endTime, filteredData, newPlot.yLimits[axis].current);
+            let filteredData = plot.data.filter(item => item.Unit === axis && item.Enabled);
+            const newLimits = recomputeDataLimits(startTime, endTime, filteredData, plot.yLimits[axis].current);
             if (newLimits)
-                newPlot.yLimits[axis].dataLimits = newLimits;
+                plot.yLimits[axis].dataLimits = newLimits;
         });
-        return newPlot;
     }
 
     //This Function Recomputes y Limits based on X limits for all states
