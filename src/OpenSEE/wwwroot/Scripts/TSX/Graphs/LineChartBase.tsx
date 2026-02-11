@@ -36,13 +36,14 @@ import {
     SetCycleLimit, SelectYLabels, SelectDeltaHoverPoints, getPrimaryAxis, SelectCycleLimits
 } from '../store/dataSlice';
 import { SelectEventList } from '../store/overlappingEventsSlice';
-import { SelectAnalyticOptions, SelectCycles, SelectFFTWindow, SelectShowFFTWindow, SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
+import { SelectAnalyticOptions, SelectCycles, SelectFFTWindow, SelectAnalytics, UpdateAnalytic } from '../store/analyticSlice';
 import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
 import HoverContext from '../Context/HoverContext'
 import { defaultSettings } from '../defaults';
 import EventContext from '../Context/EventContext';
+import { DataContext } from '../Context/DataContext';
 
 interface iProps {
     height: number,
@@ -148,9 +149,11 @@ const LineChart = (props: iProps) => {
     const originalStartTime = new Date(evt.EventInfo?.EventDate + "Z").getTime()
 
     const fftWindow = useAppSelector(SelectFFTWindow);
-    const showFFT = useAppSelector(SelectShowFFTWindow);
     const fftCycles = useAppSelector(SelectCycles);
     const [hover, setHover] = React.useContext(HoverContext);
+
+    const data = React.useContext(DataContext);
+    const showFFT = React.useMemo(() => data.Plots.findIndex(plot => plot.key.DataType === "FFT") >= 0, [data]);
 
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
