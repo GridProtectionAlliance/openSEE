@@ -30,43 +30,6 @@ import { defaultSettings } from '../defaults';
 import { sortGraph } from '../Graphs/Utilities'
 
 // #region [ Thunks ]
-// Thunk To Add New Plot
-export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number] }, thunkAPI) => {
-    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
-    const state = (thunkAPI.getState() as OpenSee.IRootState)
-    const singlePlot = state.Settings.SinglePlot
-
-    if (plot === null || plot.loading !== 'Loading') 
-        return Promise.resolve();
-    
-    // Adding Data to the Plot
-    let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
-
-    let handles = getData(arg.key, analyticOptions, async data => {
-        await thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: arg.key.EventId }));
-
-        const updatedState = (thunkAPI.getState() as OpenSee.IRootState);
-        const updatedPlot = updatedState.Data.Plots.find(item => item.key.DataType === arg.key.DataType && item.key.EventId === arg.key.EventId);
-        const singleOverlappingPlot = updatedState.Data.Plots.find(item => item.key.DataType === arg.key.DataType && item.key.EventId === -1)
-
-
-        //Only dispatch to the overlapping single plot after the first call to AppendData finishes and if it exists
-        if (singlePlot) {
-            if (singleOverlappingPlot)
-                thunkAPI.dispatch(DataReducer.actions.AppendData({ key: { EventId: -1, DataType: arg.key.DataType }, data: _.cloneDeep(updatedPlot.data), defaultTraces: updatedState.Settings.DefaultTrace, defaultV: updatedState.Settings.DefaultVType, eventID: arg.key.EventId }));
-            else
-                thunkAPI.dispatch(AddSingleOverlappingPlot(arg.key));
-        }
-    },
-        () => {
-            thunkAPI.dispatch(InitiateDetailed(arg.key))
-        }
-    );
-
-    AddRequest(arg.key, handles);
-    return await Promise.all(handles);
-})
-
 // Thunk To Remove Plot
 export const RemovePlot = createAsyncThunk('Data/removePlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
     const state = (thunkAPI.getState() as OpenSee.IRootState)
@@ -81,21 +44,6 @@ export const RemovePlot = createAsyncThunk('Data/removePlot', async (arg: OpenSe
         if (singlePlot)
             thunkAPI.dispatch(DataReducer.actions.RemoveOverlappingData({ key: arg, data: _.cloneDeep(plotData) }))
     }
-
-    return await Promise.resolve();
-})
-
-// Thunk To Add New Single Overlapping Plot
-export const AddSingleOverlappingPlot = createAsyncThunk('Data/addOverlappingPlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    const state = (thunkAPI.getState() as OpenSee.IRootState)
-    const singleOverlappingPlot = state.Data.Plots.find(plot => plot.key.DataType === arg.DataType && plot.key.EventId === -1)
-    const currentPlot = state.Data.Plots.find(plot => plot.key.DataType === arg.DataType && plot.key.EventId === arg.EventId)
-
-    if (singleOverlappingPlot === null || singleOverlappingPlot.loading !== 'Loading')
-        return Promise.resolve();
-
-    // Adding Data with matching datatypes
-    thunkAPI.dispatch(DataReducer.actions.AppendData({ key: { EventId: -1, DataType: currentPlot.key.DataType }, data: _.cloneDeep(currentPlot.data), defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: currentPlot.key.EventId })); //not really sure what requestID and secondary is...
 
     return await Promise.resolve();
 })
@@ -120,99 +68,6 @@ export const DataReducer = ({
             }
         },
     },
-    extraReducers: (builder) => {
-        builder.addCase(AddPlot.pending, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-
-            if (plot === undefined) {
-                plot = _.cloneDeep(emptygraph);
-                plot.loading = 'Loading';
-                state.Plots.push(plot)
-            }
-
-            if (action.meta.arg.yLimits)
-                Object.keys(action.meta.arg.yLimits).forEach(unit => {
-                    plot.yLimits[unit] = action.meta.arg.yLimits[unit]
-                })
-
-            if (action.meta.arg.isZoomed !== undefined)
-                plot.isZoomed = action.meta.arg.isZoomed
-
-            plot.key = action.meta.arg.key;
-
-            const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
-            if (singlePlot)
-                singlePlot.loading = 'Loading'
-
-            return state
-        });
-        builder.addCase(AddPlot.fulfilled, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-            if (plot === undefined)
-                return state
-
-            plot.loading = 'Idle'
-
-            const singlePlot = state.Plots.find(plot => plot.key.EventId === -1 && plot.key.DataType === action.meta.arg.key.DataType)
-            if (singlePlot) {
-                const evtIDs = _.uniq(state.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1))
-                const evtIDsPresent = _.uniq(singlePlot.data.map(data => data.EventID))
-                const allDataPresent = evtIDs.every(id => {
-                    return evtIDsPresent.includes(id)
-                })
-
-                if (allDataPresent)
-                    singlePlot.loading = 'Idle';
-            }
-
-
-            if (action.meta.arg.fftLimits)
-                state.fftLimits = action.meta.arg.fftLimits
-            if (action.meta.arg.fftLimits)
-                state.cycleLimit = action.meta.arg.cycleLimits
-
-
-            return state
-        });
-        builder.addCase(AddPlot.rejected, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-            if (plot === undefined)
-                return state
-
-            plot.loading = 'Error'
-          
-            return state
-        });
-        builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
-
-            if (plot === undefined) {
-                plot = _.cloneDeep(emptygraph);
-                state.Plots.push(plot)
-            }
-
-            plot.key = { EventId: -1, DataType: action.meta.arg.DataType };
-            plot.loading = 'Loading';
-
-
-            return state
-        });
-        builder.addCase(AddSingleOverlappingPlot.fulfilled, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
-            if (plot) {
-                const evtIDs = _.uniq(state.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1))
-                const evtIDsPresent = _.uniq(plot.data.map(data => data.EventID))
-                const allDataPresent = evtIDs.every(id => {
-                    return evtIDsPresent.includes(id)
-                })
-
-                if (allDataPresent)
-                    plot.loading = 'Idle';
-            }
-
-            return state
-        });
-    }
 
 });
 

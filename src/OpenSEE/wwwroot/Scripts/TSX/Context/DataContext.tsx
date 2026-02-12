@@ -26,11 +26,11 @@ import * as React from 'react';
 import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
 import func from './DataContextFunctions';
-import { getData } from '../Data/GraphLogic';
+import { emptygraph, getData } from '../Data/GraphLogic';
 import { AddRequest } from '../Data/RequestHandler';
 import AnalyticContext from './AnalyticContext';
 import { useAppSelector } from '../hooks';
-import { SelectDefaultTraces, SelectVTypeDefault } from '../store/settingSlice';
+import { SelectDefaultTraces, SelectSinglePlot, SelectVTypeDefault } from '../store/settingSlice';
 
 interface IProps {
 }
@@ -48,6 +48,7 @@ interface IDataFunctions {
     ClearSelectPoints: () => void,
     RemoveSelectPoints: (index: number) => void,
     SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) => void,
+    AddPlot: (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]) => void,
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
 }
 
@@ -66,6 +67,7 @@ const defaultState: OpenSee.IDataContextType = {
 export const DataContext = React.createContext<OpenSee.IDataContextType>(defaultState);
 export const DataFunctionContext = React.createContext<IDataFunctionContextType>({ Dispatch: undefined });
 
+// ToDo: A lot of element appear to add/remove plots on a toggle, we might wanna cache data somewhere instead...
 export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const [contextState, setContextState] = React.useState<OpenSee.IDataContextType>(defaultState);
     const contextRef = React.useRef<IDataFunctions>();
@@ -76,6 +78,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     const defaultVType = useAppSelector(SelectVTypeDefault);
     const defaultTrace = useAppSelector(SelectDefaultTraces);
+    const singlePlot = useAppSelector(SelectSinglePlot);
 
     // Context State Functions
     const SetTimeLimit = React.useCallback((start: number, end: number) =>
@@ -378,7 +381,88 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     , []);
 
     // Plot Data Functions
-    const UpdateAnalyticPlot = (key: OpenSee.IGraphProps) => {
+    const AddPlot = (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]): void => {
+        // Check to see if plot exists
+        let plotIndex = contextState.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+
+        // Add plot to context if it does not exist
+        let updatedContext = _.cloneDeep(contextState);
+        if (plotIndex < 0) {
+            const newPlot = _.cloneDeep(emptygraph);
+            plotIndex = updatedContext.Plots.push(newPlot) - 1;
+        }
+
+        // Set fields based on arguements
+        if (yLimits)
+            Object.keys(yLimits).forEach(unit => {
+                updatedContext[plotIndex].yLimits[unit] = yLimits[unit]
+            });
+        if (isZoomed !== undefined)
+            updatedContext[plotIndex].isZoomed = isZoomed;
+        updatedContext[plotIndex].key = key;
+        updatedContext[plotIndex].loading = 'Loading';
+
+        // Add/deal with overlapping plot if needed
+        let overlappingPlotIndex = -1;
+        if (singlePlot) {
+            overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
+            if (overlappingPlotIndex < 0) {
+                const newPlot = _.cloneDeep(emptygraph);
+                overlappingPlotIndex = updatedContext.Plots.push(newPlot) - 1;
+            }
+            updatedContext.Plots[overlappingPlotIndex].key = { EventId: -1, DataType: key.DataType };
+            updatedContext.Plots[overlappingPlotIndex].loading = 'Loading';
+
+        }
+
+        // Adding Data to the Plot
+        let handles = getData(
+            key,
+            analytic,
+            data => {
+                func.AppendData(updatedContext, key, data, defaultTrace, defaultVType, key.EventId);
+                // Append overlapping plot data
+                if (overlappingPlotIndex > -1)
+                    func.AppendData(updatedContext, { EventId: -1, DataType: key.DataType }, _.cloneDeep(updatedContext[plotIndex].data), defaultTrace, defaultVType, key.EventId);
+            },
+            () => func.InitiateDetailed(updatedContext, analytic, key)
+        );
+
+        // Register requests to handle store
+        AddRequest(key, handles);
+
+        // Register promise to finally set context state
+        Promise.all(handles).then(() => {
+            updatedContext.Plots[plotIndex].loading = 'Idle';
+
+            // Set flag for overlapping plot
+            if (overlappingPlotIndex > -1) {
+                const evtIDs = _.uniq(updatedContext.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1));
+                const evtIDsPresent = _.uniq(updatedContext.Plots[overlappingPlotIndex].data.map(data => data.EventID));
+                const allDataPresent = evtIDs.every(id => {
+                    return evtIDsPresent.includes(id)
+                })
+
+                if (allDataPresent)
+                    updatedContext.Plots[overlappingPlotIndex].loading = 'Idle';
+            }
+
+            if (fftLimits != null)
+                updatedContext.FftLimits = fftLimits;
+            if (cycleLimits != null)
+                updatedContext.CycleLimits = cycleLimits;
+
+            setContextState(updatedContext);
+        }, () => {
+            updatedContext.Plots[plotIndex].loading = 'Error';
+            if (overlappingPlotIndex > -1)
+                updatedContext.Plots[overlappingPlotIndex].loading = 'Error';
+
+            setContextState(updatedContext);
+        });
+    }
+
+    const UpdateAnalyticPlot = (key: OpenSee.IGraphProps): void => {
         // No plot matches
         const plotIndex = contextState.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
         if (plotIndex < 0)
@@ -391,7 +475,6 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         // Set loading flag
         updatedContext.Plots[plotIndex].loading = 'Loading';
         setContextState(updatedContext);
-
 
         // Adding Data to the Plot
         let handles = getData(
@@ -463,6 +546,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         ClearSelectPoints,
         RemoveSelectPoints,
         SetManualLimits,
+        AddPlot,
         UpdateAnalyticPlot
     };
 
