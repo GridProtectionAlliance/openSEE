@@ -24,12 +24,8 @@
 import { clone } from 'lodash';
 import * as React from 'react';
 import { OpenSee } from '../global';
-import { SelectCycles, SelectHarmonic, SelectHPF, SelectLPF, SelectTRC } from '../store/analyticSlice';
-import { SelectAnalytics, SelectDisplayed, SelectFFTEnabled, SelectFFTLimits } from '../store/dataSlice';
-import { SelectMouseMode, SetMouseMode } from '../store/settingSlice';
-
 import { useAppDispatch, useAppSelector } from '../hooks';
-
+import { SelectMouseMode, SetMouseMode } from '../store/settingSlice';
 import InfoSection from './InfoSection';
 import PlotUtilitiesSection from './PlotUtilitiesSection';
 import WidgetSection from './WidgetSection';
