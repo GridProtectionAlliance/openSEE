@@ -25,7 +25,6 @@
 
 import * as React from 'react';
 import { OpenSee } from '../global';
-import { SelectHarmonic,SelectHPF, SelectLPF, SelectTRC, SelectCycles, UpdateAnalytic, SelectAnalytics } from '../store/analyticSlice';
 import { SelectPlotKeys, RemovePlot, AddPlot, SelectEventIDs } from '../store/dataSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive"
@@ -33,21 +32,14 @@ import { Select, Input } from "@gpa-gemstone/react-forms"
 import * as _ from 'lodash'
 import { ToInt } from '../store/queryThunk'
 import { GetDisplayLabel } from '../Graphs/Utilities'
+import AnalyticContext from '../Context/AnalyticContext';
 
 const AnalyticOptions = () => {
     const dispatch = useAppDispatch();
-    const harmonic = useAppSelector(SelectHarmonic)
     const plotKeys = useAppSelector(SelectPlotKeys)
-    const hpf = useAppSelector(SelectHPF)
-    const lpf = useAppSelector(SelectLPF)
-    const trc = useAppSelector(SelectTRC)
-    const cycles = useAppSelector(SelectCycles);
-    const analytics = useAppSelector(SelectAnalytics);
-    const eventIDs = useAppSelector(SelectEventIDs)
+    const eventIDs = useAppSelector(SelectEventIDs);
 
-    const [isHarmonicValid, setIsHarmonicValid] = React.useState<boolean>(true)
-    const [isFFTCyclesValid, setIsFFTCyclesValid] = React.useState<boolean>(true)
-
+    const [analytic, setAnalytic] = React.useContext(AnalyticContext);
 
     const defaultAnalyticBtns = [
         { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FaultDistance', EventId: id } }))), DataType: 'FaultDistance' },
@@ -73,31 +65,10 @@ const AnalyticOptions = () => {
 
     const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(defaultAnalyticBtns)
 
-    const handleAnalyticChange = (analyticParam: number, analytic: 'Harmonic' | 'FFT') => {
-        if (analytic === "Harmonic") {
-            if (analyticParam) {
-                eventIDs.forEach(id => {
-                    setTimeout(() => {
-                        dispatch(UpdateAnalytic({ settings: { ...analytics, Harmonic: ToInt(harmonic) }, key: { DataType: "Harmonic", EventId: id } }));
-                    }, 500);
-                });
-                setIsHarmonicValid(true)
-            }
-            else
-                setIsHarmonicValid(false)
-        } else if (analytic === "FFT") {
-            if (analyticParam) {
-                eventIDs.forEach(id => {
-                    setTimeout(() => {
-                        dispatch(UpdateAnalytic({ settings: { ...analytics, FFTCycles: ToInt(analyticParam) }, key: { DataType: "FFT", EventId: id } }));
-                    }, 500);
-                });
-                setIsFFTCyclesValid(true)
-            }
-            else
-                setIsFFTCyclesValid(false)
-        }
-
+    const analyticDebounce = (newAnalytic: OpenSee.IAnalyticContext) => {
+        setTimeout(() => {
+            setAnalytic(newAnalytic);
+        }, 500);
     }
 
     const options = {
@@ -157,12 +128,13 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Specified Harmonic</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Input
-                                            Record={{ harmonic }}
-                                            Field={'harmonic'}
-                                            Setter={(harmonic) => handleAnalyticChange(ToInt(harmonic.harmonic), 'Harmonic')}
+                                        <Input<OpenSee.IAnalyticContext>
+                                            Record={analytic}
+                                            Field={'Harmonic'}
+                                            Type={'integer'}
+                                            Setter={analyticDebounce}
                                             Label={"Harmonic:"}
-                                            Valid={() => isHarmonicValid}
+                                            Valid={() => analytic.Harmonic != null}
                                             Feedback="Harmonic value can not be empty"
                                         />
                                     </div>
@@ -179,11 +151,11 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>High Pass Filter</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Select
-                                            Record={{ hpf }}
-                                            Field={'hpf'}
+                                        <Select<OpenSee.IAnalyticContext>
+                                            Record={analytic}
+                                            Field={'HPFOrder'}
                                             Options={options.order}
-                                            Setter={(hpf) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, HPFOrder: ToInt(hpf.hpf) }, key: { DataType: "HighPassFilter" , EventId: id} })))}
+                                            Setter={setAnalytic}
                                             Label={"Order:"}
                                         />
                                     </div>
@@ -200,11 +172,11 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Low Pass Filter</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Select
-                                            Record={{ lpf }}
-                                            Field={'lpf'}
+                                        <Select<OpenSee.IAnalyticContext>
+                                            Record={analytic}
+                                            Field={'LPFOrder'}
                                             Options={options.order}
-                                            Setter={(lpf) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, LPFOrder: ToInt(lpf.lpf) }, key: { DataType: "LowPassFilter", EventId: id } }))) }
+                                            Setter={setAnalytic}
                                             Label={"Order:"}
                                         />
                                     </div>
@@ -221,11 +193,11 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Select
-                                            Record={{ trc }}
-                                            Field={'trc'}
+                                        <Select<OpenSee.IAnalyticContext>
+                                            Record={analytic}
+                                            Field={'Trc'}
                                             Options={options.trc}
-                                            Setter={(trc) => eventIDs.forEach(id => dispatch(UpdateAnalytic({ settings: { ...analytics, Trc: ToInt(trc.trc) }, key: { DataType: "Rectifier", EventId: id } }))) }
+                                            Setter={setAnalytic}
                                             Label={"RC Time Const. (ms):"}
                                         />
                                     </div>
@@ -242,12 +214,13 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end">
-                                        <Input
-                                            Record={{ cycles }}
-                                            Field={'cycles'}
-                                            Setter={cycles => handleAnalyticChange(ToInt(cycles.cycles), 'FFT')}
+                                        <Input<OpenSee.IAnalyticContext>
+                                            Record={analytic}
+                                            Field={'FFTCycles'}
+                                            Type={"integer"}
+                                            Setter={analyticDebounce}
                                             Label={"Length(Cycles):"}
-                                            Valid={() => isFFTCyclesValid}
+                                            Valid={() => analytic.FFTCycles != null}
                                             Feedback="FFT Cycles value can not be empty"
                                         />
                                     </div>
