@@ -24,14 +24,15 @@
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import React from "react";
+import EventContext from '../Context/EventContext';
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { SelectNavigation, SetMouseMode } from '../store/settingSlice';
-import PlotTable from './PlotTable';
-import { SelectHarmonic, SelectTRC, SelectLPF, SelectHPF, SelectCycles } from '../store/analyticSlice';
 import { SelectAnalytics, SelectDisplayed, SelectFFTEnabled, SelectFFTLimits } from '../store/dataSlice';
-import EventContext from '../Context/EventContext';
+import { SetMouseMode } from '../store/settingSlice';
+import PlotTable from './PlotTable';
+import DataContext from '../Context/DataContext';
+import AnalyticContext from '../Context/AnalyticContext';
 
 interface IWidgets {
     hover: OpenSee.Hover,
@@ -42,11 +43,6 @@ interface IWidgets {
 
 const WidgetSection = (props: IWidgets) => {
     const dispatch = useAppDispatch();
-    const harmonic = useAppSelector(SelectHarmonic);
-    const trc = useAppSelector(SelectTRC);
-    const lpf = useAppSelector(SelectLPF);
-    const hpf = useAppSelector(SelectHPF);
-    const cycles = useAppSelector(SelectCycles);
 
     const showPlots = useAppSelector(SelectDisplayed);
     const fftTime = useAppSelector(SelectFFTLimits);
@@ -54,6 +50,7 @@ const WidgetSection = (props: IWidgets) => {
     const showFFT = useAppSelector(SelectFFTEnabled);
 
     const evt = React.useContext(EventContext);
+    const [analytic] = React.useContext(AnalyticContext);
 
     const exportData = (type) => {
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.EventInfo.EventId}` +
@@ -63,12 +60,12 @@ const WidgetSection = (props: IWidgets) => {
             `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
             `${`&displayAnalytics=${analytics}`}` +
-            `${`&lpfOrder=${lpf}`}` +
-            `${`&hpfOrder=${hpf}`}` +
-            `${`&Trc=${trc}`}` +
-            `${`&harmonic=${harmonic}`}` +
+            `${`&lpfOrder=${analytic.LPFOrder}`}` +
+            `${`&hpfOrder=${analytic.HPFOrder}`}` +
+            `${`&Trc=${analytic.Trc}`}` +
+            `${`&harmonic=${analytic.Harmonic}`}` +
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
-            `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
+            `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
             `&Meter=${evt.EventInfo.MeterName}` +
             `&EventType=${evt.EventInfo.EventName}`;
         window.open(uri, '_blank');

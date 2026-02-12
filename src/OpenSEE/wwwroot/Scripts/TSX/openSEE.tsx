@@ -40,14 +40,13 @@ import * as _ from "lodash";
 
 import AnalyticOptions from './Components/AnalyticOptions';
 import LineChart from './Graphs/LineChartBase';
-import OpenSeeNavBar from './Components/OpenSEENavbar';
+import OpenSeeNavBar from './Navbar/OpenSEENavbar';
 
 import store from './store/store';
 import { sortGraph } from './Graphs/Utilities'
 import { OpenSee } from './global';
 
 import { LoadSettings, SelectMouseMode, SetMouseMode } from './store/settingSlice';
-import { SelectCycles, SelectAnalytics } from './store/analyticSlice';
 import { SelectDisplayed, SelectFFTLimits, SelectListGraphs, SelectPlotKeys } from './store/dataSlice';
 import { LoadOverlappingEvents, SelectEventList } from './store/overlappingEventsSlice';
 
@@ -70,7 +69,8 @@ import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 
 // Providers
 import { HoverProvider } from './Context/HoverContext';
-import { EventProvider } from './Context/EventContext';
+import { EventProvider, EventContext } from './Context/EventContext';
+import AnalyticContext from './Context/AnalyticContext';
 
 const OpenSeeHome = () => {
     const dispatch = useAppDispatch();
@@ -115,9 +115,11 @@ const OpenSeeHome = () => {
     const plotKeys = useAppSelector(SelectPlotKeys);
     const eventList = useAppSelector(SelectEventList);
     const showPlots = useAppSelector(SelectDisplayed);
-    const cycles = useAppSelector(SelectCycles);
-    const analytics = useAppSelector(SelectAnalytics);
     const fftTime = useAppSelector(SelectFFTLimits);
+
+    // ToDo: this and logic that relies on it needs to be moved downstream or contexts up
+    const [analytic, setAnalytic] = React.useContext(AnalyticContext);
+    const evt = React.useContext(EventContext);
 
     /*
        (state: OpenSee.IRootState) => state.Data,
@@ -168,14 +170,14 @@ const OpenSeeHome = () => {
                 eventID: eventId,
                 startTime: data.startTime,
                 endTime: data.endTime,
-                Trc: analyticInfo.Trc,
-                HPFOrder: analyticInfo.HPFOrder,
-                LPFOrder: analyticInfo.LPFOrder,
+                Trc: analytic.Trc,
+                HPFOrder: analytic.HPFOrder,
+                LPFOrder: analytic.LPFOrder,
                 CycleLimits: data.cycleLimit as [number, number],
                 FFTLimits: data.fftLimits as [number, number],
-                FFTCycles: analyticInfo.FFTCycles,
-                FFTStartTime: analyticInfo.FFTStartTime,
-                Harmonic: analyticInfo.Harmonic,
+                FFTCycles: analytic.FFTCycles,
+                FFTStartTime: analytic.FFTStartTime,
+                Harmonic: analytic.Harmonic,
                 singlePlot: singlePlot,
                 plots: plotBase64,
                 overlappingInfo: overlappingBase64
@@ -218,8 +220,6 @@ const OpenSeeHome = () => {
     //Effect to handle queryParams
     React.useEffect(() => {
         const query = queryString.parse(history.current['location'].search);
-
-        /*
         const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
         const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
 
@@ -227,8 +227,7 @@ const OpenSeeHome = () => {
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
         dispatch(SetTimeLimit({ start: startTime, end: endTime }));
-        dispatch(UpdateAnalytic({ settings: { ...analytics, FFTStartTime: startTime } }));
-        */
+        setAnalytic(a => ({ ...a, FFTStartTime: startTime }));
 
         setEventId(Number(query['eventId']));
 
@@ -281,21 +280,19 @@ const OpenSeeHome = () => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
     };
 
-    /*
     function exportData(type) {
-        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${eventID}` +
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${eventId}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
             `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
-            `${type == 'fft' ? `&cycles=${cycles}` : ``}` +
-            `&Meter=${eventInfo.MeterName}` +
-            `&EventType=${eventInfo.MeterName}`;
+            `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
+            `&Meter=${evt.EventInfo.MeterName}` +
+            `&EventType=${evt.EventInfo.MeterName}`;
         window.open(uri, "_blank");
     }
-    */
 
     return (
         <EventProvider EventID={eventId}>
