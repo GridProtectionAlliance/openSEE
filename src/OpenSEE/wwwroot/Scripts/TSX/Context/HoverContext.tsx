@@ -24,6 +24,7 @@ import * as React from 'react';
 
 type HoverContextType = [[number, number], React.Dispatch<React.SetStateAction<[number, number]>>];
 
+// ToDo: This likely can and SHOULD be converted to a simple state in the topmost element...
 export const HoverContext = React.createContext<HoverContextType>([[0, 0], () => { }]);
 export const HoverProvider = (props: React.PropsWithChildren<{}>) => {
     const hover = React.useState<[number, number]>([0, 0]);

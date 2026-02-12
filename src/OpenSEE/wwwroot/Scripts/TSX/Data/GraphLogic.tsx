@@ -62,8 +62,8 @@ export const emptygraph: OpenSee.IGraphstate = {
 // #region [ Async Functions ]
 
 //This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
-export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, appendCallBack: (data: OpenSee.iD3DataSeries[], type: 'time'|'frequency') => void, detailedCallBack: (key: OpenSee.IGraphProps) => void): Array<JQuery.jqXHR<any>> {
-    let result = [];
+export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticContext, appendCallBack: (data: OpenSee.iD3DataSeries[], type: 'time'|'frequency') => void, detailedCallBack: (key: OpenSee.IGraphProps) => void): Array<JQuery.jqXHR<any>> {
+    let result: Array<JQuery.jqXHR<any>> = [];
 
     switch (key.DataType) {
 
@@ -403,16 +403,13 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStor
             result.push(i2tDataHandle);
             break
         default:
-            return []
             break;
     }
-
-
     return result;
 }
 
-export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticStore, callBack: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void): Array<JQuery.jqXHR<any>> {
-    let result = [];
+export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticContext, callBack: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void): Array<JQuery.jqXHR<any>> {
+    let result: Array<JQuery.jqXHR<any>> = [];
 
     switch (key.DataType) {
         case ('Current'):

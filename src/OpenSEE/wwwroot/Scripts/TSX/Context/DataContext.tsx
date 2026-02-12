@@ -26,6 +26,11 @@ import * as React from 'react';
 import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
 import func from './DataContextFunctions';
+import { getData } from '../Data/GraphLogic';
+import { AddRequest } from '../Data/RequestHandler';
+import AnalyticContext from './AnalyticContext';
+import { useAppSelector } from '../hooks';
+import { SelectDefaultTraces, SelectVTypeDefault } from '../store/settingSlice';
 
 interface IProps {
 }
@@ -43,6 +48,7 @@ interface IDataFunctions {
     ClearSelectPoints: () => void,
     RemoveSelectPoints: (index: number) => void,
     SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) => void,
+    UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
 }
 
 interface IDataFunctionContextType {
@@ -65,6 +71,12 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const contextRef = React.useRef<IDataFunctions>();
     const dispatch = React.useMemo(() => ({ Dispatch: contextRef }), []);
 
+    const [analytic] = React.useContext(AnalyticContext);
+    const oldAnalyticRef = React.useRef<{ [key: string]: number }>({});
+
+    const defaultVType = useAppSelector(SelectVTypeDefault);
+    const defaultTrace = useAppSelector(SelectDefaultTraces);
+
     // Context State Functions
     const SetTimeLimit = React.useCallback((start: number, end: number) =>
         setContextState(c => {
@@ -74,7 +86,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         })
     , []);
 
-    const SetCycleLimit = React.useCallback((start: number, end: number) => 
+    const SetCycleLimit = React.useCallback((start: number, end: number) =>
         setContextState(c => {
             const updatedContext = _.cloneDeep(c);
             func.UpdateCycleLimits(updatedContext, start, end);
@@ -82,7 +94,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         })
     , []);
 
-    const SetFFTLimits = React.useCallback((start: number, end: number) => 
+    const SetFFTLimits = React.useCallback((start: number, end: number) =>
         setContextState(c => {
             const updatedContext = _.cloneDeep(c);
             func.UpdateFFTLimits(updatedContext, start, end);
@@ -244,7 +256,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
                 if (traceIndex < updatedContext.Plots[plotIndex].data.length) {
                     updatedContext.Plots[plotIndex].data[traceIndex].Enabled = enabled;
                 }
-        });
+            });
 
             // Recompute limits and update units
             const relevantTraces = trace.map(index => updatedContext.Plots[plotIndex].data[index])
@@ -365,6 +377,78 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         })
     , []);
 
+    // Plot Data Functions
+    const UpdateAnalyticPlot = (key: OpenSee.IGraphProps) => {
+        // No plot matches
+        const plotIndex = contextState.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+        if (plotIndex < 0)
+            return;
+
+        // Remove old data
+        let updatedContext = _.cloneDeep(contextState);
+        updatedContext.Plots[plotIndex].data = [];
+
+        // Set loading flag
+        updatedContext.Plots[plotIndex].loading = 'Loading';
+        setContextState(updatedContext);
+
+
+        // Adding Data to the Plot
+        let handles = getData(
+            key,
+            analytic,
+            data => func.AppendData(updatedContext, key, data, defaultTrace, defaultVType, key.EventId ),
+            () => func.InitiateDetailed(updatedContext, analytic, key)
+        );
+
+        // Register requests to handle store
+        AddRequest(key, handles);
+
+        // Register promise to finally set context state
+        Promise.all(handles).then(() => {
+            updatedContext.Plots[plotIndex].loading = 'Idle';
+            setContextState(updatedContext);
+        }, () => {
+            updatedContext.Plots[plotIndex].loading = 'Error';
+            setContextState(updatedContext);
+        });
+    }
+
+    // If analytic changes, we need to refetch
+    React.useEffect(() => {
+        Object.keys(analytic).forEach((key: keyof OpenSee.IAnalyticContext) => {
+            if (oldAnalyticRef.current?.[key] == null || oldAnalyticRef.current[key] != analytic[key]) {
+                let keyAnalytic: OpenSee.graphType;
+                //ToDo: This can probably be moved to analytic context...
+                switch (key) {
+                    case 'FFTCycles':
+                    case 'FFTStartTime':
+                        keyAnalytic = "FFT";
+                        break;
+                    case 'LPFOrder':
+                        keyAnalytic = "LowPassFilter";
+                        break;
+                    case 'HPFOrder':
+                        keyAnalytic = "HighPassFilter";
+                        break;
+                    case 'Trc':
+                        keyAnalytic = "Rectifier";
+                        break;
+                    case 'Harmonic':
+                        keyAnalytic = "Harmonic";
+                        break;
+                    default:
+                        console.warn(`Unrecognized key ${key} change in datacontext, check to make sure correct analytic is refreshing...`);
+                        break;
+                }
+                if (keyAnalytic != null) {
+                    // ToDo: this should be current event + all overlapping events
+                    UpdateAnalyticPlot({ DataType: keyAnalytic, EventId: id });
+                }
+            } 
+        });
+    }, [analytic]);
+
     // Set context
     contextRef.current = {
         SetTimeLimit,
@@ -379,13 +463,14 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         ClearSelectPoints,
         RemoveSelectPoints,
         SetManualLimits,
+        UpdateAnalyticPlot
     };
 
     return (
         <DataFunctionContext.Provider value={dispatch}>
             <DataContext.Provider value={contextState}>
-            {props.children}
-        </DataContext.Provider>
+                {props.children}
+            </DataContext.Provider>
         </DataFunctionContext.Provider>
     );
 };

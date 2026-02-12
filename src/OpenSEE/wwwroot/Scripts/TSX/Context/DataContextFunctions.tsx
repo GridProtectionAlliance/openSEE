@@ -111,6 +111,31 @@ namespace DataContextFunctions {
         }
     }
 
+    export function InitiateDetailed(context: OpenSee.IDataContextType, anayltic: OpenSee.IAnalyticContext, key: OpenSee.IGraphProps): void {
+        // Append request to request store
+        AppendRequest(key, getDetailedData(key, anayltic, (argKey, data) => {
+            // Replace data with detailed
+            if (data && data?.length > 0)
+                return;
+            let plotIndex = context.Plots.findIndex(plot => plot.key.EventId === argKey.EventId && plot.key.DataType === argKey.DataType);
+            if (plotIndex < 0)
+                return;
+
+            let updated = [];
+            data.forEach(d => {
+                let dIndex = context.Plots[plotIndex].data.findIndex((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
+                const data = context.Plots[plotIndex].data.find((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
+                if (dIndex !== -1) {
+                    let detailedData = d;
+                    detailedData.Enabled = data.Enabled;
+                    detailedData.EventID = data.EventID;
+                    updated.push(dIndex);
+                    context.Plots[plotIndex].data[dIndex] = d;
+                }
+            });
+        }));
+    }
+
     export function applyLocalSettings(plot: OpenSee.IGraphstate) {
         try {
             let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
