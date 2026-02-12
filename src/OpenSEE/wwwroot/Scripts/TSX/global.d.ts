@@ -32,11 +32,10 @@ export namespace OpenSee {
 
     interface IRootState {
         Settings: ISettingsState,
-        Analytic: IAnalyticStore,
         OverlappingEvents: IOverlappingEventsStore
     }
 
-    interface IAnalyticStore {
+    interface IAnalyticContext {
         Harmonic: number,
         LPFOrder: number,
         HPFOrder: number,

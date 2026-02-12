@@ -30,15 +30,6 @@ import { defaultSettings } from '../defaults';
 import { sortGraph } from '../Graphs/Utilities'
 
 // #region [ Thunks ]
-//Thunk to Get Detailed Data
-export const InitiateDetailed = createAsyncThunk('Data/InitiateDetailed', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    AppendRequest(arg, getDetailedData(arg, (thunkAPI.getState() as OpenSee.IRootState).Analytic, (key, data) => {
-        thunkAPI.dispatch(DataReducer.actions.ReplaceData({ key, data }))
-    }))
-    return Promise.resolve();
-});
-
-
 // Thunk To Add New Plot
 export const AddPlot = createAsyncThunk('Data/addPlot', async (arg: { key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number] }, thunkAPI) => {
     let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
@@ -109,41 +100,12 @@ export const AddSingleOverlappingPlot = createAsyncThunk('Data/addOverlappingPlo
     return await Promise.resolve();
 })
 
-// Thunk To Refetch Data for Analytic Plots
-export const UpdateAnalyticPlot = createAsyncThunk('Data/updateAnalyticPlot', async (arg: { key: OpenSee.IGraphProps }, thunkAPI) => {
-    let plot = (thunkAPI.getState() as RootState).Data.Plots.find(item => item.key.DataType == arg.key.DataType && item.key.EventId == arg.key.EventId)
-    const state = (thunkAPI.getState() as OpenSee.IRootState)
-
-    if (plot === null) 
-        return Promise.resolve();
-    
-
-    thunkAPI.dispatch(DataReducer.actions.RemoveData(arg.key))
-
-    // Adding Data to the Plot
-    let analyticOptions = (thunkAPI.getState() as OpenSee.IRootState).Analytic;
-    let handles = getData(arg.key, analyticOptions, data => {
-        thunkAPI.dispatch(DataReducer.actions.AppendData({ key: arg.key, data, defaultTraces: state.Settings.DefaultTrace, defaultV: state.Settings.DefaultVType, eventID: plot.key.EventId }));
-    }, () => {
-        thunkAPI.dispatch(InitiateDetailed(arg.key))
-    });
-
-    AddRequest(arg.key, handles);
-    return await Promise.all(handles);
-})
-
-
 // #endregion
 
 export const DataReducer = ({
     reducers: {
         RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
             state.Plots.splice(action.payload, 1);
-        },
-        RemoveData: (state: OpenSee.IDataState, action: PayloadAction<OpenSee.IGraphProps>) => {
-            const plot = state.Plots.find(item => item.key.DataType == action.payload.DataType && item.key.EventId == action.payload.EventId)
-            if (plot)
-                plot.data = [];
         },
         RemoveOverlappingData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[] }>) => {
             const plot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
@@ -155,74 +117,6 @@ export const DataReducer = ({
                     const plotIndex = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
                     state.Plots.splice(plotIndex, 1);
                 }
-            }
-        },
-        AppendData: (state: OpenSee.IDataState, action: PayloadAction<{
-            key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>,
-            defaultTraces: OpenSee.IDefaultTrace, defaultV: "L-L" | "L-N",
-            eventID: number
-        }>) => {
-            let currentPlot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == action.payload.key.EventId)
-
-            if (currentPlot) {
-                const orignalLength = currentPlot.data.length
-                //update plot with unit settings from local storage
-                applyLocalSettings(currentPlot)
-
-                currentPlot.data.push(...action.payload.data);
-                const newLength = currentPlot.data.length
-
-                let extendEnabled = GetDefaults(action.payload.key.DataType, action.payload.defaultTraces, action.payload.defaultV, currentPlot.data);
-
-                for (let i = orignalLength; i < newLength; i++) {
-                    currentPlot.data[i].EventID = action.payload.eventID
-                }
-
-                for (let i = 0; i < newLength; i++) {
-                    currentPlot.data[i].Enabled = extendEnabled[i];
-                }
-
-                const RelevantAxises = _.uniq(currentPlot.data.map(s => s.Unit));
-
-                RelevantAxises.forEach(axis => {
-                    let filteredData = currentPlot.data.filter(item => item.Unit === axis && item.Enabled);
-                    let index = updateActiveUnits(currentPlot.yLimits, axis, filteredData, state.startTime, state.endTime, null);
-                    if (index)
-                        currentPlot.yLimits[axis].current = index;
-                })
-
-                if (currentPlot.key.DataType === 'FFT') {
-                    state.fftLimits = [Math.min(...currentPlot.data.map(item => Math.min(...item.DataPoints.map(pt => pt[0])))), Math.max(...currentPlot.data.map(item => Math.max(...item.DataPoints.map(pt => pt[0]))))]
-                    updateAutoLimits(currentPlot, state.fftLimits[0], state.fftLimits[1]);
-                } else if (currentPlot.key.DataType === 'OverlappingWave')
-                    updateAutoLimits(currentPlot, state.cycleLimit[0], state.cycleLimit[1]);
-                else
-                    updateAutoLimits(currentPlot, state.startTime, state.endTime);
-            }
-
-            return state
-
-        },
-        ReplaceData: (state, action: PayloadAction<{ key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries> }>) => {
-            let plot = state.Plots.find(plot => plot.key.EventId === action.payload.key.EventId && plot.key.DataType === action.payload.key.DataType)
-            if (plot) {
-                let updated = [];
-
-                if (action.payload.data && action.payload.data?.length > 0) {
-
-                    action.payload.data.forEach(d => {
-                        let dIndex = plot.data.findIndex((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
-                        const data = plot.data.find((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
-                        if (dIndex !== -1) {  
-                            let detailedData = d;
-                            detailedData.Enabled = data.Enabled;
-                            detailedData.EventID = data.EventID;
-                            updated.push(dIndex);
-                            plot.data[dIndex] = d;
-                        }
-                    });
-                }
-                return state;
             }
         },
     },
@@ -289,21 +183,6 @@ export const DataReducer = ({
           
             return state
         });
-
-        builder.addCase(UpdateAnalyticPlot.pending, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-            if (plot)
-                plot.loading = 'Loading';
-
-            return state
-        });
-        builder.addCase(UpdateAnalyticPlot.fulfilled, (state, action) => {
-            let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.key.DataType && item.key.EventId == action.meta.arg.key.EventId);
-            if (plot)
-                plot.loading = 'Idle';
-
-            return state
-        });
         builder.addCase(AddSingleOverlappingPlot.pending, (state, action) => {
             let plot = state.Plots.find(item => item.key.DataType == action.meta.arg.DataType && item.key.EventId == -1);
 
@@ -338,8 +217,7 @@ export const DataReducer = ({
 });
 
 
-export const { RemoveSelectPoints, ClearSelectPoints, SetManualLimits, AppendData, ReplaceData } = DataReducer.actions;
-export default DataReducer.reducer;
+export const { RemoveSelectPoints, ClearSelectPoints, SetManualLimits } = DataReducer.actions;
 
 // #endregion
 

@@ -22,8 +22,6 @@
 //******************************************************************************************************
 import { configureStore } from '@reduxjs/toolkit';
 import SettingsReducer from './settingSlice';
-import DataReducer from './dataSlice';
-import AnalyticReducer  from './analyticSlice';
 import OverlappingEventReducer from './overlappingEventsSlice';
 
 export type AppDispatch = typeof store.dispatch;
@@ -31,8 +29,6 @@ export type RootState = ReturnType<typeof store.getState>
 
 const reducer = {
     Settings: SettingsReducer,
-    Data: DataReducer,
-    Analytic: AnalyticReducer,
     OverlappingEvents: OverlappingEventReducer
 }
 const store = configureStore({ reducer });
