@@ -383,118 +383,155 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     // Plot Data Functions
     const AddPlot = (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]): void => {
         // Check to see if plot exists
-        let plotIndex = contextState.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
 
-        // Add plot to context if it does not exist
-        let updatedContext = _.cloneDeep(contextState);
-        if (plotIndex < 0) {
-            const newPlot = _.cloneDeep(emptygraph);
-            plotIndex = updatedContext.Plots.push(newPlot) - 1;
-        }
-
-        // Set fields based on arguements
-        if (yLimits)
-            Object.keys(yLimits).forEach(unit => {
-                updatedContext[plotIndex].yLimits[unit] = yLimits[unit]
-            });
-        if (isZoomed !== undefined)
-            updatedContext[plotIndex].isZoomed = isZoomed;
-        updatedContext[plotIndex].key = key;
-        updatedContext[plotIndex].loading = 'Loading';
-
-        // Add/deal with overlapping plot if needed
-        let overlappingPlotIndex = -1;
-        if (singlePlot) {
-            overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
-            if (overlappingPlotIndex < 0) {
+        setContextState(c => {
+            // Add plot to context if it does not exist
+            const updatedContext = _.cloneDeep(c);
+            let plotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+            if (plotIndex < 0) {
                 const newPlot = _.cloneDeep(emptygraph);
-                overlappingPlotIndex = updatedContext.Plots.push(newPlot) - 1;
+                plotIndex = updatedContext.Plots.push(newPlot) - 1;
             }
-            updatedContext.Plots[overlappingPlotIndex].key = { EventId: -1, DataType: key.DataType };
-            updatedContext.Plots[overlappingPlotIndex].loading = 'Loading';
 
-        }
+            // Set fields based on arguements
+            if (yLimits)
+                Object.keys(yLimits).forEach(unit => {
+                    updatedContext[plotIndex].yLimits[unit] = yLimits[unit]
+                });
+            if (isZoomed !== undefined)
+                updatedContext[plotIndex].isZoomed = isZoomed;
+            updatedContext[plotIndex].key = key;
+            updatedContext[plotIndex].loading = 'Loading';
+
+            // Add/deal with overlapping plot if needed
+            let overlappingPlotIndex = -1;
+            if (singlePlot) {
+                overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
+                if (overlappingPlotIndex < 0) {
+                    const newPlot = _.cloneDeep(emptygraph);
+                    overlappingPlotIndex = updatedContext.Plots.push(newPlot) - 1;
+                }
+                updatedContext.Plots[overlappingPlotIndex].key = { EventId: -1, DataType: key.DataType };
+                updatedContext.Plots[overlappingPlotIndex].loading = 'Loading';
+            }
+            return updatedContext;
+        });
 
         // Adding Data to the Plot
         let handles = getData(
             key,
             analytic,
-            data => {
+            data => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                const plotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+                const overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
                 func.AppendData(updatedContext, key, data, defaultTrace, defaultVType, key.EventId);
                 // Append overlapping plot data
                 if (overlappingPlotIndex > -1)
                     func.AppendData(updatedContext, { EventId: -1, DataType: key.DataType }, _.cloneDeep(updatedContext[plotIndex].data), defaultTrace, defaultVType, key.EventId);
-            },
-            () => func.InitiateDetailed(updatedContext, analytic, key)
+                return updatedContext;
+            }),
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                func.InitiateDetailed(updatedContext, analytic, key);
+                return updatedContext;
+            })
         );
 
         // Register requests to handle store
         AddRequest(key, handles);
 
         // Register promise to finally set context state
-        Promise.all(handles).then(() => {
-            updatedContext.Plots[plotIndex].loading = 'Idle';
+        Promise.all(handles).then(
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                const plotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+                const overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
+                updatedContext.Plots[plotIndex].loading = 'Idle';
 
-            // Set flag for overlapping plot
-            if (overlappingPlotIndex > -1) {
-                const evtIDs = _.uniq(updatedContext.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1));
-                const evtIDsPresent = _.uniq(updatedContext.Plots[overlappingPlotIndex].data.map(data => data.EventID));
-                const allDataPresent = evtIDs.every(id => {
-                    return evtIDsPresent.includes(id)
-                })
+                // Set flag for overlapping plot
+                if (overlappingPlotIndex > -1) {
+                    const evtIDs = _.uniq(updatedContext.Plots.filter(plot => plot.data.length > 1).map(plot => plot.key.EventId).filter(id => id !== -1));
+                    const evtIDsPresent = _.uniq(updatedContext.Plots[overlappingPlotIndex].data.map(data => data.EventID));
+                    const allDataPresent = evtIDs.every(id => {
+                        return evtIDsPresent.includes(id)
+                    })
 
-                if (allDataPresent)
-                    updatedContext.Plots[overlappingPlotIndex].loading = 'Idle';
-            }
+                    if (allDataPresent)
+                        updatedContext.Plots[overlappingPlotIndex].loading = 'Idle';
+                }
 
-            if (fftLimits != null)
-                updatedContext.FftLimits = fftLimits;
-            if (cycleLimits != null)
-                updatedContext.CycleLimits = cycleLimits;
+                if (fftLimits != null)
+                    updatedContext.FftLimits = fftLimits;
+                if (cycleLimits != null)
+                    updatedContext.CycleLimits = cycleLimits;
 
-            setContextState(updatedContext);
-        }, () => {
-            updatedContext.Plots[plotIndex].loading = 'Error';
-            if (overlappingPlotIndex > -1)
-                updatedContext.Plots[overlappingPlotIndex].loading = 'Error';
-
-            setContextState(updatedContext);
-        });
+                return updatedContext;
+            }),
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                const plotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+                const overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
+                updatedContext.Plots[plotIndex].loading = 'Error';
+                if (overlappingPlotIndex > -1)
+                    updatedContext.Plots[overlappingPlotIndex].loading = 'Error';
+                return updatedContext;
+            })
+        );
     }
 
     const UpdateAnalyticPlot = (key: OpenSee.IGraphProps): void => {
-        // No plot matches
-        const plotIndex = contextState.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
-        if (plotIndex < 0)
-            return;
+        setContextState(c => {
+            // No plot matches
+            const plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+            if (plotIndex < 0)
+                return c;
 
-        // Remove old data
-        let updatedContext = _.cloneDeep(contextState);
-        updatedContext.Plots[plotIndex].data = [];
+            // Remove old data
+            let updatedContext = _.cloneDeep(c);
+            updatedContext.Plots[plotIndex].data = [];
 
-        // Set loading flag
-        updatedContext.Plots[plotIndex].loading = 'Loading';
-        setContextState(updatedContext);
+            // Set loading flag
+            updatedContext.Plots[plotIndex].loading = 'Loading';
+            return updatedContext;
+        });
 
         // Adding Data to the Plot
         let handles = getData(
             key,
             analytic,
-            data => func.AppendData(updatedContext, key, data, defaultTrace, defaultVType, key.EventId ),
-            () => func.InitiateDetailed(updatedContext, analytic, key)
+            data => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                func.AppendData(updatedContext, key, data, defaultTrace, defaultVType, key.EventId)
+                return updatedContext;
+            }),
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                func.InitiateDetailed(updatedContext, analytic, key)
+                return updatedContext;
+            })
         );
 
         // Register requests to handle store
         AddRequest(key, handles);
 
         // Register promise to finally set context state
-        Promise.all(handles).then(() => {
-            updatedContext.Plots[plotIndex].loading = 'Idle';
-            setContextState(updatedContext);
-        }, () => {
-            updatedContext.Plots[plotIndex].loading = 'Error';
-            setContextState(updatedContext);
-        });
+        Promise.all(handles).then(
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                const plotIndex = updatedContext.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+                updatedContext.Plots[plotIndex].loading = 'Idle';
+                setContextState(updatedContext);
+                return updatedContext;
+            }),
+            () => setContextState(c => {
+                const updatedContext = _.cloneDeep(c);
+                const plotIndex = updatedContext.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
+                updatedContext.Plots[plotIndex].loading = 'Error';
+                setContextState(updatedContext);
+                return updatedContext;
+            })
+        );
     }
 
     // If analytic changes, we need to refetch
