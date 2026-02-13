@@ -29,47 +29,8 @@ import { RootState } from './store';
 import { defaultSettings } from '../defaults';
 import { sortGraph } from '../Graphs/Utilities'
 
-// #region [ Thunks ]
-// Thunk To Remove Plot
-export const RemovePlot = createAsyncThunk('Data/removePlot', async (arg: OpenSee.IGraphProps, thunkAPI) => {
-    const state = (thunkAPI.getState() as OpenSee.IRootState)
-    const singlePlot = state.Settings.SinglePlot
-    const plotIndex = state.Data.Plots.findIndex(item => item.key.DataType == arg.DataType && item.key.EventId == arg.EventId)
-    const plotData = state.Data.Plots[plotIndex].data
+/*
 
-    if (plotIndex > -1) {
-        thunkAPI.dispatch(DataReducer.actions.RemovePlot(plotIndex))
-
-        //Remove data from the overlapping single plot if enabled
-        if (singlePlot)
-            thunkAPI.dispatch(DataReducer.actions.RemoveOverlappingData({ key: arg, data: _.cloneDeep(plotData) }))
-    }
-
-    return await Promise.resolve();
-})
-
-// #endregion
-
-export const DataReducer = ({
-    reducers: {
-        RemovePlot: (state: OpenSee.IDataState, action: PayloadAction<number>) => {
-            state.Plots.splice(action.payload, 1);
-        },
-        RemoveOverlappingData: (state: OpenSee.IDataState, action: PayloadAction<{ key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[] }>) => {
-            const plot = state.Plots.find(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
-            if (plot) {
-                plot.data = plot.data.filter(data => data.EventID !== action.payload.key.EventId)
-                if (plot.data.length !== 0)
-                    updateAutoLimits(plot, state.startTime, state.endTime);
-                else {
-                    const plotIndex = state.Plots.findIndex(item => item.key.DataType == action.payload.key.DataType && item.key.EventId == -1)
-                    state.Plots.splice(plotIndex, 1);
-                }
-            }
-        },
-    },
-
-});
 
 
 export const { RemoveSelectPoints, ClearSelectPoints, SetManualLimits } = DataReducer.actions;
@@ -650,3 +611,4 @@ export const SelectFFTData = createSelector(
 
         return result;
     })
+    */

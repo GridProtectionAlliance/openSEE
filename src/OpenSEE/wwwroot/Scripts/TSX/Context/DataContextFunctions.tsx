@@ -25,7 +25,7 @@ import { OpenSee } from "../global";
 import { defaultSettings } from '../defaults';
 import _ from "lodash";
 import { plotTypes } from "../store/settingSlice";
-import { getDetailedData } from "../Data/GraphLogic";
+import { emptygraph, getDetailedData } from "../Data/GraphLogic";
 import { AppendRequest } from "../Data/RequestHandler";
 
 namespace DataContextFunctions {
@@ -134,6 +134,17 @@ namespace DataContextFunctions {
                 }
             });
         }));
+    }
+
+    export function AddSingleOverlappingPlot(context: OpenSee.IDataContextType, key: OpenSee.IGraphProps): number {
+        let overlappingPlotIndex = context.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
+        if (overlappingPlotIndex < 0) {
+            const newPlot = _.cloneDeep(emptygraph);
+            overlappingPlotIndex = context.Plots.push(newPlot) - 1;
+        }
+        context.Plots[overlappingPlotIndex].key = { EventId: -1, DataType: key.DataType };
+        context.Plots[overlappingPlotIndex].loading = 'Loading';
+        return overlappingPlotIndex;
     }
 
     export function applyLocalSettings(plot: OpenSee.IGraphstate) {

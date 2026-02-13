@@ -49,6 +49,7 @@ interface IDataFunctions {
     RemoveSelectPoints: (index: number) => void,
     SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) => void,
     AddPlot: (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]) => void,
+    RemovePlot: (key: OpenSee.IGraphProps) => void,
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
 }
 
@@ -405,15 +406,8 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
             // Add/deal with overlapping plot if needed
             let overlappingPlotIndex = -1;
-            if (singlePlot) {
-                overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
-                if (overlappingPlotIndex < 0) {
-                    const newPlot = _.cloneDeep(emptygraph);
-                    overlappingPlotIndex = updatedContext.Plots.push(newPlot) - 1;
-                }
-                updatedContext.Plots[overlappingPlotIndex].key = { EventId: -1, DataType: key.DataType };
-                updatedContext.Plots[overlappingPlotIndex].loading = 'Loading';
-            }
+            if (singlePlot)
+                overlappingPlotIndex = func.AddSingleOverlappingPlot(updatedContext, key);
             return updatedContext;
         });
 
@@ -480,6 +474,30 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         );
     }
 
+    const RemovePlot = React.useCallback((key: OpenSee.IGraphProps) =>
+        setContextState(c => {
+            const plotIndex = c.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
+
+            if (plotIndex < 0)
+                return c;
+
+            const updatedState = _.cloneDeep(c);
+            updatedState.Plots.splice(plotIndex, 1);
+
+            //Remove data from the overlapping single plot if enabled
+            if (singlePlot) {
+                const overlappingPlotIndex = updatedState.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == -1)
+                if (overlappingPlotIndex >= 0) {
+                    updatedState.Plots[overlappingPlotIndex].data = updatedState.Plots[overlappingPlotIndex].data.filter(data => data.EventID !== key.EventId)
+                    if (updatedState.Plots[overlappingPlotIndex].data.length !== 0)
+                        func.updateAutoLimits(updatedState.Plots[overlappingPlotIndex], updatedState.StartTime, updatedState.EndTime);
+                    else
+                        updatedState.Plots.splice(overlappingPlotIndex, 1);
+                }
+            }
+        }
+    ), [singlePlot]);
+
     const UpdateAnalyticPlot = (key: OpenSee.IGraphProps): void => {
         setContextState(c => {
             // No plot matches
@@ -534,6 +552,25 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         );
     }
 
+    // If SinglePlot changes, we need to refetch overlapping plots
+    React.useEffect(() => {
+        setContextState(c => {
+            const updatedContext = _.cloneDeep(c);
+
+            if (singlePlot)
+                updatedContext.Plots.forEach(plot => func.AddSingleOverlappingPlot(updatedContext, plot.key));
+            else
+                while (true) {
+                    const index = c.Plots.findIndex(plot => plot.key.EventId === -1);
+                    if (index >= 0)
+                        updatedContext.Plots.splice(index, 1);
+                    else
+                        break;
+                }
+            return updatedContext;
+        });
+    }, [singlePlot]);
+
     // If analytic changes, we need to refetch
     React.useEffect(() => {
         Object.keys(analytic).forEach((key: keyof OpenSee.IAnalyticContext) => {
@@ -584,6 +621,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         RemoveSelectPoints,
         SetManualLimits,
         AddPlot,
+        RemovePlot,
         UpdateAnalyticPlot
     };
 
