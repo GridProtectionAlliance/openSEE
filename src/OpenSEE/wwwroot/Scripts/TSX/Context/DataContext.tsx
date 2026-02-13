@@ -31,8 +31,10 @@ import { AddRequest } from '../Data/RequestHandler';
 import AnalyticContext from './AnalyticContext';
 import { useAppSelector } from '../hooks';
 import { SelectDefaultTraces, SelectSinglePlot, SelectVTypeDefault } from '../store/settingSlice';
+import { sortGraph } from '../Graphs/Utilities';
 
 interface IProps {
+    EventID: number
 }
 
 interface IDataFunctions {
@@ -53,11 +55,47 @@ interface IDataFunctions {
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
 }
 
+// ToDo: I'm sure we can remove a lot of these, a lot of them are only used in one place...
+interface ISelectorFunctions {
+    SelectOverlappingEvents: (graphType: OpenSee.graphType) => OpenSee.IGraphProps[],
+    SelectDisplayed: () => OpenSee.IDisplayed,
+    SelectPlotKeys: () => OpenSee.IGraphProps[],
+    SelectListGraphs: () => _.Dictionary<OpenSee.IGraphProps[]>
+    SelectAnalytics: () => OpenSee.graphType[],
+    SelectData: (key: OpenSee.IGraphProps) => OpenSee.iD3DataSeries[],
+    SelectEnabled: (key: OpenSee.IGraphProps) => boolean[],
+    SelectRelevantUnits: (key: OpenSee.IGraphProps) => OpenSee.Unit[],
+    SelectEnabledUnits: (key: OpenSee.IGraphProps) => OpenSee.Unit[],
+    SelectYLimits: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<[number, number]>,
+    SelectOverlappingYLimits: (key: OpenSee.graphType) => OpenSee.IGraphCollection<[number, number]>,
+    SelectLoading: (key: OpenSee.IGraphProps) => OpenSee.LoadingState,
+    SelectAutoUnits: (key: OpenSee.IGraphProps) => {[key: string]: boolean},
+    SelectAxisSettings: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
+    SelectYLabels: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<string>,
+    SelectEventIDs: () => number[],
+    SelectFFTEnabled: () => boolean,
+    SelectIsManual: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<boolean>,
+    SelectIsOverlappingManual: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> },
+    SelectOverlappingAutoUnits: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> },
+    SelectIsZoomed: (key: OpenSee.IGraphProps) => boolean,
+    SelectHoverPoints: (point: [number, number]) => OpenSee.IPoint[],
+    SelectDeltaHoverPoints: (point: [number, number]) => OpenSee.IPoint[],
+    SelectVPhases: (point: [number, number]) => OpenSee.IVector[],
+    SelectIPhases: (point: [number, number]) => OpenSee.IVector[],
+    SelectSelectedPoints: () => OpenSee.IPointCollection[],
+    SelectFFTData: () => OpenSee.IFFTSeries[]
+}
+
 interface IDataFunctionContextType {
     Dispatch: React.MutableRefObject<IDataFunctions | undefined>
 }
 
-const defaultState: OpenSee.IDataContextType = {
+interface IDataContextType {
+    Selector: React.MutableRefObject<ISelectorFunctions | undefined>,
+    Context: OpenSee.IDataContext
+}
+
+const defaultState: OpenSee.IDataContext = {
     StartTime: 0 as number,
     EndTime: 0 as number,
     Plots: [] as OpenSee.IGraphstate[],
@@ -65,14 +103,18 @@ const defaultState: OpenSee.IDataContextType = {
     CycleLimits: [0, 1000.0 / 60.0]
 };
 
-export const DataContext = React.createContext<OpenSee.IDataContextType>(defaultState);
+export const DataContext = React.createContext<IDataContextType>({ Context: defaultState, Selector: undefined });
 export const DataFunctionContext = React.createContext<IDataFunctionContextType>({ Dispatch: undefined });
 
 // ToDo: A lot of element appear to add/remove plots on a toggle, we might wanna cache data somewhere instead...
 export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
-    const [contextState, setContextState] = React.useState<OpenSee.IDataContextType>(defaultState);
-    const contextRef = React.useRef<IDataFunctions>();
-    const dispatch = React.useMemo(() => ({ Dispatch: contextRef }), []);
+    const [contextState, setContextState] = React.useState<OpenSee.IDataContext>(defaultState);
+
+    const dataRef = React.useRef<ISelectorFunctions>();
+    const selector = React.useMemo(() => ({ Selector: dataRef, Context: contextState }), [contextState]);
+
+    const functionRef = React.useRef<IDataFunctions>();
+    const dispatch = React.useMemo(() => ({ Dispatch: functionRef }), []);
 
     const [analytic] = React.useContext(AnalyticContext);
     const oldAnalyticRef = React.useRef<{ [key: string]: number }>({});
@@ -80,6 +122,469 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     const defaultVType = useAppSelector(SelectVTypeDefault);
     const defaultTrace = useAppSelector(SelectDefaultTraces);
     const singlePlot = useAppSelector(SelectSinglePlot);
+
+    // Context Selector Functions
+
+    const SelectOverlappingEvents = (graphType: OpenSee.graphType) => {
+        const filteredPlots = contextState.Plots.filter(plot => plot.key.EventId !== props.EventID && plot.key.EventId !== -1 && plot.key.DataType === graphType).map(plot => plot.key);
+        //order by eventID because we groupBy eventID in openSEE.tsx
+        const sortedPlots = _.orderBy(filteredPlots, "EventId", "desc")
+        return sortedPlots;
+    }
+
+    const SelectDisplayed = () => ({
+        Voltage: contextState.Plots.some(p => p.key.DataType == 'Voltage'),
+        Current: contextState.Plots.some(p => p.key.DataType == 'Current'),
+        TripCoil: contextState.Plots.some(p => p.key.DataType == 'TripCoil'),
+        Analogs: contextState.Plots.some(p => p.key.DataType == 'Analogs'),
+        Digitals: contextState.Plots.some(p => p.key.DataType == 'Digitals')
+    });
+
+    const SelectPlotKeys = () => {;
+        let keys = contextState.Plots.map(plot => plot.key);
+        if (singlePlot)
+            keys = keys.filter(key => key.EventId === -1);
+
+        keys = _.uniq(keys);
+        keys.sort(sortGraph);
+
+        return keys?.length > 0 ? keys : [];
+    }
+
+    // Returns a List of keys for Plots that should be displayed.
+    const SelectListGraphs = () => {
+        let keys = contextState.Plots.map(p => p.key);
+        if (singlePlot)
+            return _.groupBy(keys.filter(item => item.EventId === -1), "EventId");
+        return _.groupBy(keys.filter(item => item.EventId !== -1), "EventId");
+    }
+
+    //Returns the DataType of plots that are Analytics
+    const SelectAnalytics = () => {
+        const analytics = ['FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'I2T'] as OpenSee.graphType[];
+        let plotTypes = contextState.Plots.filter(plot => plot.key.EventId === props.EventID && analytics.includes(plot.key.DataType)).map(plot => plot.key.DataType)
+
+        plotTypes = _.uniq(plotTypes)
+
+        if (plotTypes)
+            return plotTypes
+        else
+            return []
+    }
+
+    const SelectData = (key: OpenSee.IGraphProps) => {
+        let plot = contextState.Plots.find(item => item.key.DataType === key.DataType && item.key.EventId === key.EventId);
+        let overlappingPlot = contextState.Plots.find(item => item.key.DataType === key.DataType && item.key.EventId === -1);
+        if (singlePlot)
+            return overlappingPlot ? overlappingPlot.data : null;
+        return plot ? plot.data : null;
+    }
+
+    const SelectEnabled = (key: OpenSee.IGraphProps) => {
+        let plot = contextState.Plots.find(item => item.key.DataType === key.DataType && item.key.EventId === key.EventId);
+        if (plot)
+            return plot.data.map(item => item.Enabled)
+        else
+            return []
+    }
+
+    const SelectRelevantUnits = (key: OpenSee.IGraphProps) => {
+        let units: OpenSee.Unit[] = [];
+
+        // Filter relevant plots and collect units
+        contextState.Plots.filter(plot => key.DataType === plot.key.DataType && key.EventId === plot.key.EventId).forEach(plot => {
+            plot.data.forEach(data => {
+                if (data.Unit) {
+                    units.push(data.Unit);
+                }
+            });
+        });
+
+        //Make sure the primaryAxis is at the beginning of the array for plotting purposes..
+        if (units.includes(func.getPrimaryAxis(key))) {
+            units = units.filter(unit => unit !== func.getPrimaryAxis(key))
+            units.unshift(func.getPrimaryAxis(key))
+        }
+        return _.uniq(units);
+    }
+
+    const SelectEnabledUnits = (key: OpenSee.IGraphProps) => {
+        let units: OpenSee.Unit[] = [];
+        const plot = contextState.Plots.find(plot => key.DataType === plot.key.DataType && key.EventId === plot.key.EventId)
+        // Filter relevant plots and collect units
+        if (plot) {
+            plot.data.forEach(data => {
+                if (data.Unit && data.Enabled)
+                    units.push(data.Unit);
+            });
+
+            //Make sure the primaryAxis is at the beginning of the array
+            if (units.includes(func.getPrimaryAxis(key))) {
+                units = units.filter(unit => unit !== func.getPrimaryAxis(key));
+                units.unshift(func.getPrimaryAxis(key))
+            }
+            return _.uniq(units);
+        }
+        else
+            return [];
+    }
+
+    const SelectYLimits = (key: OpenSee.IGraphProps) => {
+        const plot = contextState.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
+        let result = {}
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(unit => {
+                if (plot.isZoomed)
+                    result[unit] = plot.yLimits[unit].zoomedLimits
+                else if (plot.yLimits[unit].isManual && plot.yLimits[unit].manualLimits)
+                    result[unit] = plot.yLimits[unit].manualLimits
+                else
+                    result[unit] = plot.yLimits[unit].dataLimits
+            })
+        }
+
+        return result as OpenSee.IUnitCollection<[number, number]>;
+    }
+
+    const SelectOverlappingYLimits = (graphType: OpenSee.graphType) => {
+        let overlappingPlots = contextState.Plots.filter(plot => plot.key.EventId !== props.EventID && plot.key.DataType === graphType);
+        let result = {};
+        if (overlappingPlots.length > 0) {
+            overlappingPlots.forEach(plot => {
+                let yLimits = {}
+                Object.keys(plot.yLimits).forEach(key => {
+                    if (plot.isZoomed)
+                        yLimits[key] = plot.yLimits[key].zoomedLimits;
+                    else if (plot.yLimits[key].isManual && plot.yLimits[key].manualLimits)
+                        yLimits[key] = plot.yLimits[key].manualLimits;
+                    else
+                        yLimits[key] = plot.yLimits[key].dataLimits;
+
+                })
+                result[plot.key.DataType] = yLimits;
+            })
+            return result as OpenSee.IGraphCollection<[number, number]>;
+        }
+
+    }
+
+    const SelectLoading = (key: OpenSee.IGraphProps) => {
+        const plot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        if (plot)
+            return plot.loading
+    }
+
+    const SelectAutoUnits = (key: OpenSee.IGraphProps) => {
+        let result = {};
+        const plot = contextState.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(unit => {
+                result[unit] = plot.yLimits[unit].isAuto
+            })
+            return result;
+        }
+    }
+
+    const SelectAxisSettings = (key: OpenSee.IGraphProps) => {
+        const plot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        return plot.yLimits;
+    }
+
+    const SelectYLabels = (key: OpenSee.IGraphProps) => {
+        let labels = {} as OpenSee.IUnitCollection<string>
+        const plot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(unit => {
+                let short = defaultSettings.Units[unit].options[plot.yLimits[unit].current].short
+                if (short === undefined)
+                    short = "N/A"
+
+                labels[unit] = `${unit} [${short}]`
+            })
+            return labels;
+        }
+        else {
+            Object.keys(defaultSettings.Units).forEach(unit => {
+                labels[unit] = ""
+            })
+            return labels;
+        }
+    }
+
+    const SelectEventIDs = () => {
+        let ids = [props.EventID];
+        state.OverlappingEvents.EventList.forEach(evt => {
+            if (evt.Selected)
+                ids.push(evt.EventID)
+        })
+
+        const eventIDS = _.uniq(ids)
+        return eventIDS
+    }
+
+    const SelectFFTEnabled = () => {
+        const keys = contextState.Plots.filter(plot => plot.key.DataType === 'FFT')
+        return keys?.length > 0;
+    }
+
+    const SelectIsManual = (key: OpenSee.IGraphProps) => {
+        let plot = contextState.Plots.find(p => p.key.DataType === key.DataType && p.key.EventId === key.EventId);
+        let result = {};
+        if (plot) {
+            Object.keys(plot.yLimits).forEach(key => {
+                result[key] = plot.yLimits[key].isManual;
+            });
+            return result as OpenSee.IUnitCollection<boolean>;
+        }
+    }
+
+    const SelectIsOverlappingManual = (graphType: OpenSee.graphType) => {
+        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== props.EventID);
+        let result = {};
+        if (overlappingPlots.length > 0) {
+            overlappingPlots.forEach(plot => {
+                let units = {}
+                Object.keys(plot.yLimits).forEach(key => {
+                    units[key] = plot.yLimits[key].isManual;
+                })
+                result[plot.key.DataType] = units as OpenSee.IUnitCollection<boolean>
+            })
+
+            return result;
+        }
+    }
+
+    const SelectOverlappingAutoUnits = (graphType: OpenSee.graphType) => {
+        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== props.EventID);
+        let result = {};
+        if (overlappingPlots.length > 0) {
+            overlappingPlots.forEach(plot => {
+                let units = {}
+                Object.keys(plot.yLimits).forEach(key => {
+                    units[key] = plot.yLimits[key].isAuto;
+                })
+                result[plot.key.DataType] = units as OpenSee.IUnitCollection<boolean>
+            })
+
+            return result;
+        }
+    }
+
+    const SelectIsZoomed = (key: OpenSee.IGraphProps,) => {
+        let plot = contextState.Plots.find(p => p.key.DataType === key.DataType && p.key.EventId === key.EventId);
+        return plot?.isZoomed;
+    }
+
+    // For tooltip
+    const SelectHoverPoints = (hover: [number, number]) => {
+        let result: OpenSee.IPoint[] = [];
+        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === props.EventID)
+
+        filteredPlots.forEach(plot => {
+            if (plot.data.length === 0) return;
+
+            let dataIndex = func.getIndex(hover[0], plot.data[0].DataPoints);
+            if (isNaN(dataIndex))
+                return;
+
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
+                dataIndex = func.getIndex(hover[0], d.DataPoints);
+                return {
+                    Color: d.Color,
+                    Unit: defaultSettings.Units[d.Unit].options[plot.yLimits[d.Unit].current],
+                    Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
+                    Name: func.GetDisplayName(d, plot.key.DataType),
+                    BaseValue: d.BaseValue,
+                    Time: 0,
+                }
+            }))
+        })
+        return result;
+    }
+
+    const SelectDeltaHoverPoints = (hover: [number, number]) => {
+        let result: OpenSee.IPoint[] = [];
+        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === props.EventID)
+
+        filteredPlots.forEach(plot => {
+            const selectedData = plot.selectedIndixes;
+            if (plot.data.length === 0) return;
+
+            let dataIndex = func.getIndex(hover[0], plot.data[0].DataPoints);
+            if (isNaN(dataIndex))
+                return;
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
+                dataIndex = func.getIndex(hover[0], d.DataPoints);
+                return {
+                    Color: d.Color,
+                    Unit: defaultSettings.Units[d.Unit].options[plot.yLimits[d.Unit].current],
+                    Value: (dataIndex > (d.DataPoints.length - 1) ? NaN : d.DataPoints[dataIndex][1]),
+                    Name: func.GetDisplayName(d, plot.key.DataType),
+                    PrevValue: (selectedData.length > 0 ? ((selectedData[selectedData.length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[selectedData.length - 1]][1]) : NaN),
+                    BaseValue: d.BaseValue,
+                    Time: (selectedData.length > 0 ? ((selectedData[selectedData.length] - 1) > d.DataPoints.length ? NaN : d.DataPoints[selectedData[selectedData.length - 1]][0]) : NaN),
+                }
+
+            }))
+        })
+        return result;
+    }
+
+    // For vector
+    const SelectVPhases = (hover: [number, number]) => {
+        let plot = contextState.Plots.find(plot => plot.key.DataType == 'Voltage' && plot.key.EventId == props.EventID);
+        if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph'))
+            return [];
+
+        const activeUnits = plot.yLimits;
+        let asset = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendGroup));
+        let phase = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendVertical));
+
+        let phaseData = plot.data.find(item => item.LegendHorizontal == 'Ph');
+        let pointIndex = phaseData ? func.getIndex(hover[0], phaseData.DataPoints) : -1;
+
+        if (isNaN(pointIndex) || pointIndex < 0)
+            return [];
+
+        let result: OpenSee.IVector[] = [];
+
+        asset.forEach(a => {
+            phase.forEach(p => {
+                let phaseChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Ph');
+                let magnitudeChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Pk');
+
+                if (phaseChannel && magnitudeChannel) {
+                    let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
+                    let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
+
+                    result.push({
+                        Color: phaseChannel.Color,
+                        Unit: defaultSettings.Units.Voltage.options[activeUnits["Voltage"].current],
+                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
+                        Phase: p,
+                        Asset: a,
+                        Magnitude: magValue,
+                        Angle: phaseValue,
+                        BaseValue: magnitudeChannel.BaseValue
+                    });
+                }
+            });
+        });
+
+        return result;
+    }
+
+    const SelectIPhases = (hover: [number, number]) => {
+        let plot = contextState.Plots.find(p => p.key.DataType == 'Current' && p.key.EventId == props.EventID);
+        if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph')) return [];
+
+        const activeUnits = plot.yLimits;
+        let asset = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendGroup));
+        let phase = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendVertical));
+
+
+        let pointIndex = func.getIndex(hover[0], plot.data.find(item => item.LegendHorizontal == 'Ph').DataPoints);
+        if (isNaN(pointIndex)) return [];
+
+        let result: OpenSee.IVector[] = [];
+
+        asset.forEach(a => {
+            phase.forEach(p => {
+                let phaseChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Ph');
+                let magnitudeChannel = plot.data.find(item => item.LegendGroup == a && item.LegendVertical == p && item.LegendHorizontal == 'Pk');
+
+                if (phaseChannel && magnitudeChannel) {
+                    let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
+                    let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
+
+                    result.push({
+                        Color: phaseChannel.Color,
+                        Unit: defaultSettings.Units.Current.options[activeUnits["Current"].current],
+                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
+                        Phase: p,
+                        Asset: a,
+                        Magnitude: magValue,
+                        Angle: phaseValue,
+                        BaseValue: magnitudeChannel.BaseValue
+                    });
+                }
+            });
+        });
+
+        return result;
+    }
+
+    // For Accumulated Point widget
+    const SelectSelectedPoints = () => {
+        let result: OpenSee.IPointCollection[] = [];
+
+        contextState.Plots.forEach(plot => {
+            if (plot.key.EventId != props.EventID) return;
+            if (plot.key.DataType != 'Voltage' && plot.key.DataType != 'Current') return;
+            if (plot.data.length == 0) return;
+
+            result = result.concat(...plot.data.filter(d => d.Enabled).map(d => {
+                const unitType = d?.Unit;
+                const unitOptions = defaultSettings.Units[unitType]?.options ?? {};
+
+                return {
+                    Group: d.LegendGroup,
+                    Name: (plot.key.DataType == 'Voltage' ? 'V ' : 'I ') + d.LegendVertical + ' ' + d.LegendHorizontal,
+                    Unit: unitOptions[plot.yLimits[unitType].current],
+                    Value: plot.selectedIndixes.map(j => d.DataPoints[j]),
+                    BaseValue: d.BaseValue,
+                    Color: d.Color
+                }
+
+            }))
+
+        })
+        return result;
+    }
+
+    // For FFT Table
+    const SelectFFTData = () => {
+        const fftPlot = contextState.Plots.find(plot => plot.key.DataType === "FFT" && plot.key.EventId === props.EventID);
+        if (fftPlot?.data == null) return [];
+        const activeUnits = defaultSettings.Units
+        let asset = _.uniq(fftPlot.data.map(item => item.LegendGroup));
+        let phase = _.uniq(fftPlot.data.map(item => item.LegendVertical));
+
+        if (fftPlot.data.length == 0) return []
+
+        let result: OpenSee.IFFTSeries[] = [];
+
+        asset.forEach(a => {
+            phase.forEach(p => {
+                if (!fftPlot.data.some((item, i) => (item.LegendGroup == a && item.LegendVertical == p)))
+                    return
+
+                let d = fftPlot.data.filter((item, i) => (item.LegendGroup == a && item.LegendVertical == p));
+                let phaseChannel = d.find(item => item.LegendHorizontal == 'Ang');
+                let magnitudeChannel = d.find(item => item.LegendHorizontal == 'Mag');
+
+                if (phaseChannel == undefined || magnitudeChannel == undefined)
+                    return;
+
+                result.push({
+                    Color: phaseChannel.Color,
+                    Unit: activeUnits[magnitudeChannel.Unit].options[fftPlot.yLimits[magnitudeChannel.Unit].current],
+                    PhaseUnit: activeUnits["Angle"].options[fftPlot.yLimits["Angle"].current],
+                    Phase: p,
+                    Asset: a,
+                    Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
+                    Angle: phaseChannel.DataPoints.map(item => item[1]),
+                    BaseValue: magnitudeChannel.BaseValue,
+                    Frequency: magnitudeChannel.DataPoints.map(item => item[0] * 60.0),
+                });
+
+            })
+        })
+
+        return result;
+    }
 
     // Context State Functions
     const SetTimeLimit = React.useCallback((start: number, end: number) =>
@@ -607,7 +1112,37 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }, [analytic]);
 
     // Set context
-    contextRef.current = {
+    dataRef.current = {
+        SelectOverlappingEvents,
+        SelectDisplayed,
+        SelectPlotKeys,
+        SelectListGraphs,
+        SelectAnalytics,
+        SelectData,
+        SelectEnabled,
+        SelectRelevantUnits,
+        SelectEnabledUnits,
+        SelectYLimits,
+        SelectOverlappingYLimits,
+        SelectLoading,
+        SelectAutoUnits,
+        SelectAxisSettings,
+        SelectYLabels,
+        SelectEventIDs,
+        SelectFFTEnabled,
+        SelectIsManual,
+        SelectIsOverlappingManual,
+        SelectOverlappingAutoUnits,
+        SelectIsZoomed,
+        SelectHoverPoints,
+        SelectDeltaHoverPoints,
+        SelectVPhases,
+        SelectIPhases,
+        SelectSelectedPoints,
+        SelectFFTData
+    };
+
+    functionRef.current = {
         SetTimeLimit,
         SetCycleLimit,
         SetFFTLimits,
@@ -627,7 +1162,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     return (
         <DataFunctionContext.Provider value={dispatch}>
-            <DataContext.Provider value={contextState}>
+            <DataContext.Provider value={selector}>
                 {props.children}
             </DataContext.Provider>
         </DataFunctionContext.Provider>
