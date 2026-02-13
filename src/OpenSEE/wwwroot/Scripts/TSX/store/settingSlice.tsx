@@ -20,30 +20,17 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as _ from 'lodash';
 import { createSelector } from 'reselect';
 import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
-import { AddSingleOverlappingPlot, RemovePlot } from './dataSlice';
 import { RootState } from './store';
 
 export const plotTypes = ["Voltage", "Current", "TripCoil", "Digitals", "Analogs", 'FirstDerivative', 'ClippedWaveforms', 'Frequency',
     'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent',
     'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'FFT', 'I2T'];
-
-// Thunk To Enable All Overlapping events on a single plot
-export const EnableSinglePlot = createAsyncThunk('Settings/enableSinglePlot', (arg: boolean, thunkAPI) => {
-    const state = (thunkAPI.getState() as OpenSee.IRootState)
-    const singleOverlappingPlots = state.Data.Plots.filter(plot => plot.key.EventId === -1)
-
-    if (arg)
-        state.Data.Plots.forEach(plot => thunkAPI.dispatch(AddSingleOverlappingPlot(plot.key)));
-    else
-        singleOverlappingPlots.forEach(plot => thunkAPI.dispatch(RemovePlot(plot.key)))
-
-    return Promise.resolve();
-})
 
 export const SettingsReducer = createSlice({
     name: 'Settings',
@@ -147,12 +134,6 @@ export const SettingsReducer = createSlice({
                 state.MouseMode = "zoom"
             saveSettings(state);
         },
-    },
-    extraReducers: (builder) => {
-        builder.addCase(EnableSinglePlot.pending, (state, action) => {
-            state.SinglePlot = action.meta.arg
-            saveSettings(state);
-        });
     }
 
 });
