@@ -21,19 +21,16 @@
 //
 //******************************************************************************************************
 
-import * as React from 'react';
 import * as d3 from "d3";
+import * as React from 'react';
+import { AnalyticContext } from '../Context/AnalyticContext';
+import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import func from '../Context/DataContextFunctions';
 import { OpenSee } from '../global';
-
-import Legend from './LegendBase';
-import { SelectColor, SelectActiveUnit, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice'
-import {
-    SelectData, SelectEnabled, SelectLoading, SelectYLimits, SetZoomedLimits, SelectFFTLimits,
-    SetFFTLimits, SelectRelevantUnits, getPrimaryAxis, SelectYLabels, SelectEnabledUnits
-} from '../store/dataSlice';
-import { SelectAnalyticOptions } from '../store/analyticSlice';
-import { LoadingIcon, NoDataIcon } from './ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
+import { SelectColor, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice';
+import { LoadingIcon, NoDataIcon } from './ChartIcons';
+import Legend from './LegendBase';
 
 interface iProps {
     height: number,
@@ -57,14 +54,18 @@ interface iProps {
 // Overlay => The Container Overlayed for eventHandling
 
 const BarChart = (props: iProps) => {
-    const dataKey: OpenSee.IGraphProps = { DataType: props.dataKey.DataType, EventId: props.dataKey.EventId };
-    const SelectActiveUnitInstance = React.useMemo(() => SelectActiveUnit(dataKey), [props.dataKey.EventId, props.dataKey.DataType])
-    const selectAnalyticOptionInstance = React.useMemo(() => SelectAnalyticOptions(props.dataKey.DataType), [props.dataKey.DataType])
-    const MemoSelectNumUnits = React.useMemo(() => SelectRelevantUnits(dataKey), []);
-    const yLimits = useAppSelector(SelectYLimits(dataKey));
+    const [analytic] = React.useContext(AnalyticContext);
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
 
-    const MemoSelectData = React.useMemo(() => SelectData(dataKey), []);
-    const MemoSelecEnable = React.useMemo(() => SelectEnabled(dataKey), []);
+    const dataKey: OpenSee.IGraphProps = { DataType: props.dataKey.DataType, EventId: props.dataKey.EventId };
+    const activeUnit = React.useMemo(() => data.Selector.current.SelectActiveUnit(dataKey), [props.dataKey.EventId, props.dataKey.DataType])
+
+    const relevantUnits = React.useMemo(() => data.Selector.current.SelectRelevantUnits(dataKey), []);
+    const yLimits = data.Selector.current.SelectYLimits(dataKey);
+
+    const barData = React.useMemo(() => data.Selector.current.SelectData(dataKey), []);
+    const enabledBar = React.useMemo(() => data.Selector.current.SelectEnabled(dataKey), []);
 
     const xScaleRef = React.useRef<d3.ScaleBand<number>>();
     const xScaleLblRef = React.useRef<any>();
@@ -74,30 +75,21 @@ const BarChart = (props: iProps) => {
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
     const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
-    const relevantUnits = useAppSelector(MemoSelectNumUnits);
-    const MemoSelectEnabledUnit = React.useMemo(() => SelectEnabledUnits(props.dataKey), []);
-    const enabledUnits = useAppSelector(MemoSelectEnabledUnit);
+    const enabledUnits = React.useMemo(() => data.Selector.current.SelectEnabledUnits(props.dataKey), []);
 
-    const barData = useAppSelector(MemoSelectData);
-    const enabledBar = useAppSelector(MemoSelecEnable);
+    const yLabels = data.Selector.current.SelectYLabels(dataKey);
 
-    const yLabels = useAppSelector(SelectYLabels(dataKey));
-
-    const xLimits = useAppSelector(SelectFFTLimits);
-
-    const loading = useAppSelector(SelectLoading(dataKey));
+    const loading = data.Selector.current.SelectLoading(dataKey);
 
     const colors = useAppSelector(SelectColor);
-    const activeUnit = useAppSelector(SelectActiveUnitInstance);
     const mouseMode = useAppSelector(SelectMouseMode);
     const zoomMode = useAppSelector(SelectZoomMode);
 
     const dispatch = useAppDispatch();
-    const options = useAppSelector(selectAnalyticOptionInstance)
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
     const [yLblFontSize, setYLblFontSize] = React.useState<OpenSee.IUnitCollection<number> | {}>({});
-    const primaryAxis = getPrimaryAxis(dataKey)
+    const primaryAxis = func.getPrimaryAxis(dataKey)
 
     React.useEffect(() => {
 
@@ -138,7 +130,7 @@ const BarChart = (props: iProps) => {
         });
 
         if (barData && barData.length > 0) {
-            let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
+            let domain = barData[0].DataPoints.filter(pt => pt[0] >= data.Context.FftLimits[0] && pt[0] <= data.Context.FftLimits[1]).map(pt => pt[0]);
             xScaleRef.current.domain(domain);
             xScaleLblRef.current.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
         }
@@ -161,12 +153,12 @@ const BarChart = (props: iProps) => {
         }
 
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x")
-            dispatch(SetFFTLimits({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
+            dataDispatch.Dispatch.current.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
-            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: dataKey }))
+            dataDispatch.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey);
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy") {
-            dispatch(SetFFTLimits({ end: Math.max(pointMouse[0], hover[0]), start: Math.min(pointMouse[0], hover[0]) }))
-            dispatch(SetZoomedLimits({ limits: [Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], key: dataKey }))
+            dataDispatch.Dispatch.current.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
+            dataDispatch.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey);
         }
     }, [mouseDown])
 
@@ -194,7 +186,7 @@ const BarChart = (props: iProps) => {
 
         return () => { }
 
-    }, [props.dataKey, options]);
+    }, [props.dataKey, analytic]);
 
     React.useEffect(() => {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
@@ -413,7 +405,7 @@ const BarChart = (props: iProps) => {
         }
 
         // We can assume consistent sampling rate for now
-        let domain = barData[0].DataPoints.filter(pt => pt[0] >= xLimits[0] && pt[0] <= xLimits[1]).map(pt => pt[0]);
+        let domain = barData[0].DataPoints.filter(pt => pt[0] >= data.Context.FftLimits[0] && pt[0] <= data.Context.FftLimits[1]).map(pt => pt[0]);
         xScaleRef.current = d3.scaleBand(domain, [60, props.width - 150])
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -612,8 +604,8 @@ const BarChart = (props: iProps) => {
                     .attr("y", 20)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(xLimits[0]))
-                    .attr("width", (xScaleRef.current as any)(xLimits[1]) - (xScaleRef.current as any)(xLimits[0]))
+                    .attr("x", (xScaleRef.current as any)(data.Context.FftLimits[0]))
+                    .attr("width", (xScaleRef.current as any)(data.Context.FftLimits[1]) - (xScaleRef.current as any)(data.Context.FftLimits[0]))
                     .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
                     .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
             else if (zoomMode == "xy")
@@ -628,10 +620,10 @@ const BarChart = (props: iProps) => {
         let deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && Math.abs(deltaT) > 0)
-            dispatch(SetFFTLimits({ start: (xLimits[0] - deltaT), end: (xLimits[1] - deltaT) }));
+            dataDispatch.Dispatch.current.SetFFTLimits((data.Context.FftLimits[0] - deltaT), (data.Context.FftLimits[1] - deltaT));
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
-            dispatch(SetZoomedLimits({ limits: [(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], key: props.dataKey }));
+            dataDispatch.Dispatch.current.SetZoomedLimits([(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], props.dataKey);
     }
 
     function updateYAxises() {
