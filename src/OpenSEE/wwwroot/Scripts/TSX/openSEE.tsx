@@ -70,14 +70,15 @@ import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 // Providers
 import { HoverProvider } from './Context/HoverContext';
 import { EventProvider, EventContext } from './Context/EventContext';
-import AnalyticContext from './Context/AnalyticContext';
+import AnalyticContext, { AnalyticProvider } from './Context/AnalyticContext';
+import OpenSeeHome from './openSEEHome';
+import { DataProvider } from './Context/DataContext';
 
-const OpenSeeHome = () => {
+const OpenSeeApplication = () => {
     const dispatch = useAppDispatch();
 
     const applicationRef = React.useRef(null);
     const plotRef = React.useRef<HTMLDivElement>(null);
-    const history = React.useRef<object>(createHistory());
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
         Settings: () => { },
         AccumulatedPoints: () => { },
@@ -106,7 +107,6 @@ const OpenSeeHome = () => {
     });
     const [resizeCount, setResizeCount] = React.useState<number>(0);
     const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
-    const [eventId, setEventId] = React.useState<number>(-1);
     const [plotHeight, setPlotHeight] = React.useState<number>(250);
     const [navWidth, setNavWidth] = React.useState<number>(100);
 
@@ -121,81 +121,6 @@ const OpenSeeHome = () => {
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
     const evt = React.useContext(EventContext);
 
-    /*
-       (state: OpenSee.IRootState) => state.Data,
-       (state: OpenSee.IRootState) => state.Analytic,
-       (state: OpenSee.IRootState) => state.OverlappingEvents,
-       (state: OpenSee.IRootState) => state.Settings.SinglePlot,
-       (data, analyticInfo, evtID, overLappingEvents, singlePlot) => */
-    const query = React.useMemo(() =>{
-            const overlappingEvts = []
-            const plotKeys = data.Plots.map(plot => plot.key)
-            const plotQuery: OpenSee.PlotQuery[] = _.uniq(plotKeys);
-
-            if (plotKeys.length > 0)
-                plotKeys.forEach(key => {
-                    const matchingPlot = data.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
-
-                    if (matchingPlot) {
-                        const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
-                        const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
-                        let yLimits = {}
-
-                        Object.keys(matchingPlot.yLimits).forEach(key => {
-                            if (enabledUnits.includes(key as OpenSee.Unit))
-                                yLimits[key] = { ...matchingPlot.yLimits[key] };
-                        })
-
-                        plotQuery.push({
-                            yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
-                            isZoomed: matchingPlot.isZoomed,
-                            key: matchingPlot.key
-                        });
-
-                    }
-                });
-
-            if (overLappingEvents.EventList.length > 0) {
-                overLappingEvents.EventList.forEach(evt => {
-                    if (evt.Selected)
-                        overlappingEvts.push(evt.EventID)
-                })
-            }
-            const plotString = JSON.stringify(plotQuery);
-            const overlappingString = JSON.stringify(overlappingEvts);
-            const plotBase64 = btoa(plotString);
-            const overlappingBase64 = btoa(overlappingString);
-
-            const queryObj = {
-                eventID: eventId,
-                startTime: data.startTime,
-                endTime: data.endTime,
-                Trc: analytic.Trc,
-                HPFOrder: analytic.HPFOrder,
-                LPFOrder: analytic.LPFOrder,
-                CycleLimits: data.cycleLimit as [number, number],
-                FFTLimits: data.fftLimits as [number, number],
-                FFTCycles: analytic.FFTCycles,
-                FFTStartTime: analytic.FFTStartTime,
-                Harmonic: analytic.Harmonic,
-                singlePlot: singlePlot,
-                plots: plotBase64,
-                overlappingInfo: overlappingBase64
-            }
-
-            let query = queryString.stringify(queryObj);
-
-            // Temporary patch to check queryString length and remove plot objects if necessary
-            while (query?.length > 3000 && plotQuery?.length > 0) {
-                plotQuery.pop();
-                const plotString = JSON.stringify(plotQuery)
-                const plotBase64 = btoa(plotString);
-                queryObj.plots = plotBase64;
-                query = queryString.stringify(queryObj);
-            }
-
-            return query
-        }, [eventId]); 
 
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -217,52 +142,12 @@ const OpenSeeHome = () => {
     }, [plotKeys, openDrawers, resizeCount])
 
 
-    //Effect to handle queryParams
-    React.useEffect(() => {
-        const query = queryString.parse(history.current['location'].search);
-        const evStart = query['eventStartTime'] != undefined ? query['eventStartTime'] : eventStartTime;
-        const evEnd = query['eventEndTime'] != undefined ? query['eventEndTime'] : eventEndTime;
-
-        const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
-        const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
-
-        dispatch(SetTimeLimit({ start: startTime, end: endTime }));
-        setAnalytic(a => ({ ...a, FFTStartTime: startTime }));
-
-        setEventId(Number(query['eventId']));
-
-        dispatch(updatedURL({ query: history.current['location'].search, initial: true }));
-
-        history.current['listen'](location => {
-            // If Query changed then we update states....
-            // Note that enabled and selected states that depend on loading state are not dealt with in here
-            dispatch(updatedURL({ query: location.search, initial: false }));
-        });
-
-    }, []);
-
-    //Effect to push updatedQueryParams
-    React.useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            history.current['push'](`?${query}`);
-        }, 1000);
-
-        return () => clearTimeout(timeoutId);
-    }, [query]);
-
     React.useEffect(() => {
         window.addEventListener("resize", () => {
             setResizeCount(x => x + 1)
         });
         return () => { $(window).off('resize'); }
     }, [])
-
-    //Effect to update EventID
-    React.useEffect(() => {
-        if (eventId && !isNaN(eventId) && eventId > -1) {
-            dispatch(LoadOverlappingEvents())
-        }
-    }, [eventId]);
 
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
@@ -295,157 +180,25 @@ const OpenSeeHome = () => {
     }
 
     return (
-        <EventProvider EventID={eventId}>
-            <Application
-                HomePath={""}
-                DefaultPath={""}
-                HideSideBar={true}
-                Version={version}
-                Logo={`${homePath}Images/openSEE.jpg`}
-                NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
-                UseLegacyNavigation={true}
-                ref={applicationRef}
-            >
-                <HoverProvider>
-                    <VerticalSplit style={{ height: '100%' }}>
-                        <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
-                            <EventInfo />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                            <OverlappingEventWindow />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                            <AnalyticOptions />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
-                            <ToolTipWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
-                            <ToolTipDeltaWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("Settings", item)} >
-                            <SettingsWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
-                            <PointWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
-                            <ScalarStatsWidget EventID={eventId} />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
-                            <TimeCorrelatedSagsWidget EventID={eventId} />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("Lightning", item)}>
-                            <LightningDataWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("FFTTable", item)}>
-                            <FFTTable />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("PolarChart", item)}>
-                            <PhasorChartWidget />
-                        </SplitDrawer>
-
-                        <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
-                            OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
-                            <HarmonicStatsWidget EventID={eventId} />
-                        </SplitDrawer>
-
-                        <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
-                            <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
-                                {groupedKeys[eventId] != undefined ? (
-                                    <>
-                                        {groupedKeys[eventId].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                            <LineChart
-                                                key={item.DataType + item.EventId}
-                                                width={plotWidth}
-                                                height={plotHeight}
-                                                showToolTip={openDrawers.ToolTipDelta}
-                                                dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                            />
-                                        ))}
-
-                                        {groupedKeys[eventId].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                            <BarChart
-                                                key={item.DataType + item.EventId}
-                                                width={plotWidth}
-                                                height={plotHeight}
-                                                dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                            />
-                                        ))}
-                                    </>
-                                ) : null}
-
-                                {Object.keys(groupedKeys).filter(item => parseInt(item) !== eventId).map(key =>
-                                    <div className="card" key={key}>
-                                        {eventList.find(item => item.EventID === parseInt(key)) ? (
-                                            <div className="card-header">
-                                                <div className="row">
-                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                        <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                        {eventList.find(item => item.EventID === parseInt(key)).MeterName}
-                                                    </div>
-                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                        <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                        {eventList.find(item => item.EventID === parseInt(key)).AssetName}
-                                                    </div>
-                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                        <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                        {eventList.find(item => item.EventID === parseInt(key)).EventType}
-                                                    </div>
-                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                        <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                        {moment(eventList.find(item => item.EventID === parseInt(key)).Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                        <div className="card-body" style={{ padding: 0 }}>
-                                            {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                                <LineChart
-                                                    key={item.DataType + item.EventId}
-                                                    width={plotWidth}
-                                                    height={plotHeight}
-                                                    showToolTip={openDrawers.ToolTipDelta}
-                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                                />
-                                            ))}
-
-                                            {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                                <BarChart
-                                                    key={item.DataType + item.EventId}
-                                                    width={plotWidth}
-                                                    height={plotHeight}
-                                                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                                />
-                                            ))}
-
-                                        </div>
-                                    </div>
-                                )}
-
-                            </div>
-                        </SplitSection>
-                    </VerticalSplit>
-                </HoverProvider>
-            </Application>
+        <EventProvider>
+            <HoverProvider>
+                <AnalyticProvider>
+                    <DataProvider>
+                        <Application
+                            HomePath={""}
+                            DefaultPath={""}
+                            HideSideBar={true}
+                            Version={version}
+                            Logo={`${homePath}Images/openSEE.jpg`}
+                            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
+                            UseLegacyNavigation={true}
+                            ref={applicationRef}
+                        >
+                            <OpenSeeHome HandleDrawerChange={handleDrawerChange} OverlayHandles={overlayHandles} />
+                        </Application>
+                    </DataProvider>
+                </AnalyticProvider>
+            </HoverProvider>
         </EventProvider>
     );
 }
@@ -455,6 +208,5 @@ store.dispatch(LoadSettings());
 
 // After
 const container = document.getElementById('DockCharts');
-const root = ReactDOM.createRoot(container!); // createRoot(container!) if you use TypeScript
-root.render(<Provider store={store}><OpenSeeHome /></Provider>);
-
+const root = ReactDOM.createRoot(container!);
+root.render(<Provider store={store}><OpenSeeApplication /></Provider>);
