@@ -43,33 +43,33 @@ const InfoSection = (props: InfoSectionProps) => {
                     <li className="nav-item" onMouseEnter={() => props.setHover('Meter')} onMouseLeave={() => props.setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}> {evt.EventInfo?.MeterName?.split(" ")[0]}</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}> {evt.Context.EventInfo?.MeterName?.split(" ")[0]}</div>
                         <ToolTip Show={props.hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
-                            <p>{evt.EventInfo?.MeterName}</p>
+                            <p>{evt.Context.EventInfo?.MeterName}</p>
                         </ToolTip>
                     </li>
                     <li className="nav-item" onMouseEnter={() => props.setHover('Station')} onMouseLeave={() => props.setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.EventInfo?.StationName}</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.StationName}</div>
                         <ToolTip Show={props.hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
-                            <p>{evt.EventInfo?.StationName}</p>
+                            <p>{evt.Context.EventInfo?.StationName}</p>
                         </ToolTip>
                     </li>
                     <li className="nav-item" onMouseEnter={() => props.setHover('Asset')} onMouseLeave={() => props.setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.EventInfo?.AssetName?.split(" ")[0]}</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.AssetName?.split(" ")[0]}</div>
                         <ToolTip Show={props.hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
-                            <p>{evt.EventInfo?.AssetName}</p>
+                            <p>{evt.Context.EventInfo?.AssetName}</p>
                         </ToolTip>
                     </li>
                     <li className="nav-item" onMouseEnter={() => props.setHover('EType')} onMouseLeave={() => props.setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
-                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.EventInfo?.EventName}</div>
+                        <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.EventName}</div>
                         <ToolTip Show={props.hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
-                            <p>{evt.EventInfo?.EventName}</p>
+                            <p>{evt.Context.EventInfo?.EventName}</p>
                         </ToolTip>
                     </li>
                     {props.width > 1695 ?
@@ -77,10 +77,10 @@ const InfoSection = (props: InfoSectionProps) => {
                             style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}>
                             <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
                             <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {moment(evt.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                {moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                             </div>
                             <ToolTip Show={props.hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
-                                <p>{moment(evt.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
+                                <p>{moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
                             </ToolTip>
                         </li> : null}
                 </ul>

@@ -28,9 +28,9 @@ import About from '../Components/About';
 import { OpenSee } from "../global";
 import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } from '../Graphs/ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { ResetZoom, SelectFFTEnabled } from '../store/dataSlice';
 import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../store/settingSlice';
 import Navigation from './Navigation';
+import { DataContext, DataFunctionContext } from '../Context/DataContext';
 
 interface IPlotUtilities {
     hover: OpenSee.Hover,
@@ -44,8 +44,11 @@ interface IPlotUtilities {
 const PlotUtilitiesSection = (props: IPlotUtilities) => {
     const dispatch = useAppDispatch();
 
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
+
     const mouseMode = useAppSelector(SelectMouseMode);
-    const showFFT = useAppSelector(SelectFFTEnabled);
+    const showFFT = data.Selector.current.SelectFFTEnabled();
 
     return (
         <>
@@ -111,7 +114,9 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
 
                     {/*reset*/}
                     <button className="btn btn-primary" style={{ padding: '0.195rem' }}
-                        onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(ResetZoom({ start: new Date(eventStartTime + "Z").getTime(), end: new Date(eventEndTime + "Z").getTime() }))}>
+                        onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom"
+                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(eventStartTime + "Z").getTime(), new Date(eventEndTime + "Z").getTime())}
+                    >
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>
                     <ToolTip Show={props.hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>

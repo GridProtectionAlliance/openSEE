@@ -24,15 +24,14 @@
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import React from "react";
+import AnalyticContext from '../Context/AnalyticContext';
+import DataContext from '../Context/DataContext';
 import EventContext from '../Context/EventContext';
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
-import { useAppDispatch, useAppSelector } from '../hooks';
-import { SelectAnalytics, SelectDisplayed, SelectFFTEnabled, SelectFFTLimits } from '../store/dataSlice';
+import { useAppDispatch } from '../hooks';
 import { SetMouseMode } from '../store/settingSlice';
 import PlotTable from './PlotTable';
-import DataContext from '../Context/DataContext';
-import AnalyticContext from '../Context/AnalyticContext';
 
 interface IWidgets {
     hover: OpenSee.Hover,
@@ -44,13 +43,13 @@ interface IWidgets {
 const WidgetSection = (props: IWidgets) => {
     const dispatch = useAppDispatch();
 
-    const showPlots = useAppSelector(SelectDisplayed);
-    const fftTime = useAppSelector(SelectFFTLimits);
-    const analytics = useAppSelector(SelectAnalytics);
-    const showFFT = useAppSelector(SelectFFTEnabled);
-
     const evt = React.useContext(EventContext);
     const [analytic] = React.useContext(AnalyticContext);
+    const data = React.useContext(DataContext);
+
+    const showPlots = data.Selector.current.SelectDisplayed();
+    const showFFT = data.Selector.current.SelectFFTEnabled();
+    const fftTime = data.Context.FftLimits;
 
     const exportData = (type) => {
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.EventInfo.EventId}` +
@@ -167,7 +166,7 @@ const WidgetSection = (props: IWidgets) => {
                     <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)} style={{ cursor: 'pointer' }}>
                         <i style={{ fontStyle: "normal" }}>Scalar Stats</i>
                     </a>
-                    {evt.EventInfo?.EventName === "Snapshot" ?
+                    {evt.Context.EventInfo?.EventName === "Snapshot" ?
                         <a key={"option-harmonic"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.HarmonicStats)} style={{ cursor: 'pointer' }}>
                             <i style={{ fontStyle: "normal" }}>Harmonic Stats</i>
                         </a>

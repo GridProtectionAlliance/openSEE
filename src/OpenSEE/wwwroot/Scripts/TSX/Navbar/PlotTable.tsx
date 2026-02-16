@@ -23,13 +23,13 @@
 
 import React from "react";
 import { OpenSee } from "../global";
-import { useAppDispatch, useAppSelector } from '../hooks';
-import { AddPlot, RemovePlot, SelectDisplayed, SelectEventIDs } from '../store/dataSlice';
+import { DataContext, DataFunctionContext } from "../Context/DataContext";
 
-const PlotTable = () => {
-    const showPlots = useAppSelector(SelectDisplayed);
-    const eventIDs = useAppSelector(SelectEventIDs);
-    const dispatch = useAppDispatch()
+const PlotTable = React.memo(() => {
+    const dataDispatch = React.useContext(DataFunctionContext);
+
+    const data = React.useContext(DataContext);
+    const showPlots = data.Selector.current.SelectDisplayed();
 
     function tooglePlots(type: OpenSee.graphType) {
         let display;
@@ -44,10 +44,13 @@ const PlotTable = () => {
         else if (type === 'TripCoil')
             display = showPlots.TripCoil;
 
+        const eventIds = data.Selector.current.SelectEventIDs(data.Context);
+
+        // ToDo: this can be turned to 1 function I think, would save a lot of performance
         if (display)
-            eventIDs.forEach(id => dispatch(RemovePlot({ DataType: type, EventId: id })))
+            eventIds.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ DataType: type, EventId: id }));
         else
-            eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: type, EventId: id } })))
+            eventIds.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: type, EventId: id }));
     }
     return (
         <>
@@ -116,6 +119,6 @@ const PlotTable = () => {
             </table>
         </>
     )
-}
+});
 
 export default PlotTable;
