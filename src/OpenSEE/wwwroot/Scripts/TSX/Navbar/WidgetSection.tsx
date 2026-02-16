@@ -47,12 +47,12 @@ const WidgetSection = (props: IWidgets) => {
     const [analytic] = React.useContext(AnalyticContext);
     const data = React.useContext(DataContext);
 
-    const showPlots = data.Selector.current.SelectDisplayed();
     const showFFT = data.Selector.current.SelectFFTEnabled();
-    const fftTime = data.Context.FftLimits;
 
     const exportData = (type) => {
-        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.EventInfo.EventId}` +
+        const showPlots = data.Selector.current.SelectDisplayed();
+        const analytics = data.Selector.current.SelectAnalytics();
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventInfo.EventId}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
@@ -63,10 +63,10 @@ const WidgetSection = (props: IWidgets) => {
             `${`&hpfOrder=${analytic.HPFOrder}`}` +
             `${`&Trc=${analytic.Trc}`}` +
             `${`&harmonic=${analytic.Harmonic}`}` +
-            `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
+            `${type == 'fft' ? `&startDate=${data.Context.FftLimits[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
-            `&Meter=${evt.EventInfo.MeterName}` +
-            `&EventType=${evt.EventInfo.EventName}`;
+            `&Meter=${evt.Context.EventInfo.MeterName}` +
+            `&EventType=${evt.Context.EventInfo.EventName}`;
         window.open(uri, '_blank');
     }
 
