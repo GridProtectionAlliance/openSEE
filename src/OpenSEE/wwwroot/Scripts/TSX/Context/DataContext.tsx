@@ -26,7 +26,7 @@ import * as React from 'react';
 import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
 import func from './DataContextFunctions';
-import { emptygraph, getData } from '../Data/GraphLogic';
+import { emptygraph, getData, getOverlappingEvents } from '../Data/GraphLogic';
 import { AddRequest } from '../Data/RequestHandler';
 import AnalyticContext from './AnalyticContext';
 import { useAppSelector } from '../hooks';
@@ -56,6 +56,7 @@ interface IDataFunctions {
 }
 
 // ToDo: I'm sure we can remove a lot of these, a lot of them are only used in one place...
+// Either that, or move them out and add context as an arguement so we don't need to worry about them in the react state
 interface ISelectorFunctions {
     SelectOverlappingEvents: (graphType: OpenSee.graphType) => OpenSee.IGraphProps[],
     SelectDisplayed: () => OpenSee.IDisplayed,
@@ -72,7 +73,7 @@ interface ISelectorFunctions {
     SelectAutoUnits: (key: OpenSee.IGraphProps) => {[key: string]: boolean},
     SelectAxisSettings: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
     SelectYLabels: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<string>,
-    SelectEventIDs: () => number[],
+    SelectEventIDs: (context: OpenSee.IDataContext) => number[],
     SelectFFTEnabled: () => boolean,
     SelectIsManual: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<boolean>,
     SelectIsOverlappingManual: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> },
@@ -100,7 +101,9 @@ const defaultState: OpenSee.IDataContext = {
     EndTime: 0 as number,
     Plots: [] as OpenSee.IGraphstate[],
     FftLimits: [0, 0],
-    CycleLimits: [0, 1000.0 / 60.0]
+    CycleLimits: [0, 1000.0 / 60.0],
+    OverlappingLoading: 'Uninitiated',
+    OverlappingEventList: []
 };
 
 export const DataContext = React.createContext<IDataContextType>({ Context: defaultState, Selector: undefined });
@@ -311,16 +314,16 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         }
     }
 
-    const SelectEventIDs = () => {
+    const SelectEventIDs = React.useCallback((context: OpenSee.IDataContext) => {
         let ids = [props.EventID];
-        state.OverlappingEvents.EventList.forEach(evt => {
+        context.OverlappingEventList.forEach(evt => {
             if (evt.Selected)
                 ids.push(evt.EventID)
         })
 
         const eventIDS = _.uniq(ids)
         return eventIDS
-    }
+    }, [props.EventID]);
 
     const SelectFFTEnabled = () => {
         const keys = contextState.Plots.filter(plot => plot.key.DataType === 'FFT')
@@ -1104,12 +1107,69 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
                         break;
                 }
                 if (keyAnalytic != null) {
-                    // ToDo: this should be current event + all overlapping events
-                    UpdateAnalyticPlot({ DataType: keyAnalytic, EventId: id });
+                    // ToDo: This needs to be reworked, not only does it do a bunch of cloning that WILL be a performance loss, it will also sometimes cause bad behavior because it could use a stale state...
+                    const selectedIds = SelectEventIDs(contextState);
+                    selectedIds.forEach(id =>
+                        UpdateAnalyticPlot({ DataType: keyAnalytic, EventId: id })
+                    );
                 }
             } 
         });
     }, [analytic]);
+
+    // If eventID changes, we need to reload overlapping events
+    React.useEffect(() => {
+        if (props.EventID == null || isNaN(props.EventID) || props.EventID <= 0)
+            return;
+
+        setContextState(c => {
+            const newState = _.cloneDeep(c);
+            newState.OverlappingLoading = 'Loading';
+            return newState;
+        });
+
+        const handle = getOverlappingEvents(props.EventID, null, null);
+        handle.then(
+            data => setContextState(c => {
+                const newState = _.cloneDeep(c);
+                newState.OverlappingLoading = 'Idle';
+                data.forEach(event => {
+                    const evtIndex = newState.OverlappingEventList.findIndex(evt => evt.EventID === event.EventID);
+                    if (evtIndex < 0)
+                        newState.OverlappingEventList.push(
+                            {
+                                Selected: false,
+                                AssetName: event.AssetName,
+                                MeterName: event.MeterName,
+                                EventID: event.EventID,
+                                StartTime: new Date(event.StartTime + "Z").getTime(),
+                                EndTime: new Date(event.EndTime + "Z").getTime(),
+                                EventType: event.EventType,
+                                Inception: event.Inception,
+                                DurationEndTime: event.DurationEndTime
+                            });
+                    else {
+                        //update eventIDs that were pushed from queryString
+                        newState.OverlappingEventList[evtIndex].AssetName = event.AssetName;
+                        newState.OverlappingEventList[evtIndex].MeterName = event.MeterName;
+                        newState.OverlappingEventList[evtIndex].StartTime = new Date(event.StartTime + "Z").getTime();
+                        newState.OverlappingEventList[evtIndex].EndTime = new Date(event.EndTime + "Z").getTime();
+                        newState.OverlappingEventList[evtIndex].EventType = event.EventType;
+                        newState.OverlappingEventList[evtIndex].Inception = event.Inception;
+                        newState.OverlappingEventList[evtIndex].DurationEndTime = event.DurationEndTime;
+                    }
+                });
+                return newState;
+            }),
+        () =>
+            setContextState(c => {
+                const newState = _.cloneDeep(c);
+                newState.OverlappingLoading = 'Error';
+                return newState;
+            })
+        );
+    }, [props.EventID]);
+
 
     // Set context
     dataRef.current = {

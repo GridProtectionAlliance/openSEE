@@ -477,4 +477,21 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
     return result;
 }
 
+// This function is to get data for overlapping events
+export function getOverlappingEvents(eventID: number, eventStartTime: string, eventEndTime: string): JQuery.jqXHR<any> {
+
+    let overlappingEventHandle = $.ajax({
+        type: "GET",
+        url: `${homePath}api/OpenSEE/GetOverlappingEvents?eventId=${eventID}` +
+            `${eventStartTime != undefined ? `&startDate=${eventStartTime}` : ``}` +
+            `${eventEndTime != undefined ? `&endDate=${eventEndTime}` : ``}`,
+        contentType: "application/json; charset=utf-8",
+        dataType: 'json',
+        cache: true,
+        async: true
+    });
+
+    return overlappingEventHandle;
+}
+
 // #endregion

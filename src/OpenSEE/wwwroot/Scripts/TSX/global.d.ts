@@ -31,8 +31,7 @@ declare global {
 export namespace OpenSee {
 
     interface IRootState {
-        Settings: ISettingsState,
-        OverlappingEvents: IOverlappingEventsStore
+        Settings: ISettingsState
     }
 
     interface IAnalyticContext {
@@ -44,12 +43,14 @@ export namespace OpenSee {
         FFTStartTime: number
     }
 
-    interface IDataContextType {
+    interface IDataContext {
         StartTime: number,
         EndTime: number,
         Plots: OpenSee.IGraphstate[],
         FftLimits: [number, number],
-        CycleLimits: [number, number]
+        CycleLimits: [number, number],
+        OverlappingLoading: LoadingState,
+        OverlappingEventList: OverlappingEvents[]
     }
     
     // For navigation
