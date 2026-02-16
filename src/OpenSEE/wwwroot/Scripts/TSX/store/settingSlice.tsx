@@ -155,60 +155,6 @@ export const SelectUseOverlappingTime = (state: RootState) => state.Settings.Use
 export const SelectOverlappingWaveTimeUnit = (state: RootState) => state.Settings.OverlappingWaveTimeUnit;
 export const SelectMouseMode = (state: OpenSee.IRootState) => state.Settings.MouseMode
 export const SelectZoomMode = (state: OpenSee.IRootState) => state.Settings.ZoomMode
-
-export const SelectEnabledPlots = createSelector(
-    (state: OpenSee.IRootState) => state.Data.Plots,
-    (Plots) => {
-        let enabledPlots: OpenSee.PlotQuery[] = [];
-        let plotKeys = Plots.map(plot => plot.key)
-        plotKeys = _.uniq(plotKeys)
-
-        if (plotKeys.length > 0)
-            plotKeys.forEach(key => {
-                const matchingPlot = Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
-
-                if (matchingPlot) {
-                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
-                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
-                    let yLimits = {}
-
-                    Object.keys(matchingPlot.yLimits).forEach(key => {
-                        if (enabledUnits.includes(key as OpenSee.Unit))
-                            yLimits[key] = { ...matchingPlot.yLimits[key], autoUnit: matchingPlot.yLimits[key as OpenSee.Unit].isAuto };
-                    })
-
-                    enabledPlots.push({
-                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
-                        isZoomed: matchingPlot.isZoomed,
-                        key: matchingPlot.key
-                    });
-                }
-            });
-
-        return enabledPlots;
-    }
-);
-
-export const SelectActiveUnit = (key: OpenSee.IGraphProps) => createSelector(
-    (state: OpenSee.IRootState) => state.Data,
-    (state) => {
-        const baseUnits = defaultSettings.Units
-        let result = {};
-        const plot = state.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType)
-        if (!plot)
-            return null
-
-        Object.keys(baseUnits).forEach(unit => {
-            if (plot.yLimits[unit])
-                result[unit] = baseUnits[unit].options[plot.yLimits[unit].current]
-        })
-
-        return result
-    }
-
-);
-
-
 // #endregion
 
 // #region [ Async Functions ]

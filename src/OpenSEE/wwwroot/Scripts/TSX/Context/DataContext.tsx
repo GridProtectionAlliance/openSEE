@@ -82,7 +82,9 @@ interface ISelectorFunctions {
     SelectVPhases: (point: [number, number]) => OpenSee.IVector[],
     SelectIPhases: (point: [number, number]) => OpenSee.IVector[],
     SelectSelectedPoints: () => OpenSee.IPointCollection[],
-    SelectFFTData: () => OpenSee.IFFTSeries[]
+    SelectFFTData: () => OpenSee.IFFTSeries[],
+    SelectEnabledPlots: () => OpenSee.PlotQuery[],
+    SelectActiveUnit: (key: OpenSee.IGraphProps) => null | { [key: string]: any },
 }
 
 interface IDataFunctionContextType {
@@ -127,6 +129,51 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
     const singlePlot = useAppSelector(SelectSinglePlot);
 
     // Context Selector Functions
+
+    const SelectEnabledPlots = () => {
+        let enabledPlots: OpenSee.PlotQuery[] = [];
+        let plotKeys = contextState.Plots.map(plot => plot.key)
+        plotKeys = _.uniq(plotKeys)
+
+        if (plotKeys.length > 0)
+            plotKeys.forEach(key => {
+                const matchingPlot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+
+                if (matchingPlot) {
+                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
+                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
+                    let yLimits = {}
+
+                    Object.keys(matchingPlot.yLimits).forEach(key => {
+                        if (enabledUnits.includes(key as OpenSee.Unit))
+                            yLimits[key] = { ...matchingPlot.yLimits[key], autoUnit: matchingPlot.yLimits[key as OpenSee.Unit].isAuto };
+                    })
+
+                    enabledPlots.push({
+                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
+                        isZoomed: matchingPlot.isZoomed,
+                        key: matchingPlot.key
+                    });
+                }
+            });
+
+        return enabledPlots;
+    }
+
+    const SelectActiveUnit = (key: OpenSee.IGraphProps): null | {[key: string]: any} => {
+        const baseUnits = defaultSettings.Units
+        let result = {};
+        const plot = contextState.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType);
+        if (!plot)
+            return null;
+
+        Object.keys(baseUnits).forEach(unit => {
+            if (plot.yLimits[unit])
+                result[unit] = baseUnits[unit].options[plot.yLimits[unit].current]
+        })
+
+        return result;
+    }
 
     const SelectOverlappingEvents = (graphType: OpenSee.graphType) => {
         const filteredPlots = contextState.Plots.filter(plot => plot.key.EventId !== evt.Context.EventID && plot.key.EventId !== -1 && plot.key.DataType === graphType).map(plot => plot.key);
@@ -889,14 +936,6 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         })
     , []);
 
-    const SetEventID = React.useCallback((id: number) =>
-        setContextState(c => {
-            const newState = _.cloneDeep(c);
-            newState.EventID = id;
-            return newState;
-        })
-    , []);
-
     // Plot Data Functions
     const AddPlot = (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]): void => {
         // Check to see if plot exists
@@ -1231,7 +1270,9 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         SelectVPhases,
         SelectIPhases,
         SelectSelectedPoints,
-        SelectFFTData
+        SelectFFTData,
+        SelectEnabledPlots,
+        SelectActiveUnit
     };
 
     functionRef.current = {
