@@ -22,14 +22,12 @@
 //******************************************************************************************************
 import { configureStore } from '@reduxjs/toolkit';
 import SettingsReducer from './settingSlice';
-import OverlappingEventReducer from './overlappingEventsSlice';
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>
 
 const reducer = {
-    Settings: SettingsReducer,
-    OverlappingEvents: OverlappingEventReducer
+    Settings: SettingsReducer
 }
 const store = configureStore({ reducer });
 

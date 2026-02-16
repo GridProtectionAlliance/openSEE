@@ -299,11 +299,6 @@ export namespace OpenSee {
 
     type LoadingState = ('Idle' | 'Loading' | 'Partial' | 'Error' | 'Uninitiated');
 
-    interface IOverlappingEventsStore {
-        EventList: OverlappingEvents[],
-        Loading: boolean
-    }
-
     interface OverlappingEvents {
         Selected: boolean,
         AssetName: string,
@@ -322,7 +317,7 @@ export namespace OpenSee {
         isZoomed: boolean
     }
     interface Query {
-        plots: PlotQuery[]
+        plots: string
         Harmonic: number,
         LPFOrder: number,
         HPFOrder: number,
@@ -334,7 +329,7 @@ export namespace OpenSee {
         startTime: number,
         endTime: number,
         eventID: number,
-        overlappingInfo: [number],
+        overlappingInfo: string,
         singlePlot: boolean
     }
 
@@ -462,4 +457,11 @@ export namespace OpenSee {
         MeterName: string
     }
 
+    interface IDisplayed {
+        Voltage: boolean,
+        Current: boolean,
+        TripCoil: boolean,
+        Analogs: boolean,
+        Digitals: boolean
+    }
 }
