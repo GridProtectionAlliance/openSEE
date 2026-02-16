@@ -24,48 +24,61 @@ import * as React from 'react';
 import { OpenSee } from '../global';
 import { Application } from '@gpa-gemstone/application-typings';
 
-interface IProps {
+interface IContextSettings {
     EventID: number,
     BreakerOperation?: string
 }
 
-interface EventContextType {
+interface IDispatchFunctions {
+    SettingsDispatch: React.Dispatch<React.SetStateAction<IContextSettings>>
+}
+
+interface IEventContextState {
     EventInfo: OpenSee.IEventInfo,
     LookupInfo: OpenSee.INextBackLookup,
     Status: Application.Types.Status
 }
 
-const defaultState: EventContextType = {
+const defaultState: IEventContextState = {
     EventInfo: null,
     LookupInfo: null,
     Status: 'uninitiated'
 };
 
-export const EventContext = React.createContext<EventContextType>(defaultState);
+interface IEventContext {
+    Context: IEventContextState,
+    Dispatch: React.MutableRefObject<IDispatchFunctions | undefined>,
+}
 
-export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
-    const [contextState, setContextState] = React.useState<EventContextType>(defaultState);
+export const EventContext = React.createContext<IEventContext>({ Context: defaultState, Dispatch: undefined });
+
+export const EventProvider = (props: React.PropsWithChildren<{}>) => {
+    const [contextState, setContextState] = React.useState<IEventContextState>(defaultState);
+    const [settings, setSettings] = React.useState<IContextSettings>();
+
+    const functionRef = React.useRef<IDispatchFunctions>();
+    const context = React.useMemo(() => ({ Dispatch: functionRef, Context: contextState }), [contextState]);
 
     React.useEffect(() => {
-        if (props.EventID == null || isNaN(props.EventID) || props.EventID < 0) return;
+        if (settings.EventID == null || isNaN(settings.EventID) || settings.EventID < 0) return;
         setContextState(state => ({
             ...state,
-            EventID: props.EventID,
+            EventID: settings.EventID,
             Status: 'loading'
         }));
 
         const eventHandle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHeaderData` +
-                `?eventId=${props.EventID}` +
-                `${props.BreakerOperation != null ? "&breakeroperation=" + props.BreakerOperation : ""}`,
+                `?eventId=${settings.EventID}` +
+                `${settings.BreakerOperation != null ? "&breakeroperation=" + settings.BreakerOperation : ""}`,
             dataType: 'json',
             cache: true,
             async: true
         });
         const lookupHandle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetNavData?eventId=${props.EventID}`,
+            url: `${homePath}api/OpenSEE/GetNavData?eventId=${settings.EventID}`,
             dataType: 'json',
             cache: true,
             async: true
@@ -88,10 +101,10 @@ export const EventProvider = (props: React.PropsWithChildren<IProps>) => {
             if (eventHandle?.abort != null) eventHandle.abort();
             if (lookupHandle?.abort != null) lookupHandle.abort();
         }
-    }, [props.EventID, props.BreakerOperation]);
+    }, [settings.EventID, settings.BreakerOperation]);
 
     return (
-        <EventContext.Provider value={contextState}>
+        <EventContext.Provider value={context}>
             {props.children}
         </EventContext.Provider>
     );

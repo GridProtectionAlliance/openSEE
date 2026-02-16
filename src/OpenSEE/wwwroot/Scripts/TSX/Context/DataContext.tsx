@@ -33,10 +33,6 @@ import { useAppSelector } from '../hooks';
 import { SelectDefaultTraces, SelectSinglePlot, SelectVTypeDefault } from '../store/settingSlice';
 import { sortGraph } from '../Graphs/Utilities';
 
-interface IProps {
-    EventID: number
-}
-
 interface IDataFunctions {
     SetTimeLimit: (start: number, end: number) => void,
     SetCycleLimit: (start: number, end: number) => void,
@@ -54,6 +50,7 @@ interface IDataFunctions {
     RemovePlot: (key: OpenSee.IGraphProps) => void,
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
     EnableOverlappingEvent: (eventID: number) => void,
+    SetEventID: (id: number) => void
 }
 
 // ToDo: I'm sure we can remove a lot of these, a lot of them are only used in one place...
@@ -98,8 +95,9 @@ interface IDataContextType {
 }
 
 const defaultState: OpenSee.IDataContext = {
-    StartTime: 0 as number,
-    EndTime: 0 as number,
+    EventID: -1,
+    StartTime: 0,
+    EndTime: 0,
     Plots: [] as OpenSee.IGraphstate[],
     FftLimits: [0, 0],
     CycleLimits: [0, 1000.0 / 60.0],
@@ -111,7 +109,7 @@ export const DataContext = React.createContext<IDataContextType>({ Context: defa
 export const DataFunctionContext = React.createContext<IDataFunctionContextType>({ Dispatch: undefined });
 
 // ToDo: A lot of element appear to add/remove plots on a toggle, we might wanna cache data somewhere instead...
-export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
+export const DataProvider = (props: React.PropsWithChildren<{}>) => {
     const [contextState, setContextState] = React.useState<OpenSee.IDataContext>(defaultState);
 
     const dataRef = React.useRef<ISelectorFunctions>();
@@ -130,7 +128,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     // Context Selector Functions
 
     const SelectOverlappingEvents = (graphType: OpenSee.graphType) => {
-        const filteredPlots = contextState.Plots.filter(plot => plot.key.EventId !== props.EventID && plot.key.EventId !== -1 && plot.key.DataType === graphType).map(plot => plot.key);
+        const filteredPlots = contextState.Plots.filter(plot => plot.key.EventId !== contextState.EventID && plot.key.EventId !== -1 && plot.key.DataType === graphType).map(plot => plot.key);
         //order by eventID because we groupBy eventID in openSEE.tsx
         const sortedPlots = _.orderBy(filteredPlots, "EventId", "desc")
         return sortedPlots;
@@ -166,7 +164,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     //Returns the DataType of plots that are Analytics
     const SelectAnalytics = () => {
         const analytics = ['FirstDerivative', 'ClippedWaveforms', 'Frequency', 'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent', 'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'I2T'] as OpenSee.graphType[];
-        let plotTypes = contextState.Plots.filter(plot => plot.key.EventId === props.EventID && analytics.includes(plot.key.DataType)).map(plot => plot.key.DataType)
+        let plotTypes = contextState.Plots.filter(plot => plot.key.EventId === contextState.EventID && analytics.includes(plot.key.DataType)).map(plot => plot.key.DataType)
 
         plotTypes = _.uniq(plotTypes)
 
@@ -251,7 +249,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }
 
     const SelectOverlappingYLimits = (graphType: OpenSee.graphType) => {
-        let overlappingPlots = contextState.Plots.filter(plot => plot.key.EventId !== props.EventID && plot.key.DataType === graphType);
+        let overlappingPlots = contextState.Plots.filter(plot => plot.key.EventId !== contextState.EventID && plot.key.DataType === graphType);
         let result = {};
         if (overlappingPlots.length > 0) {
             overlappingPlots.forEach(plot => {
@@ -316,7 +314,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }
 
     const SelectEventIDs = React.useCallback((context: OpenSee.IDataContext) => {
-        let ids = [props.EventID];
+        let ids = [contextState.EventID];
         context.OverlappingEventList.forEach(evt => {
             if (evt.Selected)
                 ids.push(evt.EventID)
@@ -324,7 +322,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
         const eventIDS = _.uniq(ids)
         return eventIDS
-    }, [props.EventID]);
+    }, [contextState.EventID]);
 
     const SelectFFTEnabled = () => {
         const keys = contextState.Plots.filter(plot => plot.key.DataType === 'FFT')
@@ -343,7 +341,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }
 
     const SelectIsOverlappingManual = (graphType: OpenSee.graphType) => {
-        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== props.EventID);
+        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== contextState.EventID);
         let result = {};
         if (overlappingPlots.length > 0) {
             overlappingPlots.forEach(plot => {
@@ -359,7 +357,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }
 
     const SelectOverlappingAutoUnits = (graphType: OpenSee.graphType) => {
-        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== props.EventID);
+        let overlappingPlots = contextState.Plots.filter(p => p.key.DataType === graphType && p.key.EventId !== contextState.EventID);
         let result = {};
         if (overlappingPlots.length > 0) {
             overlappingPlots.forEach(plot => {
@@ -382,7 +380,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     // For tooltip
     const SelectHoverPoints = (hover: [number, number]) => {
         let result: OpenSee.IPoint[] = [];
-        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === props.EventID)
+        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === contextState.EventID)
 
         filteredPlots.forEach(plot => {
             if (plot.data.length === 0) return;
@@ -409,7 +407,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     const SelectDeltaHoverPoints = (hover: [number, number]) => {
         let result: OpenSee.IPoint[] = [];
-        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === props.EventID)
+        let filteredPlots = contextState.Plots.filter(plot => plot.key.EventId === contextState.EventID)
 
         filteredPlots.forEach(plot => {
             const selectedData = plot.selectedIndixes;
@@ -438,7 +436,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     // For vector
     const SelectVPhases = (hover: [number, number]) => {
-        let plot = contextState.Plots.find(plot => plot.key.DataType == 'Voltage' && plot.key.EventId == props.EventID);
+        let plot = contextState.Plots.find(plot => plot.key.DataType == 'Voltage' && plot.key.EventId == contextState.EventID);
         if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph'))
             return [];
 
@@ -481,7 +479,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
     }
 
     const SelectIPhases = (hover: [number, number]) => {
-        let plot = contextState.Plots.find(p => p.key.DataType == 'Current' && p.key.EventId == props.EventID);
+        let plot = contextState.Plots.find(p => p.key.DataType == 'Current' && p.key.EventId == contextState.EventID);
         if (!plot || plot.data.length === 0 || !plot.data.some(d => d.LegendHorizontal == 'Ph')) return [];
 
         const activeUnits = plot.yLimits;
@@ -525,7 +523,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         let result: OpenSee.IPointCollection[] = [];
 
         contextState.Plots.forEach(plot => {
-            if (plot.key.EventId != props.EventID) return;
+            if (plot.key.EventId != contextState.EventID) return;
             if (plot.key.DataType != 'Voltage' && plot.key.DataType != 'Current') return;
             if (plot.data.length == 0) return;
 
@@ -550,7 +548,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     // For FFT Table
     const SelectFFTData = () => {
-        const fftPlot = contextState.Plots.find(plot => plot.key.DataType === "FFT" && plot.key.EventId === props.EventID);
+        const fftPlot = contextState.Plots.find(plot => plot.key.DataType === "FFT" && plot.key.EventId === contextState.EventID);
         if (fftPlot?.data == null) return [];
         const activeUnits = defaultSettings.Units
         let asset = _.uniq(fftPlot.data.map(item => item.LegendGroup));
@@ -890,6 +888,14 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         })
     , []);
 
+    const SetEventID = React.useCallback((id: number) =>
+        setContextState(c => {
+            const newState = _.cloneDeep(c);
+            newState.EventID = id;
+            return newState;
+        })
+    , []);
+
     // Plot Data Functions
     const AddPlot = (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]): void => {
         // Check to see if plot exists
@@ -1144,7 +1150,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
 
     // If eventID changes, we need to reload overlapping events
     React.useEffect(() => {
-        if (props.EventID == null || isNaN(props.EventID) || props.EventID <= 0)
+        if (contextState.EventID == null || isNaN(contextState.EventID) || contextState.EventID <= 0)
             return;
 
         setContextState(c => {
@@ -1153,7 +1159,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
             return newState;
         });
 
-        const handle = getOverlappingEvents(props.EventID, null, null);
+        const handle = getOverlappingEvents(contextState.EventID, null, null);
         handle.then(
             data => setContextState(c => {
                 const newState = _.cloneDeep(c);
@@ -1193,7 +1199,7 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
                 return newState;
             })
         );
-    }, [props.EventID]);
+    }, [contextState.EventID]);
 
 
     // Set context
@@ -1243,7 +1249,8 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         AddPlot,
         RemovePlot,
         UpdateAnalyticPlot,
-        EnableOverlappingEvent
+        EnableOverlappingEvent,
+        SetEventID
     };
 
     return (
