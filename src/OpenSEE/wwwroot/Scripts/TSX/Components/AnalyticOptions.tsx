@@ -25,42 +25,40 @@
 
 import * as React from 'react';
 import { OpenSee } from '../global';
-import { SelectPlotKeys, RemovePlot, AddPlot, SelectEventIDs } from '../store/dataSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive"
 import { Select, Input } from "@gpa-gemstone/react-forms"
-import * as _ from 'lodash'
-import { ToInt } from '../store/queryThunk'
+import * as _ from 'lodash';
 import { GetDisplayLabel } from '../Graphs/Utilities'
 import AnalyticContext from '../Context/AnalyticContext';
+import { DataContext, DataFunctionContext } from '../Context/DataContext';
 
 const AnalyticOptions = () => {
-    const dispatch = useAppDispatch();
-    const plotKeys = useAppSelector(SelectPlotKeys)
-    const eventIDs = useAppSelector(SelectEventIDs);
-
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
 
+    const eventIDs = data.Selector.current.SelectEventIDs(data.Context);
     const defaultAnalyticBtns = [
-        { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FaultDistance', EventId: id } }))), DataType: 'FaultDistance' },
-        { Label: 'FFT', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FFT', EventId: id } }))), DataType: 'FFT' },
-        { Label: 'First Derivative', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'FirstDerivative', EventId: id } }))), DataType: "FirstDerivative" },
-        { Label: 'Fix Clipped Waveforms', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'ClippedWaveforms', EventId: id } }))), DataType: 'ClippedWaveforms' },
-        { Label: 'Frequency', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Frequency', EventId: id } }))), DataType: 'Frequency' },
-        { Label: 'High Pass', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'HighPassFilter', EventId: id } }))), DataType: 'HighPassFilter' },
-        { Label: 'Impedance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Impedance', EventId: id } }))), DataType: 'Impedance' },
-        { Label: 'Low Pass', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'LowPassFilter', EventId: id } }))), DataType: 'LowPassFilter' },
-        { Label: 'Missing Voltage', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'MissingVoltage', EventId: id } }))), DataType: 'MissingVoltage' },
-        { Label: 'Overlapping Waveform', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'OverlappingWave', EventId: id } }))), DataType: 'OverlappingWave' },
-        { Label: 'Power', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Power', EventId: id } }))), DataType: 'Power' },
-        { Label: 'Rapid Voltage Change', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'RapidVoltage', EventId: id } }))), DataType: 'RapidVoltage' },
-        { Label: 'Rectifier Output', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Rectifier', EventId: id } }))), DataType: 'Rectifier' },
-        { Label: 'Remove Current', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'RemoveCurrent', EventId: id } }))), DataType: 'RemoveCurrent' },
-        { Label: 'Specified Harmonic', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Harmonic', EventId: id } }))), DataType: 'Harmonic' },
-        { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'SymetricComp', EventId: id } }))), DataType: 'SymetricComp' },
-        { Label: 'THD', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'THD', EventId: id } }))), DataType: 'THD' },
-        { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'Unbalance', EventId: id } }))), DataType: 'Unbalance' },
-        { Label: 'i2t', Callback: () => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: 'I2T', EventId: id } }))), DataType: 'I2T' }
+        { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'FaultDistance', EventId: id })), DataType: 'FaultDistance' },
+        { Label: 'FFT', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'FFT', EventId: id })), DataType: 'FFT' },
+        { Label: 'First Derivative', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'FirstDerivative', EventId: id })), DataType: "FirstDerivative" },
+        { Label: 'Fix Clipped Waveforms', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'ClippedWaveforms', EventId: id })), DataType: 'ClippedWaveforms' },
+        { Label: 'Frequency', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Frequency', EventId: id })), DataType: 'Frequency' },
+        { Label: 'High Pass', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'HighPassFilter', EventId: id })), DataType: 'HighPassFilter' },
+        { Label: 'Impedance', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Impedance', EventId: id })), DataType: 'Impedance' },
+        { Label: 'Low Pass', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'LowPassFilter', EventId: id })), DataType: 'LowPassFilter' },
+        { Label: 'Missing Voltage', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'MissingVoltage', EventId: id })), DataType: 'MissingVoltage' },
+        { Label: 'Overlapping Waveform', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'OverlappingWave', EventId: id })), DataType: 'OverlappingWave' },
+        { Label: 'Power', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Power', EventId: id })), DataType: 'Power' },
+        { Label: 'Rapid Voltage Change', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'RapidVoltage', EventId: id })), DataType: 'RapidVoltage' },
+        { Label: 'Rectifier Output', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Rectifier', EventId: id })), DataType: 'Rectifier' },
+        { Label: 'Remove Current', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'RemoveCurrent', EventId: id })), DataType: 'RemoveCurrent' },
+        { Label: 'Specified Harmonic', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Harmonic', EventId: id })), DataType: 'Harmonic' },
+        { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'SymetricComp', EventId: id })), DataType: 'SymetricComp' },
+        { Label: 'THD', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'THD', EventId: id })), DataType: 'THD' },
+        { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'Unbalance', EventId: id })), DataType: 'Unbalance' },
+        { Label: 'i2t', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'I2T', EventId: id })), DataType: 'I2T' }
     ];
 
     const [analyticBtns, setAnalyticBtns] = React.useState<any[]>(defaultAnalyticBtns)
@@ -101,11 +99,13 @@ const AnalyticOptions = () => {
         ]
     }
 
+    const plotKeys = data.Selector.current.SelectPlotKeys();
+
     React.useEffect(() => {
-        const filteredAnalyticBtns = defaultAnalyticBtns.filter(btn => !plotKeys.map(key => key.DataType).includes(btn.DataType as OpenSee.graphType));
+        const filteredAnalyticBtns = defaultAnalyticBtns.filter(btn => !.map(key => key.DataType).includes(btn.DataType as OpenSee.graphType));
 
         setAnalyticBtns(filteredAnalyticBtns)
-    }, [plotKeys])
+    }, [data])
 
 
     //nonanalytic plots or analytic plots that need parameters
@@ -118,7 +118,7 @@ const AnalyticOptions = () => {
                     <div style={{marginBottom: '20px'}}>
                     <BtnDropdown
                             Label={analyticBtns[0].Label}
-                            Callback={() => eventIDs.forEach(id => dispatch(AddPlot({ key: { DataType: analyticBtns[0].DataType, EventId: id } })))}
+                            Callback={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: analyticBtns[0].DataType, EventId: id }))}
                             Options={analyticBtns}
                         />
                     </div>
@@ -139,7 +139,7 @@ const AnalyticOptions = () => {
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "Harmonic" })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: "Harmonic" }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
@@ -160,7 +160,7 @@ const AnalyticOptions = () => {
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "HighPassFilter" })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: "HighPassFilter" }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
@@ -181,7 +181,7 @@ const AnalyticOptions = () => {
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "LowPassFilter" })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: "LowPassFilter" }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
@@ -202,7 +202,7 @@ const AnalyticOptions = () => {
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "Rectifier" })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: "Rectifier" }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
@@ -225,7 +225,7 @@ const AnalyticOptions = () => {
                                         />
                                     </div>
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: "FFT" })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: "FFT" }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
@@ -237,7 +237,7 @@ const AnalyticOptions = () => {
                                 <legend className="w-auto" style={{ fontSize: 'large' }}>{GetDisplayLabel(key.DataType)}</legend>
                                 <div className="row">
                                     <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dispatch(RemovePlot({ EventId: id, DataType: key.DataType })))}>Remove</button>
+                                        <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ EventId: id, DataType: key.DataType }))}>Remove</button>
                                     </div>
                                 </div>
                             </fieldset>
