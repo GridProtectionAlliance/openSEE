@@ -27,7 +27,7 @@ import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
 import func from './DataContextFunctions';
 import { emptygraph, getData, getOverlappingEvents } from '../Data/GraphLogic';
-import { AddRequest } from '../Data/RequestHandler';
+import { AddRequest, CancelEvent } from '../Data/RequestHandler';
 import AnalyticContext from './AnalyticContext';
 import { useAppSelector } from '../hooks';
 import { SelectDefaultTraces, SelectSinglePlot, SelectVTypeDefault } from '../store/settingSlice';
@@ -53,6 +53,7 @@ interface IDataFunctions {
     AddPlot: (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]) => void,
     RemovePlot: (key: OpenSee.IGraphProps) => void,
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void,
+    EnableOverlappingEvent: (eventID: number) => void,
 }
 
 // ToDo: I'm sure we can remove a lot of these, a lot of them are only used in one place...
@@ -1004,7 +1005,31 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
                 }
             }
         }
-    ), [singlePlot]);
+        ), [singlePlot]);
+
+    // Overlapping Events
+    const EnableOverlappingEvent = React.useCallback((eventID: number) => {
+        const plotIndex = contextState.OverlappingEventList.findIndex(event => event.EventID === eventID);
+        if (plotIndex === -1)
+            return;
+
+        // handle request store
+        CancelEvent(eventID);
+
+        let plots = _.uniq(contextState.Plots.map(item => item.key.DataType));
+
+        // ToDo: This could be improved, lots of clones and set states will slow this down...
+        if (contextState.OverlappingEventList[plotIndex].Selected)
+            plots.forEach(item => RemovePlot({ DataType: item, EventId: eventID }));
+        else
+            plots.forEach(item => AddPlot({ DataType: item, EventId: eventID }));
+
+        setContextState(c => {
+            const updatedState = _.cloneDeep(c);
+            updatedState.OverlappingEventList[plotIndex].Selected = !updatedState.OverlappingEventList[plotIndex].Selected;
+            return updatedState;
+        });
+    }, [contextState]);
 
     const UpdateAnalyticPlot = (key: OpenSee.IGraphProps): void => {
         setContextState(c => {
@@ -1217,7 +1242,8 @@ export const DataProvider = (props: React.PropsWithChildren<IProps>) => {
         SetManualLimits,
         AddPlot,
         RemovePlot,
-        UpdateAnalyticPlot
+        UpdateAnalyticPlot,
+        EnableOverlappingEvent
     };
 
     return (
