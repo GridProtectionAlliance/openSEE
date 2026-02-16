@@ -34,12 +34,14 @@ interface IDispatchFunctions {
 }
 
 interface IEventContextState {
+    EventID: number,
     EventInfo: OpenSee.IEventInfo,
     LookupInfo: OpenSee.INextBackLookup,
     Status: Application.Types.Status
 }
 
 const defaultState: IEventContextState = {
+    EventID: -1,
     EventInfo: null,
     LookupInfo: null,
     Status: 'uninitiated'
@@ -57,6 +59,9 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
     const [settings, setSettings] = React.useState<IContextSettings>();
 
     const functionRef = React.useRef<IDispatchFunctions>();
+    functionRef.current = {
+        SettingsDispatch: setSettings
+    }
     const context = React.useMemo(() => ({ Dispatch: functionRef, Context: contextState }), [contextState]);
 
     React.useEffect(() => {
@@ -86,6 +91,7 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
         Promise.all([lookupHandle, eventHandle]).then(([evtResult, lookupResult]) => {
             setContextState({
                 Status: 'idle',
+                EventID: settings.EventID,
                 EventInfo: evtResult,
                 LookupInfo: lookupResult
             });
