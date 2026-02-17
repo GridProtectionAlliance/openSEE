@@ -102,7 +102,7 @@ const AnalyticOptions = () => {
     const plotKeys = data.Selector.current.SelectPlotKeys();
 
     React.useEffect(() => {
-        const filteredAnalyticBtns = defaultAnalyticBtns.filter(btn => !.map(key => key.DataType).includes(btn.DataType as OpenSee.graphType));
+        const filteredAnalyticBtns = defaultAnalyticBtns.filter(btn => !plotKeys.map(key => key.DataType).includes(btn.DataType as OpenSee.graphType));
 
         setAnalyticBtns(filteredAnalyticBtns)
     }, [data])
