@@ -53,10 +53,10 @@ const EventInfo = () => {
     }
 
     React.useEffect(() => {
-        const time = moment.utc(evt.EventInfo.EventDate, eventDateFormat).format(timeFormat)
-        const date = moment.utc(evt.EventInfo.EventDate, eventDateFormat).format(dateFormat)
+        const time = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(timeFormat)
+        const date = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(dateFormat)
         const queryParams = {
-            eventid: evt.EventID,
+            eventid: evt.Context.EventID,
             time: time,
             date: date,
             windowSize: 1,
@@ -64,9 +64,9 @@ const EventInfo = () => {
         }
         setPQBrowserParams(queryString.stringify(queryParams))
 
-    }, [evt.EventInfo]);
+    }, [evt.Context.EventInfo]);
 
-    if (evt.EventInfo == null)
+    if (evt.Context.EventInfo == null)
         return null;
 
     return (
@@ -74,14 +74,14 @@ const EventInfo = () => {
             <div style={{ height: '100%', overflow: 'auto' }}>
                 <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`}}>
                     <tbody>
-                        <tr><td>Meter:</td><td>{evt.EventInfo.MeterName}</td></tr>
-                        <tr><td>Station:</td><td>{evt.EventInfo.StationName}</td></tr>
-                        <tr><td>Asset:</td><td>{evt.EventInfo.AssetName}</td></tr>
+                        <tr><td>Meter:</td><td>{evt.Context.EventInfo.MeterName}</td></tr>
+                        <tr><td>Station:</td><td>{evt.Context.EventInfo.StationName}</td></tr>
+                        <tr><td>Asset:</td><td>{evt.Context.EventInfo.AssetName}</td></tr>
                         <tr>
                             <td>Event Type:</td>
                             <td>
                                 {
-                                    evt.EventInfo.EventName != 'Fault' ? evt.EventInfo.EventName :
+                                    evt.Context.EventInfo.EventName != 'Fault' ? evt.Context.EventInfo.EventName :
                                         <a
                                             href="#"
                                             title="Click for fault details"
@@ -90,17 +90,17 @@ const EventInfo = () => {
                                 }
                             </td>
                         </tr>
-                        <tr><td>Event Date:</td><td>{evt.EventInfo.EventDate}</td></tr>
-                        <tr><td>Inception:</td><td>{moment(evt.EventInfo.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</td></tr>
-                        {(evt.EventInfo.StartTime ? <tr><td>Event Start:</td><td>{evt.EventInfo.StartTime}</td></tr> : null)}
-                        {(evt.EventInfo.Phase ? <tr><td>Phase:</td><td>{evt.EventInfo.Phase}</td></tr> : null)}
-                        {(evt.EventInfo.DurationPeriod ? <tr><td>Duration:</td><td>{evt.EventInfo.DurationPeriod}</td></tr> : null)}
-                        {(evt.EventInfo.Magnitude ? <tr><td>Magnitude:</td><td>{evt.EventInfo.Magnitude}</td></tr> : null)}
-                        {(evt.EventInfo.SagDepth ? <tr><td>Sag Depth:</td><td>{evt.EventInfo.SagDepth}</td></tr> : null)}
-                        {(evt.EventInfo.BreakerNumber ? <tr><td>Breaker:</td><td>{evt.EventInfo.BreakerNumber}</td></tr> : null)}
-                        {(evt.EventInfo.BreakerTiming ? <tr><td>Timing:</td><td>{evt.EventInfo.BreakerTiming}</td></tr> : null)}
-                        {(evt.EventInfo.BreakerSpeed ? <tr><td>Speed:</td><td>{evt.EventInfo.BreakerSpeed}</td></tr> : null)}
-                        {(evt.EventInfo.BreakerOperation ? <tr><td>Operation:</td><td>{evt.EventInfo.BreakerOperation}</td></tr> : null)}
+                        <tr><td>Event Date:</td><td>{evt.Context.EventInfo.EventDate}</td></tr>
+                        <tr><td>Inception:</td><td>{moment(evt.Context.EventInfo.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</td></tr>
+                        {(evt.Context.EventInfo.StartTime ? <tr><td>Event Start:</td><td>{evt.Context.EventInfo.StartTime}</td></tr> : null)}
+                        {(evt.Context.EventInfo.Phase ? <tr><td>Phase:</td><td>{evt.Context.EventInfo.Phase}</td></tr> : null)}
+                        {(evt.Context.EventInfo.DurationPeriod ? <tr><td>Duration:</td><td>{evt.Context.EventInfo.DurationPeriod}</td></tr> : null)}
+                        {(evt.Context.EventInfo.Magnitude ? <tr><td>Magnitude:</td><td>{evt.Context.EventInfo.Magnitude}</td></tr> : null)}
+                        {(evt.Context.EventInfo.SagDepth ? <tr><td>Sag Depth:</td><td>{evt.Context.EventInfo.SagDepth}</td></tr> : null)}
+                        {(evt.Context.EventInfo.BreakerNumber ? <tr><td>Breaker:</td><td>{evt.Context.EventInfo.BreakerNumber}</td></tr> : null)}
+                        {(evt.Context.EventInfo.BreakerTiming ? <tr><td>Timing:</td><td>{evt.Context.EventInfo.BreakerTiming}</td></tr> : null)}
+                        {(evt.Context.EventInfo.BreakerSpeed ? <tr><td>Speed:</td><td>{evt.Context.EventInfo.BreakerSpeed}</td></tr> : null)}
+                        {(evt.Context.EventInfo.BreakerOperation ? <tr><td>Operation:</td><td>{evt.Context.EventInfo.BreakerOperation}</td></tr> : null)}
                         <tr>
                             {<td><button className="btn btn-link" onClick={() => { window.open(pqBrowserURL + '/eventsearch?' + pqBrowserParams) }}>Edit Event and Manage Notes</button></td>}
                             <td></td>
@@ -111,7 +111,7 @@ const EventInfo = () => {
             <FaultSpecificsModal
                 SetShow={setShowFaultSpecifics}
                 Show={showFaultSpecifics}
-                EventID={evt.EventInfo.EventId}
+                EventID={evt.Context.EventInfo.EventId}
             />
         </div>
     )

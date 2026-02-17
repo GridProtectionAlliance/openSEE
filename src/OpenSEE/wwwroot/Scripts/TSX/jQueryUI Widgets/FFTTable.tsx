@@ -22,12 +22,12 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { useSelector } from 'react-redux';
-import { SelectFFTData } from '../store/dataSlice';
+import DataContext from '../Context/DataContext';
 
 
 const FFTTable = () => {
-    const fftPoints = useSelector(SelectFFTData);
+    const data = React.useContext(DataContext);
+    const fftPoints = data.Selector.current.SelectFFTData();
 
     const showAng = (index, row) => {
         let f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;

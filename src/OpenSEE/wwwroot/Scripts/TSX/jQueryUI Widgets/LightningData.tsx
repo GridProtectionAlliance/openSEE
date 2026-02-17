@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table'
+import EventContext from '../Context/EventContext';
 
 
 interface Column {
@@ -58,14 +59,14 @@ interface LightningData { // these probably arent all strings but not sure since
 
 
 const LightningDataWidget = () => {
+    const evt = React.useContext(EventContext);
+
     const [lightningData, setLightningData] = React.useState<LightningData[]>(null);
-    const [cols, setCols] = React.useState<Column[]>([]);
 
-    function getData(): JQuery.jqXHR {
-
+    React.useEffect(() => {
         const handle = $.ajax({
             type: "GET",
-            url: `${homePath}api/OpenSEE/GetLightningData?eventID=${eventID}`,
+            url: `${homePath}api/OpenSEE/GetLightningData?eventID=${evt.Context.EventID}`,
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
             cache: true,
@@ -76,14 +77,8 @@ const LightningDataWidget = () => {
             setLightningData(lightningData)
         });
 
-        return handle;
-    }
-
-    React.useEffect(() => {
-        const handle = getData();
-
         return () => { if (handle !== undefined && handle.abort !== undefined) handle.abort(); }
-    }, [eventID]);
+    }, [evt.Context.EventID]);
 
     return (
         <>

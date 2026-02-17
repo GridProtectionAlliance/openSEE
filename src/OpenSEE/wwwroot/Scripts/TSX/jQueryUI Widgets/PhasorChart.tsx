@@ -21,21 +21,20 @@
 //
 //******************************************************************************************************
 
-import * as React from 'react';
-
-import { useSelector } from 'react-redux';
-import { SelectVPhases, SelectIPhases } from '../store/dataSlice';
-import { SelectColor } from '../store/settingSlice';
 import * as _ from 'lodash';
+import * as React from 'react';
+import { useSelector } from 'react-redux';
+import DataContext from '../Context/DataContext';
+import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
-import HoverContext from '../Context/HoverContext'
-
+import { SelectColor } from '../store/settingSlice';
 
 const PhasorChartWidget = () => {
     const [hover] = React.useContext(HoverContext);
+    const data = React.useContext(DataContext);
 
-    const VVector = useSelector(SelectVPhases(hover));
-    const IVector = useSelector(SelectIPhases(hover));
+    const VVector = data.Selector.current.SelectVPhases(hover);
+    const IVector = data.Selector.current.SelectIPhases(hover);
     const colors = useSelector(SelectColor);
 
     const [AssetList, setAssetList] = React.useState<string[]>([]);

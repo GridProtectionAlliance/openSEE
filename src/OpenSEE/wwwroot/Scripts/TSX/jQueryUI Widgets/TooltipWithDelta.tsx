@@ -26,17 +26,19 @@
 
 import * as React from 'react';
 import moment = require('moment');
-import { SelectDeltaHoverPoints } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext'
+import DataContext from '../Context/DataContext'
 
 const ToolTipDeltaWidget = () => {
     const [hover] = React.useContext(HoverContext);
-    const points = useAppSelector(SelectDeltaHoverPoints(hover));
+    const data = React.useContext(DataContext);
+
+    const points = data.Selector.current.SelectDeltaHoverPoints(hover);
     const colors = useAppSelector(SelectColor);
     
-    let data: Array<JSX.Element> = (points.map((p, i) => <tr key={i}>
+    let dataPoints: Array<JSX.Element> = (points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
@@ -71,7 +73,7 @@ const ToolTipDeltaWidget = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {data}
+                        {dataPoints}
                     </tbody>
                 </table>
             </div>

@@ -29,25 +29,16 @@ import * as _ from 'lodash';
 import { BlockPicker } from 'react-color';
 import { OpenSee } from '../global';
 import {
-    SelectData, SelectPlotKeys, SetUnit, SelectIsManual, SetIsManual, SelectOverlappingEvents,
-    SelectYLimits, SetManualLimits, SelectStartTime, SelectEndTime, 
-    SetTimeLimit, SelectAutoUnits, SelectIsOverlappingManual,
-    SelectOverlappingYLimits, SelectAxisSettings, SelectOverlappingAutoUnits, 
-} from '../store/dataSlice';
-
-import {
     SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces, SelectPlotMarkers, SetPlotMarkers,
     SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
     SetOverlappingWaveTimeUnit, SetTimeUnit
 } from '../store/settingSlice';
-
-import { SelectEventInfo, SelectEventID } from '../store/eventInfoSlice'
-
 import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
-
 import { DatePicker, Input, CheckBox, ColorPicker } from '@gpa-gemstone/react-forms'
+import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import EventContext from '../Context/EventContext';
 
 interface TimeLimit {
     start: string,
@@ -56,22 +47,23 @@ interface TimeLimit {
 
 const SettingsWidget = (props) => {
     const dispatch = useAppDispatch();
-    const plotKeys = useAppSelector(SelectPlotKeys);
+
     const defaultTraces = useAppSelector(SelectDefaultTraces);
     const defaultVtype = useAppSelector(SelectVTypeDefault);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
 
-    const startTime = useAppSelector(SelectStartTime);
-    const endTime = useAppSelector(SelectEndTime);
-
     const timeUnit = useAppSelector(SelectTimeUnit);
-    const eventInfo = useAppSelector(SelectEventInfo);
-    const evtID = useAppSelector(SelectEventID);
-    const originalStartTime = new Date(eventInfo?.EventDate + "Z").getTime()
-    const inceptionOffset = (eventInfo?.Inception - originalStartTime)
 
-    const [startMS, setStartMS] = React.useState<number>(startTime - originalStartTime);
-    const [endMS, setEndMS] = React.useState<number>(endTime - originalStartTime);
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
+    const evt = React.useContext(EventContext);
+
+    const plotKeys = data.Selector.current.SelectPlotKeys();
+    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime()
+    const inceptionOffset = (evt.Context.EventInfo?.Inception - originalStartTime)
+
+    const [startMS, setStartMS] = React.useState<number>(data.Context.StartTime - originalStartTime);
+    const [endMS, setEndMS] = React.useState<number>(data.Context.EndTime - originalStartTime);
 
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
     const [formattedTime, setFormattedTime] = React.useState<TimeLimit>({ start: '', end: '' });
@@ -96,9 +88,9 @@ const SettingsWidget = (props) => {
     const handleDateChange = (time, start: boolean) => {
         let newDate: Date;
         if (start)
-            newDate = new Date(startTime);
+            newDate = new Date(data.Context.StartTime);
         else
-            newDate = new Date(endTime);
+            newDate = new Date(data.Context.EndTime);
 
         if (time && time !== 'Invalid date') {
             const timeString = time.split(':');
@@ -109,18 +101,18 @@ const SettingsWidget = (props) => {
             newDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), parseInt(milliseconds))
 
             if (start) {
-                if (newDate.getTime() < endTime) {
+                if (newDate.getTime() < data.Context.EndTime) {
                     setValid(true)
-                    setFormattedTime({ start: moment(newDate).format('HH:mm:ss.SSS'), end: moment(new Date(endTime)).format('HH:mm:ss.SSS') })
-                    setCurrentDate({ start: newDate, end: new Date(endTime) })
+                    setFormattedTime({ start: moment(newDate).format('HH:mm:ss.SSS'), end: moment(new Date(data.Context.EndTime)).format('HH:mm:ss.SSS') })
+                    setCurrentDate({ start: newDate, end: new Date(data.Context.EndTime) })
                 }
                 else
                     setValid(false)
             }
             else {
-                if (newDate.getTime() > startTime) {
-                    setFormattedTime({ start: moment(new Date(startTime)).format('HH:mm:ss.SSS'), end: moment(newDate).format('HH:mm:ss.SSS') })
-                    setCurrentDate({ start: new Date(startTime), end: newDate })
+                if (newDate.getTime() > data.Context.StartTime) {
+                    setFormattedTime({ start: moment(new Date(data.Context.StartTime)).format('HH:mm:ss.SSS'), end: moment(newDate).format('HH:mm:ss.SSS') })
+                    setCurrentDate({ start: new Date(data.Context.StartTime), end: newDate })
                     setValid(true)
                 }
                 else
@@ -132,8 +124,8 @@ const SettingsWidget = (props) => {
     };
 
     React.useEffect(() => {
-        const startDate = new Date(startTime)
-        const endDate = new Date(endTime)
+        const startDate = new Date(data.Context.StartTime)
+        const endDate = new Date(data.Context.EndTime)
         setFormattedTime({ start: moment(startDate).format('HH:mm:ss.SSS'), end: moment(new Date(endDate)).format('HH:mm:ss.SSS') })
         setCurrentDate({ start: startDate, end: endDate })
     }, [])
@@ -148,16 +140,15 @@ const SettingsWidget = (props) => {
                 const curStartMS = isCycles ? startMS / (60.0 / 1000.0) : startMS
                 const curEndMS = isCycles ? endMS / (60.0 / 1000.0) : endMS
                 const newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
-                const endOffset = curEndMS - (endTime - originalStartTime)
-                const newEndTime = isSinceInception ? endTime + endOffset + inceptionOffset : endTime + endOffset
+                const endOffset = curEndMS - (data.Context.EndTime - originalStartTime)
+                const newEndTime = isSinceInception ? data.Context.EndTime + endOffset + inceptionOffset : data.Context.EndTime + endOffset
 
 
-                if (newStartTime !== startTime && timeSinceChanged)
-                    dispatch(SetTimeLimit({ start: newStartTime, end: endTime }));
+                if (newStartTime !== data.Context.StartTime && timeSinceChanged)
+                    dataDispatch.Dispatch.current.SetTimeLimit(newStartTime, data.Context.EndTime);
 
-
-                if (newEndTime !== endTime && timeSinceChanged)
-                    dispatch(SetTimeLimit({ start: startTime, end: newEndTime }));
+                if (newEndTime !== data.Context.EndTime && timeSinceChanged)
+                    dataDispatch.Dispatch.current.SetTimeLimit(data.Context.StartTime, newEndTime);
             }
         }, 1000);
         return () => clearTimeout(timeOutId);
@@ -171,8 +162,8 @@ const SettingsWidget = (props) => {
             if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
                 const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
                 const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
-                const newStartMS = isSinceInception ? startTime - originalStartTime - inceptionOffset : startTime - originalStartTime
-                const newEndMS = isSinceInception ? endTime - originalStartTime - inceptionOffset : endTime - originalStartTime
+                const newStartMS = isSinceInception ? data.Context.StartTime - originalStartTime - inceptionOffset : data.Context.StartTime - originalStartTime
+                const newEndMS = isSinceInception ? data.Context.EndTime - originalStartTime - inceptionOffset : data.Context.EndTime - originalStartTime
 
                 if (isCycles) {
                     const newStartCycles = newStartMS * 60.0 / 1000.0
@@ -194,7 +185,7 @@ const SettingsWidget = (props) => {
 
         }, 1000);
         return () => clearTimeout(timeOutId);
-    }, [startTime, endTime, timeUnit]);
+    }, [data.Context.StartTime, data.Context.EndTime, timeUnit]);
 
 
     //Effect to update start and end time whenever formattedTime changes
@@ -202,9 +193,9 @@ const SettingsWidget = (props) => {
         const newStart = currentDate.start.getTime();
         const newEnd = currentDate.end.getTime();
 
-        if (newEnd - newStart !== endTime - startTime && valid && !defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since")) {
+        if (newEnd - newStart !== data.Context.EndTime - data.Context.StartTime && valid && !defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since")) {
             const timeOutId = setTimeout(() => {
-                dispatch(SetTimeLimit({ start: newStart, end: newEnd }));
+                dataDispatch.Dispatch.current.SetTimeLimit(newStart, newEnd);
             }, 1000);
 
             return () => clearTimeout(timeOutId);
@@ -373,7 +364,7 @@ const SettingsWidget = (props) => {
                         </div>
                     </div>
 
-                    {plotKeys.filter(key => key.EventId === evtID || key.EventId === -1).map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
+                    {plotKeys.filter(key => key.EventId === evt.Context.EventID || key.EventId === -1).map((item, index) => <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />)}
 
                 </div>
             </div>
@@ -448,25 +439,23 @@ interface ILimits {
 const PlotCard = (props: ICardProps) => {
     const dispatch = useAppDispatch();
 
-    const MemoSelectYlimits = React.useMemo(() => SelectYLimits(props), [props]);
-    const yLimits = useAppSelector(MemoSelectYlimits);
-
-    const MemoSelectOverLappingYLimits = React.useMemo(() => SelectOverlappingYLimits(props.DataType), [props]);
-    const overlappingYLimits = useAppSelector(MemoSelectOverLappingYLimits);
-
-    const MemoSelectData = React.useMemo(() => SelectData(props), []);
-    const lineData = useAppSelector(MemoSelectData);
-
     const singlePlot = useAppSelector(SelectSinglePlot);
-    const axisSettings = useAppSelector(SelectAxisSettings(props));
     const colors = useAppSelector(SelectColor);
 
-    const overlappingKeys = useAppSelector(SelectOverlappingEvents(props.DataType));
     const overlapWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
-    const isManual = useAppSelector(SelectIsManual(props));
-    const isOverlappingManual = useAppSelector(SelectIsOverlappingManual(props.DataType));
-    const isOverlappingAuto = useAppSelector(SelectOverlappingAutoUnits(props.DataType));
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
+    const evt = React.useContext(EventContext);
+
+    const isManual = data.Selector.current.SelectIsManual(props);
+    const isOverlappingManual = data.Selector.current.SelectIsOverlappingManual(props.DataType);
+    const isOverlappingAuto = data.Selector.current.SelectOverlappingAutoUnits(props.DataType);
+    const axisSettings = data.Selector.current.SelectAxisSettings(props);
+    const lineData = React.useMemo(() => data.Selector.current.SelectData(props), []);
+    const overlappingKeys = data.Selector.current.SelectOverlappingEvents(props.DataType);
+    const yLimits = React.useMemo(() => data.Selector.current.SelectYLimits(props), [props]);
+    const overlappingYLimits = React.useMemo(() => data.Selector.current.SelectOverlappingYLimits(props.DataType), [props]);
 
     const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits>>(null);
     const [overlappingLimits, setOverlappingLimits] = React.useState<OpenSee.IGraphCollection<ILimits>>(null)
@@ -475,7 +464,7 @@ const PlotCard = (props: ICardProps) => {
 
     const [valid, setValid] = React.useState<boolean>(true)
 
-    const autoUnits = useAppSelector(SelectAutoUnits(props));
+    const autoUnits = data.Selector.current.SelectAutoUnits(props);
 
     let colorSettings: OpenSee.Color[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
     let unitSettings: OpenSee.Unit[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
@@ -485,8 +474,8 @@ const PlotCard = (props: ICardProps) => {
             const timeOutId = setTimeout(() => {
 
                 if (limitsPayload.limits[0] < limitsPayload.limits[1]) {
-                    setValid(true)
-                    dispatch(SetManualLimits(limitsPayload))
+                    setValid(true);
+                    dataDispatch.Dispatch.current.SetManualLimits(limitsPayload.limits, limitsPayload.key, limitsPayload.axis, limitsPayload.auto, limitsPayload.factor);
                 }
                 else
                     setValid(false)
@@ -515,7 +504,7 @@ const PlotCard = (props: ICardProps) => {
             auto = true
         else
             auto = false
-        dispatch(SetUnit({ unit: unit, value: index, auto: auto, key: key }))
+        dataDispatch.Dispatch.current.SetUnit(unit, index, auto, key);
     }
 
     const getLabel = (unit: OpenSee.Unit, key?: OpenSee.IGraphProps) => {
@@ -605,11 +594,11 @@ const PlotCard = (props: ICardProps) => {
                                         <AxisUnitSelector label={item as string} setter={(index) => handleUnitChange(item, index, props)} unitType={item} axisSetting={axisSettings[item]} />
                                     </div>
                                     <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={!isManual[item]} onChange={(e) => dispatch(SetIsManual({ key: props, unit: item, manual: !e.target.checked }))} />
+                                        <input className="form-check-input" type="radio" checked={!isManual[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, !e.target.checked)} />
                                         <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
                                     </div>
                                     <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={isManual[item]} onChange={(e) => dispatch(SetIsManual({ key: props, unit: item, manual: e.target.checked }))} />
+                                        <input className="form-check-input" type="radio" checked={isManual[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, e.target.checked)} />
                                         <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
                                     </div>
                                 </div>
@@ -645,11 +634,11 @@ const PlotCard = (props: ICardProps) => {
                                                 <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
                                             </div>
                                             <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={!isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dispatch(SetIsManual({ key: key, unit: item, manual: !e.target.checked }))} />
+                                                <input className="form-check-input" type="radio" checked={!isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, !e.target.checked)} />
                                                 <label className="form-check-label" style={{ fontSize: '0.8rem', }}>Auto Limits</label>
                                             </div>
                                             <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dispatch(SetIsManual({ key: key, unit: item, manual: e.target.checked }))} />
+                                                <input className="form-check-input" type="radio" checked={isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, e.target.checked)} />
                                                 <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
                                             </div>
 

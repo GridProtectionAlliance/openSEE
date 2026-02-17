@@ -24,14 +24,16 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { SelectSelectedPoints, SelectStartTime, RemoveSelectPoints, ClearSelectPoints } from '../store/dataSlice';
 import { SelectColor } from '../store/settingSlice'
 import { useAppDispatch, useAppSelector } from '../hooks';
+import { DataContext, DataFunctionContext } from '../Context/DataContext';
 
 
 const PointWidget = () => {
-    const points = useAppSelector(SelectSelectedPoints);
-    const startTime = useAppSelector(SelectStartTime);
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
+
+    const points = data.Selector.current.SelectSelectedPoints();
     const dispatch = useAppDispatch();
     const colors = useAppSelector(SelectColor);
     const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
@@ -76,7 +78,7 @@ const PointWidget = () => {
                                 {points[0]?.Value?.map((p, i) => (
                                     <td key={i} style={{ maxHeight: 100, backgroundColor: (selectedIndex == i ? 'yellow' : 'white'), zIndex: 100, textAlign: 'center', verticalAlign: 'middle' }}>
                                         <span>
-                                            {(p[0] - startTime).toFixed(7)} sec<hr />{((p[0] - startTime) * 60.0).toFixed(2)} cycles
+                                            {(p[0] - data.Context.StartTime).toFixed(7)} sec<hr />{((p[0] - data.Context.StartTime) * 60.0).toFixed(2)} cycles
                                         </span>
                                     </td>
                                 ))}
@@ -115,9 +117,9 @@ const PointWidget = () => {
                     </table>
                 </div>
                 <div style={{ height: '7%' }}>
-                    <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dispatch(RemoveSelectPoints(selectedIndex)); setSelectedIndex(-1) }} />
-                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dispatch(RemoveSelectPoints(points[0].Value.length - 1))} />
-                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { dispatch(ClearSelectPoints()); setSelectedIndex(-1) }} />
+                    <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dataDispatch.Dispatch.current.RemoveSelectPoints(selectedIndex); setSelectedIndex(-1) }} />
+                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dataDispatch.Dispatch.current.RemoveSelectPoints(points[0].Value.length - 1)} />
+                    <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { dataDispatch.Dispatch.current.ClearSelectPoints(); setSelectedIndex(-1) }} />
                 </div>
             </div>
         </>
