@@ -459,6 +459,7 @@ namespace OpenSEE
                 returnDict.Add("AssetName", theEvent.AssetName);
                 returnDict.Add("EventName", theEvent.EventTypeName);
                 returnDict.Add("EventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
+                returnDict.Add("EventEnd", theEvent.EndTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
                 returnDict.Add("Date", theEvent.StartTime.ToShortDateString());
                 returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));

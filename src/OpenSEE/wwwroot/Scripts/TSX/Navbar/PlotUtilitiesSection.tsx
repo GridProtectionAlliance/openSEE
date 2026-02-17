@@ -31,6 +31,7 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../store/settingSlice';
 import Navigation from './Navigation';
 import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import EventContext from '../Context/EventContext';
 
 interface IPlotUtilities {
     hover: OpenSee.Hover,
@@ -45,6 +46,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
     const dispatch = useAppDispatch();
 
     const data = React.useContext(DataContext);
+    const evt = React.useContext(EventContext);
     const dataDispatch = React.useContext(DataFunctionContext);
 
     const mouseMode = useAppSelector(SelectMouseMode);
@@ -115,7 +117,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                     {/*reset*/}
                     <button className="btn btn-primary" style={{ padding: '0.195rem' }}
                         onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom"
-                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(eventStartTime + "Z").getTime(), new Date(eventEndTime + "Z").getTime())}
+                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(evt.Context.EventInfo.EventDate + "Z").getTime(), new Date(evt.Context.EventInfo.EventEnd + "Z").getTime())}
                     >
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>

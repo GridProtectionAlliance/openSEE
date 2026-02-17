@@ -101,6 +101,7 @@ export namespace OpenSee {
         AssetName: string,
         EventName: string,
         EventDate: string,
+        EventEnd: string,
         SystemFrequency: string,
         MeterId: string,
         EventMilliseconds: number,
