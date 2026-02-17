@@ -25,7 +25,8 @@ import * as React from 'react';
 import { useAppSelector } from '../hooks';
 
 interface Iprops {
-    EventID: number
+    EventID: number,
+    ExportCallback: (arg: string) => void
 }
 
 const HarmonicStatsWidget = (props: Iprops) => {
@@ -45,7 +46,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
             let rows = [];
             rows.push(
                 <tr>
-                    <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.exportCallback('harmonics')}>Export</button></th>
+                    <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.ExportCallback('harmonics')}>Export</button></th>
                     {data.map((key, i) => <th colSpan={2} scope='colgroup' key={i}>{key.Channel}</th>)}
                 </tr>)
 

@@ -182,11 +182,10 @@ const OpenSeeApplication = React.memo(() => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
     };
 
-    /*
     function exportData(type) {
-        const fftTime = useAppSelector(SelectFFTLimits);
-        const showPlots = useAppSelector(SelectDisplayed);
-        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${eventId}` +
+        const fftTime = data.Context.FftLimits;
+        const showPlots = data.Selector.current.SelectDisplayed();
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
@@ -194,11 +193,10 @@ const OpenSeeApplication = React.memo(() => {
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
-            `&Meter=${evt.EventInfo.MeterName}` +
-            `&EventType=${evt.EventInfo.MeterName}`;
+            `&Meter=${evt.Context.EventInfo.MeterName}` +
+            `&EventType=${evt.Context.EventInfo.MeterName}`;
         window.open(uri, "_blank");
     }
-    */
 
     function DispatchQuery(argQuery: string, intial: boolean) {
         // Fields for this aren't type checked, do due diligience before using a field
@@ -396,12 +394,12 @@ const OpenSeeApplication = React.memo(() => {
 
                 <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
-                    <ScalarStatsWidget EventID={evt.Context.EventID} />
+                    <ScalarStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
-                    <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} />
+                    <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
@@ -421,7 +419,7 @@ const OpenSeeApplication = React.memo(() => {
 
                 <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
-                    <HarmonicStatsWidget EventID={evt.Context.EventID} />
+                    <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
                 </SplitDrawer>
 
                 <SplitSection MinWidth={70} MaxWidth={100} Width={100}>

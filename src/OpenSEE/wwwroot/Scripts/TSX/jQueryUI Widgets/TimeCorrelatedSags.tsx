@@ -25,7 +25,8 @@ import * as React from 'react';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
-    EventID: number
+    EventID: number,
+    ExportCallback: (arg: string) => void
 }
 
 interface ICorrelatedSags {
@@ -148,7 +149,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                             AllowSort={false}
                             RowStyle={{ width: 0 }}
                         >
-                            <button className="btn btn-primary" onClick={() => props.exportCallback('correlatedsags')}>Export(csv)</button>
+                            <button className="btn btn-primary" onClick={() => props.ExportCallback('correlatedsags')}>Export(csv)</button>
                         </Column>
                     </ConfigurableTable>
                 </div>

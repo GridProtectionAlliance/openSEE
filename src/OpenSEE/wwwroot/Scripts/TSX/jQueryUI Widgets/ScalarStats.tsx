@@ -32,7 +32,8 @@ interface IEventData {
 }
 
 interface Iprops {
-    EventID: number
+    EventID: number,
+    ExportCallback: (arg: string) => void
 }
 
 const ScalarStatsWidget = (props: Iprops) => {
@@ -91,7 +92,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                         <Column<IEventData>
                             Key={'Export'}
                             AllowSort={false}>
-                            <button className="btn btn-primary" onClick={() => props.exportCallback('stats')}>Export(csv)</button>
+                            <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
                         </Column>
                     </Table>
                 </div>
