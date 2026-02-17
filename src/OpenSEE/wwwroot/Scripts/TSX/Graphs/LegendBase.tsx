@@ -25,11 +25,11 @@
 import * as React from "react";
 import { OpenSee } from '../global';
 import { cloneDeep } from "lodash";
-import { SelectData, SelectEnabled, EnableTrace } from "../store/dataSlice";
 import { SelectColor } from "../store/settingSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
 import { MultiCheckBoxSelect, StylableSelect } from "@gpa-gemstone/react-forms";
+import { DataContext, DataFunctionContext } from "../Context/DataContext";
 
 const hrow = 26;
 
@@ -58,11 +58,11 @@ const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.', 'V', 'I'];
 const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero', 'S0/S1', 'S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
 
 const Legend = (props: iProps) => {
-    const MemoSelectData = React.useMemo(() => SelectData(props.dataKey), []);
-    const MemoSelectEnabled = React.useMemo(() => SelectEnabled(props.dataKey), []);
+    const data = React.useContext(DataContext);
+    const dataDispatch = React.useContext(DataFunctionContext);
+    const dataPoints = React.useMemo(() => data.Selector.current.SelectData(props.dataKey), []);
+    const enabled = React.useMemo(() => data.Selector.current.SelectEnabled(props.dataKey), []);
 
-    const data = useAppSelector(MemoSelectData);
-    const enabled = useAppSelector(MemoSelectEnabled)
     const dispatch = useAppDispatch();
 
     const [categories, setCategories] = React.useState<Array<ICategory>>([]);
@@ -93,7 +93,7 @@ const Legend = (props: iProps) => {
         let categories: Array<ICategory> = [];
         let grid: Array<ILegendGrid> = [];
 
-        data?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
+        dataPoints?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
             let index = categories.findIndex(category => category.Label === item.LegendGroup);
             if (index === -1) {
                 categories.push({ Value: 0, Label: item.LegendGroup, Selected: false });
@@ -131,7 +131,7 @@ const Legend = (props: iProps) => {
     function update() {
         let updateGrid: Map<string, ILegendGrid[]> = cloneDeep(grid);
 
-        data?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
+        dataPoints?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
 
             let index = item.LegendVertical + item.LegendVGroup;
             if (!updateGrid.has(index)) {
@@ -235,7 +235,7 @@ const Legend = (props: iProps) => {
                         traces = traces.concat(data.traces.get(item.Label));
                 }));
 
-            dispatch(EnableTrace({ trace: traces, enabled: tmp[index].Selected, key: props.dataKey }));
+            dataDispatch.Dispatch.current.EnableTrace(props.dataKey, traces, tmp[index].Selected);
             return tmp;
         });
     }
@@ -330,9 +330,7 @@ const Legend = (props: iProps) => {
                 });
             }
         }
-
-        dispatch(EnableTrace({ key: props.dataKey, trace: updates, enabled: !isAny }))
-
+        dataDispatch.Dispatch.current.EnableTrace(props.dataKey, updates, !isAny);
     }
     const isScroll = (props.height - 97) < (verticalHeader.length * (2 + hrow));
     return (
@@ -427,7 +425,7 @@ const Row = (props: { category: string, label: string, data: Array<ILegendGrid>,
 
 const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, width: React.CSSProperties, dataKey: OpenSee.IGraphProps }) => {
     const colors = useAppSelector(SelectColor)
-    const dispatch = useAppDispatch();
+    const dataDispatch = React.useContext(DataFunctionContext);
 
     function getColor(color: OpenSee.Color) {
 
@@ -442,7 +440,7 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
                 traces = traces.concat(val);
         })
         props.data.enabled = !props.data.enabled;
-        dispatch(EnableTrace({ key: props.dataKey, trace: traces, enabled: props.data.enabled }));
+        dataDispatch.Dispatch.current.EnableTrace(props.dataKey, traces, props.data.enabled);
     }
 
     return (
