@@ -30,7 +30,7 @@ import { AppendRequest } from "../Data/RequestHandler";
 
 namespace DataContextFunctions {
     /* Functions to Update Context objects */
-    export function UpdateTimeLimit(context: OpenSee.IDataContextType, start: number, end: number): void {
+    export function UpdateTimeLimit(context: OpenSee.IDataContext, start: number, end: number): void {
         if (Math.abs(start - end) < 10)
             return;
 
@@ -45,7 +45,7 @@ namespace DataContextFunctions {
         });
     }
 
-    export function UpdateCycleLimits(context: OpenSee.IDataContextType, start: number, end: number): void {
+    export function UpdateCycleLimits(context: OpenSee.IDataContext, start: number, end: number): void {
         if (Math.abs(start - end) < 5)
             return;
 
@@ -55,7 +55,7 @@ namespace DataContextFunctions {
         updateAutoLimits(context.Plots[plotIndex], start, end);
     }
 
-    export function UpdateFFTLimits(context: OpenSee.IDataContextType, start: number, end: number): void {
+    export function UpdateFFTLimits(context: OpenSee.IDataContext, start: number, end: number): void {
         if (Math.abs(start - end) < 1)
             return;
 
@@ -65,7 +65,7 @@ namespace DataContextFunctions {
         updateAutoLimits(context.Plots[plotIndex], start, end);
     }
 
-    export function AppendData(context: OpenSee.IDataContextType, key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, defaultTraces: OpenSee.IDefaultTrace, defaultV: "L-L" | "L-N", eventID: number): void {
+    export function AppendData(context: OpenSee.IDataContext, key: OpenSee.IGraphProps, data: Array<OpenSee.iD3DataSeries>, defaultTraces: OpenSee.IDefaultTrace, defaultV: "L-L" | "L-N", eventID: number): void {
         let plotIndex = context.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId)
         if (plotIndex < 0)
             return;
@@ -111,7 +111,7 @@ namespace DataContextFunctions {
         }
     }
 
-    export function InitiateDetailed(context: OpenSee.IDataContextType, anayltic: OpenSee.IAnalyticContext, key: OpenSee.IGraphProps): void {
+    export function InitiateDetailed(context: OpenSee.IDataContext, anayltic: OpenSee.IAnalyticContext, key: OpenSee.IGraphProps): void {
         // Append request to request store
         AppendRequest(key, getDetailedData(key, anayltic, (argKey, data) => {
             // Replace data with detailed
@@ -136,7 +136,7 @@ namespace DataContextFunctions {
         }));
     }
 
-    export function AddSingleOverlappingPlot(context: OpenSee.IDataContextType, key: OpenSee.IGraphProps): number {
+    export function AddSingleOverlappingPlot(context: OpenSee.IDataContext, key: OpenSee.IGraphProps): number {
         let overlappingPlotIndex = context.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
         if (overlappingPlotIndex < 0) {
             const newPlot = _.cloneDeep(emptygraph);
@@ -168,7 +168,7 @@ namespace DataContextFunctions {
         } catch { }
     }
 
-    export function saveSettings(state: OpenSee.IDataContextType): void {
+    export function saveSettings(state: OpenSee.IDataContext): void {
         try {
             //lets type currentSettings to prevent errors in future
             const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
