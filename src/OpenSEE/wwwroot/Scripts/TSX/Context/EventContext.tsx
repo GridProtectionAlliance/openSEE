@@ -65,7 +65,9 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
     const context = React.useMemo(() => ({ Dispatch: functionRef, Context: contextState }), [contextState]);
 
     React.useEffect(() => {
-        if (settings.EventID == null || isNaN(settings.EventID) || settings.EventID < 0) return;
+        if (settings == null || settings.EventID == null || isNaN(settings.EventID) || settings.EventID < 0)
+            return;
+
         setContextState(state => ({
             ...state,
             EventID: settings.EventID,
@@ -107,7 +109,7 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
             if (eventHandle?.abort != null) eventHandle.abort();
             if (lookupHandle?.abort != null) lookupHandle.abort();
         }
-    }, [settings.EventID, settings.BreakerOperation]);
+    }, [settings?.EventID, settings?.BreakerOperation]);
 
     return (
         <EventContext.Provider value={context}>
