@@ -105,7 +105,7 @@ const OpenSeeApplication = React.memo(() => {
     const [plotHeight, setPlotHeight] = React.useState<number>(250);
     const [navWidth, setNavWidth] = React.useState<number>(100);
 
-    const queryString = React.useMemo(() => {
+    const queryStr = React.useMemo(() => {
         const overlappingEvts = []
         const plotKeys = _.uniq(data.Context.Plots.map(plot => plot.key));
         const plotQuery: OpenSee.PlotQuery[] = [];
@@ -201,7 +201,7 @@ const OpenSeeApplication = React.memo(() => {
 
     function DispatchQuery(argQuery: string, intial: boolean) {
         // Fields for this aren't type checked, do due diligience before using a field
-        let parsedQuery: OpenSee.Query = queryString.parse(argQuery);
+        let parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
 
         let parsedPlots: OpenSee.PlotQuery[];
         if (parsedQuery?.plots != null) {
@@ -241,12 +241,12 @@ const OpenSeeApplication = React.memo(() => {
 
         //Analytic Query
         const analyticQuery: OpenSee.IAnalyticContext = {
-            Harmonic: ToInt(parsedQuery?.Harmonic) ?? analytic.Harmonic,
-            Trc: ToInt(parsedQuery?.Trc) ?? analytic.Trc,
-            LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? analytic.LPFOrder,
-            HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? analytic.HPFOrder,
-            FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? analytic.FFTCycles,
-            FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? analytic.Harmonic
+            Harmonic: ToInt(parsedQuery?.Harmonic),
+            Trc: ToInt(parsedQuery?.Trc),
+            LPFOrder: ToInt(parsedQuery?.LPFOrder),
+            HPFOrder: ToInt(parsedQuery?.HPFOrder),
+            FFTCycles: ToInt(parsedQuery?.FFTCycles),
+            FFTStartTime: ToFloat(parsedQuery.FFTStartTime)
         };
         if (!_.isEqual(analytic, analyticQuery))
             setAnalytic(queryStringToNums(analyticQuery));
@@ -323,8 +323,8 @@ const OpenSeeApplication = React.memo(() => {
         const evStart = query['eventStartTime'] ?? defaultEventStartTime;
         const evEnd = query['eventEndTime'] ?? defaultEventEndTime;
 
-        const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
-        const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
+        const startTime = (query['startTime'] != undefined ? parseInt(query['startTime'] as string) : new Date(evStart + "Z").getTime());
+        const endTime = (query['endTime'] != undefined ? parseInt(query['endTime'] as string) : new Date(evEnd + "Z").getTime());
 
         dataDispatch.Dispatch.current.SetTimeLimit(startTime, endTime);
         setAnalytic(a => ({ ...a, FFTStartTime: startTime }));
@@ -339,11 +339,11 @@ const OpenSeeApplication = React.memo(() => {
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
-            history.current['push'](`?${queryString}`);
+            history.current['push'](`?${queryStr}`);
         }, 1000);
 
         return () => clearTimeout(timeoutId);
-    }, [queryString]);
+    }, [queryStr]);
 
     // Tooltip effects
     React.useEffect(() => {
@@ -356,7 +356,7 @@ const OpenSeeApplication = React.memo(() => {
 
     return (
         <Application
-            HomePath={""}
+            HomePath={homePath}
             DefaultPath={""}
             HideSideBar={true}
             Version={version}
