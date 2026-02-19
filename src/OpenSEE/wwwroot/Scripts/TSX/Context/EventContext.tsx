@@ -90,7 +90,7 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
             cache: true,
             async: true
         });
-        Promise.all([lookupHandle, eventHandle]).then(([evtResult, lookupResult]) => {
+        Promise.all([eventHandle, lookupHandle]).then(([evtResult, lookupResult]) => {
             setContextState({
                 Status: 'idle',
                 EventID: settings.EventID,
