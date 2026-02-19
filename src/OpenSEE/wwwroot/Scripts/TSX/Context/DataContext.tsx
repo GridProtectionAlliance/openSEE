@@ -345,7 +345,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         const plot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
         if (plot) {
             Object.keys(plot.yLimits).forEach(unit => {
-                let short = defaultSettings.Units[unit].options[plot.yLimits[unit].current].short
+                let short = defaultSettings.Units[unit].options?.[plot.yLimits[unit].current]?.short
                 if (short === undefined)
                     short = "N/A"
 
