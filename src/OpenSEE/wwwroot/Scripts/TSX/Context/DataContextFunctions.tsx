@@ -214,7 +214,7 @@ namespace DataContextFunctions {
     /* Functions that deal with individual plots */
     export function updateAutoLimits(plot: OpenSee.IGraphstate, startTime: number, endTime: number): void {
         //only update limits once there is data loaded
-        if (plot?.data?.length <= 0)
+        if (plot?.data == null || plot.data.length === 0)
             return;
 
         const RelevantAxis = _.uniq(plot.data.map(s => s.Unit));
