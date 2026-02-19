@@ -76,6 +76,9 @@
     <script>
         var homePath = '@Html.Raw(Url.Content("~/"))';
         var version = '@applicationVersion';
+        var defaultEventID = @Html.Raw(ViewBag.DefaultEventID);
+        var defaultEventStartTime = '@Html.Raw(ViewBag.DefaultEventStartTime)';
+        var defaultEventEndTime = '@Html.Raw(ViewBag.DefaultEventEndTime)';
     </script>
 
     @*@Scripts.Render("~/Scripts/OpenSEE")*@

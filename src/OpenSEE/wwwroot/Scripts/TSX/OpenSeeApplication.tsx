@@ -35,6 +35,7 @@ import * as React from 'react';
 import AnalyticOptions from './Components/AnalyticOptions';
 import OverlappingEventWindow from './Components/OverlappingEvents';
 import AnalyticContext from './Context/AnalyticContext';
+import queryString from 'querystring';
 import { DataContext, DataFunctionContext } from './Context/DataContext';
 import { EventContext } from './Context/EventContext';
 import BarChart from './Graphs/BarChartBase';
@@ -223,8 +224,14 @@ const OpenSeeApplication = React.memo(() => {
 
         //Set EventID
         const parsedEventID = ToInt(parsedQuery?.eventID);
-        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID)
+        let usedEventID: number;
+        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID) {
             evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
+            usedEventID = parsedEventID;
+        } else if (intial) {
+            evt.Dispatch.current.SettingsDispatch({ EventID: defaultEventID });
+            usedEventID = defaultEventID;
+        }
 
         //Set TimeLimit
         const parsedStart = ToFloat(parsedQuery?.startTime);
@@ -246,8 +253,8 @@ const OpenSeeApplication = React.memo(() => {
 
         // On initial load, add default plots (Voltage and Current) if there is none provided via query
         if (intial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
-            dataDispatch.Dispatch.current.AddPlot({ EventId: evt.Context.EventID, DataType: "Voltage" });
-            dataDispatch.Dispatch.current.AddPlot({ EventId: evt.Context.EventID, DataType: "Current" });
+            dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Voltage" });
+            dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Current" });
         }
         //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort, however this would more than likely require us compressing the queryString / reducing number of plots in queryString
         else if (parsedPlots?.length > 0) {
@@ -313,17 +320,14 @@ const OpenSeeApplication = React.memo(() => {
     // Query string Effects
     React.useEffect(() => {
         const query = queryString.parse(history.current['location'].search);
-        // ToDo: Make sure these three are ALWAYS in uri via controller (along with event id) or do a reset after event info fetch
-        const evStart = query['eventStartTime'];
-        const evEnd = query['eventEndTime'];
+        const evStart = query['eventStartTime'] ?? defaultEventStartTime;
+        const evEnd = query['eventEndTime'] ?? defaultEventEndTime;
 
         const startTime = (query['startTime'] != undefined ? parseInt(query['startTime']) : new Date(evStart + "Z").getTime());
         const endTime = (query['endTime'] != undefined ? parseInt(query['endTime']) : new Date(evEnd + "Z").getTime());
 
         dataDispatch.Dispatch.current.SetTimeLimit(startTime, endTime);
         setAnalytic(a => ({ ...a, FFTStartTime: startTime }));
-
-
         DispatchQuery(history.current['location'].search, true);
 
         history.current['listen'](location => {

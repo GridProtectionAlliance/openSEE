@@ -21,8 +21,12 @@
 //
 //******************************************************************************************************
 
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Data.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using openXDA.Model;
 
 namespace OpenSEE.Controllers
 {
@@ -32,6 +36,24 @@ namespace OpenSEE.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        public IActionResult Index() =>  View("Index");
+        // This provides some default values for if nothing is supplied in the query string
+        public IActionResult Index()
+        {
+            int eventID = -1;
+            Event evt;
+
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
+            {
+                TableOperations<Event> eventTable = new TableOperations<Event>(connection);
+
+                eventID = eventTable.QueryRecord("ID > 0").ID;
+                evt = eventTable.QueryRecordWhere("ID = {0}", eventID);
+
+                ViewBag.DefaultEventID = eventID;
+                ViewBag.DefaultEventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+                ViewBag.DefaultEventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+                return View("Index");
+            }
+        }
     }
 }
