@@ -952,12 +952,12 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             // Set fields based on arguements
             if (yLimits)
                 Object.keys(yLimits).forEach(unit => {
-                    updatedContext[plotIndex].yLimits[unit] = yLimits[unit]
+                    updatedContext.Plots[plotIndex].yLimits[unit] = yLimits[unit]
                 });
             if (isZoomed !== undefined)
-                updatedContext[plotIndex].isZoomed = isZoomed;
-            updatedContext[plotIndex].key = key;
-            updatedContext[plotIndex].loading = 'Loading';
+                updatedContext.Plots[plotIndex].isZoomed = isZoomed;
+            updatedContext.Plots[plotIndex].key = key;
+            updatedContext.Plots[plotIndex].loading = 'Loading';
 
             // Add/deal with overlapping plot if needed
             let overlappingPlotIndex = -1;
@@ -1021,7 +1021,8 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 const updatedContext = _.cloneDeep(c);
                 const plotIndex = updatedContext.Plots.findIndex(item => item.key.DataType == key.DataType && item.key.EventId == key.EventId);
                 const overlappingPlotIndex = updatedContext.Plots.findIndex(plot => plot.key.EventId === -1 && plot.key.DataType === key.DataType);
-                updatedContext.Plots[plotIndex].loading = 'Error';
+                if (plotIndex > -1)
+                    updatedContext.Plots[plotIndex].loading = 'Error';
                 if (overlappingPlotIndex > -1)
                     updatedContext.Plots[overlappingPlotIndex].loading = 'Error';
                 return updatedContext;
@@ -1078,6 +1079,9 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
     }, [contextState]);
 
     const UpdateAnalyticPlot = (key: OpenSee.IGraphProps): void => {
+        if (contextState.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId) < 0)
+            return;
+
         setContextState(c => {
             // No plot matches
             const plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
@@ -1118,14 +1122,13 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 const updatedContext = _.cloneDeep(c);
                 const plotIndex = updatedContext.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
                 updatedContext.Plots[plotIndex].loading = 'Idle';
-                setContextState(updatedContext);
                 return updatedContext;
             }),
             () => setContextState(c => {
                 const updatedContext = _.cloneDeep(c);
                 const plotIndex = updatedContext.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
-                updatedContext.Plots[plotIndex].loading = 'Error';
-                setContextState(updatedContext);
+                if (plotIndex > -1)
+                    updatedContext.Plots[plotIndex].loading = 'Error';
                 return updatedContext;
             })
         );
@@ -1152,8 +1155,11 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
     // If analytic changes, we need to refetch
     React.useEffect(() => {
+        if (evt.Context.EventID < 0)
+            return;
+
         Object.keys(analytic).forEach((key: keyof OpenSee.IAnalyticContext) => {
-            if (oldAnalyticRef.current?.[key] == null || oldAnalyticRef.current[key] != analytic[key]) {
+            if (analytic[key] != null && oldAnalyticRef.current?.[key] == null || oldAnalyticRef.current[key] != analytic[key]) {
                 let keyAnalytic: OpenSee.graphType;
                 //ToDo: This can probably be moved to analytic context...
                 switch (key) {
@@ -1183,10 +1189,11 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                     selectedIds.forEach(id =>
                         UpdateAnalyticPlot({ DataType: keyAnalytic, EventId: id })
                     );
+                    oldAnalyticRef.current[key] = analytic[key];
                 }
             } 
         });
-    }, [analytic]);
+    }, [analytic, evt.Context.EventID]);
 
     // If eventID changes, we need to reload overlapping events
     React.useEffect(() => {
