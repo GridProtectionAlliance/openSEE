@@ -360,7 +360,7 @@ const OpenSeeApplication = React.memo(() => {
             DefaultPath={""}
             HideSideBar={true}
             Version={version}
-            Logo={`${homePath}Images/openSEE.jpg`}
+            Logo={`${homePath}Images/openSEE.png`}
             NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
             UseLegacyNavigation={true}
             ref={applicationRef}
