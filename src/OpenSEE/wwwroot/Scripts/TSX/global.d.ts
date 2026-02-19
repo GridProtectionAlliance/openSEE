@@ -26,6 +26,9 @@
 declare global {
     var homePath: string;
     var version: string;
+    var defaultEventID: number;
+    var defaultEventStartTime: string;
+    var defaultEventEndTime: string;
 }
 
 export namespace OpenSee {
