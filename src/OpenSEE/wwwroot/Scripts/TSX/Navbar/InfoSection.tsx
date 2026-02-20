@@ -28,58 +28,57 @@ import { OpenSee } from "../global";
 import EventContext from '../Context/EventContext';
 
 interface InfoSectionProps {
-    hover: OpenSee.Hover,
-    setHover: (hover: OpenSee.Hover) => void,
     width: number
 }
 
 const InfoSection = (props: InfoSectionProps) => {
     const evt = React.useContext(EventContext);
+    const [hover, setHover] = React.useState<string>('None');
 
     return (
         <>
             <div className="d-none d-xl-block col-xl-4">
                 <ul className="navbar-nav navbar-expand">
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Meter')} onMouseLeave={() => props.setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
+                    <li className="nav-item" onMouseEnter={() => setHover('Meter')} onMouseLeave={() => setHover('None')} data-tooltip={'meter'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}> {evt.Context.EventInfo?.MeterName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
+                        <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
                             <p>{evt.Context.EventInfo?.MeterName}</p>
                         </ToolTip>
                     </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Station')} onMouseLeave={() => props.setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"
+                    <li className="nav-item" onMouseEnter={() => setHover('Station')} onMouseLeave={() => setHover('None')} data-tooltip={'station'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.StationName}</div>
-                        <ToolTip Show={props.hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
+                        <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
                             <p>{evt.Context.EventInfo?.StationName}</p>
                         </ToolTip>
                     </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('Asset')} onMouseLeave={() => props.setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"
+                    <li className="nav-item" onMouseEnter={() => setHover('Asset')} onMouseLeave={() => setHover('None')} data-tooltip={'asset'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.AssetName?.split(" ")[0]}</div>
-                        <ToolTip Show={props.hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
+                        <ToolTip Show={hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
                             <p>{evt.Context.EventInfo?.AssetName}</p>
                         </ToolTip>
                     </li>
-                    <li className="nav-item" onMouseEnter={() => props.setHover('EType')} onMouseLeave={() => props.setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"
+                    <li className="nav-item" onMouseEnter={() => setHover('EType')} onMouseLeave={() => setHover('None')} data-tooltip={'etype'} data-toggle="tooltip" data-placement="bottom"
                         style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
                         <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
                         <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.EventName}</div>
-                        <ToolTip Show={props.hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
+                        <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
                             <p>{evt.Context.EventInfo?.EventName}</p>
                         </ToolTip>
                     </li>
                     {props.width > 1695 ?
-                        <li className="nav-item" onMouseEnter={() => props.setHover('EInception')} onMouseLeave={() => props.setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"
+                        <li className="nav-item" onMouseEnter={() => setHover('EInception')} onMouseLeave={() => setHover('None')} data-tooltip={'einception'} data-toggle="tooltip" data-placement="bottom"
                             style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}>
                             <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
                             <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                             </div>
-                            <ToolTip Show={props.hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
+                            <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
                                 <p>{moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
                             </ToolTip>
                         </li> : null}

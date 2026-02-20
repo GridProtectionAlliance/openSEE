@@ -41,7 +41,6 @@ const OpenSeeNavBar = (props: IProps) => {
     const mouseMode = useAppSelector(SelectMouseMode);
 
     const [showAbout, setShowAbout] = React.useState<boolean>(false);
-    const [hover, setHover] = React.useState<OpenSee.Hover>('None');
 
     React.useEffect(() => {
         if (props.OpenDrawers.AccumulatedPoints) {
@@ -57,30 +56,40 @@ const OpenSeeNavBar = (props: IProps) => {
 
     return (
         <>
-            <InfoSection hover={hover} setHover={(item) => setHover(item)} width={props.Width}/>
+            <InfoSection width={props.Width}/>
             <div className="col-sm-10 col-md-11 col-xl-7">
                 {(props.Width < 1568 && props.Width > 1200) || props.Width < 1050 ?
                     <>
                         {/* Top Section */}
                         <ul className="navbar-nav navbar-expand justify-content-end">
-                            <PlotUtilitiesSection hover={hover} setHover={(item) => setHover(item)} showAbout={showAbout}
-                                setShowAbout={(item) => setShowAbout(item)} OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer}
+                            <PlotUtilitiesSection
+                                showAbout={showAbout}
+                                setShowAbout={(item) => setShowAbout(item)}
+                                OpenDrawers={props.OpenDrawers}
+                                ToggleDrawer={props.ToggleDrawer}
                             />
                         </ul>
                         {/* Bottom section */}
                         <ul className="navbar-nav navbar-expand justify-content-end" style={{marginRight: '105px', marginBottom: '10px'}}>
-                            <WidgetSection hover={hover} setHover={(item) => setHover(item)}
-                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} />
+                            <WidgetSection
+                                OpenDrawers={props.OpenDrawers}
+                                ToggleDrawer={props.ToggleDrawer}
+                            />
                         </ul>
                     </> :
                     <>
                         <ul className="navbar-nav navbar-expand">
                             {/* Left Section */}
-                            <WidgetSection hover={hover} setHover={(item) => setHover(item)}
-                                OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer} />
+                            <WidgetSection 
+                                OpenDrawers={props.OpenDrawers}
+                                ToggleDrawer={props.ToggleDrawer}
+                            />
                             {/* Right section */}
-                            <PlotUtilitiesSection hover={hover} setHover={(item) => setHover(item)} showAbout={showAbout}
-                                setShowAbout={(item) => setShowAbout(item)} OpenDrawers={props.OpenDrawers} ToggleDrawer={props.ToggleDrawer}
+                            <PlotUtilitiesSection
+                                showAbout={showAbout}
+                                setShowAbout={(item) => setShowAbout(item)}
+                                OpenDrawers={props.OpenDrawers}
+                                ToggleDrawer={props.ToggleDrawer}
                             />
                         </ul>
                     </>

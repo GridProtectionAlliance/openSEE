@@ -34,8 +34,6 @@ import { SetMouseMode } from '../store/settingSlice';
 import PlotTable from './PlotTable';
 
 interface IWidgets {
-    hover: OpenSee.Hover,
-    setHover: (hover: OpenSee.Hover) => void,
     OpenDrawers: OpenSee.Drawers,
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void
 }
@@ -46,6 +44,7 @@ const WidgetSection = (props: IWidgets) => {
     const evt = React.useContext(EventContext);
     const [analytic] = React.useContext(AnalyticContext);
     const data = React.useContext(DataContext);
+    const [hover, setHover] = React.useState<string>('None');
 
     const showFFT = data.Selector.current.SelectFFTEnabled();
 
@@ -72,30 +71,18 @@ const WidgetSection = (props: IWidgets) => {
 
     const optionList = [
         {
-            Label: (
-                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                    Export CSV
-                </a>
-            ),
+            Label: "Export CSV",
             Callback: () => exportData('csv')
         },
         {
-            Label: (
-                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                    Export PQDS
-                </a>
-            ),
+            Label: "Export PQDS",
             Callback: () => exportData('pqds')
         }
     ];
 
     if (showFFT)
         optionList.push({
-            Label: (
-                <a className="dropdown-item" style={{ cursor: 'pointer' }} target="_blank">
-                    Export FFT
-                </a>
-            ),
+            Label: "Export FFT",
             Callback: () => exportData('fft')
         });
 
@@ -107,8 +94,8 @@ const WidgetSection = (props: IWidgets) => {
                 <button type="button"
                     className="btn btn-primary"
                     style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Waveform')}
-                    onMouseLeave={() => props.setHover('None')}
+                    onMouseEnter={() => setHover('Waveform')}
+                    onMouseLeave={() => setHover('None')}
                     data-tooltip={'waveform-btn'}
                     data-toggle="dropdown" data-placement="bottom">
                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
@@ -127,38 +114,38 @@ const WidgetSection = (props: IWidgets) => {
                     }}>
                     <PlotTable />
                 </div>
-                <ToolTip Show={props.hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'}>
+                <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'}>
                     <p>Waveform Views</p>
                 </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Show Points')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'points-btn'}
+                    onMouseEnter={() => setHover('Show Points')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints); }}>
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
+                <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
                     <p>Show Points</p>
                 </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Clock')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'phasorclock-btn'}
+                    onMouseEnter={() => setHover('Clock')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart); }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }} >{PhasorClock}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
+                <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
                 </ToolTip>
             </li>
             <li className={"nav-item dropdown"} style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Stat')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'stats-btn'}
+                    onMouseEnter={() => setHover('Stat')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
                     data-placement="bottom">
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{statsIcon}</i>
                 </button>
@@ -172,19 +159,19 @@ const WidgetSection = (props: IWidgets) => {
                         </a>
                         : null}
                 </div>
-                <ToolTip Show={props.hover == 'Stat'} Position={'bottom'} Target={'stats-btn'}>
+                <ToolTip Show={hover == 'Stat'} Position={'bottom'} Target={'stats-btn'}>
                     <p>Stats</p>
                 </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Sags')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'sags-btn'}
+                    onMouseEnter={() => setHover('Sags')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags); }}>
                     < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
+                <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
                     <p>Correlated Sags</p>
                 </ToolTip>
             </li>
@@ -192,24 +179,24 @@ const WidgetSection = (props: IWidgets) => {
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     disabled={!showFFT}
-                    onMouseEnter={() => props.setHover('FFTTable')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'fftTable-btn'}
+                    onMouseEnter={() => setHover('FFTTable')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable) }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{FFT}</i>
                 </button>
-                <ToolTip Show={props.hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
+                <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
                     <p>FFT Table</p>
                 </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Lightning')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'lightning-btn'}
+                    onMouseEnter={() => setHover('Lightning')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning); }}>
                     <i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>
+                <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>
                     <p>Lightning Data</p>
                 </ToolTip>
             </li>
@@ -217,10 +204,10 @@ const WidgetSection = (props: IWidgets) => {
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
                     <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{exportBtn}</i>}
-                        Callback={() => { }}
+                        Callback={() => exportData('csv')}
                         Size={'sm'}
                         Options={optionList}
-                        ShowToolTip={props.hover == "Export"}
+                        ShowToolTip={hover == "Export"}
                         BtnClass={'btn-primary'}
                         TooltipContent={<p>Export</p>}
                     />

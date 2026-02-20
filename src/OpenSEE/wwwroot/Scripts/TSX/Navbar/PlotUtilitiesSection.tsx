@@ -34,8 +34,6 @@ import { DataContext, DataFunctionContext } from '../Context/DataContext';
 import EventContext from '../Context/EventContext';
 
 interface IPlotUtilities {
-    hover: OpenSee.Hover,
-    setHover: (hover: OpenSee.Hover) => void,
     OpenDrawers: OpenSee.Drawers,
     showAbout: boolean,
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
@@ -51,6 +49,8 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
 
     const mouseMode = useAppSelector(SelectMouseMode);
     const showFFT = data.Selector.current.SelectFFTEnabled();
+
+    const [hover, setHover] = React.useState<string>('None');
 
     return (
         <>
@@ -80,24 +80,24 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
 
                     {/*Pan*/}
                     <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
-                        onMouseEnter={() => props.setHover('Pan')}
-                        onMouseLeave={() => props.setHover('None')} data-tooltip={'pan-btn'}
+                        onMouseEnter={() => setHover('Pan')}
+                        onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
                         data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
                         <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
+                    <ToolTip Show={hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
                         <p>Pan</p>
                     </ToolTip>
 
                     { /*Select*/}
                     <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints || props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
                         disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
-                        onMouseEnter={() => props.setHover('Select')}
-                        onMouseLeave={() => props.setHover('None')} data-tooltip={'select-btn'}
+                        onMouseEnter={() => setHover('Select')}
+                        onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
                         data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
                         <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
+                    <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
                         <p>Select</p>
                     </ToolTip>
 
@@ -105,23 +105,23 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                     <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
                         onClick={() => dispatch(SetMouseMode("fftMove"))}
                         disabled={!showFFT}
-                        onMouseEnter={() => props.setHover('FFTMove')}
-                        onMouseLeave={() => props.setHover('None')} data-tooltip={'fftMove-btn'}
+                        onMouseEnter={() => setHover('FFTMove')}
+                        onMouseLeave={() => setHover('None')} data-tooltip={'fftMove-btn'}
                         data-toggle="tooltip" data-placement="bottom">
                         <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
+                    <ToolTip Show={hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
                         <p>FFT Move</p>
                     </ToolTip>
 
                     {/*reset*/}
                     <button className="btn btn-primary" style={{ padding: '0.195rem' }}
-                        onMouseEnter={() => props.setHover('Reset Zoom')} onMouseLeave={() => props.setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom"
+                        onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom"
                         onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(evt.Context.EventInfo.EventDate + "Z").getTime(), new Date(evt.Context.EventInfo.EventEnd + "Z").getTime())}
                     >
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>
-                    <ToolTip Show={props.hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
+                    <ToolTip Show={hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
                         <p>Reset Zoom</p>
                     </ToolTip>
 
@@ -130,27 +130,27 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
 
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
                 <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => props.setHover('Settings')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
+                    onMouseEnter={() => setHover('Settings')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
                     onClick={() => { props.ToggleDrawer('Settings', !props.OpenDrawers.Settings); }}
                 >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Settings'} Position={'bottom'} Target={'settings-btn'}>
+                <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'}>
                     <p>Settings</p>
                 </ToolTip>
             </li>
 
-            <Navigation hover={props.hover} setHover={(item) => props.setHover(item)}/>
+            <Navigation />
 
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
                 <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }}
-                    onMouseEnter={() => props.setHover('Help')}
-                    onMouseLeave={() => props.setHover('None')} data-tooltip={'help-btn'}
+                    onMouseEnter={() => setHover('Help')}
+                    onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => props.setShowAbout(true)}>
                     <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
                 </button>
-                <ToolTip Show={props.hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
+                <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
                     <p>Help</p>
                 </ToolTip>
                 <About isOpen={props.showAbout} closeCallback={() => props.setShowAbout(false)} />
