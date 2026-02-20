@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import { Point } from '@gpa-gemstone/gpa-symbols';
+import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import React from "react";
 import About from '../Components/About';
@@ -57,26 +58,29 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
             <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
                 <div className="btn-group d-flex" role="group">
                     {/*Zoom*/}
-                    <button type="button" className={"btn btn-primary" + (mouseMode == "zoom" ? " active" : "")} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ padding: '0.195rem' }}
-                        onMouseEnter={() => props.setHover('Zoom Mode')} onMouseLeave={() => props.setHover('None')} data-tooltip={'zoom-btn'}
-                        data-placement="bottom" onClick={() => dispatch(SetMouseMode("zoom"))}>
-                        < i style={{ fontStyle: "normal", fontSize: "25px" }} >{Zoom}</i>
-                    </button>
-                    <div className="dropdown-menu" style={{ position: "absolute" }}>
-                        <a key={"option-x"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('x'))} style={{ cursor: 'pointer' }}>
-                            <i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time
-                        </a>
-                        <a key={"option-y"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('y'))} style={{ cursor: 'pointer' }}>
-                            <i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value
-                        </a>
-                        <a key={"option-xy"} className="dropdown-item" onClick={() => dispatch(SetZoomMode('xy'))} style={{ cursor: 'pointer' }}>
-                            <i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle
-                        </a>
-                    </div>
-
-                    <ToolTip Show={props.hover == 'Zoom Mode'} Position={'bottom'} Target={'zoom-btn'}>
-                        <p>Zoom</p>
-                    </ToolTip>
+                    <BtnDropdown
+                        Label={<i style={{ fontStyle: "normal", fontSize: "25px" }}>{Zoom}</i>}
+                        Callback={() => dispatch(SetMouseMode("zoom"))}
+                        Size={'sm'}
+                        Options={[
+                            {
+                                Label: <><i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time</>,
+                                Callback: () => { dispatch(SetZoomMode('x')); dispatch(SetMouseMode("zoom")); }
+                            },
+                            {
+                                Label: <><i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value</>,
+                                Callback: () => { dispatch(SetZoomMode('y')); dispatch(SetMouseMode("zoom")); }
+                            },
+                            {
+                                Label: <><i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle</>,
+                                Callback: () => { dispatch(SetZoomMode('xy')); dispatch(SetMouseMode("zoom")); }
+                            }
+                        ]}
+                        BtnClass={'btn-primary' + (mouseMode == "zoom" ? " active" : "")}
+                        TooltipContent={<p>Zoom</p>}
+                        TooltipLocation={'bottom'}
+                        ShowToolTip={true}
+                    />
 
                     {/*Pan*/}
                     <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
