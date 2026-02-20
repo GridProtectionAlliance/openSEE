@@ -384,12 +384,6 @@ const Legend = (props: iProps) => {
     
 }
 
-const Category = (props: { key: number, label: string, enabled: boolean, onclick: () => void }) => {
-    return (
-        <a className={"dropdown-item " + (props.enabled ? "active" : "")} style={{ overflow: 'hidden', whiteSpace: 'normal', maxWidth: '196px' }} onClick={() => props.onclick()}>{props.label}</a>
-    );
-};
-
 const Header = (props: { index: number, label: string, width: number, onClick: (str: string, type: string) => void }) => {
 
     return (<div key={props.index} style={{ width: props.width, borderLeft: "2px solid #b2b2b2" }}>

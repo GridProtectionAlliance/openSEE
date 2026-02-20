@@ -76,13 +76,13 @@ const LineChart = (props: iProps) => {
 
     const activeUnit = React.useMemo(() => data.Selector.current.SelectActiveUnit(props.dataKey), [props.dataKey]);
 
-    const lineData = React.useMemo(() => data.Selector.current.SelectData(props.dataKey), []);
+    const lineData = React.useMemo(() => data.Selector.current.SelectData(props.dataKey), [data.Context.Plots]);
 
     const relevantUnits = React.useMemo(() => data.Selector.current.SelectRelevantUnits(props.dataKey), []);
 
     const enabledUnits = React.useMemo(() => data.Selector.current.SelectEnabledUnits(props.dataKey), []);
 
-    const enabledLine = React.useMemo(() => data.Selector.current.SelectEnabled(props.dataKey), []);
+    const enabledLine = React.useMemo(() => data.Selector.current.SelectEnabled(props.dataKey), [data.Context.Plots]);
 
     const yLimits = React.useMemo(() => data.Selector.current.SelectYLimits(props.dataKey), [props.dataKey, lineData]);
 

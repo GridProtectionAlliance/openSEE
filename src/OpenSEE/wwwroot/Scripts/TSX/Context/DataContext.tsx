@@ -54,7 +54,7 @@ interface IDataFunctions {
 }
 
 // ToDo: I'm sure we can remove a lot of these, a lot of them are only used in one place...
-// Either that, or move them out and add context as an arguement so we don't need to worry about them in the react state
+// If we need to cache results, use memo in the common parent parent or memoize it in the context after its computed...
 interface ISelectorFunctions {
     SelectOverlappingEvents: (graphType: OpenSee.graphType) => OpenSee.IGraphProps[],
     SelectDisplayed: () => OpenSee.IDisplayed,
