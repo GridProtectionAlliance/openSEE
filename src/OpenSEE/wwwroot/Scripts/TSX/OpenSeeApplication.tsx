@@ -241,12 +241,12 @@ const OpenSeeApplication = React.memo(() => {
 
         //Analytic Query
         const analyticQuery: OpenSee.IAnalyticContext = {
-            Harmonic: ToInt(parsedQuery?.Harmonic),
-            Trc: ToInt(parsedQuery?.Trc),
-            LPFOrder: ToInt(parsedQuery?.LPFOrder),
-            HPFOrder: ToInt(parsedQuery?.HPFOrder),
-            FFTCycles: ToInt(parsedQuery?.FFTCycles),
-            FFTStartTime: ToFloat(parsedQuery.FFTStartTime)
+            Harmonic: ToInt(parsedQuery?.Harmonic) ?? analytic.Harmonic,
+            Trc: ToInt(parsedQuery?.Trc) ?? analytic.Trc,
+            LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? analytic.LPFOrder,
+            HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? analytic.HPFOrder,
+            FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? analytic.FFTCycles,
+            FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? analytic.FFTStartTime
         };
         if (!_.isEqual(analytic, analyticQuery))
             setAnalytic(queryStringToNums(analyticQuery));
