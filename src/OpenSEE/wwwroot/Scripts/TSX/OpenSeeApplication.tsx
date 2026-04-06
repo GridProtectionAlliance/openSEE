@@ -27,7 +27,7 @@
 // # Fix Dowload.ash to include Analytics
 //
 
-import { Application, SplitDrawer, SplitSection, VerticalSplit } from '@gpa-gemstone/react-interactive';
+import { Application, SplitDrawer, SplitSection, VerticalSplit, IApplicationRefs } from '@gpa-gemstone/react-interactive';
 import createHistory from "history/createBrowserHistory";
 import * as _ from "lodash";
 import moment from 'moment';
@@ -35,7 +35,7 @@ import * as React from 'react';
 import AnalyticOptions from './Components/AnalyticOptions';
 import OverlappingEventWindow from './Components/OverlappingEvents';
 import AnalyticContext from './Context/AnalyticContext';
-import queryString from 'querystring';
+import queryString from 'query-string';
 import { DataContext, DataFunctionContext } from './Context/DataContext';
 import { EventContext } from './Context/EventContext';
 import BarChart from './Graphs/BarChartBase';
@@ -63,7 +63,7 @@ const OpenSeeApplication = React.memo(() => {
 
     const history = React.useRef<object>(createHistory());
     const plotRef = React.useRef<HTMLDivElement>(null);
-    const applicationRef = React.useRef(null);
+    const applicationRef = React.useRef<IApplicationRefs>(null);
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
         Settings: () => { },
         AccumulatedPoints: () => { },
@@ -106,7 +106,7 @@ const OpenSeeApplication = React.memo(() => {
     const [navWidth, setNavWidth] = React.useState<number>(100);
 
     const queryStr = React.useMemo(() => {
-        const overlappingEvts = []
+        const overlappingEvts: number[] = []
         const plotKeys = _.uniq(data.Context.Plots.map(plot => plot.key));
         const plotQuery: OpenSee.PlotQuery[] = [];
 
@@ -194,8 +194,8 @@ const OpenSeeApplication = React.memo(() => {
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
             `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
-            `&Meter=${evt.Context.EventInfo.MeterName}` +
-            `&EventType=${evt.Context.EventInfo.MeterName}`;
+            `&Meter=${evt.Context.EventInfo?.MeterName}` +
+            `&EventType=${evt.Context.EventInfo?.MeterName}`;
         window.open(uri, "_blank");
     }
 
@@ -203,13 +203,14 @@ const OpenSeeApplication = React.memo(() => {
         // Fields for this aren't type checked, do due diligience before using a field
         let parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
 
-        let parsedPlots: OpenSee.PlotQuery[];
+        let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
             const plotString = atob(parsedQuery.plots);
             parsedPlots = JSON.parse(plotString);
         }
 
-        let parsedOverlap: number[];
+        //this whole block isnt used leaving for now, but need to figure out why this isnt used before removing
+        let parsedOverlap: number[] = [];
         if (parsedQuery?.overlappingInfo != null) {
             const overlapppingString = atob(parsedQuery.overlappingInfo);
             parsedOverlap = JSON.parse(overlapppingString);
@@ -224,7 +225,7 @@ const OpenSeeApplication = React.memo(() => {
 
         //Set EventID
         const parsedEventID = ToInt(parsedQuery?.eventID);
-        let usedEventID: number;
+        let usedEventID: number = defaultEventID;
         if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID) {
             evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
             usedEventID = parsedEventID;
@@ -248,14 +249,18 @@ const OpenSeeApplication = React.memo(() => {
             FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? analytic.FFTCycles,
             FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? analytic.FFTStartTime
         };
-        if (!_.isEqual(analytic, analyticQuery))
-            setAnalytic(queryStringToNums(analyticQuery));
+
+        const analyticData = queryStringToNums(analyticQuery);
+
+        if (!_.isEqual(analytic, analyticQuery) && analyticData != null)
+            setAnalytic(analyticData);
 
         // On initial load, add default plots (Voltage and Current) if there is none provided via query
         if (intial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
             dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Voltage" });
             dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Current" });
         }
+
         //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort, however this would more than likely require us compressing the queryString / reducing number of plots in queryString
         else if (parsedPlots?.length > 0) {
             parsedPlots.forEach(plot => {
@@ -265,6 +270,20 @@ const OpenSeeApplication = React.memo(() => {
                 const isFFTLimitsEqual = _.isEqual([ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])], data.Context.FftLimits);
                 const isCycleLimitsEqual = _.isEqual([ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])], data.Context.CycleLimits);
 
+                // FFT Limits
+                const fftStart = ToInt(parsedQuery?.FFTLimits?.[0]);
+                const fftEnd = ToInt(parsedQuery?.FFTLimits?.[1]);
+                const fftLimits: [number, number] | undefined =
+                    fftStart != null && fftEnd != null && !isFFTLimitsEqual
+                        ? [fftStart, fftEnd] : undefined;
+
+                // Cycle Limits
+                const cycleStart = ToInt(parsedQuery?.CycleLimits?.[0]);
+                const cycleEnd = ToInt(parsedQuery?.CycleLimits?.[1]);
+                const cycleLimits: [number, number] | undefined =
+                    cycleStart != null && cycleEnd != null && !isCycleLimitsEqual
+                        ? [cycleStart, cycleEnd] : undefined;
+
                 if (plotChange && plot.key.EventId !== -1) {
                     if (parsedSinglePlot ?? false) {
                         const plots = parsedPlots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType);
@@ -272,8 +291,8 @@ const OpenSeeApplication = React.memo(() => {
                             p.key,
                             !isYLimitsEqual ? plot.yLimits : undefined,
                             plot.isZoomed,
-                            !isFFTLimitsEqual ? [ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])] : undefined,
-                            !isCycleLimitsEqual ? [ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])] : undefined
+                            fftLimits,
+                            cycleLimits
                         ));
                     }
                     else {
@@ -281,8 +300,8 @@ const OpenSeeApplication = React.memo(() => {
                             plot.key,
                             !isYLimitsEqual ? plot.yLimits : undefined,
                             plot.isZoomed,
-                            !isFFTLimitsEqual ? [ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])] : undefined,
-                            !isCycleLimitsEqual ? [ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])] : undefined
+                            fftLimits,
+                            cycleLimits
                         );
                     }
                 }
@@ -293,19 +312,19 @@ const OpenSeeApplication = React.memo(() => {
     // Resizing Effects
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (applicationRef.current) {
-                const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
-                const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
-                const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth
-                if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
-                    setPlotHeight(newHeight)
+            if (applicationRef.current == null || applicationRef.current.navBarDiv == null) return;
 
-                if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
-                    setPlotWidth(newWidth);
+            const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
+            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
+            const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth
+            if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
+                setPlotHeight(newHeight)
 
-                if (navWidth !== newNavBarWidth && !isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
-                    setNavWidth(newNavBarWidth)
-            }
+            if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
+                setPlotWidth(newWidth);
+
+            if (navWidth !== newNavBarWidth && !isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
+                setNavWidth(newNavBarWidth)
         }, 100);
         return () => clearTimeout(timeoutId);
     }, [data, openDrawers, resizeCount]);
@@ -458,19 +477,19 @@ const OpenSeeApplication = React.memo(() => {
                                         <div className="row">
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key)).MeterName}
+                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key)).AssetName}
+                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key)).EventType}
+                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                {moment(data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key)).Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                {moment(data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                                             </div>
                                         </div>
                                     </div>

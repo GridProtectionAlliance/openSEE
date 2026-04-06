@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import { OpenSee } from "../global";
+import $ from 'jquery';
 
 const defaultLimits = {
     isManual: false,
@@ -33,7 +34,10 @@ const defaultLimits = {
 } as OpenSee.IAxisSettings;
 
 export const emptygraph: OpenSee.IGraphstate = {
-    key: null,
+    key: {
+        EventId: -1,
+        DataType: 'Voltage',
+    },
     data: [],
     loading: 'Idle',
     isZoomed: false,
@@ -478,7 +482,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
 }
 
 // This function is to get data for overlapping events
-export function getOverlappingEvents(eventID: number, eventStartTime: string, eventEndTime: string): JQuery.jqXHR<any> {
+export function getOverlappingEvents(eventID: number, eventStartTime: string | null, eventEndTime: string | null): JQuery.jqXHR<any> {
 
     let overlappingEventHandle = $.ajax({
         type: "GET",

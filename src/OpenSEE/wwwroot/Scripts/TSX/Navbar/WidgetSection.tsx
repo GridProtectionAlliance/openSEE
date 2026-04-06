@@ -51,7 +51,7 @@ const WidgetSection = (props: IWidgets) => {
     const exportData = (type) => {
         const showPlots = data.Selector.current.SelectDisplayed();
         const analytics = data.Selector.current.SelectAnalytics();
-        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventInfo.EventId}` +
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventInfo?.EventId}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
@@ -64,8 +64,8 @@ const WidgetSection = (props: IWidgets) => {
             `${`&harmonic=${analytic.Harmonic}`}` +
             `${type == 'fft' ? `&startDate=${data.Context.FftLimits[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
-            `&Meter=${evt.Context.EventInfo.MeterName}` +
-            `&EventType=${evt.Context.EventInfo.EventName}`;
+            `&Meter=${evt.Context.EventInfo?.MeterName}` +
+            `&EventType=${evt.Context.EventInfo?.EventName}`;
         window.open(uri, '_blank');
     }
 

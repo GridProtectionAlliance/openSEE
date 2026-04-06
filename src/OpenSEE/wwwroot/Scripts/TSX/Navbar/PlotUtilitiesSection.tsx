@@ -119,9 +119,15 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                     </ToolTip>
 
                     {/*reset*/}
-                    <button className="btn btn-primary" style={{ padding: '0.195rem' }}
-                        onMouseEnter={() => setHover('Reset Zoom')} onMouseLeave={() => setHover('None')} data-tooltip={'reset-btn'} data-toggle="tooltip" data-placement="bottom"
-                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(evt.Context.EventInfo.EventDate + "Z").getTime(), new Date(evt.Context.EventInfo.EventEnd + "Z").getTime())}
+                    <button
+                        className="btn btn-primary"
+                        style={{ padding: '0.195rem' }}
+                        onMouseEnter={() => setHover('Reset Zoom')}
+                        onMouseLeave={() => setHover('None')}
+                        data-tooltip={'reset-btn'}
+                        data-toggle="tooltip"
+                        data-placement="bottom"
+                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(evt.Context.EventInfo?.EventDate + "Z").getTime(), new Date(evt.Context.EventInfo?.EventEnd + "Z").getTime())}
                     >
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>

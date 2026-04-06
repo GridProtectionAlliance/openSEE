@@ -25,7 +25,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import moment = require('moment');
+import moment from 'moment';
 import { SelectColor } from '../store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext'
@@ -42,8 +42,8 @@ const ToolTipDeltaWidget = () => {
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.PrevValue * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{((p.Value - p.PrevValue) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{((p.PrevValue ?? 1) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
+        <td style={{ textAlign: "right" }}><b>{((p.Value - (p.PrevValue ?? 0)) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
     </tr>))
 
 

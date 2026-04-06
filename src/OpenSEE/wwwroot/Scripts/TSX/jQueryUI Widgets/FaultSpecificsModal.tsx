@@ -37,7 +37,7 @@ interface Iprops {
 const FaultSpecificsController = new ReadOnlyControllerFunctions_Gemstone<OpenSee.IFaultSpecifics>(`${homePath}api/openSEE/FaultSpecifics`);
 
 const FaultSpecificsModal = (props: Iprops) => {
-    const [faultSpecifics, setFaultSpecifics] = React.useState<OpenSee.IFaultSpecifics>(null);
+    const [faultSpecifics, setFaultSpecifics] = React.useState<OpenSee.IFaultSpecifics | null>(null);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
 
     React.useEffect(() => {
@@ -66,7 +66,7 @@ const FaultSpecificsModal = (props: Iprops) => {
                 </div> :
                 <></>
             }
-            {status === 'idle' ?
+            {status === 'idle' && faultSpecifics != null ?
                 <div className="col">
                     <div className="row">
                         <div className="col">

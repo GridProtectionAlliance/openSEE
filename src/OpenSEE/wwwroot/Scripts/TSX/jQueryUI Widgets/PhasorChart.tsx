@@ -28,6 +28,7 @@ import DataContext from '../Context/DataContext';
 import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
 import { SelectColor } from '../store/settingSlice';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 
 const PhasorChartWidget = () => {
     const [hover] = React.useContext(HoverContext);
@@ -42,12 +43,8 @@ const PhasorChartWidget = () => {
     const [scaleI, setScaleI] = React.useState<number>(0);
 
     const svgRef = React.useRef(null);
-    const [svgSize, setSvgSize] = React.useState({ width: 0, height: 0 });
+    const {clientWidth, clientHeight} = useGetContainerPosition(svgRef);
 
-    React.useLayoutEffect(() => {
-        if (svgRef.current)
-            setSvgSize({ width: svgRef.current.clientWidth, height: svgRef.current.clientHeight });
-    }, [])
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -55,8 +52,8 @@ const PhasorChartWidget = () => {
             if (!_.isEqual(newAssetList.sort(), AssetList.sort())) {
                 setAssetList(newAssetList);
             }
-            setScaleV(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...VVector.map(item => item.Magnitude)))
-            setScaleI(0.9 * Math.max(svgSize.width / 2, svgSize.height / 2) / Math.max(...IVector.map(item => item.Magnitude)))
+            setScaleV(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...VVector.map(item => item.Magnitude)))
+            setScaleI(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...IVector.map(item => item.Magnitude)))
         }, 100);
 
         return () => clearTimeout(timeoutId);
@@ -65,8 +62,8 @@ const PhasorChartWidget = () => {
     function drawVectorSVG(vec, scale) {
         if (vec.Magnitude === undefined || scale === undefined) return '';
 
-        const centerX = svgSize.width / 2;
-        const centerY = svgSize.height / 2;
+        const centerX = clientWidth / 2;
+        const centerY = clientHeight / 2;
 
         let x = vec.Magnitude * scale * Math.cos(vec.Angle * Math.PI / 180);
         let y = vec.Magnitude * scale * Math.sin(vec.Angle * Math.PI / 180);
@@ -100,17 +97,17 @@ const PhasorChartWidget = () => {
         return "[" + unit.short + "]";
     }).join("  ");
 
-    const radius = (Math.min(svgSize.width, svgSize.height) / 2) - 10;
+    const radius = (Math.min(clientWidth, clientHeight) / 2) - 10;
 
     return (
         <div className="d-flex flex-column" style={{ width: '100%', height: '100%', zIndex: 1001, padding: '10px' }}>
             <div style={{ height: '100%', overflow: 'auto' }}>
                 <div style={{ zIndex: 1001, height: '40%' }}>
                     <svg ref={svgRef} width="100%" height="100%">
-                        <circle cx={svgSize.width / 2} cy={svgSize.height / 2} r={radius / 2.167} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
-                        <circle cx={svgSize.width / 2} cy={svgSize.height / 2} r={radius} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
-                        <line x1="0" y1={svgSize.height / 2} x2={svgSize.width} y2={svgSize.height / 2} style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
-                        <line x1={svgSize.width / 2} y1="0" x2={svgSize.width / 2} y2={svgSize.height} style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
+                        <circle cx={clientWidth / 2} cy={clientHeight / 2} r={radius / 2.167} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
+                        <circle cx={clientWidth / 2} cy={clientHeight / 2} r={radius} stroke="lightgrey" strokeWidth="1" fill='white' fillOpacity="0" />
+                        <line x1="0" y1={clientHeight / 2} x2={clientWidth} y2={clientHeight / 2} style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
+                        <line x1={clientWidth / 2} y1="0" x2={clientWidth / 2} y2={clientHeight} style={{ stroke: 'lightgrey', strokeWidth: 2 }} />
                         {VVector.map((v, i) => <path key={i} d={drawVectorSVG(v, scaleV)} style={{ stroke: colors[v.Color], strokeWidth: 3 }} />)}
                         {IVector.map((v, i) => <path key={i} d={drawVectorSVG(v, scaleI)} style={{ stroke: colors[v.Color], strokeWidth: 3 }} />)}
                     </svg>

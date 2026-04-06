@@ -1,7 +1,7 @@
 //******************************************************************************************************
 //  DataContextFunctions.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright ï¿½ 2020, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -121,11 +121,11 @@ namespace DataContextFunctions {
             if (plotIndex < 0)
                 return;
 
-            let updated = [];
+            let updated: number[] = [];
             data.forEach(d => {
                 let dIndex = context.Plots[plotIndex].data.findIndex((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
                 const data = context.Plots[plotIndex].data.find((od, di) => od.LegendGroup == d.LegendGroup && od.LegendHorizontal == d.LegendHorizontal && od.LegendVertical == d.LegendVertical && od.LegendVGroup == d.LegendVGroup && updated.indexOf(di) == -1);
-                if (dIndex !== -1) {
+                if (dIndex !== -1 && data != null) {
                     let detailedData = d;
                     detailedData.Enabled = data.Enabled;
                     detailedData.EventID = data.EventID;
@@ -149,11 +149,15 @@ namespace DataContextFunctions {
 
     export function applyLocalSettings(plot: OpenSee.IGraphstate) {
         try {
-            let settings: OpenSee.ISettingsState = JSON.parse(localStorage.getItem('openSee.Settings'));
+            const localStorageVal = localStorage.getItem("openSee.Settings");
+            let settings: OpenSee.ISettingsState = JSON.parse(localStorageVal ?? "{}");
             const unitSettings = settings.Units
 
-            if (unitSettings && Array.isArray(unitSettings)) {
+            if (unitSettings != null && Array.isArray(unitSettings)) {
                 const matchingPlot = unitSettings.find(setting => setting.DataType === plot.key.DataType)
+
+                if (matchingPlot == null)
+                    return;
 
                 Object.keys(matchingPlot.Units).forEach(key => {
                     plot.yLimits[key].current = matchingPlot.Units[key].current
@@ -171,8 +175,9 @@ namespace DataContextFunctions {
     export function saveSettings(state: OpenSee.IDataContext): void {
         try {
             //lets type currentSettings to prevent errors in future
-            const settings = JSON.parse(localStorage.getItem("openSee.Settings"))
-            let unitSettings = settings.Units
+            const localStorageVal = localStorage.getItem("openSee.Settings");
+            const settings = JSON.parse(localStorageVal ?? "{}");
+            let unitSettings = settings?.Units
             if (unitSettings === null || unitSettings === undefined)
                 unitSettings = []
 
@@ -200,9 +205,11 @@ namespace DataContextFunctions {
                 }
             });
 
-            let currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
+            let currentSettings = JSON.parse(localStorageVal ?? "{}");
+
             if (currentSettings === null || currentSettings === undefined)
                 currentSettings = {}
+
             currentSettings.Units = unitSettings
             const serializedState = JSON.stringify(currentSettings)
             localStorage.setItem('openSee.Settings', serializedState);
@@ -241,11 +248,16 @@ namespace DataContextFunctions {
             let indexStart = getIndex(start, dataPoints);
             let indexEnd = getIndex(end, dataPoints);
 
-            let factor = defaultSettings.Units[item.Unit].options[activeUnit].factor;
+            let factor = 1;
 
-            if (factor === undefined) { //p.u case
+            let unit: OpenSee.IUnitSetting | undefined = defaultSettings.Units[item.Unit];
+
+            if (unit != null)
+                factor = unit?.options?.[activeUnit]?.factor ?? 1;
+
+            //p.u case
+            if (factor === undefined)
                 factor = 1.0 / item.BaseValue;
-            }
 
             let sliced = dataPoints.slice(indexStart, indexEnd)
             let dt = sliced.map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
@@ -332,7 +344,7 @@ namespace DataContextFunctions {
     }
 
     // function that Updates the Current Units if they are on auto 
-    export function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number]): number {
+    export function updateActiveUnits(units: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, unit: OpenSee.Unit, data: OpenSee.iD3DataSeries[], startTime: number, endTime: number, manualLimits: [number, number] | null): number {
         if (!units[unit].isAuto)
             return -1;
 
@@ -475,20 +487,23 @@ namespace DataContextFunctions {
     }
 
     export function getIndex(t: number, data: Array<[number, number]>): number {
-        if (data) {
-            if (data.length < 2)
-                return NaN;
-            let dP = data[1][0] - data[0][0];
+        if (data == null)
+            return NaN;
 
-            if (t < data[0][0])
-                return 0;
+        if (data.length < 2)
+            return NaN;
+        let dP = data[1][0] - data[0][0];
 
-            if (t > data[data.length - 1][0])
-                return (data.length - 1);
-            let deltaT = t - data[0][0];
+        if (t < data[0][0])
+            return 0;
 
-            return Math.floor(deltaT / dP);
-        }
+        if (t > data[data.length - 1][0])
+            return (data.length - 1);
+        let deltaT = t - data[0][0];
+
+        return Math.floor(deltaT / dP);
+
+
     }
 }
 

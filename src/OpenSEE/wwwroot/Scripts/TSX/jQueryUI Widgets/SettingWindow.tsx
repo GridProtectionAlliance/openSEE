@@ -33,7 +33,7 @@ import {
     SetOverlappingWaveTimeUnit, SetTimeUnit
 } from '../store/settingSlice';
 import { GetDisplayLabel } from '../Graphs/Utilities';
-import { defaultSettings } from '../defaults';
+import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { DatePicker, Select, Input, CheckBox, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
 import { DataContext, DataFunctionContext } from '../Context/DataContext';
@@ -58,8 +58,8 @@ const SettingsWidget = (props) => {
     const evt = React.useContext(EventContext);
 
     const plotKeys = data.Selector.current.SelectPlotKeys();
-    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime()
-    const inceptionOffset = (evt.Context.EventInfo?.Inception - originalStartTime)
+    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
+    const inceptionOffset = ((evt.Context.EventInfo?.Inception ?? 0) - originalStartTime); //not sure what default should be if Inception is null/undefined..
 
     const [startMS, setStartMS] = React.useState<number>(data.Context.StartTime - originalStartTime);
     const [endMS, setEndMS] = React.useState<number>(data.Context.EndTime - originalStartTime);
@@ -69,7 +69,7 @@ const SettingsWidget = (props) => {
     const [currentDate, setCurrentDate] = React.useState<{ start: Date, end: Date }>({ start: new Date(), end: new Date() });
 
     const [valid, setValid] = React.useState<boolean>(true)
-    const [timeSinceChanged, setTimeSinceChanged] = React.useState<boolean>(false) 
+    const [timeSinceChanged, setTimeSinceChanged] = React.useState<boolean>(false)
 
     const handleTimeChange = (time: number, start: boolean) => {
         if (start)
@@ -133,9 +133,9 @@ const SettingsWidget = (props) => {
     React.useEffect(() => {
         const timeOutId = setTimeout(() => {
 
-            if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
-                const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
-                const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
+            if (TimeUnitOptions[timeUnit.current].short.includes('since')) {
+                const isCycles = TimeUnitOptions[timeUnit.current].short.includes('cycles')
+                const isSinceInception = TimeUnitOptions[timeUnit.current].short.includes('inception')
                 const curStartMS = isCycles ? startMS / (60.0 / 1000.0) : startMS
                 const curEndMS = isCycles ? endMS / (60.0 / 1000.0) : endMS
                 const newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
@@ -158,9 +158,9 @@ const SettingsWidget = (props) => {
     //Effect to update 
     React.useEffect(() => {
         const timeOutId = setTimeout(() => {
-            if (defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since')) {
-                const isCycles = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('cycles')
-                const isSinceInception = defaultSettings.TimeUnit.options[timeUnit.current].short.includes('inception')
+            if (TimeUnitOptions[timeUnit.current].short.includes('since')) {
+                const isCycles = TimeUnitOptions[timeUnit.current].short.includes('cycles')
+                const isSinceInception = TimeUnitOptions[timeUnit.current].short.includes('inception')
                 const newStartMS = isSinceInception ? data.Context.StartTime - originalStartTime - inceptionOffset : data.Context.StartTime - originalStartTime
                 const newEndMS = isSinceInception ? data.Context.EndTime - originalStartTime - inceptionOffset : data.Context.EndTime - originalStartTime
 
@@ -192,7 +192,7 @@ const SettingsWidget = (props) => {
         const newStart = currentDate.start.getTime();
         const newEnd = currentDate.end.getTime();
 
-        if (newEnd - newStart !== data.Context.EndTime - data.Context.StartTime && valid && !defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since")) {
+        if (newEnd - newStart !== data.Context.EndTime - data.Context.StartTime && valid && !TimeUnitOptions[timeUnit.current].short.includes("since")) {
             const timeOutId = setTimeout(() => {
                 dataDispatch.Dispatch.current.SetTimeLimit(newStart, newEnd);
             }, 1000);
@@ -204,13 +204,22 @@ const SettingsWidget = (props) => {
 
     React.useEffect(() => {
         const handleScroll = () => {
-            const offset = document.getElementById("settingScrollContainer").scrollTop;
-            setScrollOffset(offset);
+            const offset = document.getElementById("settingScrollContainer")?.scrollTop;
+            if (offset != null)
+                setScrollOffset(offset);
         }
-        document.getElementById("settingScrollContainer").addEventListener("scroll", handleScroll, { passive: true });
-        return () => { if (document.getElementById("settingScrollContainer") != null) document.getElementById("settingScrollContainer").removeEventListener("scroll", handleScroll); }
-    }, [props])
 
+        const container = document.getElementById("settingScrollContainer");
+
+        if (container != null) {
+            container.addEventListener("scroll", handleScroll, { passive: true });
+        }
+
+        return () => {
+            if (container != null)
+                container.removeEventListener("scroll", handleScroll);
+        }
+    }, [props])
 
     return (
         <div className="d-flex flex-column" style={{ marginTop: '10px', width: '100%', height: '100%', padding: '10px' }}>
@@ -226,8 +235,8 @@ const SettingsWidget = (props) => {
                         </div>
                         <div className="card-body" style={{ overflowY: 'auto', height: '100%' }}>
                             <fieldset className="border p-2">
-                                <legend style={{fontSize: '1.2em'}}>Default Traces (on Loading):</legend>
-                                <div className="form-row" style={{marginBottom: '10px'}}>
+                                <legend style={{ fontSize: '1.2em' }}>Default Traces (on Loading):</legend>
+                                <div className="form-row" style={{ marginBottom: '10px' }}>
                                     <div className="col-6 mr-0">
                                         <CheckBox
                                             Record={defaultTraces}
@@ -290,7 +299,7 @@ const SettingsWidget = (props) => {
                                         {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnitIndex={timeUnit.current} setter={index => handleTimeUnitChange(index)} /> : null}
                                     </div>
                                 </div>
-                                {defaultSettings.TimeUnit.options[timeUnit.current].short.includes("since") ?
+                                {TimeUnitOptions[timeUnit.current].short.includes("since") ?
                                     <div className="form-row" style={{ marginTop: '10px' }}>
                                         <div className="col-6">
                                             <Input
@@ -390,10 +399,10 @@ export const AxisUnitSelector = (props: { label: string, setter: (index: number)
             Field='buttonLabel'
             Setter={(_, option) => props.setter(option.Value as number)}
             Options={defaultSettings.Units[props.unitType].options.map((option, index) =>
-                ({
-                    Label: option.label,
-                    Value: index
-                })
+            ({
+                Label: option.label,
+                Value: index
+            })
             )}
         />
     );
@@ -404,11 +413,11 @@ export const TimeUnitSelector = (props: { label: string, setter: (index: number)
     let buttonLabel: string;
 
     if (props.overlappingWave) {
-        options = defaultSettings.OverlappingWaveTimeUnit.options;
-        buttonLabel = props.label + " [" + defaultSettings.OverlappingWaveTimeUnit.options[props.timeUnitIndex].short + "]";
+        options = defaultSettings.OverlappingWaveTimeUnit.options ?? [];
+        buttonLabel = props.label + " [" + (defaultSettings.OverlappingWaveTimeUnit.options?.[props.timeUnitIndex]?.short ?? '') + "]";
     } else {
-        options = defaultSettings.TimeUnit.options;
-        buttonLabel = props.label + " [" + defaultSettings.TimeUnit.options[props.timeUnitIndex].short + "]";
+        options = defaultSettings.TimeUnit.options ?? [];
+        buttonLabel = props.label + " [" + TimeUnitOptions[props.timeUnitIndex].short + "]";
     }
 
     return (
@@ -417,12 +426,7 @@ export const TimeUnitSelector = (props: { label: string, setter: (index: number)
             Record={{ buttonLabel }}
             Field='buttonLabel'
             Setter={(_, option) => props.setter(option.Value as number)}
-            Options={options.map((option, index) =>
-                ({
-                    Label: option.label,
-                    Value: index
-                })
-            )}
+            Options={options.map((option, index) => ({ Label: option.label, Value: index }))}
         />
     );
 }
@@ -448,15 +452,15 @@ const PlotCard = (props: ICardProps) => {
     const isOverlappingManual = data.Selector.current.SelectIsOverlappingManual(props.DataType);
     const isOverlappingAuto = data.Selector.current.SelectOverlappingAutoUnits(props.DataType);
     const axisSettings = data.Selector.current.SelectAxisSettings(props);
-    const lineData = React.useMemo(() => data.Selector.current.SelectData(props), []);
+    const lineData = React.useMemo(() => data.Selector.current.SelectData(props) ?? [], []);
     const overlappingKeys = data.Selector.current.SelectOverlappingEvents(props.DataType);
     const yLimits = React.useMemo(() => data.Selector.current.SelectYLimits(props), [props]);
     const overlappingYLimits = React.useMemo(() => data.Selector.current.SelectOverlappingYLimits(props.DataType), [props]);
 
-    const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits>>(null);
-    const [overlappingLimits, setOverlappingLimits] = React.useState<OpenSee.IGraphCollection<ILimits>>(null)
+    const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits> | null>(null);
+    const [overlappingLimits, setOverlappingLimits] = React.useState<OpenSee.IGraphCollection<ILimits> | null>(null)
 
-    const [limitsPayload, setLimitsPayload] = React.useState<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number }>(null);
+    const [limitsPayload, setLimitsPayload] = React.useState<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number } | null>(null);
 
     const [valid, setValid] = React.useState<boolean>(true)
 
@@ -483,14 +487,16 @@ const PlotCard = (props: ICardProps) => {
 
 
     const handleLimitChange = (axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean) => {
-        let limit = { min: null, max: null }
         let factor = 1
         if (defaultSettings.Units[axis].options[axisSettings[axis].current].factor !== 1)
             factor = defaultSettings.Units[axis].options[axisSettings[axis].current].factor
 
-        limit.min = limits[0]
-        limit.max = limits[1]
-        setCurLimits(prevLimits => ({ ...prevLimits, [axis]: limit }));
+        const limit = {
+            min: limits[0],
+            max: limits[1]
+        };
+
+        setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: limit }));
         setLimitsPayload({ axis, limits, key, auto, factor })
     }
 
@@ -515,7 +521,7 @@ const PlotCard = (props: ICardProps) => {
                 return defaultSettings.Units[unit].options[axisSettings[unit].current].short
         }
 
-        else if (isManual[unit] && autoUnits[unit]) {
+        else if (isManual?.[unit] && autoUnits?.[unit]) {
             let settingOptions: OpenSee.iUnitOptions[] = defaultSettings.Units[unit].options
             let index = settingOptions.findIndex(item => item.factor === 1)
             return settingOptions[index].short
@@ -547,10 +553,10 @@ const PlotCard = (props: ICardProps) => {
         Object.keys(yLimits).forEach(unit => {
             limits[unit] = {};
             let factor = 1
-            let autoUnit = autoUnits[unit]
+            let autoUnit = autoUnits?.[unit]
             const overLappingManual = isOverlappingManual?.[graphType]?.[unit] === undefined ? false : isOverlappingManual[graphType][unit]
 
-            if (overLappingManual || isManual[unit]) {
+            if (overLappingManual || isManual?.[unit]) {
                 if (defaultSettings.Units[unit].options[axisSettings[unit].current].factor !== 1)
                     factor = defaultSettings.Units[unit].options[axisSettings[unit].current].factor
 
@@ -583,106 +589,118 @@ const PlotCard = (props: ICardProps) => {
         <div id={"collaps-" + props.DataType} className="collapse" aria-labelledby={"header-" + props.DataType} data-parent="#panelSettings">
             <div className="card-body">
                 {unitSettings.map(item => (
-                            <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
-                                <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
-                                <div className="form-row" key={item}>
+                    <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
+                        <div className="form-row" key={item}>
+                            <div className="col-6">
+                                <AxisUnitSelector label={item as string} setter={(index) => handleUnitChange(item, index, props)} unitType={item} axisSetting={axisSettings[item]} />
+                            </div>
+                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                <input className="form-check-input" type="radio" checked={!isManual?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, !e.target.checked)} />
+                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
+                            </div>
+                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                <input className="form-check-input" type="radio" checked={isManual?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, e.target.checked)} />
+                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                            </div>
+                        </div>
+
+                        {isManual?.[item] && (
+                            <>
+                                <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
+                                    <div className="col-6" style={{}}>
+                                        <Input<ILimits>
+                                            Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }}
+                                            Field={'min'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits?.[item] ?? false)}
+                                            Valid={() => valid}
+                                            Label={`${item} ` + `Min [${getLabel(item)}]`}
+                                            Type={'number'}
+                                            Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                        />
+                                    </div>
                                     <div className="col-6">
-                                        <AxisUnitSelector label={item as string} setter={(index) => handleUnitChange(item, index, props)} unitType={item} axisSetting={axisSettings[item]} />
-                                    </div>
-                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={!isManual[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, !e.target.checked)} />
-                                        <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
-                                    </div>
-                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={isManual[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, e.target.checked)} />
-                                        <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                                        <Input<ILimits>
+                                            Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }}
+                                            Field={'max'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits?.[item] ?? false)}
+                                            Valid={() => valid}
+                                            Label={`${item} ` + `Max [${getLabel(item)}]`}
+                                            Type={'number'}
+                                            Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                        />
                                     </div>
                                 </div>
+                            </>
+                        )}
+                        {overlappingKeys.length > 0 && !singlePlot ?
+                            overlappingKeys.map((key, idx) => (
+                                <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
+                                    <div className="col-6">
+                                        <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
+                                    </div>
+                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                        <input className="form-check-input" type="radio" checked={!isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, !e.target.checked)} />
+                                        <label className="form-check-label" style={{ fontSize: '0.8rem', }}>Auto Limits</label>
+                                    </div>
+                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                        <input className="form-check-input" type="radio" checked={isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, e.target.checked)} />
+                                        <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                                    </div>
 
-                                {isManual[item] && (
-                                    <>
-                                        <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
-                                            <div className="col-6" style={{}}>
-                                                <Input<ILimits> Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }} Field={'min'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits[item])}
-                                                    Valid={() => valid}
-                                                    Label={`${item} ` + `Min [${getLabel(item)}]`}
-                                                    Type={'number'}
-                                                    Help={autoUnits[item] ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
-                                                    Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                />
+                                    {isOverlappingManual?.[key.DataType]?.[item] && (
+                                        <>
+                                            <div className="form-row" style={{ marginLeft: '5px' }}>
+                                                <div className="col-6">
+                                                    <Input<ILimits>
+                                                        Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }}
+                                                        Field={'min'}
+                                                        Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits?.[item] ?? false)}
+                                                        Valid={() => valid}
+                                                        Label={`${item} ` + `Min [${getLabel(item, key)}]`}
+                                                        Type={'number'}
+                                                        Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
+                                                        Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                                    />
+                                                </div>
+                                                <div className="col-6">
+                                                    <Input<ILimits> 
+                                                        Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }}
+                                                        Field={'max'}
+                                                        Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits?.[item] ?? false)}
+                                                        Valid={() => valid}
+                                                        Label={`${item} ` + `Max [${getLabel(item, key)}]`}
+                                                        Type={'number'}
+                                                        Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
+                                                        Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="col-6">
-                                                <Input<ILimits> Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }} Field={'max'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits[item])}
-                                                    Valid={() => valid}
-                                                    Label={`${item} ` + `Max [${getLabel(item)}]`}
-                                                    Type={'number'}
-                                            Help={autoUnits[item] ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
-                                                    Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                                {overlappingKeys.length > 0 && !singlePlot ?
-                                    overlappingKeys.map((key, idx) => (
-                                        <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
-                                            <div className="col-6">
-                                                <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
-                                            </div>
-                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={!isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, !e.target.checked)} />
-                                                <label className="form-check-label" style={{ fontSize: '0.8rem', }}>Auto Limits</label>
-                                            </div>
-                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, e.target.checked)} />
-                                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
-                                            </div>
-
-                                            {isOverlappingManual?.[key.DataType]?.[item] && (
-                                                <>
-                                                    <div className="form-row" style={{ marginLeft: '5px' }}>
-                                                        <div className="col-6">
-                                                            <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }} Field={'min'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits[item])}
-                                                                Valid={() => valid}
-                                                                Label={`${item} ` + `Min [${getLabel(item, key)}]`}
-                                                                Type={'number'}
-                                                                Help={autoUnits[item] ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
-                                                                Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                            />
-                                                        </div>
-                                                        <div className="col-6">
-                                                            <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }} Field={'max'} Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits[item])}
-                                                                Valid={() => valid}
-                                                                Label={`${item} ` + `Max [${getLabel(item, key)}]`}
-                                                                Type={'number'}
-                                                                Help={autoUnits[item] ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
-                                                                Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    )) : null}
-                            </fieldset>
+                                        </>
+                                    )}
+                                </div>
+                            )) : null}
+                    </fieldset>
                 ))}
 
                 {colorSettings.length > 0 ?
                     <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
                         <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
                         <div className="row">
-                                {colorSettings.map((c: OpenSee.Color, i: number) =>
-                                    <div className="col-3">
-                                        <ColorPicker<OpenSee.IColorCollection>
-                                            Record={colors}
-                                            Field={c}
-                                            key={i}
-                                            Label={c as string}
-                                            Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
-                                            Style={{ background: colors[c], marginBottom: 5 }}
-                                        />
-                                    </div>)}
-                            </div>                           
+                            {colorSettings.map((c: OpenSee.Color, i: number) =>
+                                <div className="col-3">
+                                    <ColorPicker<OpenSee.IColorCollection>
+                                        Record={colors}
+                                        Field={c}
+                                        key={i}
+                                        Label={c as string}
+                                        Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
+                                        Style={{ background: colors[c], marginBottom: 5 }}
+                                    />
+                                </div>)}
+                        </div>
                     </fieldset> : null}
 
 

@@ -44,7 +44,7 @@ interface iProps {
     dataKey: OpenSee.IGraphProps
 }
 
-interface IMarker { 
+interface IMarker {
     x: number,
     y: number,
     unit: string,
@@ -74,9 +74,11 @@ const LineChart = (props: iProps) => {
 
     const isOverlappingWaveform = props.dataKey.DataType === "OverlappingWave";
 
+    //All these dependency array look wrong.. 
+
     const activeUnit = React.useMemo(() => data.Selector.current.SelectActiveUnit(props.dataKey), [props.dataKey]);
 
-    const lineData = React.useMemo(() => data.Selector.current.SelectData(props.dataKey), [data.Context.Plots]);
+    const lineData = React.useMemo(() => data.Selector.current.SelectData(props.dataKey) ?? [], [data.Context.Plots]);
 
     const relevantUnits = React.useMemo(() => data.Selector.current.SelectRelevantUnits(props.dataKey), []);
 
@@ -88,7 +90,7 @@ const LineChart = (props: iProps) => {
 
     const isZoomed = data.Selector.current.SelectIsZoomed(props.dataKey);
 
-    const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>();
+    const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>(d3.scaleLinear());
     const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
 
     const primaryAxis = func.getPrimaryAxis(props.dataKey);
@@ -100,7 +102,7 @@ const LineChart = (props: iProps) => {
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
 
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
-    const [selectedPointLocation, setSelectedPointLocation] = React.useState<number>(null);
+    const [selectedPointLocation, setSelectedPointLocation] = React.useState<number | null>(null);
     const [inceptionLocation, setInceptionLocation] = React.useState<number>(10);
     const [durationLocation, setDurationLocation] = React.useState<number>(10);
 
@@ -114,7 +116,7 @@ const LineChart = (props: iProps) => {
 
     const useRelevantTime = useAppSelector(SelectUseOverlappingTime);
 
-    const loading = data.Selector.current.SelectLoading(props.dataKey);
+    const loading = data.Selector.current.SelectLoading(props.dataKey) ?? 'Uninitiated';
 
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
@@ -139,7 +141,7 @@ const LineChart = (props: iProps) => {
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
 
     const points = data.Selector.current.SelectDeltaHoverPoints(hover);
-    
+
     //Effect to update the Data 
     React.useEffect(() => {
         if (lineData && lineData?.length > 0 && loading !== 'Loading') {
@@ -180,7 +182,7 @@ const LineChart = (props: iProps) => {
     React.useEffect(() => {
         if (xScaleRef.current) {
             const newTime = points.length > 0 ? points[0].Time : null
-            if (newTime && selectedPointLocation !== xScaleRef.current(newTime)) 
+            if (newTime && selectedPointLocation !== xScaleRef.current(newTime))
                 setSelectedPointLocation(xScaleRef.current(newTime))
         }
     }, [points, startTime, endTime])
@@ -258,8 +260,7 @@ const LineChart = (props: iProps) => {
     }, [fftWindow, showFFT, currentFFTWindow])
 
     React.useEffect(() => {
-        if (xScaleRef.current)
-            updateDurationWindow();
+        updateDurationWindow();
     }, [plotMarkers, startTime, endTime, props.width, props.height, timeUnit])
 
     React.useEffect(() => {
@@ -322,7 +323,7 @@ const LineChart = (props: iProps) => {
 
     }, [props.height, yLabels])
 
-    function createLineGen(unit: OpenSee.Unit = null, base = null) {
+    function createLineGen(unit: OpenSee.Unit | null = null, base: number | null = null) {
         let factor = 1.0
 
         // Calculate factor if unit and base are provided
@@ -332,16 +333,18 @@ const LineChart = (props: iProps) => {
                 factor = 1.0 / base
         }
 
+        const yScale = yScaleRef.current ? yScaleRef.current[unit ?? ''] : null;
+
         return d3.line()
             .x(d => {
                 return xScaleRef.current ? xScaleRef.current(d[0]) : 0
             })
-            .y(d => yScaleRef?.current[unit] ? yScaleRef?.current[unit](d[1] * factor) : 0)
+            .y(d => yScale != null ? yScale(d[1] * factor) : 0)
             .defined(d => {
-                let tx = !isNaN(parseFloat(xScaleRef.current ? xScaleRef.current(d[0])?.toString() : '0'));
-                let ty = !isNaN(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
-                tx = tx && isFinite(parseFloat(xScaleRef.current ? xScaleRef.current(d[0])?.toString() : '0'));
-                ty = ty && isFinite(parseFloat(yScaleRef?.current[unit] ? yScaleRef.current[unit](d[1] * factor)?.toString() : '0'));
+                let tx = !isNaN(parseFloat(xScaleRef.current != null ? xScaleRef.current(d[0])?.toString() : '0'));
+                let ty = !isNaN(parseFloat(yScale != null ? yScale(d[1] * factor)?.toString() : '0'));
+                tx = tx && isFinite(parseFloat(xScaleRef.current != null ? xScaleRef.current(d[0])?.toString() : '0'));
+                ty = ty && isFinite(parseFloat(yScale != null ? yScale(d[1] * factor)?.toString() : '0'));
                 return tx && ty;
             });
     }
@@ -364,7 +367,7 @@ const LineChart = (props: iProps) => {
         lines.enter().append("path").classed(`Line`, true)
             .attr("type", d => `${d.Unit}`)
             .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
-            .attr("stroke-dasharray", d => singlePlot && evt.Context.EventInfo.EventId !== d.EventID ? 5 : 0)
+            .attr("stroke-dasharray", d => singlePlot && evt.Context.EventInfo?.EventId !== d.EventID ? 5 : 0)
             .attr("d", d => {
                 const lineGen = createLineGen(d.Unit)
                 if (d.SmoothDataPoints.length > 0)
@@ -407,18 +410,20 @@ const LineChart = (props: iProps) => {
         const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         const svg = container.select(".DataContainer");
 
-        svg.selectAll(".Line").attr("d", function (d: OpenSee.iD3DataSeries) {
+        svg.selectAll<SVGPathElement, OpenSee.iD3DataSeries>(".Line").attr("d", (d) => {
             const scopedLineGen = createLineGen(d.Unit, d.BaseValue);
+
             if (d.SmoothDataPoints.length > 0)
                 return scopedLineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
+
             return scopedLineGen(d.DataPoints);
         });
 
-        svg.selectAll("circle")
-            .attr("cx", function (d: IMarker) {
+        svg.selectAll<SVGPathElement, IMarker>("circle")
+            .attr("cx", (d: IMarker) => {
                 return isNaN(xScaleRef.current(d.x)) ? null : xScaleRef.current(d.x);
             })
-            .attr("cy", function (d: IMarker) {
+            .attr("cy", (d: IMarker) => {
                 let factor = 1.0;
                 if (activeUnit?.[d.unit] != undefined)
                     factor = activeUnit?.[d.unit].factor === undefined ? (1.0 / d.base) : factor;
@@ -430,11 +435,13 @@ const LineChart = (props: iProps) => {
         updateLabels();
 
         //Format Time Axis with current xScale
-        container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleRef.current).tickFormat(d => formatTimeTick(d as number)) as any);
+        container.selectAll(".xAxis")
+            .transition()
+            .call(d3.axisBottom(xScaleRef.current)
+                .tickFormat(d => formatTimeTick(d as number)) as any);
 
-        if (xScaleRef.current != null && showFFT) {
+        if (xScaleRef.current != null && showFFT)
             setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
-        }
 
     }
 
@@ -523,15 +530,16 @@ const LineChart = (props: iProps) => {
             .attr("fill", "black")
             .style("opacity", 0);
 
-        //Add Window to indicate Inception and Duration of event
-        svg.append("rect").classed("DurationWindow", true)
-            .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
-            .attr("stroke", "#d3d3d3")
-            .attr("x", xScaleRef.current(evt.Context.EventInfo?.Inception))
-            .attr("width", evt.Context.EventInfo?.DurationEndTime - evt.Context.EventInfo?.Inception)
-            .style("opacity", (plotMarkers ? 0.25 : 0))
-            .attr("y", 20).attr("height", props.height - 60)
-            .attr("fill", "black")
+        if (evt.Context.EventInfo != null)
+            //Add Window to indicate Inception and Duration of event
+            svg.append("rect").classed("DurationWindow", true)
+                .attr("clip-path", "url(#clipData-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ")")
+                .attr("stroke", "#d3d3d3")
+                .attr("x", xScaleRef.current(evt.Context.EventInfo?.Inception))
+                .attr("width", evt.Context.EventInfo?.DurationEndTime - evt.Context.EventInfo?.Inception)
+                .style("opacity", (plotMarkers ? 0.25 : 0))
+                .attr("y", 20).attr("height", props.height - 60)
+                .attr("fill", "black")
 
         //Add Empty group for Data Points
         svg.append("g").classed("DataContainer", true)
@@ -541,7 +549,7 @@ const LineChart = (props: iProps) => {
             .attr("stroke-width", 0.0);
 
         //Event overlay - needs to be treated seperately
-        svg.append("svg:rect").classed("Overlay", true)
+        svg.append<SVGRectElement>("svg:rect").classed("Overlay", true)
             .attr("width", props.width - 110)
             .attr("height", '100%')
             .attr("x", 20)
@@ -583,14 +591,14 @@ const LineChart = (props: iProps) => {
             h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
         if (isOverlappingWaveform) {
-            if (defaultSettings.OverlappingWaveTimeUnit.options[overlappingWaveTimeUnit].short === "ms") {
+            if (defaultSettings.OverlappingWaveTimeUnit.options?.[overlappingWaveTimeUnit]?.short === "ms") {
                 if (h < 2)
                     return d.toFixed(3)
                 if (h < 5)
                     return d.toFixed(2)
                 else
                     return d.toFixed(1)
-            } else if (defaultSettings.OverlappingWaveTimeUnit.options[overlappingWaveTimeUnit].short === "cycles") {
+            } else if (defaultSettings.OverlappingWaveTimeUnit.options?.[overlappingWaveTimeUnit]?.short === "cycles") {
                 const cyc = d * 60.0 / 1000.0;
                 h = h * 60.0 / 1000.0;
                 if (h < 2)
@@ -602,7 +610,7 @@ const LineChart = (props: iProps) => {
             }
 
         }
-        else if (timeUnit.options[timeUnit.current].short == 'auto') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'auto') {
             if (h < 100)
                 return TS.format("SSS.S")
             else if (h < 1000)
@@ -610,7 +618,7 @@ const LineChart = (props: iProps) => {
             else
                 return TS.format("ss.S")
         }
-        else if (timeUnit.options[timeUnit.current].short == 's') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 's') {
             if (h < 100)
                 return TS.format("ss.SSS")
             else if (h < 1000)
@@ -618,21 +626,22 @@ const LineChart = (props: iProps) => {
             else
                 return TS.format("ss.S")
         }
-        else if (timeUnit.options[timeUnit.current].short == 'ms')
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms')
             if (h < 100)
                 return TS.format("SSS.S")
             else
                 return TS.format("SSS")
 
-        else if (timeUnit.options[timeUnit.current].short == 'min')
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'min')
             return TS.format("mm:ss")
 
-        else if (timeUnit.options[timeUnit.current].short == 'ms since record') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms since record') {
             let ms = d - originalStartTime;
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = data.Context.OverlappingEventList.find(evt => evt.EventID === props.dataKey.EventId);
-                ms = d - evt?.StartTime
+                if (evt != null)
+                    ms = d - evt?.StartTime
             }
 
             if (h < 2)
@@ -643,12 +652,13 @@ const LineChart = (props: iProps) => {
                 return ms.toFixed(1)
         }
 
-        else if (timeUnit.options[timeUnit.current].short == 'ms since inception') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms since inception') {
             let ms = d - (new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime());
 
             if (useRelevantTime && !isOriginalEvt) {
                 const evt = data.Context.OverlappingEventList.find(evt => evt.EventID === props.dataKey.EventId);
-                ms = d - evt?.Inception
+                if (evt != null)
+                    ms = d - evt?.Inception
             }
 
             if (h < 2)
@@ -659,7 +669,7 @@ const LineChart = (props: iProps) => {
                 return ms.toFixed(1)
         }
 
-        else if (timeUnit.options[timeUnit.current].short == 'cycles since record') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'cycles since record') {
             let cyc = (d - startTime) * 60.0 / 1000.0;
 
             h = h * 60.0 / 1000.0;
@@ -670,7 +680,7 @@ const LineChart = (props: iProps) => {
             else
                 return cyc.toFixed(1)
         }
-        else if (timeUnit.options[timeUnit.current].short == 'cycles since inception') {
+        else if (timeUnit.options?.[timeUnit.current]?.short == 'cycles since inception') {
             let cyc = (d - startTime) * 60.0 / 1000.0;
 
             h = h * 60.0 / 1000.0;
@@ -681,6 +691,8 @@ const LineChart = (props: iProps) => {
             else
                 return cyc.toFixed(1)
         }
+
+        return d.toFixed(1);
     }
 
     function formatValueTick(d: number, unit: OpenSee.Unit) {
@@ -896,7 +908,7 @@ const LineChart = (props: iProps) => {
     }
 
     function updateDurationWindow() {
-        if (xScaleRef.current === undefined)
+        if (xScaleRef.current === undefined || evt.Context.EventInfo == null)
             return;
 
         setInceptionLocation(xScaleRef.current(evt.Context.EventInfo?.Inception));
@@ -910,14 +922,13 @@ const LineChart = (props: iProps) => {
         width = xScaleRef.current(evt.Context.EventInfo?.DurationEndTime) - xScaleRef.current(evt.Context.EventInfo?.Inception);
         x = xScaleRef.current(evt.Context.EventInfo?.Inception);
 
-
         container.select(".DurationWindow")
             .attr("x", x)
             .attr("width", width)
             .style("opacity", (plotMarkers ? 0.25 : 0))
     }
 
-    const wheelZoom = d3.zoom() //probably could include panning in here...
+    const wheelZoom = d3.zoom<SVGRectElement, unknown>() //probably could include panning in here...
         .filter(event => {
             return event.type === 'wheel';
         })
@@ -960,8 +971,8 @@ const LineChart = (props: iProps) => {
                 h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
 
 
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short != 'auto' && !isOverlappingWaveform)
-                return (timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short;
+            if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short != 'auto' && !isOverlappingWaveform)
+                return (timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short;
 
             if (isOverlappingWaveform) {
                 if (h < 100)
@@ -970,9 +981,9 @@ const LineChart = (props: iProps) => {
                     return "s"
             }
 
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short == 'ms since event')
+            if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short == 'ms since event')
                 return "ms";
-            if ((timeUnit as OpenSee.IUnitSetting).options[timeUnit.current].short == 'cycles')
+            if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short == 'cycles')
                 return "cycle"
             if (h < 100)
                 return "ms"
@@ -991,8 +1002,8 @@ const LineChart = (props: iProps) => {
             return colors[col as string]
         }
 
-        container.select(".DataContainer").selectAll(".Line").attr("stroke", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
-        container.select(".DataContainer").selectAll(".Markers").attr("fill", (d: OpenSee.iD3DataSeries) => GetColor(d.Color));
+        container.select(".DataContainer").selectAll<SVGPathElement, OpenSee.iD3DataSeries>(".Line").attr("stroke", (d) => GetColor(d.Color));
+        container.select(".DataContainer").selectAll<SVGPathElement, OpenSee.iD3DataSeries>(".Markers").attr("fill", (d) => GetColor(d.Color));
     }
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
@@ -1096,19 +1107,49 @@ const LineChart = (props: iProps) => {
 
     return (
         <div>
-            <Container key={props.dataKey.DataType + props.dataKey.EventId + 'container'} dataKey={props.dataKey} height={props.height} loading={loading} hover={toolTipLocation} hasData={lineData?.length > 0} hasTrace={enabledLine?.some(i => i)}
-                selectedPointLocation={selectedPointLocation} showToolTip={props.showToolTip} inceptionLocation={inceptionLocation} durationLocation={durationLocation} plotMarkers={plotMarkers} />
-            {loading === 'Loading' || lineData?.length == 0 ? null : <Legend key={props.dataKey.DataType + props.dataKey.EventId + 'legend'} height={props.height} dataKey={props.dataKey} />}
+            <Container
+                key={props.dataKey.DataType + props.dataKey.EventId + 'container'}
+                dataKey={props.dataKey}
+                height={props.height}
+                loading={loading}
+                hover={toolTipLocation}
+                hasData={lineData?.length > 0}
+                hasTrace={enabledLine?.some(i => i)}
+                selectedPointLocation={selectedPointLocation}
+                showToolTip={props.showToolTip}
+                inceptionLocation={inceptionLocation}
+                durationLocation={durationLocation}
+                plotMarkers={plotMarkers}
+            />
+            {loading === 'Loading' || lineData?.length == 0 ? null :
+                <Legend
+                    key={props.dataKey.DataType + props.dataKey.EventId + 'legend'}
+                    height={props.height}
+                    dataKey={props.dataKey}
+                />
+            }
         </div>
     );
 }
 
+interface IContainerProps {
+    height: number,
+    dataKey: OpenSee.IGraphProps,
+    loading: OpenSee.LoadingState,
+    hover: number,
+    hasData: boolean,
+    hasTrace: boolean,
+    selectedPointLocation: number | null,
+    showToolTip: boolean,
+    inceptionLocation: number,
+    durationLocation: number,
+    plotMarkers: boolean
 
-const Container = React.memo((props: {
-    height: number, dataKey: OpenSee.IGraphProps, loading: OpenSee.LoadingState, hover: number, hasData: boolean,
-    hasTrace: boolean, selectedPointLocation: number, showToolTip: boolean, inceptionLocation: number, durationLocation: number, plotMarkers: boolean
-}) => {
+}
+
+const Container = React.memo((props: IContainerProps) => {
     const showSVG = props.loading != 'Loading' && props.hasData;
+
     return (
         <div data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
             {props.loading === 'Loading' ? <LoadingIcon /> : null}
@@ -1117,14 +1158,50 @@ const Container = React.memo((props: {
 
             <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
                 { /*PolyLine for the mouse position*/}
-                {props.loading !== 'Loading' && props.hasData ? <PolyLine class={"hover"} key={'hover'} height={props.height - 40} left={props.hover} style={{ stroke: "#000", opacity: 0.5 }} /> : null}
+                {props.loading !== 'Loading' && props.hasData ?
+                    <PolyLine
+                        class={"hover"}
+                        key={'hover'}
+                        height={props.height - 40}
+                        left={props.hover}
+                        style={{ stroke: "#000", opacity: 0.5 }}
+                    />
+                    : null
+                }
+
                 { /*PolyLine for the position of Selected Point*/}
-                {props.showToolTip && props.selectedPointLocation ? <PolyLine class={"selectedPoint"} key={'selectedPoint'} height={props.height - 40} left={props.selectedPointLocation} style={{ stroke: "#000", opacity: 1, strokeDasharray: "5,5" }} /> : null}
+                {props.showToolTip && props.selectedPointLocation != null ?
+                    <PolyLine
+                        class={"selectedPoint"}
+                        key={'selectedPoint'}
+                        height={props.height - 40}
+                        left={props.selectedPointLocation}
+                        style={{ stroke: "#000", opacity: 1, strokeDasharray: "5,5" }}
+                    />
+                    : null
+                }
 
                 { /*PolyLine for the inception of the event*/}
-                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ? <PolyLine class={"inception"} key={'inception'} height={props.height - 40} left={props.inceptionLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} /> : null}
+                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ?
+                    <PolyLine
+                        class={"inception"}
+                        key={'inception'}
+                        height={props.height - 40}
+                        left={props.inceptionLocation}
+                        style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }}
+                    />
+                    : null}
+
                 { /*PolyLine for the end of the duration of the event*/}
-                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ? <PolyLine class={"duration"} key={'duration'} height={props.height - 40} left={props.durationLocation} style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} /> : null}
+                {props.loading !== 'Loading' && props.hasData && props.plotMarkers ?
+                    <PolyLine
+                        class={"duration"}
+                        key={'duration'}
+                        height={props.height - 40}
+                        left={props.durationLocation}
+                        style={{ stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 }} />
+                    : null
+                }
 
                 {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
                     <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text> : null}

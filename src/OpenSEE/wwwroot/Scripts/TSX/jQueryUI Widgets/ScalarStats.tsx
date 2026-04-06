@@ -25,10 +25,12 @@
 
 import * as React from 'react';
 import { Table, Column } from '@gpa-gemstone/react-table';
+import { CreateGuid } from '@gpa-gemstone/helper-functions';
 
 interface IEventData {
     Stat: string,
-    Value: string
+    Value: string,
+    ID: string // created clientside for table
 }
 
 interface Iprops {
@@ -49,9 +51,9 @@ const ScalarStatsWidget = (props: Iprops) => {
             async: true
         });
         handle.done((d) => {
-            let t = []
+            let t: IEventData[] = []
             Object.keys(d).forEach(stat => {
-                t.push({ Stat: stat, Value: d[stat] })
+                t.push({ Stat: stat, Value: d[stat], ID: CreateGuid() })
             })
             setStats(t);
         });
@@ -61,8 +63,8 @@ const ScalarStatsWidget = (props: Iprops) => {
 
     return (
         <>
-            <div className="d-flex flex-column h-100 w-100" style={{padding: '10px'}}>
-                <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto'}}>
+            <div className="d-flex flex-column h-100 w-100" style={{ padding: '10px' }}>
+                <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto' }}>
                     <Table<IEventData>
                         TableClass="table table-hover w-100"
                         Data={stats}
@@ -71,7 +73,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                         OnSort={() => { }}
                         OnClick={() => { }}
                         Selected={() => false}
-                        KeySelector={(_, index) => index}
+                        KeySelector={(item) => item.ID}
                     >
                         <Column<IEventData>
                             Key={'Stat'}

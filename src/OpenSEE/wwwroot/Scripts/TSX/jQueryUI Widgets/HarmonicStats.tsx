@@ -22,7 +22,6 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import { useAppSelector } from '../hooks';
 
 interface Iprops {
     EventID: number,
@@ -43,7 +42,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
         });
 
         handle.done((data) => {
-            let rows = [];
+            let rows: JSX.Element[] = [];
             rows.push(
                 <tr>
                     <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.ExportCallback('harmonics')}>Export</button></th>
@@ -62,7 +61,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
             let numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
 
             for (var index = 1; index <= numHarmonics; ++index) {
-                let tds = [];
+                let tds: JSX.Element[] = [];
                 let label = 'H' + index
                 for (let j = 0; j < numChannels; ++j) {
                     let key = data[j].Channel + label

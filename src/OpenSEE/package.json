@@ -3,6 +3,7 @@
   "name": "opensee",
   "private": true,
   "devDependencies": {
+    "@types/node": "^25.5.2",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
     "css-loader": "6.2.0",
@@ -52,7 +53,7 @@
   },
   "scripts": {
     "build": "npm prune && npm ci && webpack --mode=development",
-    "builddev": "webpack --mode=development",
+    "builddev": "npm install && webpack --mode=development",
     "buildrelease": "npm prune && npm ci && webpack --mode=production",
     "watch": "webpack --watch --color --mode=development",
     "update": "npx npm-check-updates",

@@ -24,7 +24,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as _ from 'lodash';
 import { createSelector } from 'reselect';
-import { defaultSettings } from '../defaults';
+import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { OpenSee } from '../global';
 import { RootState } from './store';
 
@@ -90,12 +90,12 @@ export const SettingsReducer = createSlice({
         SetTimeUnit: (state, action: PayloadAction<{ index: number }>) => {
             state.TimeUnit.current = action.payload.index
 
-            if (defaultSettings.TimeUnit.options[action.payload.index].factor === undefined)
+            if (TimeUnitOptions[action.payload.index].factor === undefined)
                 state.TimeUnit.autoUnit = true
             else
                 state.TimeUnit.autoUnit = false
 
-            if (!defaultSettings.TimeUnit.options[action.payload.index].short.includes('since'))
+            if (!TimeUnitOptions[action.payload.index].short.includes('since'))
                 state.UseOverlappingTime = false
 
             saveSettings(state);
@@ -159,8 +159,11 @@ export const SelectZoomMode = (state: OpenSee.IRootState) => state.Settings.Zoom
 
 // #region [ Async Functions ]
 function saveSettings(state: OpenSee.ISettingsState) {
-    const currentSettings = JSON.parse(localStorage.getItem("openSee.Settings"))
-    const units = currentSettings?.Units
+    const settings = localStorage.getItem("openSee.Settings");
+    const currentSettings = JSON.parse(settings ?? '{}');
+
+    const units = currentSettings?.Units;
+
     try {
         let saveState = {
             Units: units,
@@ -183,17 +186,16 @@ function saveSettings(state: OpenSee.ISettingsState) {
     }
 }
 
-function getSettings(): OpenSee.ISettingsState {
+function getSettings(): OpenSee.ISettingsState | undefined {
     try {
         const serializedState = localStorage.getItem('openSee.Settings');
-        if (serializedState === null) {
+        if (serializedState === null) 
             return undefined;
-        }
-
+        
         // overwrite options if new options are available
         let storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
 
-        const timeUnitValid = storageState.TimeUnit !== undefined && storageState.TimeUnit.current >= 0 && storageState.TimeUnit.current < defaultSettings.TimeUnit.options.length;
+        const timeUnitValid = storageState.TimeUnit !== undefined && storageState.TimeUnit.current >= 0 && storageState.TimeUnit.current < TimeUnitOptions.length;
 
         storageState.TimeUnit = { ...defaultSettings.TimeUnit, current: timeUnitValid ? storageState.TimeUnit.current : defaultSettings.TimeUnit.current };
 

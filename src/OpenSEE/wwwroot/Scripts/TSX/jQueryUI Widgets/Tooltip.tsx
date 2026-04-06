@@ -24,12 +24,11 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import moment = require('moment');
+import moment from 'moment';
 import { useSelector } from 'react-redux';
 import { SelectColor } from '../store/settingSlice';
 import HoverContext from '../Context/HoverContext'
 import DataContext from '../Context/DataContext';
-
 
 const ToolTipWidget = () => {
     const [hover] = React.useContext(HoverContext);

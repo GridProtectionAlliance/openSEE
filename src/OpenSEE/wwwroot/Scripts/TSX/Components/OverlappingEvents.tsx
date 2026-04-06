@@ -31,7 +31,7 @@ import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverla
 import { CheckBox } from '@gpa-gemstone/react-forms';
 import _ from 'lodash';
 import { LoadingIcon } from '../Graphs/ChartIcons';
-import { defaultSettings } from '../defaults';
+import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { DataContext, DataFunctionContext } from '../Context/DataContext';
 
 const OverlappingEventWindow = () => {
@@ -62,7 +62,7 @@ const OverlappingEventWindow = () => {
                                 />
                             </div>
                         </div>
-                        {defaultSettings.TimeUnit.options[timeUnit.current].short.includes('since') &&
+                        {TimeUnitOptions[timeUnit.current].short.includes('since') &&
                                 (!singlePlot || (singlePlot && !data.Context.OverlappingEventList.some(i => i.Selected))) ?
                                 <div className="form-row">
                                     <div className="col-6 form-check-inline" style={{ margin: 0 }}>

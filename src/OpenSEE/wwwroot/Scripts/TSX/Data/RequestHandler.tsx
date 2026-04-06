@@ -27,8 +27,11 @@ var HandleStore = new Map<string, JQuery.jqXHR<any>[]>();
 //Functions to Handle Requests.
 function AddRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
     let target = key.DataType.toString() + '-' + key.EventId.toString();
-    if (HandleStore.has(target))
-        HandleStore.get(target).forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
+    const targetValue = HandleStore.get(target);
+
+    if (targetValue != null)
+        targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
     HandleStore.set(target, requests);
 }
 
@@ -36,7 +39,11 @@ function CancelAnalytics() {
     for (let key of HandleStore.keys()) {
         if (key.startsWith('Voltage-') || key.startsWith('Current-') || key.startsWith("Analogs-") || key.startsWith("Digitals-") || key.startsWith('TripCoil-'))
             continue;
-        HandleStore.get(key).forEach(item => { if (item != null && item.abort != null) item.abort(); })
+        
+        const targetValue = HandleStore.get(key);
+        if (targetValue != null)
+            targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
         HandleStore.delete(key);
     }
 }
@@ -45,7 +52,11 @@ function CancelCompare(baseEventID: number) {
     for (let key of HandleStore.keys()) {
         if (key.endsWith('-' + baseEventID.toString()))
             continue;
-        HandleStore.get(key).forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
+        const targetValue = HandleStore.get(key);
+        if (targetValue != null)
+            targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
         HandleStore.delete(key);
     }
 }
@@ -54,7 +65,11 @@ function CancelEvent(eventId: number) {
     for (let key of HandleStore.keys()) {
         if (!key.endsWith('-' + eventId.toString()))
             continue;
-        HandleStore.get(key).forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
+        const targetValue = HandleStore.get(key);
+        if (targetValue != null)
+            targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
+
         HandleStore.delete(key);
     }
 }
@@ -62,8 +77,11 @@ function CancelEvent(eventId: number) {
 function AppendRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
     let target = key.DataType.toString() + '-' + key.EventId.toString();
     let r = requests;
-    if (HandleStore.has(target))
-        r = [...r, ...HandleStore.get(target)];
+
+    const targetValue = HandleStore.get(target);
+    if (targetValue != null)
+        r = [...r, ...targetValue];
+    
     HandleStore.set(target, r)
 }
 

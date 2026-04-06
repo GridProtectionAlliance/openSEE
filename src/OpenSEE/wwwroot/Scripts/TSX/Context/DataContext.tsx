@@ -1,7 +1,7 @@
 //******************************************************************************************************
 //  DataContext.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright ï¿½ 2020, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -61,22 +61,22 @@ interface ISelectorFunctions {
     SelectPlotKeys: () => OpenSee.IGraphProps[],
     SelectListGraphs: () => _.Dictionary<OpenSee.IGraphProps[]>
     SelectAnalytics: () => OpenSee.graphType[],
-    SelectData: (key: OpenSee.IGraphProps) => OpenSee.iD3DataSeries[],
+    SelectData: (key: OpenSee.IGraphProps) => OpenSee.iD3DataSeries[] | null,
     SelectEnabled: (key: OpenSee.IGraphProps) => boolean[],
     SelectRelevantUnits: (key: OpenSee.IGraphProps) => OpenSee.Unit[],
     SelectEnabledUnits: (key: OpenSee.IGraphProps) => OpenSee.Unit[],
     SelectYLimits: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<[number, number]>,
-    SelectOverlappingYLimits: (key: OpenSee.graphType) => OpenSee.IGraphCollection<[number, number]>,
-    SelectLoading: (key: OpenSee.IGraphProps) => OpenSee.LoadingState,
-    SelectAutoUnits: (key: OpenSee.IGraphProps) => {[key: string]: boolean},
+    SelectOverlappingYLimits: (key: OpenSee.graphType) => OpenSee.IGraphCollection<[number, number]> | undefined,
+    SelectLoading: (key: OpenSee.IGraphProps) => OpenSee.LoadingState | undefined,
+    SelectAutoUnits: (key: OpenSee.IGraphProps) => { [key: string]: boolean } | undefined,
     SelectAxisSettings: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
     SelectYLabels: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<string>,
     SelectEventIDs: (context: OpenSee.IDataContext) => number[],
     SelectFFTEnabled: () => boolean,
-    SelectIsManual: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<boolean>,
-    SelectIsOverlappingManual: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> },
-    SelectOverlappingAutoUnits: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> },
-    SelectIsZoomed: (key: OpenSee.IGraphProps) => boolean,
+    SelectIsManual: (key: OpenSee.IGraphProps) => OpenSee.IUnitCollection<boolean> | undefined,
+    SelectIsOverlappingManual: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> } | undefined,
+    SelectOverlappingAutoUnits: (type: OpenSee.graphType) => { [key: string]: OpenSee.IUnitCollection<boolean> } | undefined,
+    SelectIsZoomed: (key: OpenSee.IGraphProps) => boolean | undefined,
     SelectHoverPoints: (point: [number, number]) => OpenSee.IPoint[],
     SelectDeltaHoverPoints: (point: [number, number]) => OpenSee.IPoint[],
     SelectVPhases: (point: [number, number]) => OpenSee.IVector[],
@@ -88,11 +88,11 @@ interface ISelectorFunctions {
 }
 
 interface IDataFunctionContextType {
-    Dispatch: React.MutableRefObject<IDataFunctions | undefined>
+    Dispatch: React.MutableRefObject<IDataFunctions>
 }
 
 interface IDataContextType {
-    Selector: React.MutableRefObject<ISelectorFunctions | undefined>,
+    Selector: React.MutableRefObject<ISelectorFunctions>,
     Context: OpenSee.IDataContext
 }
 
@@ -106,17 +106,80 @@ const defaultState: OpenSee.IDataContext = {
     OverlappingEventList: []
 };
 
-export const DataContext = React.createContext<IDataContextType>({ Context: defaultState, Selector: undefined });
-export const DataFunctionContext = React.createContext<IDataFunctionContextType>({ Dispatch: undefined });
+const defaultOption: OpenSee.iUnitOptions = {
+    label: '',
+    factor: 1,
+    short: ''
+};
+
+const defaultSelectors: ISelectorFunctions = {
+    SelectOverlappingEvents: () => [],
+    SelectDisplayed: () => ({ Voltage: false, Current: false, TripCoil: false, Analogs: false, Digitals: false }),
+    SelectPlotKeys: () => [],
+    SelectListGraphs: () => ({}),
+    SelectAnalytics: () => [],
+    SelectData: () => [],
+    SelectEnabled: () => [],
+    SelectRelevantUnits: () => [],
+    SelectEnabledUnits: () => [],
+    SelectYLimits: () => ({} as OpenSee.IUnitCollection<[number, number]>),
+    SelectOverlappingYLimits: () => undefined,
+    SelectLoading: () => 'Uninitiated',
+    SelectAutoUnits: () => ({}),
+    SelectAxisSettings: () => ({ isManual: false, dataLimits: [0, 0], manualLimits: [0, 0], zoomedLimits: [0, 0], isAuto: false, current: 0 } as any),
+    SelectYLabels: () => ({} as OpenSee.IUnitCollection<string>),
+    SelectEventIDs: () => [],
+    SelectFFTEnabled: () => false,
+    SelectIsManual: () => undefined,
+    SelectIsOverlappingManual: () => undefined,
+    SelectOverlappingAutoUnits: () => undefined,
+    SelectIsZoomed: () => false,
+    SelectHoverPoints: () => [],
+    SelectDeltaHoverPoints: () => [],
+    SelectVPhases: () => [],
+    SelectIPhases: () => [],
+    SelectSelectedPoints: () => [],
+    SelectFFTData: () => [],
+    SelectEnabledPlots: () => [],
+    SelectActiveUnit: () => null,
+};
+
+const defaultDispatchers: IDataFunctions = {
+    SetTimeLimit: () => { /* noop */ },
+    SetCycleLimit: () => { /* noop */ },
+    SetFFTLimits: () => { /* noop */ },
+    ResetZoom: () => { /* noop */ },
+    SetZoomedLimits: () => { /* noop */ },
+    SetUnit: () => { /* noop */ },
+    EnableTrace: () => { /* noop */ },
+    SetIsManual: () => { /* noop */ },
+    SetSelectPoint: () => { /* noop */ },
+    ClearSelectPoints: () => { /* noop */ },
+    RemoveSelectPoints: () => { /* noop */ },
+    SetManualLimits: () => { /* noop */ },
+    AddPlot: () => { /* noop */ },
+    RemovePlot: () => { /* noop */ },
+    UpdateAnalyticPlot: () => { /* noop */ },
+    EnableOverlappingEvent: () => { /* noop */ },
+};
+
+export const DataContext = React.createContext<IDataContextType>({
+    Context: defaultState,
+    Selector: { current: defaultSelectors } as React.MutableRefObject<ISelectorFunctions>
+});
+
+export const DataFunctionContext = React.createContext<IDataFunctionContextType>({
+    Dispatch: { current: defaultDispatchers } as React.MutableRefObject<IDataFunctions>
+});
 
 // ToDo: A lot of element appear to add/remove plots on a toggle, we might wanna cache data somewhere instead...
 export const DataProvider = (props: React.PropsWithChildren<{}>) => {
     const [contextState, setContextState] = React.useState<OpenSee.IDataContext>(defaultState);
 
-    const dataRef = React.useRef<ISelectorFunctions>();
+    const dataRef = React.useRef<ISelectorFunctions>(defaultSelectors);
     const selector = React.useMemo(() => ({ Selector: dataRef, Context: contextState }), [contextState]);
 
-    const functionRef = React.useRef<IDataFunctions>();
+    const functionRef = React.useRef<IDataFunctions>(defaultDispatchers);
     const dispatch = React.useMemo(() => ({ Dispatch: functionRef }), []);
 
     const [analytic] = React.useContext(AnalyticContext);
@@ -160,7 +223,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         return enabledPlots;
     }
 
-    const SelectActiveUnit = (key: OpenSee.IGraphProps): null | {[key: string]: any} => {
+    const SelectActiveUnit = (key: OpenSee.IGraphProps): null | { [key: string]: any } => {
         const baseUnits = defaultSettings.Units
         let result = {};
         const plot = contextState.Plots.find(plot => plot.key.EventId === key.EventId && plot.key.DataType === key.DataType);
@@ -190,7 +253,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         Digitals: contextState.Plots.some(p => p.key.DataType == 'Digitals')
     });
 
-    const SelectPlotKeys = () => {;
+    const SelectPlotKeys = () => {
         let keys = contextState.Plots.map(plot => plot.key);
         if (singlePlot)
             keys = keys.filter(key => key.EventId === -1);
@@ -337,7 +400,17 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
     const SelectAxisSettings = (key: OpenSee.IGraphProps) => {
         const plot = contextState.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
-        return plot.yLimits;
+        if (plot != null)
+            return plot.yLimits;
+
+        return {
+            isManual: false,
+            dataLimits: [0, 0],
+            manualLimits: [0, 0],
+            zoomedLimits: [0, 0],
+            isAuto: false,
+            current: 0
+        } as unknown as OpenSee.IUnitCollection<OpenSee.IAxisSettings>
     }
 
     const SelectYLabels = (key: OpenSee.IGraphProps) => {
@@ -509,10 +582,13 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                     let phaseValue = pointIndex < phaseChannel.DataPoints.length ? phaseChannel.DataPoints[pointIndex][1] : NaN;
                     let magValue = pointIndex < magnitudeChannel.DataPoints.length ? magnitudeChannel.DataPoints[pointIndex][1] : NaN;
 
+                    const unit = defaultSettings.Units.Voltage.options?.[activeUnits["Voltage"].current] ?? defaultOption;
+                    const phaseUnit = defaultSettings.Units.Angle.options?.[activeUnits["Angle"].current] ?? defaultOption;
+
                     result.push({
                         Color: phaseChannel.Color,
-                        Unit: defaultSettings.Units.Voltage.options[activeUnits["Voltage"].current],
-                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
+                        Unit: unit,
+                        PhaseUnit: phaseUnit,
                         Phase: p,
                         Asset: a,
                         Magnitude: magValue,
@@ -534,8 +610,8 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         let asset = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendGroup));
         let phase = _.uniq(plot.data.filter(item => item.Enabled).map(item => item.LegendVertical));
 
+        let pointIndex = func.getIndex(hover[0], plot.data.find(item => item.LegendHorizontal == 'Ph')?.DataPoints ?? []);
 
-        let pointIndex = func.getIndex(hover[0], plot.data.find(item => item.LegendHorizontal == 'Ph').DataPoints);
         if (isNaN(pointIndex)) return [];
 
         let result: OpenSee.IVector[] = [];
@@ -551,8 +627,8 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
                     result.push({
                         Color: phaseChannel.Color,
-                        Unit: defaultSettings.Units.Current.options[activeUnits["Current"].current],
-                        PhaseUnit: defaultSettings.Units.Angle.options[activeUnits["Angle"].current],
+                        Unit: defaultSettings.Units.Current.options?.[activeUnits["Current"].current] ?? defaultOption,
+                        PhaseUnit: defaultSettings.Units.Angle.options?.[activeUnits["Angle"].current] ?? defaultOption,
                         Phase: p,
                         Asset: a,
                         Magnitude: magValue,
@@ -621,7 +697,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 result.push({
                     Color: phaseChannel.Color,
                     Unit: activeUnits[magnitudeChannel.Unit].options[fftPlot.yLimits[magnitudeChannel.Unit].current],
-                    PhaseUnit: activeUnits["Angle"].options[fftPlot.yLimits["Angle"].current],
+                    PhaseUnit: activeUnits["Angle"].options?.[fftPlot.yLimits["Angle"].current] ?? defaultOption,
                     Phase: p,
                     Asset: a,
                     Magnitude: magnitudeChannel.DataPoints.map(item => item[1]),
@@ -643,7 +719,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             func.UpdateTimeLimit(updatedContext, start, end);
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetCycleLimit = React.useCallback((start: number, end: number) =>
         setContextState(c => {
@@ -651,7 +727,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             func.UpdateCycleLimits(updatedContext, start, end);
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetFFTLimits = React.useCallback((start: number, end: number) =>
         setContextState(c => {
@@ -659,7 +735,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             func.UpdateFFTLimits(updatedContext, start, end);
             return updatedContext;
         })
-    , []);
+        , []);
 
     const ResetZoom = React.useCallback((start: number, end: number) =>
         setContextState(c => {
@@ -691,7 +767,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetZoomedLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps) =>
         setContextState(c => {
@@ -726,7 +802,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             newContext.Plots[plotIndex].isZoomed = true;
             return newContext;
         })
-    , []);
+        , []);
 
     const SetUnit = React.useCallback((unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps) =>
         setContextState(c => {
@@ -799,14 +875,14 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             func.saveSettings(newContext);
             return newContext;
         })
-    , []);
+        , []);
 
-    const EnableTrace = React.useCallback((key: OpenSee.IGraphProps, trace: number[], enabled: boolean) => 
+    const EnableTrace = React.useCallback((key: OpenSee.IGraphProps, trace: number[], enabled: boolean) =>
         setContextState(c => {
             // Find the index of the plot in the state
             let plotIndex = c.Plots.findIndex(plot => plot.key.DataType == key.DataType && plot.key.EventId == key.EventId);
             if (plotIndex < 0)
-                return;
+                return c;
 
             const updatedContext = _.cloneDeep(c);
 
@@ -851,7 +927,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 });
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetIsManual = React.useCallback((key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean) =>
         setContextState(c => {
@@ -871,7 +947,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetSelectPoint = React.useCallback((time: number) =>
         setContextState(c => {
@@ -880,15 +956,15 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 let shortestDataObject = _.minBy(updatedContext.Plots[index].data, dataObject => dataObject.DataPoints.length);
 
                 if (updatedContext.Plots[index]?.data?.length > 0) {
-                    let dataIndex = func.getIndex(time, shortestDataObject.DataPoints)
+                    let dataIndex = func.getIndex(time, shortestDataObject?.DataPoints ?? [])
                     updatedContext.Plots[index].selectedIndixes.push(dataIndex);
                 }
             }
             return updatedContext;
         })
-    , []);
+        , []);
 
-    const ClearSelectPoints = React.useCallback(() => 
+    const ClearSelectPoints = React.useCallback(() =>
         setContextState(c => {
             const updatedContext = _.cloneDeep(c);
             for (let index = 0; index < updatedContext.Plots.length; index++) {
@@ -896,9 +972,9 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             }
             return updatedContext;
         })
-    , []);
+        , []);
 
-    const RemoveSelectPoints = React.useCallback((selectIndex: number) => 
+    const RemoveSelectPoints = React.useCallback((selectIndex: number) =>
         setContextState(c => {
             const updatedContext = _.cloneDeep(c);
             for (let index = 0; index < updatedContext.Plots.length; index++) {
@@ -906,7 +982,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
             }
             return updatedContext;
         })
-    , []);
+        , []);
 
     const SetManualLimits = React.useCallback((limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, factor?: number) =>
         setContextState(c => {
@@ -922,6 +998,8 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
             updatedContext.Plots[plotIndex].yLimits[axis].manualLimits = limits;
 
+            factor = factor ?? 1;
+
             if (auto) {
                 let revelantData = updatedContext.Plots[plotIndex].data.filter(data => data.Enabled && data.Unit === axis);
                 let index = func.updateActiveUnits(updatedContext.Plots[plotIndex].yLimits, axis, revelantData, updatedContext.StartTime, updatedContext.EndTime, limits);
@@ -934,7 +1012,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
             return updatedContext;
         })
-    , []);
+        , []);
 
     // Plot Data Functions
     const AddPlot = (key: OpenSee.IGraphProps, yLimits?: OpenSee.IUnitCollection<OpenSee.IAxisSettings>, isZoomed?: boolean, fftLimits?: [number, number], cycleLimits?: [number, number]): void => {
@@ -1051,6 +1129,8 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                         updatedState.Plots.splice(overlappingPlotIndex, 1);
                 }
             }
+
+            return updatedState;
         }
         ), [singlePlot]);
 
@@ -1158,9 +1238,11 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
         if (evt.Context.EventID < 0)
             return;
 
-        Object.keys(analytic).forEach((key: keyof OpenSee.IAnalyticContext) => {
+        Object.keys(analytic).forEach((key) => {
+            key = key as keyof OpenSee.IAnalyticContext;
+
             if (analytic[key] != null && oldAnalyticRef.current?.[key] == null || oldAnalyticRef.current[key] != analytic[key]) {
-                let keyAnalytic: OpenSee.graphType;
+                let keyAnalytic: OpenSee.graphType | undefined;
                 //ToDo: This can probably be moved to analytic context...
                 switch (key) {
                     case 'FFTCycles':
@@ -1183,6 +1265,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                         console.warn(`Unrecognized key ${key} change in datacontext, check to make sure correct analytic is refreshing...`);
                         break;
                 }
+
                 if (keyAnalytic != null) {
                     // ToDo: This needs to be reworked, not only does it do a bunch of cloning that WILL be a performance loss, it will also sometimes cause bad behavior because it could use a stale state...
                     const selectedIds = SelectEventIDs(contextState);
@@ -1191,7 +1274,7 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                     );
                     oldAnalyticRef.current[key] = analytic[key];
                 }
-            } 
+            }
         });
     }, [analytic, evt.Context.EventID]);
 
@@ -1239,15 +1322,14 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
                 });
                 return newState;
             }),
-        () =>
-            setContextState(c => {
-                const newState = _.cloneDeep(c);
-                newState.OverlappingLoading = 'Error';
-                return newState;
-            })
+            () =>
+                setContextState(c => {
+                    const newState = _.cloneDeep(c);
+                    newState.OverlappingLoading = 'Error';
+                    return newState;
+                })
         );
     }, [evt.Context.EventID]);
-
 
     // Set context
     dataRef.current = {

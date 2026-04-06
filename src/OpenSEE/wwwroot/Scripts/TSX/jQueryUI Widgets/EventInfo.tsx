@@ -1,7 +1,7 @@
 //******************************************************************************************************
 //  EventInfo.tsx - Gbtc
 //
-//  Copyright © 2018, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright ï¿½ 2018, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -21,8 +21,8 @@
 //******************************************************************************************************
 
 import React from 'react';
-import queryString from 'querystring';
-import moment from 'moment'; 
+import queryString from 'query-string';
+import moment from 'moment';
 import FaultSpecificsModal from './FaultSpecificsModal';
 import EventContext from '../Context/EventContext';
 
@@ -53,15 +53,20 @@ const EventInfo = () => {
     }
 
     React.useEffect(() => {
-        const time = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(timeFormat)
-        const date = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(dateFormat)
+        if (evt.Context.EventInfo == null)
+            return;
+
+        const time = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(timeFormat);
+        const date = moment.utc(evt.Context.EventInfo.EventDate, eventDateFormat).format(dateFormat);
+
         const queryParams = {
             eventid: evt.Context.EventID,
             time: time,
             date: date,
             windowSize: 1,
             timeWindowUnits: 3
-        }
+        };
+
         setPQBrowserParams(queryString.stringify(queryParams))
 
     }, [evt.Context.EventInfo]);
@@ -72,7 +77,7 @@ const EventInfo = () => {
     return (
         <div className="d-flex" style={{ marginTop: '10px', width: '100%', height: '100%', textAlign: 'center', padding: '10px' }}>
             <div style={{ height: '100%', overflow: 'auto' }}>
-                <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)`}}>
+                <table className="table" style={{ height: '100%', fontSize: `calc(${(window.innerWidth / 100) * 1}px)` }}>
                     <tbody>
                         <tr><td>Meter:</td><td>{evt.Context.EventInfo.MeterName}</td></tr>
                         <tr><td>Station:</td><td>{evt.Context.EventInfo.StationName}</td></tr>
@@ -86,7 +91,7 @@ const EventInfo = () => {
                                             href="#"
                                             title="Click for fault details"
                                             onClick={() => setShowFaultSpecifics(true)}
-                                >Fault</a>
+                                        >Fault</a>
                                 }
                             </td>
                         </tr>

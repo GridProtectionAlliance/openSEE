@@ -25,7 +25,6 @@
 
 import * as React from 'react';
 import { OpenSee } from '../global';
-import { useAppDispatch, useAppSelector } from '../hooks';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive"
 import { Select, Input } from "@gpa-gemstone/react-forms"
 import * as _ from 'lodash';
@@ -39,6 +38,7 @@ const AnalyticOptions = () => {
     const dataDispatch = React.useContext(DataFunctionContext);
 
     const eventIDs = data.Selector.current.SelectEventIDs(data.Context);
+    
     const defaultAnalyticBtns = [
         { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'FaultDistance', EventId: id })), DataType: 'FaultDistance' },
         { Label: 'FFT', Callback: () => eventIDs.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: 'FFT', EventId: id })), DataType: 'FFT' },

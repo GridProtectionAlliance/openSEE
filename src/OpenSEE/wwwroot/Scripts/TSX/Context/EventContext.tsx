@@ -1,7 +1,7 @@
 //******************************************************************************************************
 //  EventContext.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright ï¿½ 2020, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -35,8 +35,8 @@ interface IDispatchFunctions {
 
 interface IEventContextState {
     EventID: number,
-    EventInfo: OpenSee.IEventInfo,
-    LookupInfo: OpenSee.INextBackLookup,
+    EventInfo: OpenSee.IEventInfo | null,
+    LookupInfo: OpenSee.INextBackLookup | null,
     Status: Application.Types.Status
 }
 
@@ -49,19 +49,29 @@ const defaultState: IEventContextState = {
 
 interface IEventContext {
     Context: IEventContextState,
-    Dispatch: React.MutableRefObject<IDispatchFunctions | undefined>,
+    Dispatch: React.MutableRefObject<IDispatchFunctions>,
 }
 
-export const EventContext = React.createContext<IEventContext>({ Context: defaultState, Dispatch: undefined });
+const defaultDispatch: IDispatchFunctions = {
+    SettingsDispatch: () => { /* noop */ }
+}
+
+const defaultEventState: IEventContextState = {
+    EventID: -1,
+    EventInfo: null,
+    LookupInfo: null,
+    Status: 'uninitiated'
+}
+
+export const EventContext = React.createContext<IEventContext>({ Context: defaultState, Dispatch: { current: defaultDispatch } });
 
 export const EventProvider = (props: React.PropsWithChildren<{}>) => {
     const [contextState, setContextState] = React.useState<IEventContextState>(defaultState);
-    const [settings, setSettings] = React.useState<IContextSettings>();
+    const [settings, setSettings] = React.useState<IContextSettings>(defaultEventState);
 
-    const functionRef = React.useRef<IDispatchFunctions>();
-    functionRef.current = {
-        SettingsDispatch: setSettings
-    }
+    const functionRef = React.useRef<IDispatchFunctions>(defaultDispatch);
+    functionRef.current = { SettingsDispatch: setSettings };
+
     const context = React.useMemo(() => ({ Dispatch: functionRef, Context: contextState }), [contextState]);
 
     React.useEffect(() => {
@@ -83,6 +93,7 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
             cache: true,
             async: true
         });
+
         const lookupHandle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetNavData?eventId=${settings.EventID}`,
@@ -90,6 +101,7 @@ export const EventProvider = (props: React.PropsWithChildren<{}>) => {
             cache: true,
             async: true
         });
+        
         Promise.all([eventHandle, lookupHandle]).then(([evtResult, lookupResult]) => {
             setContextState({
                 Status: 'idle',

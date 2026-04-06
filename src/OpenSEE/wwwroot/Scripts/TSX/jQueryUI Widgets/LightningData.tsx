@@ -25,7 +25,6 @@ import * as React from 'react';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table'
 import EventContext from '../Context/EventContext';
 
-
 interface Column {
     key: string;
     label: string;
@@ -61,7 +60,7 @@ interface LightningData { // these probably arent all strings but not sure since
 const LightningDataWidget = () => {
     const evt = React.useContext(EventContext);
 
-    const [lightningData, setLightningData] = React.useState<LightningData[]>(null);
+    const [lightningData, setLightningData] = React.useState<LightningData[]>([]);
 
     React.useEffect(() => {
         const handle = $.ajax({
@@ -82,7 +81,7 @@ const LightningDataWidget = () => {
 
     return (
         <>
-            {lightningData ?
+            {lightningData.length > 0 ?
                 <div style={{ width: '100%', height: '100%', maxHeight: '100%', overflowY: 'hidden' }}>
                     <ConfigurableTable<LightningData>
                         LocalStorageKey={"OpenSee.Lightning.TableCols"}

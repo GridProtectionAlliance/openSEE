@@ -41,7 +41,7 @@ interface ICorrelatedSags {
 }
 
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
-    const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>(null);
+    const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>([]);
 
     React.useEffect(() => {
         const handle = $.ajax({
@@ -60,7 +60,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
 
     return (
         <>
-            {sagsData ?
+            {sagsData.length > 0 ?
                 <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
                     <ConfigurableTable<ICorrelatedSags>
                         LocalStorageKey={"OpenSee.Correlated.TableCols"}

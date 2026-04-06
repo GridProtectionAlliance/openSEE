@@ -40,6 +40,7 @@ const Navigation = () => {
                 <li className="nav-item" style={{ width: '210px', marginTop: "10px", minWidth: '155px' }}>
                     <div className="input-group mb-3">
                         <div className="input-group-prepend">
+
                             <ToolTip Show={hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'}>
                                 <p>Navigate to Previous Event in the {navigation}</p>
                                 {navigation === "system" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.System?.m_Item1 != null ? evt.Context.LookupInfo.System.m_Item1.StartTime : '')})</p>)}
@@ -47,10 +48,56 @@ const Navigation = () => {
                                 {navigation === "meter" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.Meter?.m_Item1 != null ? evt.Context.LookupInfo.Meter.m_Item1.StartTime : '')})</p>)}
                                 {navigation === "asset" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.System?.m_Item1 != null ? evt.Context.LookupInfo.System.m_Item1.StartTime : '')})</p>)}
                             </ToolTip>
-                            {(navigation == "system" ? <a href={(evt.Context.LookupInfo?.System?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.System.m_Item1.ID : '#')} id="system-back" key="system-back" className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                            {(navigation == "station" ? <a href={(evt.Context.LookupInfo?.Station?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Station.m_Item1.ID : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                            {(navigation == "meter" ? <a href={(evt.Context.LookupInfo?.Meter?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.m_Item1.ID : '#')} id="meter-back" key="meter-back" className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
-                            {(navigation == "asset" ? <a href={(evt.Context.LookupInfo?.Asset?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.m_Item1.ID : '#')} id="line-back" key="line-back" className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+
+                            {(navigation == "system" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.System?.m_Item1 != null ?
+                                        "?eventID=" + evt.Context.LookupInfo.System.m_Item1.ID : '#')}
+                                    id="system-back"
+                                    key="system-back"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.m_Item1 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavLeft')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'back-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &lt;
+                                </a> : null)}
+                            {(navigation == "station" ?
+                                <a href={(evt.Context.LookupInfo?.Station?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Station.m_Item1.ID : '#')} id="station-back" key="station-back" className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.m_Item1 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavLeft')} onMouseLeave={() => setHover('None')} data-tooltip={'back-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&lt;</a> : null)}
+
+                            {(navigation == "meter" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.Meter?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.m_Item1.ID : '#')}
+                                    id="meter-back"
+                                    key="meter-back"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.m_Item1 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavLeft')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'back-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &lt;
+                                </a> : null)}
+                            {(navigation == "asset" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.Asset?.m_Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.m_Item1.ID : '#')}
+                                    id="line-back"
+                                    key="line-back"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.m_Item1 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavLeft')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'back-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &lt;
+                                </a> : null)}
                         </div>
                         <select id="next-back-selection" value={navigation} onChange={e => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
                             <option value="system">System</option>
@@ -66,10 +113,66 @@ const Navigation = () => {
                                 {navigation === "meter" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.Meter?.m_Item2 != null ? evt.Context.LookupInfo.Meter.m_Item2.StartTime : '')})</p>)}
                                 {navigation === "asset" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.Asset?.m_Item2 != null ? evt.Context.LookupInfo.Asset.m_Item2.StartTime : '')})</p>)}
                             </ToolTip>
-                            {(navigation == "system" ? <a href={(evt.Context.LookupInfo?.System?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.System.m_Item2.ID : '#')} id="system-next" key="system-next" className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                            {(navigation == "station" ? <a href={(evt.Context.LookupInfo?.Station?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Station.m_Item2.ID : '#')} id="station-next" key="station-next" className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                            {(navigation == "meter" ? <a href={(evt.Context.LookupInfo?.Meter?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.m_Item2.ID : '#')} id="meter-next" key="meter-next" className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
-                            {(navigation == "asset" ? <a href={(evt.Context.LookupInfo?.Asset?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.m_Item2.ID : '#')} id="line-next" key="line-next" className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.m_Item2 == null ? ' disabled' : '')} onMouseEnter={() => setHover('NavRight')} onMouseLeave={() => setHover('None')} data-tooltip={'next-btn'} data-toggle="tooltip" data-placement="bottom" style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}>&gt;</a> : null)}
+                            {(navigation == "system" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.System?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.System.m_Item2.ID : '#')}
+                                    id="system-next"
+                                    key="system-next"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.m_Item2 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavRight')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'next-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &gt;
+                                </a> : null)}
+                            {(navigation == "station" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.Station?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Station.m_Item2.ID : '#')}
+                                    id="station-next"
+                                    key="station-next"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.m_Item2 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavRight')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'next-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &gt;
+                                </a> : null)}
+                            {(navigation == "meter" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.Meter?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.m_Item2.ID : '#')}
+                                    id="meter-next"
+                                    key="meter-next"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.m_Item2 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavRight')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'next-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &gt;
+                                </a> : null)}
+                            {(navigation == "asset" ?
+                                <a
+                                    href={(evt.Context.LookupInfo?.Asset?.m_Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.m_Item2.ID : '#')}
+                                    id="line-next"
+                                    key="line-next"
+                                    className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.m_Item2 == null ? ' disabled' : '')}
+                                    onMouseEnter={() => setHover('NavRight')}
+                                    onMouseLeave={() => setHover('None')}
+                                    data-tooltip={'next-btn'}
+                                    data-toggle="tooltip"
+                                    data-placement="bottom"
+                                    style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
+                                >
+                                    &gt;
+                                </a> : null)}
                         </div>
                     </div>
                 </li> : null}

@@ -41,7 +41,7 @@ interface iProps {
 interface ICategory {
     Value: number;
     Label: string;
-    Selected: boolean 
+    Selected: boolean
 }
 
 interface ILegendGrid {
@@ -81,7 +81,7 @@ const Legend = (props: iProps) => {
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
-        update();
+            update();
         }, 250);
 
         return () => clearTimeout(timeoutId);
@@ -90,27 +90,34 @@ const Legend = (props: iProps) => {
 
     React.useEffect(() => { setWScroll(measureScrollbarWidth()); }, [])
     function dataUpdate() {
-        let categories: Array<ICategory> = [];
-        let grid: Array<ILegendGrid> = [];
+        let categories: ICategory[] = [];
+        let grid: ILegendGrid[] = [];
 
         dataPoints?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
             let index = categories.findIndex(category => category.Label === item.LegendGroup);
+
             if (index === -1) {
                 categories.push({ Value: 0, Label: item.LegendGroup, Selected: false });
                 index = categories.findIndex(category => category.Label === item.LegendGroup);
             }
+
             if (enabled[dataIndex])
                 categories[index].Selected = true;
+
             index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical && g.category == item.LegendVGroup);
+
             if (index === -1) {
                 grid.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup })
                 index = grid.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical && g.category == item.LegendVGroup);
             }
+
             if (enabled[dataIndex])
                 grid[index].enabled = true;
 
-            if (grid[index].traces.has(item.LegendGroup))
-                grid[index].traces.get(item.LegendGroup).push(dataIndex)
+            const trace = grid[index].traces.get(item.LegendGroup) ?? [];
+
+            if (trace != null)
+                trace.push(dataIndex)
             else
                 grid[index].traces.set(item.LegendGroup, [dataIndex])
         });
@@ -134,27 +141,28 @@ const Legend = (props: iProps) => {
         dataPoints?.forEach((item: OpenSee.iD3DataSeries, dataIndex) => {
 
             let index = item.LegendVertical + item.LegendVGroup;
-            if (!updateGrid.has(index)) {
+
+            if (!updateGrid.has(index))
                 updateGrid.set(index, [{ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup }])
-            }
-            let dIndex = updateGrid.get(index).findIndex(g => g.hLabel === item.LegendHorizontal)
+
+            // Safe to assert non-null here 
+            let entries = updateGrid.get(index)!;
+            let dIndex = entries.findIndex(g => g.hLabel === item.LegendHorizontal);
 
             if (dIndex == -1) {
-                updateGrid.set(index, [...updateGrid.get(index), { enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup }])
-                dIndex = updateGrid.get(index).findIndex(g => g.hLabel === item.LegendHorizontal);
+                entries.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map<string, Array<number>>(), category: item.LegendVGroup });
+                dIndex = entries.length - 1;
             }
-            if (enabled[dataIndex])
-                updateGrid.get(index)[dIndex].enabled = true;
 
-            if (updateGrid.get(index)[dIndex].traces.has(item.LegendGroup)) {
-                let ugrid = updateGrid.get(index);
-                ugrid[dIndex].traces.get(item.LegendGroup).push(dataIndex)
-                updateGrid.set(index, ugrid);
+            if (enabled[dataIndex])
+                entries[dIndex].enabled = true;
+
+            let traces = entries[dIndex].traces;
+            if (traces.has(item.LegendGroup)) {
+                traces.get(item.LegendGroup)!.push(dataIndex);
             }
             else {
-                let ugrid = updateGrid.get(index);
-                ugrid[dIndex].traces.set(item.LegendGroup, [dataIndex])
-                updateGrid.set(index, ugrid);
+                traces.set(item.LegendGroup, [dataIndex]);
             }
         });
 
@@ -226,13 +234,15 @@ const Legend = (props: iProps) => {
 
             if (tmp[index].Selected)
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.Label) && data.enabled)
-                        traces = traces.concat(data.traces.get(item.Label));
+                    const trace = data.traces.get(item.Label);
+                    if (trace != null && data.enabled)
+                        traces = traces.concat(trace);
                 }));
             else
                 grid.forEach(row => row.forEach(data => {
-                    if (data.traces.has(item.Label))
-                        traces = traces.concat(data.traces.get(item.Label));
+                    const trace = data.traces.get(item.Label);
+                    if (trace != null)
+                        traces = traces.concat(trace);
                 }));
 
             dataDispatch.Dispatch.current.EnableTrace(props.dataKey, traces, tmp[index].Selected);
@@ -241,8 +251,8 @@ const Legend = (props: iProps) => {
     }
 
     function uniq(array, fx) {
-        const result = [];
-        const resultfx = [];
+        const result: any[] = [];
+        const resultfx: any[] = [];
         array.forEach(item => {
             const fxn = fx(item);
             const index = resultfx.findIndex(sitem => sitem === fxn)
@@ -259,8 +269,9 @@ const Legend = (props: iProps) => {
         let result: Map<string, ILegendGrid[]> = new Map<string, ILegendGrid[]>();
 
         list.forEach(item => {
-            if (result.has(fnct(item)))
-                result.get(fnct(item)).push(item);
+            const value = result.get(fnct(item));
+            if (value != null)
+                value.push(item);
             else
                 result.set(fnct(item), [item]);
         })
@@ -275,28 +286,32 @@ const Legend = (props: iProps) => {
         let updates: number[] = [];
 
         if (type == 'vertical') {
-            isAny = grid.get(group).some(item => item.enabled);
+            const gridValue = grid.get(group);
+            isAny = gridValue?.some(item => item.enabled) ?? false;
 
 
             if (isAny) {
-                grid.get(group).forEach(row => {
+                gridValue?.forEach(row => {
                     if (row.enabled) {
                         row.enabled = false;
                         categories.forEach((cat) => {
-                            updates.push(...row.traces.get(cat.Label));
+                            const trace = row.traces.get(cat.Label);
+                            if (trace != null)
+                                updates.push(...trace);
                         });
                     }
                 });
             }
             else {
-
-                grid.get(group).forEach(row => {
+                gridValue?.forEach(row => {
                     row.enabled = true;
                     categories.forEach((cat) => {
-                        if (cat.Selected)
-                            updates.push(...row.traces.get(cat.Label));
+                        if (cat.Selected) {
+                            const trace = row.traces.get(cat.Label);
+                            if (trace != null)
+                                updates.push(...trace);
+                        }
                     });
-
                 });
             }
         }
@@ -310,7 +325,9 @@ const Legend = (props: iProps) => {
                         if (item.enabled && item.hLabel == group) {
                             item.enabled = false;
                             categories.forEach((cat) => {
-                                updates.push(...item.traces.get(cat.Label));
+                                const trace = item.traces.get(cat.Label);
+                                if (trace != null)
+                                    updates.push(...trace);
                             });
                         }
                     })
@@ -322,8 +339,11 @@ const Legend = (props: iProps) => {
                         if (item.hLabel == group) {
                             item.enabled = true;
                             categories.forEach((cat) => {
-                                if (cat.Selected)
-                                    updates.push(...item.traces.get(cat.Label));
+                                if (cat.Selected) {
+                                    const trace = item.traces.get(cat.Label);
+                                    if (trace != null)
+                                        updates.push(...trace);
+                                }
                             });
                         }
                     })
@@ -337,28 +357,62 @@ const Legend = (props: iProps) => {
         <OverlayDrawer Location={"right"} Title={"Traces"} Open={false} Target={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId}>
             <div style={{ float: "right", width: "200px", height: props.height - 38, marginTop: "6px" }} >
                 <div className="form-group" >
-                        <MultiCheckBoxSelect
-                            Options={categories}
+                    <MultiCheckBoxSelect
+                        Options={categories}
                         OnChange={(evt, options) => {
                             options.forEach(o => {
                                 const i = categories.findIndex(c => c.Label == o.Label);
-                                    changeCategory(i, categories[i])
-                                })
-                            }}
-                            Label={""}
-                        />
-                    </div>
-                <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
-                <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: (isScroll ? wScroll : 0) }}>
-                    <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }}></div>
-                        {horizontalHeader.map((item, index) => <Header key={index} label={item} index={index} width={hwidth} onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)} />)}
+                                changeCategory(i, categories[i])
+                            })
+                        }}
+                        Label={""}
+                    />
                 </div>
-                <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101, width: '100%' }}>
-                {(verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ?
-                    <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                        {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) => <VCategory key={index} label={value[1]} height={hrow * verticalHeader.filter(item => item[1] == value[1]).length} width={hwidth} />)}
-                    </div> : null)}
-                        <div style={{ width: (verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ? "calc(100% - " + hwidth + "px)" : "100%"), backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
+                    <div
+                        style={{
+                            width: "100%",
+                            backgroundColor: "rgb(204,204,204)",
+                            overflow: "hidden",
+                            textAlign: "center",
+                            display: "flex",
+                            borderBottom: "2px solid #b2b2b2",
+                            paddingRight: (isScroll ? wScroll : 0)
+                        }}
+                    >
+                        <div style={{ width: ((verticalHeader.length > 1 ? 2 : 1) * hwidth), backgroundColor: "#b2b2b2" }} />
+                        {horizontalHeader.map((item, index) =>
+                            <Header
+                                key={index}
+                                label={item}
+                                index={index}
+                                width={hwidth}
+                                onClick={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}
+                            />
+                        )}
+                    </div>
+                    <div style={{ overflowY: (isScroll ? 'scroll' : 'hidden'), maxHeight: props.height - 101, width: '100%' }}>
+                        {(verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ?
+                            <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                                {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((value, index) =>
+                                    <VCategory
+                                        key={index}
+                                        label={value[1]}
+                                        height={hrow * verticalHeader.filter(item => item[1] == value[1]).length}
+                                        width={hwidth}
+                                    />
+                                )}
+                            </div> : null)}
+                        <div
+                            style={{
+                                width: (verticalHeader.length > 1 && verticalHeader.some(item => item[1]) ? "calc(100% - " + hwidth + "px)" : "100%"),
+                                backgroundColor: "rgb(204,204,204)",
+                                overflow: "hidden",
+                                textAlign: "center",
+                                display: "inline-block",
+                                verticalAlign: "top"
+                            }}
+                        >
                             {verticalHeader.map((value, index) => {
                                 return (
                                     <Row
@@ -367,7 +421,7 @@ const Legend = (props: iProps) => {
                                         activeCategories={categories.filter(item => item.Selected).map(item => item.Label)}
                                         key={index}
                                         label={value[0]}
-                                        data={grid?.get(value[0] + value[1])?.sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel))}
+                                        data={grid?.get(value[0] + value[1])?.sort((item1, item2) => sortHorizontal(item1.hLabel, item2.hLabel)) ?? []}
                                         width={hwidth}
                                         clickHeader={(grp: string, type: ("vertical" | "horizontal")) => clickGroup(grp, type)}
                                         verticalHeaders={verticalHeader}
@@ -375,16 +429,16 @@ const Legend = (props: iProps) => {
                                     />
                                 );
                             })}
+                        </div>
                     </div>
                 </div>
-        </div>
-        </div>
+            </div>
         </OverlayDrawer>
-        );
-    
+    );
+
 }
 
-const Header = (props: { index: number, label: string, width: number, onClick: (str: string, type: string) => void }) => {
+const Header = (props: { index: number, label: string, width: number, onClick: (str: string, type: 'horizontal' | 'vertical') => void }) => {
 
     return (<div key={props.index} style={{ width: props.width, borderLeft: "2px solid #b2b2b2" }}>
         <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap", margin: "(0,0,0,0)" }} onClick={() => props.onClick(props.label, 'horizontal')} > {props.label}</span>
@@ -399,11 +453,10 @@ const VCategory = (props: { key: number, label: string, height: number, width: n
         </div>)
 }
 
-const Row = (props: { category: string, label: string, data: Array<ILegendGrid>, width: number, activeCategories: Array<string>, clickHeader: (group: string, type: string) => void, dataKey: OpenSee.IGraphProps, horizontalHeaders, verticalHeaders }) => {
+const Row = (props: { category: string, label: string, data: Array<ILegendGrid>, width: number, activeCategories: Array<string>, clickHeader: (group: string, type: 'horizontal' | 'vertical') => void, dataKey: OpenSee.IGraphProps, horizontalHeaders, verticalHeaders }) => {
     const hasHorizontalHeaders = props.horizontalHeaders.some(item => item)
     const hasCategoryGroup = props.category !== '' && props.category !== null
     const labelWidth = !hasHorizontalHeaders && !hasCategoryGroup ? '50%' : hasHorizontalHeaders && !hasCategoryGroup ? 2 * props.width : props.width
-
 
     return (
         <div className="d-flex" style={{ width: "100%", backgroundColor: "rgb(204,204,204)", textAlign: "center", borderTop: "2px solid #b2b2b2", height: 'auto' }}>
@@ -431,7 +484,7 @@ const TraceButton = (props: { data: ILegendGrid, activeCategory: Array<string>, 
     function onClick(sender) {
         let traces: Array<number> = [];
         props.data.traces.forEach(val => {
-                traces = traces.concat(val);
+            traces = traces.concat(val);
         })
         props.data.enabled = !props.data.enabled;
         dataDispatch.Dispatch.current.EnableTrace(props.dataKey, traces, props.data.enabled);
