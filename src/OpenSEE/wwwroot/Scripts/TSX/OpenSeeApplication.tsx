@@ -236,7 +236,7 @@ const OpenSeeApplication = React.memo(() => {
 
         //Set TimeLimit
         const parsedStart = ToFloat(parsedQuery?.startTime);
-        const parsedEnd = ToFloat(parsedQuery?.startTime);
+        const parsedEnd = ToFloat(parsedQuery?.endTime);
         if (parsedStart != undefined && parsedEnd != undefined && (data.Context.StartTime != parsedStart || (data.Context.EndTime != parsedEnd)))
             dataDispatch.Dispatch.current.SetTimeLimit(parsedStart, parsedEnd);
 
