@@ -94,8 +94,8 @@ export namespace OpenSee {
     }
 
     interface iEventTuple {
-        m_Item1?: iXDAEvent;
-        m_Item2?: iXDAEvent;
+        Item1?: iXDAEvent;
+        Item2?: iXDAEvent;
     }
 
     interface IEventInfo {
