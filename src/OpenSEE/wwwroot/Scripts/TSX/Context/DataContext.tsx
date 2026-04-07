@@ -814,8 +814,13 @@ export const DataProvider = (props: React.PropsWithChildren<{}>) => {
 
                 const oldUnitIndex = newContext.Plots[plotIndex].yLimits[unit].current
                 let newUnitIndex = value
-                const oldFactor = defaultSettings.Units[unit].options[oldUnitIndex].factor
-                const newFactor = defaultSettings.Units[unit].options[newUnitIndex].factor
+
+                //Shouldnt need to explicty type this..
+                const unitSetting: OpenSee.IUnitSetting = defaultSettings.Units[unit];
+
+                const oldFactor = unitSetting.options?.[oldUnitIndex]?.factor
+                const newFactor = unitSetting.options?.[newUnitIndex]?.factor
+                
                 const isPU = oldFactor === undefined || newFactor === undefined ? true : false
 
                 newContext.Plots[plotIndex].yLimits[unit].isAuto = auto
