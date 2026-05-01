@@ -36,14 +36,18 @@ import AnalyticOptions from './Components/AnalyticOptions';
 import OverlappingEventWindow from './Components/OverlappingEvents';
 import AnalyticContext from './Context/AnalyticContext';
 import queryString from 'query-string';
-import { DataContext, DataFunctionContext } from './Context/DataContext';
 import { EventContext } from './Context/EventContext';
+import { PlotDataStateContext } from './Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotStateContext';
+import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
 import BarChart from './Graphs/BarChartBase';
 import LineChart from './Graphs/LineChartBase';
 import { sortGraph } from './Graphs/Utilities';
 import OpenSeeNavBar from './Navbar/OpenSEENavbar';
 import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
+import { usePlotLifecycle } from './hooks/usePlotLifeCycle';
+import { selectListGraphs, selectPlotKeys, selectDisplayed, selectEnabledPlots, selectFFTEnabled } from './PlotSelectors';
 import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
 import EventInfo from './jQueryUI Widgets/EventInfo';
 import FFTTable from './jQueryUI Widgets/FFTTable';
@@ -76,14 +80,33 @@ const OpenSeeApplication = React.memo(() => {
     });
 
     const evt = React.useContext(EventContext);
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const overlapping = React.useContext(OverlappingStateContext);
+    const overlappingActions = React.useContext(OverlappingActionContext);
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
+
+    const lifecycle = usePlotLifecycle();
 
     const mouseMode = useAppSelector(SelectMouseMode);
     const singlePlot = useAppSelector(SelectSinglePlot);
-    const groupedKeys = data.Selector.current.SelectListGraphs();
-    const plotKeys = data.Selector.current.SelectPlotKeys();
+
+    // Refs for values read inside the history listener callback.
+    // The listener is set up once on mount, so it would otherwise capture stale closures.
+    const plotStateRef = React.useRef(plotState);
+    const plotDataRef = React.useRef(plotData);
+    const lifecycleRef = React.useRef(lifecycle);
+    const stateActionsRef = React.useRef(stateActions);
+    const analyticRef = React.useRef(analytic);
+    plotStateRef.current = plotState;
+    plotDataRef.current = plotData;
+    lifecycleRef.current = lifecycle;
+    stateActionsRef.current = stateActions;
+    analyticRef.current = analytic;
+
+    const groupedKeys = React.useMemo(() => selectListGraphs(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
+    const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot, sortGraph), [plotState.meta, singlePlot]);
 
     const [openDrawers, setOpenDrawers] = React.useState<OpenSee.Drawers>({
         Settings: false,
@@ -105,75 +128,101 @@ const OpenSeeApplication = React.memo(() => {
     const [plotHeight, setPlotHeight] = React.useState<number>(250);
     const [navWidth, setNavWidth] = React.useState<number>(100);
 
-    const queryStr = React.useMemo(() => {
-        const overlappingEvts: number[] = []
-        const plotKeys = _.uniq(data.Context.Plots.map(plot => plot.key));
-        const plotQuery: OpenSee.PlotQuery[] = [];
+    // -- Coordination effects --
 
-        if (plotKeys.length > 0)
-            plotKeys.forEach(key => {
-                const matchingPlot = data.Context.Plots.find(plot => plot.key.DataType === key.DataType && plot.key.EventId === key.EventId);
+    // Analytic change tracking ref
+    const oldAnalyticRef = React.useRef<{ [key: string]: number }>({});
 
-                if (matchingPlot) {
-                    const relevantUnits = matchingPlot.data.filter(data => data.Enabled)
-                    const enabledUnits = _.uniqBy(relevantUnits, "Unit").map(data => data.Unit)
-                    let yLimits = {}
+    // Load overlapping events when eventID changes
+    React.useEffect(() => {
+        if (evt.Context.EventID > 0)
+            overlappingActions.LoadOverlappingEvents(evt.Context.EventID);
+    }, [evt.Context.EventID]);
 
-                    Object.keys(matchingPlot.yLimits).forEach(key => {
-                        if (enabledUnits.includes(key as OpenSee.Unit))
-                            yLimits[key] = { ...matchingPlot.yLimits[key] };
-                    })
+    // Refresh analytic plots when analytic settings change
+    React.useEffect(() => {
+        if (evt.Context.EventID < 0) return;
 
-                    plotQuery.push({
-                        yLimits: yLimits as OpenSee.IUnitCollection<OpenSee.IAxisSettings>,
-                        isZoomed: matchingPlot.isZoomed,
-                        key: matchingPlot.key
-                    });
-
+        Object.keys(analytic).forEach(key => {
+            if (oldAnalyticRef.current[key] != null && oldAnalyticRef.current[key] !== analytic[key]) {
+                let graphType: OpenSee.graphType | undefined;
+                switch (key) {
+                    case 'FFTCycles':
+                    case 'FFTStartTime': graphType = 'FFT'; break;
+                    case 'LPFOrder': graphType = 'LowPassFilter'; break;
+                    case 'HPFOrder': graphType = 'HighPassFilter'; break;
+                    case 'Trc': graphType = 'Rectifier'; break;
+                    case 'Harmonic': graphType = 'Harmonic'; break;
+                    default:
+                        console.warn(`Unrecognized analytic key: ${key}`);
+                        break;
                 }
-            });
+                if (graphType != null) {
+                    const eventIds = [evt.Context.EventID];
+                    overlapping.events.forEach(e => { if (e.Selected) eventIds.push(e.EventID); });
+                    eventIds.forEach(id => lifecycle.UpdateAnalyticPlot({ DataType: graphType!, EventId: id }));
+                }
+            }
+            oldAnalyticRef.current[key] = analytic[key];
+        });
+    }, [analytic, evt.Context.EventID]);
 
-        if (data.Context.OverlappingEventList.length > 0) {
-            data.Context.OverlappingEventList.forEach(evt => {
-                if (evt.Selected)
-                    overlappingEvts.push(evt.EventID)
-            })
+    // Handle singlePlot toggle
+    React.useEffect(() => {
+        if (singlePlot) {
+            Object.values(plotState.meta).forEach(m => {
+                if (m.key.EventId === -1) return;
+                const overlayKey: OpenSee.IGraphProps = { DataType: m.key.DataType, EventId: -1 };
+                // TODO: wire up singlePlot overlay init through lifecycle
+            });
+        } else {
+            Object.values(plotState.meta).forEach(m => {
+                if (m.key.EventId !== -1) return;
+                stateActions.RemovePlotMeta(m.key);
+            });
         }
-        const plotString = JSON.stringify(plotQuery);
-        const overlappingString = JSON.stringify(overlappingEvts);
-        const plotBase64 = btoa(plotString);
-        const overlappingBase64 = btoa(overlappingString);
+    }, [singlePlot]);
+
+    const queryStr = React.useMemo(() => {
+        const overlappingEvts: number[] = [];
+        const enabledPlots = selectEnabledPlots(plotState.meta, plotData);
+
+        if (overlapping.events.length > 0) {
+            overlapping.events.forEach(e => {
+                if (e.Selected) overlappingEvts.push(e.EventID);
+            });
+        }
+
+        const plotBase64 = btoa(JSON.stringify(enabledPlots));
+        const overlappingBase64 = btoa(JSON.stringify(overlappingEvts));
 
         const queryObj = {
             eventID: evt.Context.EventID,
-            startTime: data.Context.StartTime,
-            endTime: data.Context.EndTime,
+            startTime: plotState.startTime,
+            endTime: plotState.endTime,
             Trc: analytic.Trc,
             HPFOrder: analytic.HPFOrder,
             LPFOrder: analytic.LPFOrder,
-            CycleLimits: data.Context.CycleLimits,
-            FFTLimits: data.Context.FftLimits,
+            CycleLimits: plotState.cycleLimits,
+            FFTLimits: plotState.fftLimits,
             FFTCycles: analytic.FFTCycles,
             FFTStartTime: analytic.FFTStartTime,
             Harmonic: analytic.Harmonic,
             singlePlot: singlePlot,
             plots: plotBase64,
             overlappingInfo: overlappingBase64
-        }
+        };
 
         let query = queryString.stringify(queryObj);
-
-        // Temporary patch to check queryString length and remove plot objects if necessary
+        // Trim query string if too long
+        const plotQuery = [...enabledPlots];
         while (query?.length > 3000 && plotQuery?.length > 0) {
             plotQuery.pop();
-            const plotString = JSON.stringify(plotQuery)
-            const plotBase64 = btoa(plotString);
-            queryObj.plots = plotBase64;
+            queryObj.plots = btoa(JSON.stringify(plotQuery));
             query = queryString.stringify(queryObj);
         }
-
-        return query
-    }, [evt.Context.EventID, data.Context, analytic, singlePlot]);
+        return query;
+    }, [evt.Context.EventID, plotState, plotData, analytic, singlePlot, overlapping.events]);
 
     const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
         overlayHandles.current[drawer](open);
@@ -183,120 +232,103 @@ const OpenSeeApplication = React.memo(() => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
     };
 
-    function exportData(type) {
-        const fftTime = data.Context.FftLimits;
-        const showPlots = data.Selector.current.SelectDisplayed();
+    function exportData(type: string) {
+        const showPlots = selectDisplayed(plotState.meta);
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
             `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
             `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
             `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
-            `${type == 'fft' ? `&startDate=${fftTime[0]}` : ``}` +
+            `${type == 'fft' ? `&startDate=${plotState.fftLimits[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
             `&Meter=${evt.Context.EventInfo?.MeterName}` +
             `&EventType=${evt.Context.EventInfo?.MeterName}`;
         window.open(uri, "_blank");
     }
 
-    function DispatchQuery(argQuery: string, intial: boolean) {
-        // Fields for this aren't type checked, do due diligience before using a field
+    function DispatchQuery(argQuery: string, initial: boolean) {
+        // Read current values from refs to avoid stale closures in the history listener
+        const curPlotState = plotStateRef.current;
+        const curPlotData = plotDataRef.current;
+        const curLifecycle = lifecycleRef.current;
+        const curStateActions = stateActionsRef.current;
+        const curAnalytic = analyticRef.current;
+
         let parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
 
         let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
-            const plotString = atob(parsedQuery.plots);
-            parsedPlots = JSON.parse(plotString);
+            parsedPlots = JSON.parse(atob(parsedQuery.plots));
         }
 
-        //this whole block isnt used leaving for now, but need to figure out why this isnt used before removing
-        let parsedOverlap: number[] = [];
-        if (parsedQuery?.overlappingInfo != null) {
-            const overlapppingString = atob(parsedQuery.overlappingInfo);
-            parsedOverlap = JSON.parse(overlapppingString);
-        }
+        const enabledPlots = selectEnabledPlots(curPlotState.meta, curPlotData);
 
-        const enabledPlots = data.Selector.current.SelectEnabledPlots();
-
-        //Set SinglePlot
         const parsedSinglePlot = ToBool(parsedQuery?.singlePlot);
         if (parsedSinglePlot != null)
             dispatch(SetSinglePlot(parsedSinglePlot));
 
-        //Set EventID
         const parsedEventID = ToInt(parsedQuery?.eventID);
         let usedEventID: number = defaultEventID;
         if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID) {
             evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
             usedEventID = parsedEventID;
-        } else if (intial) {
+        } else if (initial) {
             evt.Dispatch.current.SettingsDispatch({ EventID: defaultEventID });
             usedEventID = defaultEventID;
         }
 
-        //Set TimeLimit
         const parsedStart = ToFloat(parsedQuery?.startTime);
         const parsedEnd = ToFloat(parsedQuery?.endTime);
-        if (parsedStart != undefined && parsedEnd != undefined && (data.Context.StartTime != parsedStart || (data.Context.EndTime != parsedEnd)))
-            dataDispatch.Dispatch.current.SetTimeLimit(parsedStart, parsedEnd);
+        if (parsedStart != undefined && parsedEnd != undefined && (curPlotState.startTime != parsedStart || curPlotState.endTime != parsedEnd))
+            curStateActions.SetTimeLimit(parsedStart, parsedEnd, curPlotData);
 
-        //Analytic Query
         const analyticQuery: OpenSee.IAnalyticContext = {
-            Harmonic: ToInt(parsedQuery?.Harmonic) ?? analytic.Harmonic,
-            Trc: ToInt(parsedQuery?.Trc) ?? analytic.Trc,
-            LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? analytic.LPFOrder,
-            HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? analytic.HPFOrder,
-            FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? analytic.FFTCycles,
-            FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? analytic.FFTStartTime
+            Harmonic: ToInt(parsedQuery?.Harmonic) ?? curAnalytic.Harmonic,
+            Trc: ToInt(parsedQuery?.Trc) ?? curAnalytic.Trc,
+            LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? curAnalytic.LPFOrder,
+            HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? curAnalytic.HPFOrder,
+            FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? curAnalytic.FFTCycles,
+            FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? curAnalytic.FFTStartTime
         };
 
         const analyticData = queryStringToNums(analyticQuery);
-
-        if (!_.isEqual(analytic, analyticQuery) && analyticData != null)
+        if (!_.isEqual(curAnalytic, analyticQuery) && analyticData != null)
             setAnalytic(analyticData);
 
-        // On initial load, add default plots (Voltage and Current) if there is none provided via query
-        if (intial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
-            dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Voltage" });
-            dataDispatch.Dispatch.current.AddPlot({ EventId: usedEventID, DataType: "Current" });
-        }
-
-        //TODO: come up with a way to handle traces in queryString CHristoph recommended a grid of some a sort, however this would more than likely require us compressing the queryString / reducing number of plots in queryString
-        else if (parsedPlots?.length > 0) {
+        if (initial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Voltage" });
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Current" });
+        } else if (parsedPlots?.length > 0) {
             parsedPlots.forEach(plot => {
-                const plotChange = parsedPlots.length !== enabledPlots.length
-                const oldPlot = enabledPlots.find(p => p.key.DataType === plot.key.DataType && p.key.EventId === plot.key.EventId)
-                const isYLimitsEqual = _.isEqual(plot?.yLimits, oldPlot?.yLimits)
-                const isFFTLimitsEqual = _.isEqual([ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])], data.Context.FftLimits);
-                const isCycleLimitsEqual = _.isEqual([ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])], data.Context.CycleLimits);
+                const plotChange = parsedPlots.length !== enabledPlots.length;
+                const oldPlot = enabledPlots.find(p => p.key.DataType === plot.key.DataType && p.key.EventId === plot.key.EventId);
+                const isYLimitsEqual = _.isEqual(plot?.yLimits, oldPlot?.yLimits);
+                const isFFTLimitsEqual = _.isEqual([ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])], curPlotState.fftLimits);
+                const isCycleLimitsEqual = _.isEqual([ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])], curPlotState.cycleLimits);
 
-                // FFT Limits
                 const fftStart = ToInt(parsedQuery?.FFTLimits?.[0]);
                 const fftEnd = ToInt(parsedQuery?.FFTLimits?.[1]);
                 const fftLimits: [number, number] | undefined =
-                    fftStart != null && fftEnd != null && !isFFTLimitsEqual
-                        ? [fftStart, fftEnd] : undefined;
+                    fftStart != null && fftEnd != null && !isFFTLimitsEqual ? [fftStart, fftEnd] : undefined;
 
-                // Cycle Limits
                 const cycleStart = ToInt(parsedQuery?.CycleLimits?.[0]);
                 const cycleEnd = ToInt(parsedQuery?.CycleLimits?.[1]);
                 const cycleLimits: [number, number] | undefined =
-                    cycleStart != null && cycleEnd != null && !isCycleLimitsEqual
-                        ? [cycleStart, cycleEnd] : undefined;
+                    cycleStart != null && cycleEnd != null && !isCycleLimitsEqual ? [cycleStart, cycleEnd] : undefined;
 
                 if (plotChange && plot.key.EventId !== -1) {
                     if (parsedSinglePlot ?? false) {
-                        const plots = parsedPlots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType);
-                        plots.forEach(p => dataDispatch.Dispatch.current.AddPlot(
-                            p.key,
-                            !isYLimitsEqual ? plot.yLimits : undefined,
-                            plot.isZoomed,
-                            fftLimits,
-                            cycleLimits
-                        ));
-                    }
-                    else {
-                        dataDispatch.Dispatch.current.AddPlot(
+                        parsedPlots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType)
+                            .forEach(p => curLifecycle.AddPlot(
+                                p.key,
+                                !isYLimitsEqual ? plot.yLimits : undefined,
+                                plot.isZoomed,
+                                fftLimits,
+                                cycleLimits
+                            ));
+                    } else {
+                        curLifecycle.AddPlot(
                             plot.key,
                             !isYLimitsEqual ? plot.yLimits : undefined,
                             plot.isZoomed,
@@ -305,53 +337,63 @@ const OpenSeeApplication = React.memo(() => {
                         );
                     }
                 }
-            })
+            });
         }
     }
 
-    // Resizing Effects
+    // Resize effects
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
             if (applicationRef.current == null || applicationRef.current.navBarDiv == null) return;
-
-            const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3))
-            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0
-            const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth
+            const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3));
+            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0;
+            const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth;
             if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
-                setPlotHeight(newHeight)
-
+                setPlotHeight(newHeight);
             if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
                 setPlotWidth(newWidth);
-
             if (navWidth !== newNavBarWidth && !isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
-                setNavWidth(newNavBarWidth)
+                setNavWidth(newNavBarWidth);
         }, 100);
         return () => clearTimeout(timeoutId);
-    }, [data, openDrawers, resizeCount]);
+    }, [plotState, openDrawers, resizeCount]);
 
     React.useEffect(() => {
-        window.addEventListener("resize", () => {
-            setResizeCount(x => x + 1)
-        });
-        return () => { $(window).off('resize'); }
+        window.addEventListener("resize", () => setResizeCount(x => x + 1));
+        return () => { $(window).off('resize'); };
     }, []);
 
-    // Query string Effects
+    // Reset time limits when a new event finishes loading
+    React.useEffect(() => {
+        if (evt.Context.Status !== 'idle' || evt.Context.EventInfo == null) return;
+
+        const startTime = new Date(evt.Context.EventInfo.EventDate + "Z").getTime();
+        const endTime = new Date(evt.Context.EventInfo.EventEnd + "Z").getTime();
+
+        if (!isNaN(startTime) && !isNaN(endTime))
+            stateActions.SetTimeLimit(startTime, endTime, plotData);
+    }, [evt.Context.EventID, evt.Context.Status]);
+
+    // Query string effect
     React.useEffect(() => {
         const query = queryString.parse(history.current['location'].search);
-        const evStart = query['eventStartTime'] ?? defaultEventStartTime;
-        const evEnd = query['eventEndTime'] ?? defaultEventEndTime;
+        const parsedStartTime = query['startTime'] != undefined ? parseInt(query['startTime'] as string) : undefined;
+        const parsedEndTime = query['endTime'] != undefined ? parseInt(query['endTime'] as string) : undefined;
 
-        const startTime = (query['startTime'] != undefined ? parseInt(query['startTime'] as string) : new Date(evStart + "Z").getTime());
-        const endTime = (query['endTime'] != undefined ? parseInt(query['endTime'] as string) : new Date(evEnd + "Z").getTime());
+        if (parsedStartTime != undefined && parsedEndTime != undefined) {
+            stateActionsRef.current.SetTimeLimit(parsedStartTime, parsedEndTime, plotDataRef.current);
+            setAnalytic(a => ({ ...a, FFTStartTime: parsedStartTime }));
+        } else {
+            //fallback
+            const evStart = new Date(defaultEventStartTime + "Z").getTime();
+            const evEnd = new Date(defaultEventEndTime + "Z").getTime();
+            stateActionsRef.current.SetTimeLimit(evStart, evEnd, plotDataRef.current);
+            setAnalytic(a => ({ ...a, FFTStartTime: evStart }));
+        }
 
-        dataDispatch.Dispatch.current.SetTimeLimit(startTime, endTime);
-        setAnalytic(a => ({ ...a, FFTStartTime: startTime }));
         DispatchQuery(history.current['location'].search, true);
 
         history.current['listen'](location => {
-            // If Query changed then we update states....
-            // Note that enabled and selected states that depend on loading state are not dealt with in here
             DispatchQuery(location.search, false);
         });
     }, []);
@@ -360,16 +402,15 @@ const OpenSeeApplication = React.memo(() => {
         const timeoutId = setTimeout(() => {
             history.current['push'](`?${queryStr}`);
         }, 1000);
-
         return () => clearTimeout(timeoutId);
     }, [queryStr]);
 
-    // Tooltip effects
+    // Tooltip select mode effect
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
             let oldMode = _.clone(mouseMode);
-            dispatch(SetMouseMode('select'))
-            return () => { dispatch(SetMouseMode(oldMode)) }
+            dispatch(SetMouseMode('select'));
+            return () => { dispatch(SetMouseMode(oldMode)); };
         }
     }, [openDrawers.ToolTipDelta]);
 
@@ -380,7 +421,7 @@ const OpenSeeApplication = React.memo(() => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.png`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} />}
+            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} lifecycle={lifecycle} />}
             UseLegacyNavigation={true}
             ref={applicationRef}
         >
@@ -390,23 +431,23 @@ const OpenSeeApplication = React.memo(() => {
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                    <OverlappingEventWindow />
+                    <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                    <AnalyticOptions />
+                    <AnalyticOptions lifecycle={lifecycle} />
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
                     <ToolTipWidget />
                 </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}  >
+                <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}>
                     <ToolTipDeltaWidget />
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("Settings", item)} >
+                    OnChange={(item) => handleDrawerChange("Settings", item)}>
                     <SettingsWidget />
                 </SplitDrawer>
 
@@ -472,24 +513,24 @@ const OpenSeeApplication = React.memo(() => {
 
                         {Object.keys(groupedKeys).filter(item => parseInt(item) !== evt.Context.EventID).map(key =>
                             <div className="card" key={key}>
-                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key)) ? (
+                                {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
                                     <div className="card-header">
                                         <div className="row">
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
+                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
+                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                {data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
+                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
                                             </div>
                                             <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
                                                 <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                {moment(data.Context.OverlappingEventList.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
                                             </div>
                                         </div>
                                     </div>
@@ -504,7 +545,6 @@ const OpenSeeApplication = React.memo(() => {
                                             dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                         />
                                     ))}
-
                                     {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
                                         <BarChart
                                             key={item.DataType + item.EventId}
@@ -513,11 +553,9 @@ const OpenSeeApplication = React.memo(() => {
                                             dataKey={{ DataType: item.DataType, EventId: item.EventId }}
                                         />
                                     ))}
-
                                 </div>
                             </div>
                         )}
-
                     </div>
                 </SplitSection>
             </VerticalSplit>
@@ -527,46 +565,31 @@ const OpenSeeApplication = React.memo(() => {
 
 export default OpenSeeApplication;
 
-function ToInt(arg) {
-    if (arg == undefined)
-        return undefined;
+function ToInt(arg: any) {
+    if (arg == undefined) return undefined;
     let val = parseInt(arg);
-    if (isNaN(val))
-        return undefined;
-    return val;
+    return isNaN(val) ? undefined : val;
 }
 
-function ToFloat(arg) {
-    if (arg == undefined)
-        return undefined;
+function ToFloat(arg: any) {
+    if (arg == undefined) return undefined;
     let val = parseFloat(arg);
-    if (isNaN(val))
-        return undefined;
-    return val;
+    return isNaN(val) ? undefined : val;
 }
 
-function ToBool(arg) {
-    if (arg == undefined)
-        return undefined;
-    if (arg == "True" || arg == "true" || arg == "1")
-        return true;
-    if (arg == "False" || arg == "false" || arg == "0")
-        return false;
+function ToBool(arg: any) {
+    if (arg == undefined) return undefined;
+    if (arg == "True" || arg == "true" || arg == "1") return true;
+    if (arg == "False" || arg == "false" || arg == "0") return false;
     return undefined;
 }
 
 function queryStringToNums(arg: OpenSee.IAnalyticContext) {
-    if (arg == undefined)
-        return undefined;
-
+    if (arg == undefined) return undefined;
     let query = {};
     Object.keys(arg).forEach(key => {
         const num = parseFloat(arg[key]);
-        if (!isNaN(num))
-            query[key] = num;
-        else
-            query[key] = arg[key];
+        query[key] = isNaN(num) ? arg[key] : num;
     });
-
     return query as OpenSee.IAnalyticContext;
 }

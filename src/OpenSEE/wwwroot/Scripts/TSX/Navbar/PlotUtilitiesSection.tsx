@@ -20,7 +20,6 @@
 //       Moved code to here from OpenSEENavbar.tsx
 //
 //******************************************************************************************************
-
 import { Point } from '@gpa-gemstone/gpa-symbols';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { ToolTip } from '@gpa-gemstone/react-forms';
@@ -31,8 +30,10 @@ import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } fr
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../store/settingSlice';
 import Navigation from './Navigation';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
+import { selectFFTEnabled } from '../PlotSelectors';
 
 interface IPlotUtilities {
     OpenDrawers: OpenSee.Drawers,
@@ -43,21 +44,19 @@ interface IPlotUtilities {
 
 const PlotUtilitiesSection = (props: IPlotUtilities) => {
     const dispatch = useAppDispatch();
-
-    const data = React.useContext(DataContext);
+    const { plots } = React.useContext(PlotDataStateContext);
+    const { meta } = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
     const evt = React.useContext(EventContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
 
     const mouseMode = useAppSelector(SelectMouseMode);
-    const showFFT = data.Selector.current.SelectFFTEnabled();
-
+    const showFFT = React.useMemo(() => selectFFTEnabled(meta), [meta]);
     const [hover, setHover] = React.useState<string>('None');
 
     return (
         <>
             <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
                 <div className="btn-group d-flex" role="group">
-                    {/*Zoom*/}
                     <BtnDropdown
                         Label={<i style={{ fontStyle: "normal", fontSize: "25px" }}>{Zoom}</i>}
                         Callback={() => dispatch(SetMouseMode("zoom"))}
@@ -82,30 +81,27 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                         ShowToolTip={true}
                     />
 
-                    {/*Pan*/}
                     <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Pan')}
                         onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
                         data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
-                        <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Pan}</i>
+                        <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Pan}</i>
                     </button>
                     <ToolTip Show={hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
                         <p>Pan</p>
                     </ToolTip>
 
-                    { /*Select*/}
                     <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints || props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
                         disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
                         onMouseEnter={() => setHover('Select')}
                         onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
                         data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
-                        <i style={{ fontStyle: "normal", fontSize: "25px" }} >{Point}</i>
+                        <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Point}</i>
                     </button>
                     <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
                         <p>Select</p>
                     </ToolTip>
 
-                    {/*FFT Move*/}
                     <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
                         onClick={() => dispatch(SetMouseMode("fftMove"))}
                         disabled={!showFFT}
@@ -118,23 +114,22 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                         <p>FFT Move</p>
                     </ToolTip>
 
-                    {/*reset*/}
-                    <button
-                        className="btn btn-primary"
-                        style={{ padding: '0.195rem' }}
+                    <button className="btn btn-primary" style={{ padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Reset Zoom')}
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'reset-btn'}
-                        data-toggle="tooltip"
-                        data-placement="bottom"
-                        onClick={() => dataDispatch.Dispatch.current.ResetZoom(new Date(evt.Context.EventInfo?.EventDate + "Z").getTime(), new Date(evt.Context.EventInfo?.EventEnd + "Z").getTime())}
+                        data-toggle="tooltip" data-placement="bottom"
+                        onClick={() => stateActions.ResetZoom(
+                            new Date(evt.Context.EventInfo?.EventDate + "Z").getTime(),
+                            new Date(evt.Context.EventInfo?.EventEnd + "Z").getTime(),
+                            plots
+                        )}
                     >
                         <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
                     </button>
                     <ToolTip Show={hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
                         <p>Reset Zoom</p>
                     </ToolTip>
-
                 </div>
             </li>
 
@@ -164,10 +159,9 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                     <p>Help</p>
                 </ToolTip>
                 <About isOpen={props.showAbout} closeCallback={() => props.setShowAbout(false)} />
-
             </li>
         </>
-    )
-}
+    );
+};
 
 export default PlotUtilitiesSection;

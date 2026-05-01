@@ -25,17 +25,22 @@ import * as d3 from "d3";
 import moment from "moment";
 import * as React from 'react';
 import { AnalyticContext, SelectAnalyticOptions } from '../Context/AnalyticContext';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
+import { OverlappingStateContext } from '../Context/OverlappingContext';
+import { toPlotKey, seriesToKey } from '../Context/PlotKeys';
+import { selectYLimits, selectYLabels, selectActiveUnit, selectRelevantUnits, selectEnabledUnits, selectFFTEnabled, selectDeltaHoverPoints } from '../PlotSelectors';
 import EventContext from '../Context/EventContext';
 import HoverContext from '../Context/HoverContext';
 import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
-import { useAppDispatch, useAppSelector } from '../hooks';
+import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../store/settingSlice';
 import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import Legend from './LegendBase';
 import { GetDisplayLabel } from './Utilities';
-import func from '../Context/DataContextFunctions';
+import { getPrimaryAxis } from '../Context/PlotUtilities';
+import { useStringMemonization } from '@gpa-gemstone/helper-functions';
 
 interface iProps {
     height: number,
@@ -69,31 +74,38 @@ const LineChart = (props: iProps) => {
     const [hover, setHover] = React.useContext(HoverContext);
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
     const evt = React.useContext(EventContext);
-    const data = React.useContext(DataContext);
-    const dataFunctions = React.useContext(DataFunctionContext);
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const overlapping = React.useContext(OverlappingStateContext);
+    const pk = toPlotKey(props.dataKey);
+    const plotMeta = plotState.meta[pk];
+    
+
+    //Eventually we should use this if we are passing this complex object thru props.. 
+    const memoizedDataKey = useStringMemonization(props.dataKey);
 
     const isOverlappingWaveform = props.dataKey.DataType === "OverlappingWave";
 
     //All these dependency array look wrong.. 
+    const activeUnit = React.useMemo(() => plotMeta ? selectActiveUnit(plotMeta) : null, [plotMeta]);
 
-    const activeUnit = React.useMemo(() => data.Selector.current.SelectActiveUnit(props.dataKey), [props.dataKey]);
+    const lineData = plotData[pk] ?? [];
 
-    const lineData = React.useMemo(() => data.Selector.current.SelectData(props.dataKey) ?? [], [data.Context.Plots]);
+    const relevantUnits = React.useMemo(() => selectRelevantUnits(props.dataKey, lineData), [lineData]);
 
-    const relevantUnits = React.useMemo(() => data.Selector.current.SelectRelevantUnits(props.dataKey), []);
+    const enabledUnits = React.useMemo(() => selectEnabledUnits(props.dataKey, lineData, plotMeta?.enabled ?? {}), [lineData, plotMeta?.enabled]);
 
-    const enabledUnits = React.useMemo(() => data.Selector.current.SelectEnabledUnits(props.dataKey), []);
+    const enabledLine = plotMeta?.enabled ?? {};
 
-    const enabledLine = React.useMemo(() => data.Selector.current.SelectEnabled(props.dataKey), [data.Context.Plots]);
+    const yLimits = React.useMemo(() => plotMeta ? selectYLimits(plotMeta) : {} as any, [plotMeta]);
 
-    const yLimits = React.useMemo(() => data.Selector.current.SelectYLimits(props.dataKey), [props.dataKey, lineData]);
-
-    const isZoomed = data.Selector.current.SelectIsZoomed(props.dataKey);
+    const isZoomed = plotMeta?.isZoomed ?? false;
 
     const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>(d3.scaleLinear());
     const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
 
-    const primaryAxis = func.getPrimaryAxis(props.dataKey);
+    const primaryAxis = getPrimaryAxis(props.dataKey);
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
@@ -111,19 +123,19 @@ const LineChart = (props: iProps) => {
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
 
-    const startTime = isOverlappingWaveform ? data.Context.CycleLimits[0] : data.Context.StartTime;
-    const endTime = isOverlappingWaveform ? data.Context.CycleLimits[1] : data.Context.EndTime;
+    const startTime = isOverlappingWaveform ? plotState.cycleLimits[0] : plotState.startTime;
+    const endTime = isOverlappingWaveform ? plotState.cycleLimits[1] : plotState.endTime;
 
     const useRelevantTime = useAppSelector(SelectUseOverlappingTime);
 
-    const loading = data.Selector.current.SelectLoading(props.dataKey) ?? 'Uninitiated';
+    const loading = plotMeta?.loading ?? 'Uninitiated';
 
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
 
     const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
-    const yLabels = data.Selector.current.SelectYLabels(props.dataKey);
+    const yLabels = React.useMemo(() => plotMeta ? selectYLabels(plotMeta) : {} as any, [plotMeta]);
     const [yLblFontSize, setYLblFontSize] = React.useState<number>(1);
 
     const mouseMode = useAppSelector(SelectMouseMode);
@@ -133,14 +145,14 @@ const LineChart = (props: iProps) => {
     const options = React.useMemo(() => SelectAnalyticOptions(analytic, props.dataKey.DataType), [analytic, props.dataKey])
     const fftWindow = React.useMemo(() => ([analytic.FFTStartTime, analytic.FFTStartTime + (analytic.FFTCycles * 1 / 60.0 * 1000.0)] as [number, number]), [analytic]);
 
-    const showFFT = React.useMemo(() => data.Context.Plots.findIndex(plot => plot.key.DataType === "FFT") >= 0, [data]);
+    const showFFT = React.useMemo(() => selectFFTEnabled(plotState.meta), [plotState.meta]);
 
     // States
     const [currentFFTWindow, setCurrentFFTWindow] = React.useState<[number, number]>(fftWindow);
     const [oldFFTWindow, setOldFFTWindow] = React.useState<[number, number]>([0, 0]);
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
 
-    const points = data.Selector.current.SelectDeltaHoverPoints(hover);
+    const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plotData, plotState.meta), [hover, evt.Context.EventID, plotData, plotState.meta]);
 
     //Effect to update the Data 
     React.useEffect(() => {
@@ -230,13 +242,13 @@ const LineChart = (props: iProps) => {
         }
 
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
-            dataFunctions.Dispatch.current.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
+            stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
-            dataFunctions.Dispatch.current.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
+            stateActions.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
-            dataFunctions.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], props.dataKey);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], props.dataKey, lineData);
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-            dataFunctions.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], props.dataKey);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], props.dataKey, lineData);
         }
         else if (!fftMouseDown && mouseMode == 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
             const deltaT = pointMouse[0] - oldFFTWindow[0];
@@ -324,11 +336,11 @@ const LineChart = (props: iProps) => {
     }, [props.height, yLabels])
 
     function createLineGen(unit: OpenSee.Unit | null = null, base: number | null = null) {
-        let factor = 1.0
+        let factor: number | undefined = 1.0
 
         // Calculate factor if unit and base are provided
         if (unit && base && activeUnit?.[unit]) {
-            factor = activeUnit?.[unit].factor;
+            factor = activeUnit?.[unit]?.factor;
             if (factor === undefined)  //p.u case
                 factor = 1.0 / base
         }
@@ -403,7 +415,6 @@ const LineChart = (props: iProps) => {
         updateLimits();
         updateDurationWindow();
     }
-
 
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
@@ -582,7 +593,6 @@ const LineChart = (props: iProps) => {
 
     }
 
-
     function formatTimeTick(d: number) {
         let TS = moment(d);
         let h = 100;
@@ -639,7 +649,7 @@ const LineChart = (props: iProps) => {
             let ms = d - originalStartTime;
 
             if (useRelevantTime && !isOriginalEvt) {
-                const evt = data.Context.OverlappingEventList.find(evt => evt.EventID === props.dataKey.EventId);
+                const evt = overlapping.events.find(evt => evt.EventID === props.dataKey.EventId);
                 if (evt != null)
                     ms = d - evt?.StartTime
             }
@@ -656,7 +666,7 @@ const LineChart = (props: iProps) => {
             let ms = d - (new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime());
 
             if (useRelevantTime && !isOriginalEvt) {
-                const evt = data.Context.OverlappingEventList.find(evt => evt.EventID === props.dataKey.EventId);
+                const evt = overlapping.events.find(evt => evt.EventID === props.dataKey.EventId);
                 if (evt != null)
                     ms = d - evt?.Inception
             }
@@ -751,7 +761,7 @@ const LineChart = (props: iProps) => {
             return;
 
         if (x0 > 60 && x0 < props.width - 140 && mouseMode === 'select')
-            dataFunctions.Dispatch.current.SetSelectPoint(t0);
+            stateActions.SetSelectPoint(t0, plotData);
 
         setOldFFTWindow(() => {
             return fftWindow
@@ -819,14 +829,14 @@ const LineChart = (props: iProps) => {
 
         if (mouseMode === 'pan' && mouseDown && (zoomMode === "x" || zoomMode === "xy")) {
             if (!isOverlappingWaveform) {
-                dataFunctions.Dispatch.current.SetTimeLimit((startTime - deltaT), (endTime - deltaT));
+                stateActions.SetTimeLimit((startTime - deltaT), (endTime - deltaT), plotData);
             } else if (isOverlappingWaveform) {
-                dataFunctions.Dispatch.current.SetCycleLimit((startTime - deltaT), (endTime - deltaT));
+                stateActions.SetCycleLimit((startTime - deltaT), (endTime - deltaT), plotData);
             }
         }
 
         if (mouseMode === 'pan' && mouseDown && (zoomMode === "y" || zoomMode === "xy")) {
-            dataFunctions.Dispatch.current.SetZoomedLimits([(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], props.dataKey);
+            stateActions.SetZoomedLimits([(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], props.dataKey, lineData);
         }
 
 
@@ -865,30 +875,29 @@ const LineChart = (props: iProps) => {
         //Update yAxises
         enabledUnits?.forEach(unit => {
             let axisType = `[type='${unit}']`;
-            let firstLeftAxisType = `[type='${enabledUnits[0]}']`
-            let firstRightAxisType = `[type='${enabledUnits[1]}']`
+            let firstLeftAxisType = `[type='${enabledUnits[0]}']`;
+            let firstRightAxisType = `[type='${enabledUnits[1]}']`;
+            const yScale = yScaleRef.current[unit];
+            if (yScale == null) return;
 
             if (isAxisLeft) {
                 if (currentAxis > 1) {
                     container.selectAll(`.yAxis${firstLeftAxisType}`).attr("transform", "translate(120, 0)")
                     container.selectAll(`.yAxisLabelLeft${firstLeftAxisType}`).attr("y", "62")
                 }
-                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScale).tickFormat(d => formatValueTick(d as number, unit)) as any);
             }
             else {
                 if (currentAxis > 2) {
                     container.selectAll(`.yAxis${firstRightAxisType}`).attr("transform", `translate(${props.width - 170},0)`)
                     container.selectAll(`.yAxisLabelRight${firstRightAxisType}`).attr("y", props.width - 135)
                 }
-                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
+                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScale).tickFormat(d => formatValueTick(d as number, unit)) as any);
             }
 
             isAxisLeft = !isAxisLeft;
             currentAxis++;
-
-
         });
-
 
         if (enabledUnits.length < 3)
             return
@@ -938,14 +947,14 @@ const LineChart = (props: iProps) => {
             let newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
 
             if (mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
-                dataFunctions.Dispatch.current.SetTimeLimit(newTime[0], newTime[1]);
+                stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
 
             if (mouseMode == 'zoom' && zoomMode == "y" && !isOverlappingWaveform)
-                dataFunctions.Dispatch.current.SetZoomedLimits(newYLimits, props.dataKey);
+                stateActions.SetZoomedLimits(newYLimits, props.dataKey, lineData);
 
             if (mouseMode == 'zoom' && zoomMode == "xy" && !isOverlappingWaveform) {
-                dataFunctions.Dispatch.current.SetTimeLimit(newTime[0], newTime[1]);
-                dataFunctions.Dispatch.current.SetZoomedLimits(newYLimits, props.dataKey);
+                stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
+                stateActions.SetZoomedLimits(newYLimits, props.dataKey, lineData);
             }
 
         });
@@ -1010,15 +1019,16 @@ const LineChart = (props: iProps) => {
     function updateVisibility() {
         let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
-        // Update line visibility for each unit
+        // Use the keyed enabled map from plot metadata instead of the stale
+        // Enabled flag on the data object itself
         container.selectAll(`.Line`).data(lineData)
-            .classed("active", d => d.Enabled)
-            .attr("stroke-width", d => d.Enabled ? 2.5 : 0);
+            .classed("active", d => enabledLine[seriesToKey(d)] === true)
+            .attr("stroke-width", d => enabledLine[seriesToKey(d)] === true ? 2.5 : 0);
 
         // Update markers for primary lines
         container.selectAll(`.Markers`).data(lineData)
-            .classed("active", d => d.Enabled)
-            .attr("opacity", d => d.Enabled ? 1.0 : 0);
+            .classed("active", d => enabledLine[seriesToKey(d)] === true)
+            .attr("opacity", d => enabledLine[seriesToKey(d)] === true ? 1.0 : 0);
 
 
         // Update axis visibility based on whether the unit is enabled
@@ -1054,6 +1064,8 @@ const LineChart = (props: iProps) => {
 
         let isAxisLeft = true;
         relevantUnits.forEach(unit => {
+            if (yScaleRef.current[unit] == null) return;
+
             //Update yScale
             yScaleRef.current[unit].range([props.height - 40, 20]);
 
@@ -1067,7 +1079,6 @@ const LineChart = (props: iProps) => {
 
             isAxisLeft = !isAxisLeft;
         })
-
 
         // Set x scale range based on the number of enabled units
         xScaleRef.current.range([60, props.width - 110]);
@@ -1114,7 +1125,7 @@ const LineChart = (props: iProps) => {
                 loading={loading}
                 hover={toolTipLocation}
                 hasData={lineData?.length > 0}
-                hasTrace={enabledLine?.some(i => i)}
+                hasTrace={Object.values(enabledLine).some(v => v)}
                 selectedPointLocation={selectedPointLocation}
                 showToolTip={props.showToolTip}
                 inceptionLocation={inceptionLocation}
@@ -1219,4 +1230,3 @@ const PolyLine = (props: { height: number, left: number, style: React.CSSPropert
 }
 
 export default LineChart;
-

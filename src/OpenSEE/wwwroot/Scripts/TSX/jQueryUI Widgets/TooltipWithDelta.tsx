@@ -23,40 +23,46 @@
 //       Refactored layout  
 //
 //******************************************************************************************************
-
 import * as React from 'react';
 import moment from 'moment';
 import { SelectColor } from '../store/settingSlice';
 import { useAppSelector } from '../hooks';
-import HoverContext from '../Context/HoverContext'
-import DataContext from '../Context/DataContext'
+import HoverContext from '../Context/HoverContext';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext } from '../Context/PlotStateContext';
+import EventContext from '../Context/EventContext';
+import { selectDeltaHoverPoints } from '../PlotSelectors';
 
 const ToolTipDeltaWidget = () => {
     const [hover] = React.useContext(HoverContext);
-    const data = React.useContext(DataContext);
-
-    const points = data.Selector.current.SelectDeltaHoverPoints(hover);
+    const { plots } = React.useContext(PlotDataStateContext);
+    const { meta } = React.useContext(PlotStateStateContext);
+    const evt = React.useContext(EventContext);
     const colors = useAppSelector(SelectColor);
-    
-    let dataPoints: Array<JSX.Element> = (points.map((p, i) => <tr key={i}>
+
+    const points = React.useMemo(
+        () => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta),
+        [hover, evt.Context.EventID, plots, meta]
+    );
+
+    const dataPoints = points.map((p, i) => <tr key={i}>
         <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
         <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
         <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
         <td style={{ textAlign: "right" }}><b>{((p.PrevValue ?? 1) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
         <td style={{ textAlign: "right" }}><b>{((p.Value - (p.PrevValue ?? 0)) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-    </tr>))
+    </tr>);
 
-
-    let firstDate = hover[0];
-    let secondDate = points.length > 0 ? points[0].Time : NaN;
+    const firstDate = hover[0];
+    const secondDate = points.length > 0 ? points[0].Time : NaN;
 
     return (
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
-            <div style={{height: '100%', overflow: 'auto' }}>
+            <div style={{ height: '100%', overflow: 'auto' }}>
                 <table className="table" style={{ minWidth: '100%', overflow: 'auto', height: '100%', boxSizing: 'border-box' }}>
-                    <thead >
-                        <tr><td style={{}}></td>
-                            <td style={{}}></td>
+                    <thead>
+                        <tr><td></td>
+                            <td></td>
                             <td style={{ paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
                                 <b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b>
                             </td>
@@ -78,7 +84,7 @@ const ToolTipDeltaWidget = () => {
                 </table>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default ToolTipDeltaWidget;

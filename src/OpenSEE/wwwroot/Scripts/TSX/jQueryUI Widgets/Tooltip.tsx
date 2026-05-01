@@ -27,15 +27,20 @@ import * as React from 'react';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
 import { SelectColor } from '../store/settingSlice';
-import HoverContext from '../Context/HoverContext'
-import DataContext from '../Context/DataContext';
+import HoverContext from '../Context/HoverContext';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext } from '../Context/PlotStateContext';
+import EventContext from '../Context/EventContext';
+import { selectHoverPoints } from '../PlotSelectors';
 
 const ToolTipWidget = () => {
     const [hover] = React.useContext(HoverContext);
-    const data = React.useContext(DataContext);
-
-    const points = data.Selector.current.SelectHoverPoints(hover);
+    const { plots } = React.useContext(PlotDataStateContext);
+    const { meta } = React.useContext(PlotStateStateContext);
+    const evt = React.useContext(EventContext);
     const colors = useSelector(SelectColor);
+
+    const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta),[hover, evt.Context.EventID, plots, meta]);
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
@@ -59,7 +64,7 @@ const ToolTipWidget = () => {
                 </tbody>
             </table>
         </div>
-    )
-}
+    );
+};
 
-export default ToolTipWidget
+export default ToolTipWidget;

@@ -20,105 +20,61 @@
 //       Moved code to here from OpenSEENavbar.tsx
 //
 //******************************************************************************************************
-
 import React from "react";
 import { OpenSee } from "../global";
-import { DataContext, DataFunctionContext } from "../Context/DataContext";
+import { PlotStateStateContext } from "../Context/PlotStateContext";
+import { OverlappingStateContext } from "../Context/OverlappingContext";
+import EventContext from "../Context/EventContext";
+import { selectDisplayed, selectEventIDs } from "../PlotSelectors";
+import { IPlotLifecycleActions } from "../hooks/usePlotLifeCycle";
 
-const PlotTable = React.memo(() => {
-    const dataDispatch = React.useContext(DataFunctionContext);
+interface IProps {
+    lifecycle: IPlotLifecycleActions;
+}
 
-    const data = React.useContext(DataContext);
-    const showPlots = data.Selector.current.SelectDisplayed();
+const PlotTable = React.memo((props: IProps) => {
+    const { meta } = React.useContext(PlotStateStateContext);
+    const evt = React.useContext(EventContext);
+    const overlapping = React.useContext(OverlappingStateContext);
 
-    function tooglePlots(type: OpenSee.graphType) {
-        let display;
-        if (type === 'Voltage')
-            display = showPlots.Voltage;
-        else if (type === 'Current')
-            display = showPlots.Current;
-        else if (type === 'Analogs')
-            display = showPlots.Analogs;
-        else if (type === 'Digitals')
-            display = showPlots.Digitals;
-        else if (type === 'TripCoil')
-            display = showPlots.TripCoil;
+    const showPlots = React.useMemo(() => selectDisplayed(meta), [meta]);
 
-        const eventIds = data.Selector.current.SelectEventIDs(data.Context);
+    function togglePlots(type: OpenSee.graphType) {
+        let display: boolean | undefined;
+        if (type === 'Voltage') display = showPlots.Voltage;
+        else if (type === 'Current') display = showPlots.Current;
+        else if (type === 'Analogs') display = showPlots.Analogs;
+        else if (type === 'Digitals') display = showPlots.Digitals;
+        else if (type === 'TripCoil') display = showPlots.TripCoil;
 
-        // ToDo: this can be turned to 1 function I think, would save a lot of performance
+        const eventIds = selectEventIDs(evt.Context.EventID, overlapping.events);
+
         if (display)
-            eventIds.forEach(id => dataDispatch.Dispatch.current.RemovePlot({ DataType: type, EventId: id }));
+            eventIds.forEach(id => props.lifecycle.RemovePlot({ DataType: type, EventId: id }));
         else
-            eventIds.forEach(id => dataDispatch.Dispatch.current.AddPlot({ DataType: type, EventId: id }));
+            eventIds.forEach(id => props.lifecycle.AddPlot({ DataType: type, EventId: id }));
     }
+
     return (
-        <>
-            <table className="table" style={{ margin: 0 }}>
-                <tbody>
-                    <tr>
+        <table className="table" style={{ margin: 0 }}>
+            <tbody>
+                {(['Voltage', 'Current', 'Analogs', 'Digitals', 'TripCoil'] as const).map(type => (
+                    <tr key={type}>
                         <td>
-                            <input className="form-check-input"
-                                style={{ margin: 0 }}
-                                type="checkbox" onChange={() => tooglePlots('Voltage')}
-                                checked={showPlots.Voltage} />
+                            <input className="form-check-input" style={{ margin: 0 }}
+                                type="checkbox" onChange={() => togglePlots(type)}
+                                checked={showPlots[type === 'TripCoil' ? 'TripCoil' : type]} />
                         </td>
                         <td>
-                            <label className="form-check-label">Voltage</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input className="form-check-input"
-                                style={{ margin: 0 }}
-                                type="checkbox"
-                                onChange={() => tooglePlots('Current')}
-                                checked={showPlots.Current} />
-                        </td>
-                        <td>
-                            <label className="form-check-label">Current</label>
+                            <label className="form-check-label">
+                                {type === 'TripCoil' ? 'Trip Coil E.' : type}
+                            </label>
                         </td>
                     </tr>
-                    <tr>
-                        <td>
-                            <input className="form-check-input"
-                                style={{ margin: 0 }}
-                                type="checkbox"
-                                onChange={() => tooglePlots('Analogs')}
-                                checked={showPlots.Analogs} />
-                        </td>
-                        <td>
-                            <label className="form-check-label">Analogs</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input className="form-check-input"
-                                style={{ margin: 0 }}
-                                type="checkbox"
-                                onChange={() => tooglePlots('Digitals')}
-                                checked={showPlots.Digitals} />
-                        </td>
-                        <td>
-                            <label className="form-check-label">Digitals</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input className="form-check-input"
-                                style={{ margin: 0 }}
-                                type="checkbox"
-                                onChange={() => tooglePlots('TripCoil')}
-                                checked={showPlots.TripCoil} />
-                        </td>
-                        <td>
-                            <label className="form-check-label">Trip Coil E.</label>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </>
-    )
+                ))}
+            </tbody>
+        </table>
+    );
 });
 
 export default PlotTable;

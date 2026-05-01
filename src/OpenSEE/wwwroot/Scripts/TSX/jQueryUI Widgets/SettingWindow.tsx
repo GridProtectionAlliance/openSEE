@@ -22,9 +22,8 @@
 //  01/26/2024 - Preston Crawford
 //       Cleaned up layout and introduced manual time&y limits
 //******************************************************************************************************
-
 import * as React from 'react';
-import moment from 'moment'
+import moment from 'moment';
 import * as _ from 'lodash';
 import { OpenSee } from '../global';
 import {
@@ -36,194 +35,119 @@ import { GetDisplayLabel } from '../Graphs/Utilities';
 import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { DatePicker, Select, Input, CheckBox, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
+import { toPlotKey } from '../Context/PlotKeys';
+import { selectPlotKeys, selectYLimits, selectOverlappingPlotKeys } from '../PlotSelectors';
+import { sortGraph } from '../Graphs/Utilities';
 
 interface TimeLimit {
     start: string,
     end: string
 }
 
-const SettingsWidget = (props) => {
+interface ILimits {
+    min: number,
+    max: number
+}
+
+const SettingsWidget = () => {
     const dispatch = useAppDispatch();
 
     const defaultTraces = useAppSelector(SelectDefaultTraces);
     const defaultVtype = useAppSelector(SelectVTypeDefault);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
-
     const timeUnit = useAppSelector(SelectTimeUnit);
+    const singlePlot = useAppSelector(SelectSinglePlot);
 
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
     const evt = React.useContext(EventContext);
 
-    const plotKeys = data.Selector.current.SelectPlotKeys();
-    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
-    const inceptionOffset = ((evt.Context.EventInfo?.Inception ?? 0) - originalStartTime); //not sure what default should be if Inception is null/undefined..
+    const plotKeys = React.useMemo(
+        () => selectPlotKeys(plotState.meta, singlePlot, sortGraph),
+        [plotState.meta, singlePlot]
+    );
 
-    const [startMS, setStartMS] = React.useState<number>(data.Context.StartTime - originalStartTime);
-    const [endMS, setEndMS] = React.useState<number>(data.Context.EndTime - originalStartTime);
+    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
+    const inceptionOffset = ((evt.Context.EventInfo?.Inception ?? 0) - originalStartTime);
 
     const [scrollOffset, setScrollOffset] = React.useState<number>(0);
-    const [formattedTime, setFormattedTime] = React.useState<TimeLimit>({ start: '', end: '' });
-    const [currentDate, setCurrentDate] = React.useState<{ start: Date, end: Date }>({ start: new Date(), end: new Date() });
+    const [valid, setValid] = React.useState<boolean>(true);
+    const startTime = plotState.startTime;
+    const endTime = plotState.endTime;
 
-    const [valid, setValid] = React.useState<boolean>(true)
-    const [timeSinceChanged, setTimeSinceChanged] = React.useState<boolean>(false)
+    const formattedTime = React.useMemo(() => ({
+        start: moment(startTime).format('HH:mm:ss.SSS'),
+        end: moment(endTime).format('HH:mm:ss.SSS')
+    }), [startTime, endTime]);
 
-    const handleTimeChange = (time: number, start: boolean) => {
-        if (start)
-            setStartMS(time)
+    const isSinceMode = TimeUnitOptions[timeUnit.current].short.includes('since');
+    const isCycles = TimeUnitOptions[timeUnit.current].short.includes('cycles');
+    const isSinceInception = TimeUnitOptions[timeUnit.current].short.includes('inception');
+
+    const startMS = React.useMemo(() => {
+        const offset = isSinceInception ? inceptionOffset : 0;
+        const ms = startTime - originalStartTime - offset;
+        return isCycles ? ms * 60.0 / 1000.0 : ms;
+    }, [startTime, originalStartTime, inceptionOffset, isCycles, isSinceInception]);
+
+    const endMS = React.useMemo(() => {
+        const offset = isSinceInception ? inceptionOffset : 0;
+        const ms = endTime - originalStartTime - offset;
+        return isCycles ? ms * 60.0 / 1000.0 : ms;
+    }, [endTime, originalStartTime, inceptionOffset, isCycles, isSinceInception]);
+
+    const handleTimeChange = React.useCallback((value: number, isStart: boolean) => {
+        const ms = isCycles ? value / (60.0 / 1000.0) : value;
+        const offset = isSinceInception ? inceptionOffset : 0;
+        const newTime = originalStartTime + ms + offset;
+
+        if (isStart)
+            stateActions.SetTimeLimit(newTime, endTime, plotData);
         else
-            setEndMS(time)
-        if (!timeSinceChanged)
-            setTimeSinceChanged(true)
-    }
+            stateActions.SetTimeLimit(startTime, newTime, plotData);
+    }, [startTime, endTime, isCycles, isSinceInception, inceptionOffset, originalStartTime, plotData, stateActions]);
 
-    const handleTimeUnitChange = (index: number) => {
-        dispatch(SetTimeUnit({ index: index }))
-    }
+    const handleSetTimeUnit = React.useCallback((index: number) => dispatch(SetTimeUnit({ index })), [dispatch]);
 
-    const handleDateChange = (time, start: boolean) => {
-        let newDate: Date;
-        if (start)
-            newDate = new Date(data.Context.StartTime);
-        else
-            newDate = new Date(data.Context.EndTime);
+    const handleDateChange = React.useCallback((time: string, isStart: boolean) => {
+        if (!time || time === 'Invalid date') return;
 
-        if (time && time !== 'Invalid date') {
-            const timeString = time.split(':');
-            const [hours, minutes] = [timeString[0], timeString[1]];
-            let seconds = timeString[2];
-            let milliseconds = '';
-            [seconds, milliseconds] = seconds.split('.')
-            newDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), parseInt(milliseconds))
+        const baseDate = new Date(isStart ? startTime : endTime);
+        const parts = time.split(':');
+        let [seconds, milliseconds] = parts[2].split('.');
+        baseDate.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(seconds), parseInt(milliseconds));
 
-            if (start) {
-                if (newDate.getTime() < data.Context.EndTime) {
-                    setValid(true)
-                    setFormattedTime({ start: moment(newDate).format('HH:mm:ss.SSS'), end: moment(new Date(data.Context.EndTime)).format('HH:mm:ss.SSS') })
-                    setCurrentDate({ start: newDate, end: new Date(data.Context.EndTime) })
-                }
-                else
-                    setValid(false)
-            }
-            else {
-                if (newDate.getTime() > data.Context.StartTime) {
-                    setFormattedTime({ start: moment(new Date(data.Context.StartTime)).format('HH:mm:ss.SSS'), end: moment(newDate).format('HH:mm:ss.SSS') })
-                    setCurrentDate({ start: new Date(data.Context.StartTime), end: newDate })
-                    setValid(true)
-                }
-                else
-                    setValid(false)
-            }
+        const newTime = baseDate.getTime();
 
+        if (isStart && newTime < endTime) {
+            setValid(true);
+            stateActions.SetTimeLimit(newTime, endTime, plotData);
+        } else if (!isStart && newTime > startTime) {
+            setValid(true);
+            stateActions.SetTimeLimit(startTime, newTime, plotData);
+        } else {
+            setValid(false);
         }
-
-    };
-
-    React.useEffect(() => {
-        const startDate = new Date(data.Context.StartTime)
-        const endDate = new Date(data.Context.EndTime)
-        setFormattedTime({ start: moment(startDate).format('HH:mm:ss.SSS'), end: moment(new Date(endDate)).format('HH:mm:ss.SSS') })
-        setCurrentDate({ start: startDate, end: endDate })
-    }, [])
-
-    //Effect to update start and end time whenever formattedTime changes
-    React.useEffect(() => {
-        const timeOutId = setTimeout(() => {
-
-            if (TimeUnitOptions[timeUnit.current].short.includes('since')) {
-                const isCycles = TimeUnitOptions[timeUnit.current].short.includes('cycles')
-                const isSinceInception = TimeUnitOptions[timeUnit.current].short.includes('inception')
-                const curStartMS = isCycles ? startMS / (60.0 / 1000.0) : startMS
-                const curEndMS = isCycles ? endMS / (60.0 / 1000.0) : endMS
-                const newStartTime = isSinceInception ? originalStartTime + curStartMS + inceptionOffset : originalStartTime + curStartMS
-                const endOffset = curEndMS - (data.Context.EndTime - originalStartTime)
-                const newEndTime = isSinceInception ? data.Context.EndTime + endOffset + inceptionOffset : data.Context.EndTime + endOffset
-
-
-                if (newStartTime !== data.Context.StartTime && timeSinceChanged)
-                    dataDispatch.Dispatch.current.SetTimeLimit(newStartTime, data.Context.EndTime);
-
-                if (newEndTime !== data.Context.EndTime && timeSinceChanged)
-                    dataDispatch.Dispatch.current.SetTimeLimit(data.Context.StartTime, newEndTime);
-            }
-        }, 1000);
-        return () => clearTimeout(timeOutId);
-
-    }, [startMS, endMS]);
-
-
-    //Effect to update 
-    React.useEffect(() => {
-        const timeOutId = setTimeout(() => {
-            if (TimeUnitOptions[timeUnit.current].short.includes('since')) {
-                const isCycles = TimeUnitOptions[timeUnit.current].short.includes('cycles')
-                const isSinceInception = TimeUnitOptions[timeUnit.current].short.includes('inception')
-                const newStartMS = isSinceInception ? data.Context.StartTime - originalStartTime - inceptionOffset : data.Context.StartTime - originalStartTime
-                const newEndMS = isSinceInception ? data.Context.EndTime - originalStartTime - inceptionOffset : data.Context.EndTime - originalStartTime
-
-                if (isCycles) {
-                    const newStartCycles = newStartMS * 60.0 / 1000.0
-                    const newEndCycles = newEndMS * 60.0 / 1000.0
-
-                    if (Math.abs(newStartCycles - startMS) > 0.1)
-                        setStartMS(newStartCycles)
-                    if (Math.abs(newEndCycles - endMS) > 0.1)
-                        setEndMS(newEndCycles)
-                }
-
-                else {
-                    setStartMS(newStartMS)
-                    setEndMS(newEndMS)
-
-                }
-
-            }
-
-        }, 1000);
-        return () => clearTimeout(timeOutId);
-    }, [data.Context.StartTime, data.Context.EndTime, timeUnit]);
-
-
-    //Effect to update start and end time whenever formattedTime changes
-    React.useEffect(() => {
-        const newStart = currentDate.start.getTime();
-        const newEnd = currentDate.end.getTime();
-
-        if (newEnd - newStart !== data.Context.EndTime - data.Context.StartTime && valid && !TimeUnitOptions[timeUnit.current].short.includes("since")) {
-            const timeOutId = setTimeout(() => {
-                dataDispatch.Dispatch.current.SetTimeLimit(newStart, newEnd);
-            }, 1000);
-
-            return () => clearTimeout(timeOutId);
-        }
-    }, [formattedTime]);
-
+    }, [startTime, endTime, plotData, stateActions]);
 
     React.useEffect(() => {
-        const handleScroll = () => {
-            const offset = document.getElementById("settingScrollContainer")?.scrollTop;
-            if (offset != null)
-                setScrollOffset(offset);
-        }
-
         const container = document.getElementById("settingScrollContainer");
-
-        if (container != null) {
+        const handleScroll = () => {
+            const offset = container?.scrollTop;
+            if (offset != null) setScrollOffset(offset);
+        };
+        if (container != null)
             container.addEventListener("scroll", handleScroll, { passive: true });
-        }
-
-        return () => {
-            if (container != null)
-                container.removeEventListener("scroll", handleScroll);
-        }
-    }, [props])
+        return () => { if (container != null) container.removeEventListener("scroll", handleScroll); };
+    }, []);
 
     return (
         <div className="d-flex flex-column" style={{ marginTop: '10px', width: '100%', height: '100%', padding: '10px' }}>
-            <div id="settingScrollContainer" className=" overflow-auto" style={{ height: '100%', zIndex: 1001 }}>
+            <div id="settingScrollContainer" className="overflow-auto" style={{ height: '100%', zIndex: 1001 }}>
                 <div className="accordion" id="panelSettings">
                     <div className="card" style={{ overflowY: 'auto', height: '100%' }}>
                         <div className="card-header" id="header-general">
@@ -238,57 +162,23 @@ const SettingsWidget = (props) => {
                                 <legend style={{ fontSize: '1.2em' }}>Default Traces (on Loading):</legend>
                                 <div className="form-row" style={{ marginBottom: '10px' }}>
                                     <div className="col-6 mr-0">
-                                        <CheckBox
-                                            Record={defaultTraces}
-                                            Field={'W'}
-                                            Setter={(item) => dispatch(SetDefaultTrace(item))}
-                                            Label={"WaveForm"}
-                                        />
+                                        <CheckBox Record={defaultTraces} Field={'W'} Setter={(item) => dispatch(SetDefaultTrace(item))} Label={"WaveForm"} />
                                     </div>
                                     <div className="col-6 mr-0">
-                                        <CheckBox
-                                            Record={defaultTraces}
-                                            Field={'Pk'}
-                                            Setter={(item) => dispatch(SetDefaultTrace(item))}
-                                            Label={"Peak"}
-                                        />
+                                        <CheckBox Record={defaultTraces} Field={'Pk'} Setter={(item) => dispatch(SetDefaultTrace(item))} Label={"Peak"} />
                                     </div>
                                 </div>
                                 <div className="form-row" style={{ marginBottom: '10px' }}>
                                     <div className="col-6 mr-0">
-                                        <CheckBox
-                                            Record={defaultTraces}
-                                            Field={'RMS'}
-                                            Setter={(item) => dispatch(SetDefaultTrace(item))}
-                                            Label={"RMS"}
-                                        />
+                                        <CheckBox Record={defaultTraces} Field={'RMS'} Setter={(item) => dispatch(SetDefaultTrace(item))} Label={"RMS"} />
                                     </div>
                                     <div className="col-6 mr-0">
-                                        <CheckBox
-                                            Record={defaultTraces}
-                                            Field={'Ph'}
-                                            Setter={(item) => dispatch(SetDefaultTrace(item))}
-                                            Label={"Phase"}
-                                        />
+                                        <CheckBox Record={defaultTraces} Field={'Ph'} Setter={(item) => dispatch(SetDefaultTrace(item))} Label={"Phase"} />
                                     </div>
                                 </div>
                                 <div className="form-row">
-                                    <RadioButtons
-                                        Record={{ defaultVtype }}
-                                        Setter={(item) => dispatch(SetDefaultVType(item.defaultVtype))}
-                                        Field="defaultVtype"
-                                        Label=""
-                                        Position="horizontal"
-                                        Options={[
-                                            {
-                                                Label: "Line to Line",
-                                                Value: 'L-L'
-                                            },
-                                            {
-                                                Label: "Line to Neutral",
-                                                Value: 'L-N'
-                                            }
-                                        ]}
+                                    <RadioButtons Record={{ defaultVtype }} Setter={(item) => dispatch(SetDefaultVType(item.defaultVtype))} Field="defaultVtype" Label="" Position="horizontal"
+                                        Options={[{ Label: "Line to Line", Value: 'L-L' }, { Label: "Line to Neutral", Value: 'L-N' }]}
                                     />
                                 </div>
                             </fieldset>
@@ -296,59 +186,29 @@ const SettingsWidget = (props) => {
                                 <legend style={{ fontSize: '1.2em' }}>Time:</legend>
                                 <div className="form-row">
                                     <div className="col-12">
-                                        {props.DataType != 'FFT' ? <TimeUnitSelector label={"Time"} timeUnitIndex={timeUnit.current} setter={index => handleTimeUnitChange(index)} /> : null}
+                                        <TimeUnitSelector label={"Time"} timeUnitIndex={timeUnit.current} setter={handleSetTimeUnit} />
                                     </div>
                                 </div>
-                                {TimeUnitOptions[timeUnit.current].short.includes("since") ?
+                                {isSinceMode ?
                                     <div className="form-row" style={{ marginTop: '10px' }}>
                                         <div className="col-6">
-                                            <Input
-                                                Record={{ startMS }}
-                                                Setter={start => handleTimeChange(start.startMS, true)}
-                                                Field={"startMS"}
-                                                Valid={() => true}
-                                                Label={"Start"}
-                                                Type={"number"}
-                                            />
+                                            <Input Record={{ startMS }} Setter={start => handleTimeChange(start.startMS, true)} Field={"startMS"} Valid={() => true} Label={"Start"} Type={"number"} />
                                         </div>
                                         <div className="col-6">
-                                            <Input
-                                                Record={{ endMS }}
-                                                Setter={end => handleTimeChange(end.endMS, false)}
-                                                Field={"endMS"}
-                                                Valid={() => true}
-                                                Label={"End"}
-                                                Type={"number"}
-                                            />
+                                            <Input Record={{ endMS }} Setter={end => handleTimeChange(end.endMS, false)} Field={"endMS"} Valid={() => true} Label={"End"} Type={"number"} />
                                         </div>
                                     </div> :
                                     <div className="form-row" style={{ marginTop: '10px' }}>
                                         <div className="col-6">
                                             <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'start'}
-                                                Setter={(e) => {
-                                                    handleDateChange(e.start, true)
-                                                }}
-                                                Label={"Start Time"}
-                                                Accuracy={'millisecond'}
-                                                Valid={() => valid}
-                                                Type={'time'}
-                                                Feedback={"Start Time can not be greater than End Time"}
-                                            />
+                                                Setter={(e) => handleDateChange(e.start, true)} Label={"Start Time"} Accuracy={'millisecond'}
+                                                Valid={() => valid} Type={'time'} Feedback={"Start Time can not be greater than End Time"} />
                                         </div>
-
                                         <div className="col-6">
                                             <DatePicker<TimeLimit> Record={formattedTime} Format={"HH:mm:ss.SSS"} Field={'end'}
-                                                Setter={(e) => {
-                                                    handleDateChange(e.end, false)
-                                                }}
-                                                Label={"End Time"}
-                                                Valid={() => valid}
-                                                Type={'time'}
-                                                Accuracy={'millisecond'}
-                                                Feedback={"Start Time can not be greater than End Time"}
-                                            />
+                                                Setter={(e) => handleDateChange(e.end, false)} Label={"End Time"} Valid={() => valid}
+                                                Type={'time'} Accuracy={'millisecond'} Feedback={"Start Time can not be greater than End Time"} />
                                         </div>
-
                                     </div>
                                 }
                             </fieldset>
@@ -356,59 +216,40 @@ const SettingsWidget = (props) => {
                                 <legend style={{ fontSize: '1.2em' }}>Plot Markers:</legend>
                                 <div className="form-row">
                                     <div className="col-auto">
-                                        <CheckBox
-                                            Record={{ plotMarkers }}
-                                            Field={'plotMarkers'}
-                                            Setter={(item) => dispatch(SetPlotMarkers(item.plotMarkers))}
-                                            Label={"Inception and Duration"}
-                                            Help={"For events without this information record start and end time will be used."}
-                                        />
+                                        <CheckBox Record={{ plotMarkers }} Field={'plotMarkers'} Setter={(item) => dispatch(SetPlotMarkers(item.plotMarkers))}
+                                            Label={"Inception and Duration"} Help={"For events without this information record start and end time will be used."} />
                                     </div>
                                 </div>
                             </fieldset>
                         </div>
                     </div>
-                    {
-                        plotKeys
-                            .filter(key => key.EventId === evt.Context.EventID || key.EventId === -1)
-                            .map((item, index) =>
-                                <PlotCard
-                                    key={index + item.DataType}
-                                    scrollOffset={scrollOffset}
-                                    {...item}
-                                />
-                            )
-                    }
+                    {plotKeys
+                        .filter(key => key.EventId === evt.Context.EventID || key.EventId === -1)
+                        .map((item, index) =>
+                            <PlotCard key={index + item.DataType} scrollOffset={scrollOffset} {...item} />
+                        )}
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default SettingsWidget;
 
-export const AxisUnitSelector = (props: { label: string, setter: (index: number) => void, unitType: OpenSee.Unit, axisSetting: OpenSee.IAxisSettings }) => {
+export const AxisUnitSelector = React.memo((props: { label: string, setter: (index: number) => void, unitType: OpenSee.Unit, axisSetting: OpenSee.IAxisSettings }) => {
     const buttonLabel = props.axisSetting.isAuto ?
         props.label + " [auto]" :
         props.label + " [" + defaultSettings.Units[props.unitType].options?.[props.axisSetting.current]?.short + "]";
 
     return (
-        <Select
-            Label={''}
-            Record={{ buttonLabel }}
-            Field='buttonLabel'
+        <Select Label={''} Record={{ buttonLabel }} Field='buttonLabel'
             Setter={(_, option) => props.setter(option.Value as number)}
-            Options={defaultSettings.Units[props.unitType].options.map((option, index) =>
-            ({
-                Label: option.label,
-                Value: index
-            })
-            )}
+            Options={defaultSettings.Units[props.unitType].options.map((option, index) => ({ Label: option.label, Value: index }))}
         />
     );
-}
+});
 
-export const TimeUnitSelector = (props: { label: string, setter: (index: number) => void, timeUnitIndex: number, overlappingWave?: boolean }) => {
+export const TimeUnitSelector = React.memo((props: { label: string, setter: (index: number) => void, timeUnitIndex: number, overlappingWave?: boolean }) => {
     let options: OpenSee.iUnitOptions[];
     let buttonLabel: string;
 
@@ -421,301 +262,254 @@ export const TimeUnitSelector = (props: { label: string, setter: (index: number)
     }
 
     return (
-        <Select
-            Label={''}
-            Record={{ buttonLabel }}
-            Field='buttonLabel'
+        <Select Label={''} Record={{ buttonLabel }} Field='buttonLabel'
             Setter={(_, option) => props.setter(option.Value as number)}
             Options={options.map((option, index) => ({ Label: option.label, Value: index }))}
         />
     );
-}
+});
 
 interface ICardProps extends OpenSee.IGraphProps { scrollOffset: number }
-interface ILimits {
-    min: number,
-    max: number
-}
 
 const PlotCard = (props: ICardProps) => {
     const dispatch = useAppDispatch();
-
     const singlePlot = useAppSelector(SelectSinglePlot);
     const colors = useAppSelector(SelectColor);
-
     const overlapWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
 
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const evt = React.useContext(EventContext);
 
-    const isManual = data.Selector.current.SelectIsManual(props);
-    const isOverlappingManual = data.Selector.current.SelectIsOverlappingManual(props.DataType);
-    const isOverlappingAuto = data.Selector.current.SelectOverlappingAutoUnits(props.DataType);
-    const axisSettings = data.Selector.current.SelectAxisSettings(props);
-    const lineData = React.useMemo(() => data.Selector.current.SelectData(props) ?? [], []);
-    const overlappingKeys = data.Selector.current.SelectOverlappingEvents(props.DataType);
-    const yLimits = React.useMemo(() => data.Selector.current.SelectYLimits(props), [props]);
-    const overlappingYLimits = React.useMemo(() => data.Selector.current.SelectOverlappingYLimits(props.DataType), [props]);
+    const pk = toPlotKey(props);
+    const meta = plotState.meta[pk];
+    const data = plotData[pk] ?? [];
+
+    // Derived values from meta
+    const axisSettings = meta?.yLimits;
+    const yLimits = React.useMemo(() => meta ? selectYLimits(meta) : {} as OpenSee.IUnitCollection<[number, number]>, [meta]);
+
+    const overlappingKeys = React.useMemo(
+        () => selectOverlappingPlotKeys(plotState.meta, evt.Context.EventID, props.DataType),
+        [plotState.meta, evt.Context.EventID, props.DataType]
+    );
 
     const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits> | null>(null);
-    const [overlappingLimits, setOverlappingLimits] = React.useState<OpenSee.IGraphCollection<ILimits> | null>(null)
-
+    const [overlappingLimits, setOverlappingLimits] = React.useState<Record<string, Record<string, ILimits>> | null>(null);
     const [limitsPayload, setLimitsPayload] = React.useState<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number } | null>(null);
+    const [valid, setValid] = React.useState<boolean>(true);
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-    const [valid, setValid] = React.useState<boolean>(true)
-
-    const autoUnits = data.Selector.current.SelectAutoUnits(props);
-
-    let colorSettings: OpenSee.Color[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Color as OpenSee.Color));
-    let unitSettings: OpenSee.Unit[] = _.uniq(lineData.map((item: OpenSee.iD3DataSeries) => item.Unit));
+    const colorSettings: OpenSee.Color[] = _.uniq(data.map(item => item.Color as OpenSee.Color));
+    const unitSettings: OpenSee.Unit[] = _.uniq(data.map(item => item.Unit));
 
     React.useEffect(() => {
         if (limitsPayload?.limits) {
             const timeOutId = setTimeout(() => {
-
                 if (limitsPayload.limits[0] < limitsPayload.limits[1]) {
                     setValid(true);
-                    dataDispatch.Dispatch.current.SetManualLimits(limitsPayload.limits, limitsPayload.key, limitsPayload.axis, limitsPayload.auto, limitsPayload.factor);
+                    const d = plotData[toPlotKey(limitsPayload.key)] ?? [];
+                    stateActions.SetManualLimits(limitsPayload.limits, limitsPayload.key, limitsPayload.axis, limitsPayload.auto, d, limitsPayload.factor);
+                } else {
+                    setValid(false);
                 }
-                else
-                    setValid(false)
-            }, 1500)
+            }, 1500);
             setLimitsPayload(null);
-            return () => clearTimeout(timeOutId)
+            return () => clearTimeout(timeOutId);
         }
-    }, [curLimits])
-
+    }, [curLimits]);
 
     const handleLimitChange = (axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean) => {
-        let factor = 1
-        if (defaultSettings.Units[axis].options[axisSettings[axis].current].factor !== 1)
-            factor = defaultSettings.Units[axis].options[axisSettings[axis].current].factor
+        let factor = 1;
+        if (axisSettings && defaultSettings.Units[axis].options[axisSettings[axis].current].factor !== 1)
+            factor = defaultSettings.Units[axis].options[axisSettings[axis].current].factor;
 
-        const limit = {
-            min: limits[0],
-            max: limits[1]
-        };
+        setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: { min: limits[0], max: limits[1] } }));
+        setLimitsPayload({ axis, limits, key, auto, factor });
+    };
 
-        setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: limit }));
-        setLimitsPayload({ axis, limits, key, auto, factor })
-    }
+    const handleSetOverlapTimeUnit = React.useCallback((index: number) => dispatch(SetOverlappingWaveTimeUnit(index)), [dispatch]);
 
-    const handleUnitChange = (unit: OpenSee.Unit, index: number, key: OpenSee.IGraphProps) => {
-        let auto: boolean;
-        if (defaultSettings.Units[unit].options[index].factor === 0)
-            auto = true
-        else
-            auto = false
-        dataDispatch.Dispatch.current.SetUnit(unit, index, auto, key);
-    }
+    const handleUnitChange = React.useCallback((unit: OpenSee.Unit, index: number, key: OpenSee.IGraphProps) => {
+        const auto = defaultSettings.Units[unit].options[index].factor === 0;
+        stateActions.SetUnit(unit, index, auto, key, plotData);
+    }, [stateActions, plotData]);
 
     const getLabel = (unit: OpenSee.Unit, key?: OpenSee.IGraphProps) => {
+        if (!axisSettings) return '';
 
         if (key) {
-            if (isOverlappingAuto?.[key.DataType]?.[unit] && isOverlappingManual?.[key.DataType]?.[unit]) {
-                let settingOptions: OpenSee.iUnitOptions[] = defaultSettings.Units[unit].options
-                let index = settingOptions.findIndex(item => item.factor === 1)
-                return settingOptions[index].short
+            const overMeta = plotState.meta[toPlotKey(key)];
+            if (overMeta?.yLimits[unit]?.isAuto && overMeta?.yLimits[unit]?.isManual) {
+                const opts = defaultSettings.Units[unit].options;
+                const idx = opts.findIndex(item => item.factor === 1);
+                return opts[idx].short;
             }
-            else
-                return defaultSettings.Units[unit].options[axisSettings[unit].current].short
+            return defaultSettings.Units[unit].options[axisSettings[unit].current].short;
         }
 
-        else if (isManual?.[unit] && autoUnits?.[unit]) {
-            let settingOptions: OpenSee.iUnitOptions[] = defaultSettings.Units[unit].options
-            let index = settingOptions.findIndex(item => item.factor === 1)
-            return settingOptions[index].short
+        if (axisSettings[unit]?.isManual && axisSettings[unit]?.isAuto) {
+            const opts = defaultSettings.Units[unit].options;
+            const idx = opts.findIndex(item => item.factor === 1);
+            return opts[idx].short;
         }
-        else
-            return defaultSettings.Units[unit].options[axisSettings[unit].current].short
-    }
+        return defaultSettings.Units[unit].options[axisSettings[unit].current].short;
+    };
 
+    // Sync local limits state when context limits change
     React.useEffect(() => {
-        const limits = getYlimits(yLimits)
-        setCurLimits(limits as OpenSee.IUnitCollection<ILimits>)
-
-        if (overlappingYLimits) {
-            let overlappingLimits = {}
-
-            Object.keys(overlappingYLimits).forEach(graphType => {
-                const yLimits = overlappingYLimits[graphType as OpenSee.graphType];
-                const limits = getYlimits(yLimits, graphType);
-                overlappingLimits[graphType] = limits
-            });
-
-            setOverlappingLimits(overlappingLimits as OpenSee.IGraphCollection<ILimits>)
-        }
-
-    }, [yLimits, overlappingYLimits])
-
-    function getYlimits(yLimits, graphType?) {
-        let limits = {}
+        if (!axisSettings) return;
+        const limits = {};
         Object.keys(yLimits).forEach(unit => {
-            limits[unit] = {};
-            let factor = 1
-            let autoUnit = autoUnits?.[unit]
-            const overLappingManual = isOverlappingManual?.[graphType]?.[unit] === undefined ? false : isOverlappingManual[graphType][unit]
-
-            if (overLappingManual || isManual?.[unit]) {
+            if (axisSettings[unit]?.isManual || false) {
+                let factor = 1;
                 if (defaultSettings.Units[unit].options[axisSettings[unit].current].factor !== 1)
-                    factor = defaultSettings.Units[unit].options[axisSettings[unit].current].factor
-
-                limits[unit].min = yLimits?.[unit][0]
-                limits[unit].max = yLimits?.[unit][1]
-
-                if (autoUnit) {
-                    limits[unit].min = limits[unit].min / factor
-                    limits[unit].max = limits[unit].max / factor
+                    factor = defaultSettings.Units[unit].options[axisSettings[unit].current].factor;
+                limits[unit] = {
+                    min: yLimits[unit]?.[0],
+                    max: yLimits[unit]?.[1]
+                };
+                if (axisSettings[unit]?.isAuto) {
+                    limits[unit].min = limits[unit].min / factor;
+                    limits[unit].max = limits[unit].max / factor;
                 }
             }
+        });
+        setCurLimits(limits as OpenSee.IUnitCollection<ILimits>);
 
-        })
-        return limits
-    }
+        // Overlapping limits
+        if (overlappingKeys.length > 0) {
+            const overLimits: Record<string, Record<string, ILimits>> = {};
+            overlappingKeys.forEach(oKey => {
+                const oPk = toPlotKey(oKey);
+                const oMeta = plotState.meta[oPk];
+                if (!oMeta) return;
+                const oYLimits = selectYLimits(oMeta);
+                const l: Record<string, ILimits> = {};
+                Object.keys(oYLimits).forEach(unit => {
+                    if (oMeta.yLimits[unit]?.isManual) {
+                        l[unit] = { min: oYLimits[unit]?.[0], max: oYLimits[unit]?.[1] };
+                    }
+                });
+                overLimits[oKey.DataType] = l;
+            });
+            setOverlappingLimits(overLimits);
+        }
+    }, [yLimits, overlappingKeys, axisSettings]);
 
-    const handleTimeUnitChange = (index: number) => {
-        dispatch(SetOverlappingWaveTimeUnit(index))
-    }
+    if (!meta || !axisSettings) return null;
 
-    return (<div className="card">
-        <div className="card-header" id={"header-" + props.DataType}>
-            <h2 className="mb-0">
-                <button className="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target={"#collaps-" + props.DataType} aria-expanded="true" aria-controls={"#collaps-" + props.DataType}>
-                    {GetDisplayLabel(props.DataType)} Settings
-                </button>
-            </h2>
-        </div>
-
-        <div id={"collaps-" + props.DataType} className="collapse" aria-labelledby={"header-" + props.DataType} data-parent="#panelSettings">
-            <div className="card-body">
-                {unitSettings.map(item => (
-                    <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
-                        <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
-                        <div className="form-row" key={item}>
-                            <div className="col-6">
-                                <AxisUnitSelector label={item as string} setter={(index) => handleUnitChange(item, index, props)} unitType={item} axisSetting={axisSettings[item]} />
+    return (
+        <div className="card">
+            <div className="card-header" id={"header-" + props.DataType} onClick={() => setIsOpen(prev => !prev)}>
+                <h2 className="mb-0">
+                    <button className="btn btn-link btn-block text-left" type="button">
+                        {GetDisplayLabel(props.DataType)} Settings
+                    </button>
+                </h2>
+            </div>
+            <div className={`collapse ${isOpen ? 'show' : ''}`}>
+                <div className="card-body">
+                    {unitSettings.map(item => (
+                        <fieldset key={item} className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
+                            <div className="form-row">
+                                <div className="col-6">
+                                    <AxisUnitSelector label={item as string} setter={(index) => handleUnitChange(item, index, props)} unitType={item} axisSetting={axisSettings[item]} />
+                                </div>
+                                <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                    <input className="form-check-input" type="radio" checked={!axisSettings[item]?.isManual} onChange={(e) => stateActions.SetIsManual(props, item, !e.target.checked)} />
+                                    <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
+                                </div>
+                                <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                    <input className="form-check-input" type="radio" checked={axisSettings[item]?.isManual} onChange={(e) => stateActions.SetIsManual(props, item, e.target.checked)} />
+                                    <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                                </div>
                             </div>
-                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                <input className="form-check-input" type="radio" checked={!isManual?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, !e.target.checked)} />
-                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
-                            </div>
-                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                <input className="form-check-input" type="radio" checked={isManual?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(props, item, e.target.checked)} />
-                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
-                            </div>
-                        </div>
 
-                        {isManual?.[item] && (
-                            <>
+                            {axisSettings[item]?.isManual && (
                                 <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
-                                    <div className="col-6" style={{}}>
-                                        <Input<ILimits>
-                                            Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }}
-                                            Field={'min'}
-                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits?.[item] ?? false)}
-                                            Valid={() => valid}
-                                            Label={`${item} ` + `Min [${getLabel(item)}]`}
-                                            Type={'number'}
-                                            Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
-                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                        />
+                                    <div className="col-6">
+                                        <Input<ILimits> Record={curLimits?.[item] ?? { min: 0, max: 1 }} Field={'min'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, axisSettings[item]?.isAuto ?? false)}
+                                            Valid={() => valid} Label={`${item} Min [${getLabel(item)}]`} Type={'number'}
+                                            Help={axisSettings[item]?.isAuto ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"} />
                                     </div>
                                     <div className="col-6">
-                                        <Input<ILimits>
-                                            Record={curLimits?.[item] ? curLimits?.[item] : { min: 0, max: 1 }}
-                                            Field={'max'}
-                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, autoUnits?.[item] ?? false)}
-                                            Valid={() => valid}
-                                            Label={`${item} ` + `Max [${getLabel(item)}]`}
-                                            Type={'number'}
-                                            Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
-                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                        />
+                                        <Input<ILimits> Record={curLimits?.[item] ?? { min: 0, max: 1 }} Field={'max'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, axisSettings[item]?.isAuto ?? false)}
+                                            Valid={() => valid} Label={`${item} Max [${getLabel(item)}]`} Type={'number'}
+                                            Help={axisSettings[item]?.isAuto ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"} />
                                     </div>
                                 </div>
-                            </>
-                        )}
-                        {overlappingKeys.length > 0 && !singlePlot ?
-                            overlappingKeys.map((key, idx) => (
-                                <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
-                                    <div className="col-6">
-                                        <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
-                                    </div>
-                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={!isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, !e.target.checked)} />
-                                        <label className="form-check-label" style={{ fontSize: '0.8rem', }}>Auto Limits</label>
-                                    </div>
-                                    <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={isOverlappingManual?.[key.DataType]?.[item]} onChange={(e) => dataDispatch.Dispatch.current.SetIsManual(key, item, e.target.checked)} />
-                                        <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
-                                    </div>
+                            )}
 
-                                    {isOverlappingManual?.[key.DataType]?.[item] && (
-                                        <>
-                                            <div className="form-row" style={{ marginLeft: '5px' }}>
-                                                <div className="col-6">
-                                                    <Input<ILimits>
-                                                        Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }}
-                                                        Field={'min'}
-                                                        Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits?.[item] ?? false)}
-                                                        Valid={() => valid}
-                                                        Label={`${item} ` + `Min [${getLabel(item, key)}]`}
-                                                        Type={'number'}
-                                                        Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
-                                                        Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                    />
-                                                </div>
-                                                <div className="col-6">
-                                                    <Input<ILimits> 
-                                                        Record={overlappingLimits?.[key.DataType]?.[item] ? overlappingLimits?.[key.DataType]?.[item] : { min: 0, max: 1 }}
-                                                        Field={'max'}
-                                                        Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, autoUnits?.[item] ?? false)}
-                                                        Valid={() => valid}
-                                                        Label={`${item} ` + `Max [${getLabel(item, key)}]`}
-                                                        Type={'number'}
-                                                        Help={autoUnits?.[item] ?? false ? 'When Auto Unit is selected limits will be factored to the base unit' : undefined}
-                                                        Feedback={"Minimum limit can not be greater than Maximum limit"}
-                                                    />
-                                                </div>
+                            {overlappingKeys.length > 0 && !singlePlot ?
+                                overlappingKeys.map((key, idx) => {
+                                    const oMeta = plotState.meta[toPlotKey(key)];
+                                    return (
+                                        <div key={idx} className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
+                                            <div className="col-6">
+                                                <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
                                             </div>
-                                        </>
-                                    )}
-                                </div>
-                            )) : null}
-                    </fieldset>
-                ))}
+                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                                <input className="form-check-input" type="radio" checked={!oMeta?.yLimits[item]?.isManual} onChange={(e) => stateActions.SetIsManual(key, item, !e.target.checked)} />
+                                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
+                                            </div>
+                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
+                                                <input className="form-check-input" type="radio" checked={oMeta?.yLimits[item]?.isManual} onChange={(e) => stateActions.SetIsManual(key, item, e.target.checked)} />
+                                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                                            </div>
+                                            {oMeta?.yLimits[item]?.isManual && (
+                                                <div className="form-row" style={{ marginLeft: '5px' }}>
+                                                    <div className="col-6">
+                                                        <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ?? { min: 0, max: 1 }} Field={'min'}
+                                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
+                                                            Valid={() => valid} Label={`${item} Min [${getLabel(item, key)}]`} Type={'number'}
+                                                            Feedback={"Minimum limit can not be greater than Maximum limit"} />
+                                                    </div>
+                                                    <div className="col-6">
+                                                        <Input<ILimits> Record={overlappingLimits?.[key.DataType]?.[item] ?? { min: 0, max: 1 }} Field={'max'}
+                                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
+                                                            Valid={() => valid} Label={`${item} Max [${getLabel(item, key)}]`} Type={'number'}
+                                                            Feedback={"Minimum limit can not be greater than Maximum limit"} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }) : null}
+                        </fieldset>
+                    ))}
 
-                {colorSettings.length > 0 ?
-                    <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
-                        <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
-                        <div className="row">
-                            {colorSettings.map((c: OpenSee.Color, i: number) =>
-                                <div className="col-3">
-                                    <ColorPicker<OpenSee.IColorCollection>
-                                        Record={colors}
-                                        Field={c}
-                                        key={i}
-                                        Label={c as string}
-                                        Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
-                                        Style={{ background: colors[c], marginBottom: 5 }}
-                                    />
-                                </div>)}
-                        </div>
-                    </fieldset> : null}
-
-
-                {props.DataType === "OverlappingWave" ?
-                    <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
-                        <legend className="w-auto" style={{ fontSize: 'large' }}>Time:</legend>
-                        <div className="row">
-                            <div className="col-12">
-                                <TimeUnitSelector label={"Time"} timeUnitIndex={overlapWaveTimeUnit} setter={index => handleTimeUnitChange(index)} overlappingWave={true} />
+                    {colorSettings.length > 0 ?
+                        <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
+                            <div className="row">
+                                {colorSettings.map((c, i) =>
+                                    <div className="col-3" key={i}>
+                                        <ColorPicker<OpenSee.IColorCollection> Record={colors} Field={c} Label={c as string}
+                                            Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
+                                            Style={{ background: colors[c], marginBottom: 5 }} />
+                                    </div>)}
                             </div>
-                        </div>
-                    </fieldset>
-                    : null}
+                        </fieldset> : null}
+
+                    {props.DataType === "OverlappingWave" ?
+                        <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Time:</legend>
+                            <div className="row">
+                                <div className="col-12">
+                                    <TimeUnitSelector label={"Time"} timeUnitIndex={overlapWaveTimeUnit} setter={handleSetOverlapTimeUnit} overlappingWave={true} />
+                                </div>
+                            </div>
+                        </fieldset>
+                        : null}
+                </div>
             </div>
         </div>
-    </div>);
-
-}
+    );
+};

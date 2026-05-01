@@ -24,8 +24,11 @@
 import * as d3 from "d3";
 import * as React from 'react';
 import { AnalyticContext } from '../Context/AnalyticContext';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
-import func from '../Context/DataContextFunctions';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
+import { toPlotKey, seriesToKey } from '../Context/PlotKeys';
+import { selectYLimits, selectYLabels, selectActiveUnit, selectRelevantUnits, selectEnabledUnits } from '../PlotSelectors';
+import { getIndex, getPrimaryAxis } from '../Context/PlotUtilities';
 import { OpenSee } from '../global';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectZoomMode, } from '../store/settingSlice';
@@ -55,17 +58,21 @@ interface iProps {
 
 const BarChart = (props: iProps) => {
     const [analytic] = React.useContext(AnalyticContext);
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
-
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
     const dataKey: OpenSee.IGraphProps = { DataType: props.dataKey.DataType, EventId: props.dataKey.EventId };
-    const activeUnit = React.useMemo(() => data.Selector.current.SelectActiveUnit(dataKey), [props.dataKey.EventId, props.dataKey.DataType])
 
-    const relevantUnits = React.useMemo(() => data.Selector.current.SelectRelevantUnits(dataKey), []);
-    const yLimits = data.Selector.current.SelectYLimits(dataKey);
+    const pk = toPlotKey(dataKey);
+    const plotMeta = plotState.meta[pk];
 
-    const barData = React.useMemo(() => data.Selector.current.SelectData(dataKey), []);
-    const enabledBar = React.useMemo(() => data.Selector.current.SelectEnabled(dataKey), []);
+    const activeUnit = React.useMemo(() => plotMeta ? selectActiveUnit(plotMeta) : null, [plotMeta])
+
+    const relevantUnits = React.useMemo(() => selectRelevantUnits(dataKey, plotData[pk] ?? []), [plotData[pk]]);
+    const yLimits = React.useMemo(() => plotMeta ? selectYLimits(plotMeta) : {} as any, [plotMeta]);
+
+    const barData = plotData[pk] ?? [];
+    const enabledBar = plotMeta?.enabled ?? {};
 
     const xScaleRef = React.useRef<d3.ScaleBand<number>>(d3.scaleBand<number>([], [0, 0]));
     const xScaleLblRef = React.useRef<d3.ScaleLinear<number, number>>(d3.scaleLinear().domain([0, 1]).range([0, 0]));
@@ -75,11 +82,11 @@ const BarChart = (props: iProps) => {
     const [mouseDown, setMouseDown] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
     const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
-    const enabledUnits = React.useMemo(() => data.Selector.current.SelectEnabledUnits(props.dataKey), []);
+    const enabledUnits = React.useMemo(() => selectEnabledUnits(dataKey, plotData[pk] ?? [], plotMeta?.enabled ?? {}), [plotData[pk], plotMeta?.enabled]);
 
-    const yLabels = data.Selector.current.SelectYLabels(dataKey);
+    const yLabels = React.useMemo(() => plotMeta ? selectYLabels(plotMeta) : {} as any, [plotMeta]);
 
-    const loading = data.Selector.current.SelectLoading(dataKey) ?? 'Uninitiated';
+    const loading = plotMeta?.loading ?? 'Uninitiated';
 
     const colors = useAppSelector(SelectColor);
     const mouseMode = useAppSelector(SelectMouseMode);
@@ -87,7 +94,7 @@ const BarChart = (props: iProps) => {
 
     const [hover, setHover] = React.useState<[number, number]>([0, 0]);
     const [yLblFontSize, setYLblFontSize] = React.useState<OpenSee.IUnitCollection<number> | {}>({});
-    const primaryAxis = func.getPrimaryAxis(dataKey)
+    const primaryAxis = getPrimaryAxis(dataKey)
 
     React.useEffect(() => {
 
@@ -128,7 +135,7 @@ const BarChart = (props: iProps) => {
         });
 
         if (barData && barData.length > 0) {
-            let domain = barData[0].DataPoints.filter(pt => pt[0] >= data.Context.FftLimits[0] && pt[0] <= data.Context.FftLimits[1]).map(pt => pt[0]);
+            let domain = barData[0].DataPoints.filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
             xScaleRef.current.domain(domain);
             xScaleLblRef.current.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
         }
@@ -151,12 +158,12 @@ const BarChart = (props: iProps) => {
         }
 
         if (!mouseDown && mouseMode == 'zoom' && zoomMode == "x")
-            dataDispatch.Dispatch.current.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
+            stateActions.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "y")
-            dataDispatch.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, barData);
         else if (!mouseDown && mouseMode == 'zoom' && zoomMode == "xy") {
-            dataDispatch.Dispatch.current.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]));
-            dataDispatch.Dispatch.current.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey);
+            stateActions.SetFFTLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, barData);
         }
     }, [mouseDown])
 
@@ -229,7 +236,7 @@ const BarChart = (props: iProps) => {
     });
 
     function createLineGen(unit: OpenSee.Unit | null = null, base: number | null = null) {
-        let factor = 1.0
+        let factor: number | undefined = 1.0
 
         // Calculate factor if unit and base are provided
         if (unit && base && activeUnit?.[unit] != null) {
@@ -269,7 +276,7 @@ const BarChart = (props: iProps) => {
             .classed("Bar", true)
             .attr("stroke", d => colors[d.Color])
             .selectAll('rect')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
+            .data(d => d.DataPoints.map(pt => ({ unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: enabledBar[seriesToKey(d)] === true, seriesKey: seriesToKey(d) })) as OpenSee.BarSeries[])
             .enter()
             .append('rect')
             .attr("x", d => {
@@ -299,7 +306,7 @@ const BarChart = (props: iProps) => {
             .classed("Point", true)
             .attr("fill", d => colors[d.Color])
             .selectAll('circle')
-            .data(d => d.DataPoints.map(pt => { return { unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: d.Enabled } }) as OpenSee.BarSeries[])
+            .data(d => d.DataPoints.map(pt => ({ unit: d.Unit, data: pt, color: d.Color, base: d.BaseValue, enabled: enabledBar[seriesToKey(d)] === true, seriesKey: seriesToKey(d) })) as OpenSee.BarSeries[])
             .enter().append('circle')
             .attr("cx", d => {
                 const v = xScaleRef.current(d.data[0]);
@@ -354,7 +361,7 @@ const BarChart = (props: iProps) => {
 
         let barGen = (unit: OpenSee.Unit, base: number) => {
             //Determine Factors
-            let factor = 1.0;
+            let factor: number | undefined = 1.0;
             if (activeUnit?.[unit]) {
                 factor = activeUnit[unit].factor
                 if (factor === undefined)  //p.u case
@@ -424,7 +431,7 @@ const BarChart = (props: iProps) => {
         }
 
         // We can assume consistent sampling rate for now
-        let domain = (barData?.[0]?.DataPoints ?? []).filter(pt => pt[0] >= data.Context.FftLimits[0] && pt[0] <= data.Context.FftLimits[1]).map(pt => pt[0]);
+        let domain = (barData?.[0]?.DataPoints ?? []).filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
         xScaleRef.current = d3.scaleBand(domain, [60, props.width - 150])
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -623,8 +630,8 @@ const BarChart = (props: iProps) => {
                     .attr("y", 20)
             else if (zoomMode == "y")
                 container.select(".zoomWindow").style("opacity", 0.5)
-                    .attr("x", (xScaleRef.current as any)(data.Context.FftLimits[0]))
-                    .attr("width", (xScaleRef.current as any)(data.Context.FftLimits[1]) - (xScaleRef.current as any)(data.Context.FftLimits[0]))
+                    .attr("x", (xScaleRef.current as any)(plotState.fftLimits[0]))
+                    .attr("width", (xScaleRef.current as any)(plotState.fftLimits[1]) - (xScaleRef.current as any)(plotState.fftLimits[0]))
                     .attr("height", Math.abs((yScaleRef.current[primaryAxis] as any)(pointMouse[1]) - (yScaleRef.current[primaryAxis] as any)(hover[1])))
                     .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
             else if (zoomMode == "xy")
@@ -639,10 +646,10 @@ const BarChart = (props: iProps) => {
         let deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && Math.abs(deltaT) > 0)
-            dataDispatch.Dispatch.current.SetFFTLimits((data.Context.FftLimits[0] - deltaT), (data.Context.FftLimits[1] - deltaT));
+            stateActions.SetFFTLimits((plotState.fftLimits[0] - deltaT), (plotState.fftLimits[1] - deltaT), plotData);
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "y" || zoomMode == "xy"))
-            dataDispatch.Dispatch.current.SetZoomedLimits([(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], props.dataKey);
+            stateActions.SetZoomedLimits([(yLimits[primaryAxis][0] - deltaData), (yLimits[primaryAxis][1] - deltaData)], props.dataKey, barData);
     }
 
     function updateYAxises() {
@@ -736,14 +743,14 @@ const BarChart = (props: iProps) => {
         if (barData) {
             //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
             const rectData = barData.filter(d => d.LegendHorizontal === "Mag")
-            container.select(".DataContainer").selectAll(".Bar").data(rectData).classed("active", d => d.Enabled)
+            container.select(".DataContainer").selectAll(".Bar").data(rectData).classed("active", d => enabledBar[seriesToKey(d)] === true)
             container.select(".DataContainer").selectAll(".Bar.active").style("opacity", 1.0);
             container.select(".DataContainer").selectAll(".Bar:not(.active)").style("opacity", 0);
 
             const pointData = barData.filter(d => d.LegendHorizontal === "Ang")
 
-            container.select(".DataContainer").selectAll(".Point").data(pointData).classed("active", d => d.Enabled)
-            container.select(".DataContainer").selectAll(".Line").data(pointData).classed("active", d => d.Enabled)
+            container.select(".DataContainer").selectAll(".Point").data(pointData).classed("active", d => enabledBar[seriesToKey(d)] === true)
+            container.select(".DataContainer").selectAll(".Line").data(pointData).classed("active", d => enabledBar[seriesToKey(d)] === true)
             container.select(".DataContainer").selectAll(".Line.active").style("opacity", 1.0);
             container.select(".DataContainer").selectAll(".Line:not(.active)").style("opacity", 0);
 
@@ -842,7 +849,7 @@ const BarChart = (props: iProps) => {
                 loading={loading}
                 type={props.dataKey.DataType}
                 hasData={(barData?.length ?? -1) > 0}
-                hasTrace={enabledBar.some(i => i)}
+                hasTrace={Object.values(enabledBar).some(v => v)}
             />
             {loading == 'Loading' || barData?.length == 0 ? null :
                 <Legend
@@ -870,4 +877,3 @@ const Container = React.memo((props: { height: number, eventID: number, type: Op
 })
 
 export default BarChart;
-

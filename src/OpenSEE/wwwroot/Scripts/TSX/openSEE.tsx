@@ -32,29 +32,34 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { AnalyticProvider } from './Context/AnalyticContext';
-import { DataProvider } from './Context/DataContext';
 import { EventProvider } from './Context/EventContext';
 import { HoverProvider } from './Context/HoverContext';
+import { PlotDataProvider } from './Context/PlotDataContext';
+import { PlotStateProvider } from './Context/PlotStateContext';
+import { OverlappingProvider } from './Context/OverlappingContext';
 import OpenSeeApplication from './OpenSeeApplication';
 import { LoadSettings } from './store/settingSlice';
 import store from './store/store';
 
+// PlotDataProvider and PlotStateProvider are independent -- neither consumes the other. Coordination happens in OpenSeeApplicationvia usePlotLifecycle, which reads from both.
 const OpenSEE = () => (
     <EventProvider>
         <HoverProvider>
             <AnalyticProvider>
-                <DataProvider>
-                    <OpenSeeApplication />
-                </DataProvider>
+                <PlotDataProvider>
+                    <PlotStateProvider>
+                        <OverlappingProvider>
+                            <OpenSeeApplication />
+                        </OverlappingProvider>
+                    </PlotStateProvider>
+                </PlotDataProvider>
             </AnalyticProvider>
         </HoverProvider>
     </EventProvider>
-)
+);
 
-//Load Settings for settings Slice
 store.dispatch(LoadSettings());
 
-// After
 const container = document.getElementById('DockCharts');
 const root = ReactDOM.createRoot(container!);
 root.render(<Provider store={store}><OpenSEE /></Provider>);

@@ -20,33 +20,39 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-
 import * as React from 'react';
-import DataContext from '../Context/DataContext';
-
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext } from '../Context/PlotStateContext';
+import EventContext from '../Context/EventContext';
+import { selectFFTData } from '../PlotSelectors';
 
 const FFTTable = () => {
-    const data = React.useContext(DataContext);
-    const fftPoints = data.Selector.current.SelectFFTData();
+    const { plots } = React.useContext(PlotDataStateContext);
+    const { meta } = React.useContext(PlotStateStateContext);
+    const evt = React.useContext(EventContext);
 
-    const showAng = (index, row) => {
-        let f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
-        let val = fftPoints[index].Angle[row] * f;
+    const fftPoints = React.useMemo(
+        () => selectFFTData(evt.Context.EventID, plots, meta),
+        [evt.Context.EventID, plots, meta]
+    );
+
+    const showAng = (index: number, row: number) => {
+        const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
+        const val = fftPoints[index].Angle[row] * (f ?? 1);
         return isNaN(val) ? <td key={`ang-${index}-${row}`}>N/A</td> : <td key={`ang-${index}-${row}`}>{val.toFixed(2)}</td>;
     };
 
-
-    const showMag = (index, row) => {
-        let f = (fftPoints?.[index]?.Unit?.factor === undefined ? 1.0 / fftPoints?.[index]?.BaseValue : fftPoints[index]?.Unit?.factor);
-        let val = fftPoints?.[index]?.Magnitude[row] * f;
-        return isNaN(val) ? <td key={`mag-${index}-${row}`} >N/A</td> : <td key={`mag-${index}-${row}`}>{val.toFixed(2)}</td>;
+    const showMag = (index: number, row: number) => {
+        const f = (fftPoints?.[index]?.Unit?.factor === undefined ? 1.0 / fftPoints?.[index]?.BaseValue : fftPoints[index]?.Unit?.factor);
+        const val = fftPoints?.[index]?.Magnitude[row] * f;
+        return isNaN(val) ? <td key={`mag-${index}-${row}`}>N/A</td> : <td key={`mag-${index}-${row}`}>{val.toFixed(2)}</td>;
     };
 
     return (
         <>
-            {fftPoints.length > 0 ? 
-            <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
-                <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
+            {fftPoints.length > 0 ?
+                <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
+                    <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
                         <thead>
                             <tr>
                                 <th></th>
@@ -65,23 +71,23 @@ const FFTTable = () => {
                             </tr>
                         </thead>
                         <tbody>
-                        {fftPoints[0].Angle.map((a, row) => (
-                            <tr key={a+row}>
-                                <td key={a+row} >{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
-                                {fftPoints.map((_, index) => (
-                                    <React.Fragment key={`row-${index}-${row}`}>
-                                        {showMag(index, row)}
-                                        {showAng(index, row)}
-                                    </React.Fragment>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                            {fftPoints[0].Angle.map((a, row) => (
+                                <tr key={a + row}>
+                                    <td key={a + row}>{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
+                                    {fftPoints.map((_, index) => (
+                                        <React.Fragment key={`row-${index}-${row}`}>
+                                            {showMag(index, row)}
+                                            {showAng(index, row)}
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
                 : null}
         </>
     );
-}
+};
 
 export default FFTTable;

@@ -23,30 +23,32 @@
 //       Fix issue where events weren't getting grouped by meter
 //
 //******************************************************************************************************
-
-
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverlappingTime, SelectTimeUnit } from '../store/settingSlice';
 import { CheckBox } from '@gpa-gemstone/react-forms';
 import _ from 'lodash';
 import { LoadingIcon } from '../Graphs/ChartIcons';
-import { defaultSettings, TimeUnitOptions } from '../defaults';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import { TimeUnitOptions } from '../defaults';
+import { OverlappingStateContext } from '../Context/OverlappingContext';
 
-const OverlappingEventWindow = () => {
+interface IProps {
+    // Passed from OpenSeeApplication where usePlotLifecycle is consumed
+    EnableOverlappingEvent: (eventId: number) => void;
+}
+
+const OverlappingEventWindow = (props: IProps) => {
     const dispatch = useAppDispatch();
     const singlePlot = useAppSelector(SelectSinglePlot);
     const useOverlappingTime = useAppSelector(SelectUseOverlappingTime);
     const timeUnit = useAppSelector(SelectTimeUnit);
 
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
-    const groupedEvents = _.groupBy(data.Context.OverlappingEventList, 'MeterName');
+    const overlapping = React.useContext(OverlappingStateContext);
+    const groupedEvents = _.groupBy(overlapping.events, 'MeterName');
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
-            {data.Context.OverlappingLoading != 'Idle' ? (
+            {overlapping.loading !== 'Idle' ? (
                 <LoadingIcon />
             ) : (
                 <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', height: '100%', width: '100%', overflowY: 'auto', padding: '10px', marginTop: 0 }}>
@@ -63,18 +65,18 @@ const OverlappingEventWindow = () => {
                             </div>
                         </div>
                         {TimeUnitOptions[timeUnit.current].short.includes('since') &&
-                                (!singlePlot || (singlePlot && !data.Context.OverlappingEventList.some(i => i.Selected))) ?
-                                <div className="form-row">
-                                    <div className="col-6 form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={!useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(!e.target.checked))} />
-                                        <label className="form-check-label">Relative to Original Event</label>
-                                    </div>
-                                    <div className="col-6 form-check-inline" style={{ margin: 0 }}>
-                                        <input className="form-check-input" type="radio" checked={useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(e.target.checked))} />
-                                        <label className="form-check-label">Relative to Selected Event</label>
-                                    </div>
+                            (!singlePlot || (singlePlot && !overlapping.events.some(i => i.Selected))) ?
+                            <div className="form-row">
+                                <div className="col-6 form-check-inline" style={{ margin: 0 }}>
+                                    <input className="form-check-input" type="radio" checked={!useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(!e.target.checked))} />
+                                    <label className="form-check-label">Relative to Original Event</label>
                                 </div>
-                                : null}
+                                <div className="col-6 form-check-inline" style={{ margin: 0 }}>
+                                    <input className="form-check-input" type="radio" checked={useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(e.target.checked))} />
+                                    <label className="form-check-label">Relative to Selected Event</label>
+                                </div>
+                            </div>
+                            : null}
                     </div>
 
                     {Object.entries(groupedEvents).map(([meterName, events]) => (
@@ -82,15 +84,15 @@ const OverlappingEventWindow = () => {
                             <legend className="w-auto" style={{ fontSize: 'large' }}>{meterName}</legend>
                             {events.map((event, idx) => (
                                 <div key={idx} className="form-row" style={{ marginBottom: '10px' }}>
-                                        <div className="col-12">
-                                            <CheckBox
-                                                Record={event}
-                                                Field={'Selected'}
-                                                Setter={(updatedEvent) => dataDispatch.Dispatch.current.EnableOverlappingEvent(updatedEvent.EventID)}
-                                                Label={event.AssetName}
-                                            />
-                                        </div>
+                                    <div className="col-12">
+                                        <CheckBox
+                                            Record={event}
+                                            Field={'Selected'}
+                                            Setter={(updatedEvent) => props.EnableOverlappingEvent(updatedEvent.EventID)}
+                                            Label={event.AssetName}
+                                        />
                                     </div>
+                                </div>
                             ))}
                         </fieldset>
                     ))}

@@ -20,47 +20,43 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
-
 import { clone } from 'lodash';
 import * as React from 'react';
 import { OpenSee } from '../global';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectMouseMode, SetMouseMode } from '../store/settingSlice';
+import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
 import InfoSection from './InfoSection';
 import PlotUtilitiesSection from './PlotUtilitiesSection';
 import WidgetSection from './WidgetSection';
 
 interface IProps {
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
-    OpenDrawers: OpenSee.Drawers
-    Width: number
+    OpenDrawers: OpenSee.Drawers,
+    Width: number,
+    lifecycle: IPlotLifecycleActions
 }
 
 const OpenSeeNavBar = (props: IProps) => {
     const dispatch = useAppDispatch();
     const mouseMode = useAppSelector(SelectMouseMode);
-
     const [showAbout, setShowAbout] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         if (props.OpenDrawers.AccumulatedPoints) {
             let oldMode = clone(mouseMode);
-            dispatch(SetMouseMode('select'))
-            return () => {
-                dispatch(SetMouseMode(oldMode))
-            }
+            dispatch(SetMouseMode('select'));
+            return () => { dispatch(SetMouseMode(oldMode)); };
         }
-        return () => { }
-
+        return () => { };
     }, [props.OpenDrawers.AccumulatedPoints]);
 
     return (
         <>
-            <InfoSection width={props.Width}/>
+            <InfoSection width={props.Width} />
             <div className="col-sm-10 col-md-11 col-xl-7">
                 {(props.Width < 1568 && props.Width > 1200) || props.Width < 1050 ?
                     <>
-                        {/* Top Section */}
                         <ul className="navbar-nav navbar-expand justify-content-end">
                             <PlotUtilitiesSection
                                 showAbout={showAbout}
@@ -69,22 +65,21 @@ const OpenSeeNavBar = (props: IProps) => {
                                 ToggleDrawer={props.ToggleDrawer}
                             />
                         </ul>
-                        {/* Bottom section */}
-                        <ul className="navbar-nav navbar-expand justify-content-end" style={{marginRight: '105px', marginBottom: '10px'}}>
+                        <ul className="navbar-nav navbar-expand justify-content-end" style={{ marginRight: '105px', marginBottom: '10px' }}>
                             <WidgetSection
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
+                                lifecycle={props.lifecycle}
                             />
                         </ul>
                     </> :
                     <>
                         <ul className="navbar-nav navbar-expand">
-                            {/* Left Section */}
-                            <WidgetSection 
+                            <WidgetSection
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
+                                lifecycle={props.lifecycle}
                             />
-                            {/* Right section */}
                             <PlotUtilitiesSection
                                 showAbout={showAbout}
                                 setShowAbout={(item) => setShowAbout(item)}
@@ -94,12 +89,9 @@ const OpenSeeNavBar = (props: IProps) => {
                         </ul>
                     </>
                 }
-
             </div>
         </>
-
     );
-
-}
+};
 
 export default OpenSeeNavBar;

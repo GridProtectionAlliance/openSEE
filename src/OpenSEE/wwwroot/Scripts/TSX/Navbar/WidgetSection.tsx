@@ -20,37 +20,39 @@
 //       Moved code to here from OpenSEENavbar.tsx
 //
 //******************************************************************************************************
-
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import React from "react";
 import AnalyticContext from '../Context/AnalyticContext';
-import DataContext from '../Context/DataContext';
+import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
 import { useAppDispatch } from '../hooks';
 import { SetMouseMode } from '../store/settingSlice';
 import PlotTable from './PlotTable';
+import { selectFFTEnabled, selectDisplayed, selectAnalytics } from '../PlotSelectors';
+import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
 
 interface IWidgets {
     OpenDrawers: OpenSee.Drawers,
-    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void
+    ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
+    lifecycle: IPlotLifecycleActions
 }
 
 const WidgetSection = (props: IWidgets) => {
     const dispatch = useAppDispatch();
-
     const evt = React.useContext(EventContext);
     const [analytic] = React.useContext(AnalyticContext);
-    const data = React.useContext(DataContext);
+    const plotState = React.useContext(PlotStateStateContext);
+
     const [hover, setHover] = React.useState<string>('None');
 
-    const showFFT = data.Selector.current.SelectFFTEnabled();
+    const showFFT = React.useMemo(() => selectFFTEnabled(plotState.meta), [plotState.meta]);
 
-    const exportData = (type) => {
-        const showPlots = data.Selector.current.SelectDisplayed();
-        const analytics = data.Selector.current.SelectAnalytics();
+    const exportData = (type: string) => {
+        const showPlots = selectDisplayed(plotState.meta);
+        const analytics = selectAnalytics(plotState.meta, evt.Context.EventID);
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventInfo?.EventId}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
             `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
@@ -62,45 +64,32 @@ const WidgetSection = (props: IWidgets) => {
             `${`&hpfOrder=${analytic.HPFOrder}`}` +
             `${`&Trc=${analytic.Trc}`}` +
             `${`&harmonic=${analytic.Harmonic}`}` +
-            `${type == 'fft' ? `&startDate=${data.Context.FftLimits[0]}` : ``}` +
+            `${type == 'fft' ? `&startDate=${plotState.fftLimits[0]}` : ``}` +
             `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
             `&Meter=${evt.Context.EventInfo?.MeterName}` +
             `&EventType=${evt.Context.EventInfo?.EventName}`;
         window.open(uri, '_blank');
-    }
+    };
 
     const optionList = [
-        {
-            Label: "Export CSV",
-            Callback: () => exportData('csv')
-        },
-        {
-            Label: "Export PQDS",
-            Callback: () => exportData('pqds')
-        }
+        { Label: "Export CSV", Callback: () => exportData('csv') },
+        { Label: "Export PQDS", Callback: () => exportData('pqds') }
     ];
 
     if (showFFT)
-        optionList.push({
-            Label: "Export FFT",
-            Callback: () => exportData('fft')
-        });
+        optionList.push({ Label: "Export FFT", Callback: () => exportData('fft') });
 
     return (
         <>
-            <li className="nav-item" style={{ width: 'calc(100% - 909px)', textAlign: 'center' }}>
-            </li>
+            <li className="nav-item" style={{ width: 'calc(100% - 909px)', textAlign: 'center' }}></li>
             <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
-                <button type="button"
-                    className="btn btn-primary"
-                    style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Waveform')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'waveform-btn'}
                     data-toggle="dropdown" data-placement="bottom">
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }} >{WaveformViews}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{WaveformViews}</i>
                 </button>
-
                 <div className="dropdown-menu"
                     style={{
                         maxHeight: window.innerHeight * 0.75,
@@ -112,7 +101,7 @@ const WidgetSection = (props: IWidgets) => {
                         zIndex: 401,
                         minWidth: '100%'
                     }}>
-                    <PlotTable />
+                    <PlotTable lifecycle={props.lifecycle} />
                 </div>
                 <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'}>
                     <p>Waveform Views</p>
@@ -124,7 +113,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseEnter={() => setHover('Show Points')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints); }}>
-                    < i style={{ fontStyle: "normal", fontSize: "25px" }} >{ShowPoints}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{ShowPoints}</i>
                 </button>
                 <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
                     <p>Show Points</p>
@@ -136,18 +125,19 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseEnter={() => setHover('Clock')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart); }}>
-                    <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }} >{PhasorClock}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }}>{PhasorClock}</i>
                 </button>
                 <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
                 </ToolTip>
             </li>
+
             <li className={"nav-item dropdown"} style={{ width: '54px', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Stat')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
                     data-placement="bottom">
-                    < i style={{ fontStyle: "normal", fontSize: "25px" }} >{statsIcon}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{statsIcon}</i>
                 </button>
                 <div className="dropdown-menu" style={{ position: "absolute" }}>
                     <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)} style={{ cursor: 'pointer' }}>
@@ -169,7 +159,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseEnter={() => setHover('Sags')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags); }}>
-                    < i style={{ fontStyle: "normal", fontSize: "25px" }} >{CorrelatedSags}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{CorrelatedSags}</i>
                 </button>
                 <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
                     <p>Correlated Sags</p>
@@ -181,8 +171,8 @@ const WidgetSection = (props: IWidgets) => {
                     disabled={!showFFT}
                     onMouseEnter={() => setHover('FFTTable')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable) }}>
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }} >{FFT}</i>
+                    data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable); }}>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{FFT}</i>
                 </button>
                 <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
                     <p>FFT Table</p>
@@ -194,7 +184,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseEnter={() => setHover('Lightning')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
                     data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning); }}>
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }} >{lightningData}</i>
+                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{lightningData}</i>
                 </button>
                 <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>
                     <p>Lightning Data</p>
@@ -214,7 +204,7 @@ const WidgetSection = (props: IWidgets) => {
                 </div>
             </li>
         </>
-    )
-}
+    );
+};
 
 export default WidgetSection;

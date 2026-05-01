@@ -24,17 +24,26 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { SelectColor } from '../store/settingSlice'
-import { useAppDispatch, useAppSelector } from '../hooks';
-import { DataContext, DataFunctionContext } from '../Context/DataContext';
+import { SelectColor } from '../store/settingSlice';
+import { useAppSelector } from '../hooks';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
+import EventContext from '../Context/EventContext';
+import { selectSelectedPoints } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 
 const PointWidget = () => {
-    const data = React.useContext(DataContext);
-    const dataDispatch = React.useContext(DataFunctionContext);
-
-    const points = data.Selector.current.SelectSelectedPoints();
+    const { plots } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const evt = React.useContext(EventContext);
     const colors = useAppSelector(SelectColor);
+
+    const points = React.useMemo(
+        () => selectSelectedPoints(evt.Context.EventID, plots, plotState.meta),
+        [evt.Context.EventID, plots, plotState.meta]
+    );
+
     const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
 
     const flexRef = React.useRef<HTMLDivElement | null>(null);
@@ -53,9 +62,9 @@ const PointWidget = () => {
 
     return (
         <div className="d-flex flex-column" ref={flexRef} style={{ height: '100%', width: '100%', padding: '10px' }}>
-            <div style={{ height: '93%', width: '100%', maxWidth: flexWidth, overflowX: 'auto', overflowY: 'auto', }}>
+            <div style={{ height: '93%', width: '100%', maxWidth: flexWidth, overflowX: 'auto', overflowY: 'auto' }}>
                 <table className="table table-bordered" style={{ height: '100%', marginBottom: 0, width: "100%" }}>
-                    <thead style={{ position: 'sticky', top: 0, zIndex: 200 }} >
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 200 }}>
                         <tr>
                             <td ref={firstCellRef} className="dot" style={{ backgroundColor: 'white', width: 12, position: 'sticky', left: 0, zIndex: 100 }}>
                                 <b>&nbsp;&nbsp;&nbsp;</b>
@@ -69,9 +78,9 @@ const PointWidget = () => {
                                 <b>Delta</b>
                             </td>
                             {points[0]?.Value?.map((p, i) => (
-                                <td key={i} style={{ maxHeight: 100, backgroundColor: (selectedIndex == i ? 'yellow' : 'white'), zIndex: 100, textAlign: 'center', verticalAlign: 'middle' }}>
+                                <td key={i} style={{ maxHeight: 100, backgroundColor: (selectedIndex === i ? 'yellow' : 'white'), zIndex: 100, textAlign: 'center', verticalAlign: 'middle' }}>
                                     <span>
-                                        {(p[0] - data.Context.StartTime).toFixed(7)} sec<hr />{((p[0] - data.Context.StartTime) * 60.0).toFixed(2)} cycles
+                                        {(p[0] - plotState.startTime).toFixed(7)} sec<hr />{((p[0] - plotState.startTime) * 60.0).toFixed(2)} cycles
                                     </span>
                                 </td>
                             ))}
@@ -80,10 +89,10 @@ const PointWidget = () => {
                     <tbody>
                         {points.map((point, pointIndex) => (
                             <tr key={pointIndex} style={{ maxWidth: flexWidth }}>
-                                <td ref={firstCellRef} className="dot" style={{ backgroundColor: colors[point.Color], width: 12, position: 'sticky', left: 0, zIndex: 100 }}>
+                                <td className="dot" style={{ backgroundColor: colors[point.Color], width: 12, position: 'sticky', left: 0, zIndex: 100 }}>
                                     <b>&nbsp;&nbsp;&nbsp;</b>
                                 </td>
-                                <td ref={secondCellRef} style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, position: 'sticky', left: leftPosition.secondCell, zIndex: 100, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
+                                <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, position: 'sticky', left: leftPosition.secondCell, zIndex: 100, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
                                     <b>{point.Group}</b>
                                 </td>
                                 <td style={{ position: 'sticky', left: leftPosition.thirdCell, top: 0, zIndex: 200, backgroundColor: 'white', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -92,7 +101,7 @@ const PointWidget = () => {
                                     <b>Delta</b>
                                 </td>
                                 {point.Value.map((p, i) => (
-                                    <td key={i} onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex == i ? 'yellow' : undefined), textAlign: 'center', verticalAlign: 'middle' }}>
+                                    <td key={i} onClick={() => setSelectedIndex(i)} style={{ backgroundColor: (selectedIndex === i ? 'yellow' : undefined), textAlign: 'center', verticalAlign: 'middle' }}>
                                         <span>
                                             {(p[1] * (point.Unit?.factor === undefined ? 1.0 / point.BaseValue : point.Unit?.factor)).toFixed(2)} {point?.Unit?.short}
                                         </span>
@@ -104,19 +113,17 @@ const PointWidget = () => {
                                     </td>
                                 ))}
                             </tr>
-
                         ))}
                     </tbody>
                 </table>
             </div>
             <div style={{ height: '7%' }}>
-                <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) dataDispatch.Dispatch.current.RemoveSelectPoints(selectedIndex); setSelectedIndex(-1) }} />
-                <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => dataDispatch.Dispatch.current.RemoveSelectPoints(points[0].Value.length - 1)} />
-                <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { dataDispatch.Dispatch.current.ClearSelectPoints(); setSelectedIndex(-1) }} />
+                <input style={{ marginTop: '5px' }} className="btn btn-primary" type="button" value="Remove" onClick={() => { if (selectedIndex !== -1) stateActions.RemoveSelectPoints(selectedIndex); setSelectedIndex(-1); }} />
+                <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Pop" onClick={() => stateActions.RemoveSelectPoints(points[0].Value.length - 1)} />
+                <input style={{ marginTop: '5px', marginLeft: '5px' }} className="btn btn-primary" type="button" value="Clear" onClick={() => { stateActions.ClearSelectPoints(); setSelectedIndex(-1); }} />
             </div>
         </div>
     );
-
-}
+};
 
 export default PointWidget;
