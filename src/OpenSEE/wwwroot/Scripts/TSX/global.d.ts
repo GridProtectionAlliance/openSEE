@@ -278,7 +278,7 @@ export namespace OpenSee {
 
     interface IUnitSetting {
         current: number,
-        options?: Array<iUnitOptions>, 
+        options?: iUnitOptions[], 
         autoUnit: boolean
     }
 
@@ -292,7 +292,7 @@ export namespace OpenSee {
     interface iUnitOptions {
         label: string,
         short: string,
-        factor: number
+        factor?: number
     }
 
     interface IGraphProps {
@@ -433,7 +433,8 @@ export namespace OpenSee {
         data: [number, number],
         color: OpenSee.Color,
         base: number,
-        enabled: boolean
+        enabled: boolean,
+        seriesKey: string
     }
 
     interface IPointCollection {
