@@ -104,6 +104,7 @@ const LineChart = (props: iProps) => {
 
     const xScaleRef = React.useRef<d3.ScaleLinear<number, number>>(d3.scaleLinear());
     const yScaleRef = React.useRef<OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}>({});
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     const primaryAxis = getPrimaryAxis(props.dataKey);
 
@@ -283,7 +284,7 @@ const LineChart = (props: iProps) => {
 
     //This Clears the Plot if loading is activated
     React.useEffect(() => {
-        d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
+        d3.select(containerRef.current).select("svg").select("g.root").remove()
 
         if (loading == 'Loading') {
             setCreated(false);
@@ -302,7 +303,7 @@ const LineChart = (props: iProps) => {
     }, [props.dataKey, options]);
 
     React.useEffect(() => {
-        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select(containerRef.current);
 
         if (container == null || container.select(".yAxisLabel") == null)
             return;
@@ -317,7 +318,7 @@ const LineChart = (props: iProps) => {
     }, [yLabels, yLblFontSize]);
 
     React.useEffect(() => {
-        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select(containerRef.current);
         if (container == null || container.select(".yAxisLabel") == null)
             return;
 
@@ -372,7 +373,7 @@ const LineChart = (props: iProps) => {
             xScaleRef.current.range([120, props.width - 170]);
 
 
-        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select(containerRef.current);
 
         const lines = container.select(".DataContainer").selectAll(".Line").data(lineData);
 
@@ -418,7 +419,7 @@ const LineChart = (props: iProps) => {
 
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
-        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select(containerRef.current);
         const svg = container.select(".DataContainer");
 
         svg.selectAll<SVGPathElement, OpenSee.iD3DataSeries>(".Line").attr("d", (d) => {
@@ -457,9 +458,9 @@ const LineChart = (props: iProps) => {
     }
 
     function createPlot() {
-        d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
+        d3.select(containerRef.current).select("svg").select("g.root").remove()
 
-        const svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
+        const svg = d3.select(containerRef.current).select("svg")
             .append("g").classed("root", true)
             .attr("transform", "translate(10,0)");
 
@@ -727,7 +728,7 @@ const LineChart = (props: iProps) => {
 
     function MouseMove(evt) {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
@@ -747,7 +748,7 @@ const LineChart = (props: iProps) => {
     }
 
     function MouseDown(evt) {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
@@ -772,7 +773,7 @@ const LineChart = (props: iProps) => {
     function FFTMouseDown(evt) {
         setFFTMouseDown(true);
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
@@ -788,7 +789,7 @@ const LineChart = (props: iProps) => {
     }
 
     function MouseUp() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
     }
@@ -796,7 +797,7 @@ const LineChart = (props: iProps) => {
     // This function needs to be called if hover is updated
     function updateHover() {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -850,7 +851,7 @@ const LineChart = (props: iProps) => {
         if (props.dataKey.DataType != 'Voltage' && props.dataKey.DataType != 'Current')
             return;
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -863,7 +864,7 @@ const LineChart = (props: iProps) => {
     }
 
     function updateYAxises() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         //Flag to alternate axis placement
         if (container === undefined)
@@ -923,7 +924,7 @@ const LineChart = (props: iProps) => {
         setInceptionLocation(xScaleRef.current(evt.Context.EventInfo?.Inception));
         setDurationLocation(xScaleRef.current(evt.Context.EventInfo?.DurationEndTime));
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         let width = 1
         let x = 1
@@ -965,14 +966,14 @@ const LineChart = (props: iProps) => {
 
     // Mouse Left only get's called if we left for a minimum of time
     function MouseLeft() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
 
     //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limits change (due to auto Units)s
     function updateLabels() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         function GetTLabel() {
             let h = 100;
@@ -1005,7 +1006,7 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever (a) Color Setting changes occur
     function updateColors() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         function GetColor(col: OpenSee.Color) {
             return colors[col as string]
@@ -1017,7 +1018,7 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         // Use the keyed enabled map from plot metadata instead of the stale
         // Enabled flag on the data object itself
@@ -1053,7 +1054,7 @@ const LineChart = (props: iProps) => {
     // This Function needs to be called whenever height or width change
     function updateSize() {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        let container = d3.select(containerRef.current);
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
         container.select(".plotTitle").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ",20)").style("font-weight", "bold")
@@ -1119,6 +1120,7 @@ const LineChart = (props: iProps) => {
     return (
         <div>
             <Container
+                ref={containerRef}
                 key={props.dataKey.DataType + props.dataKey.EventId + 'container'}
                 dataKey={props.dataKey}
                 height={props.height}
@@ -1158,11 +1160,11 @@ interface IContainerProps {
 
 }
 
-const Container = React.memo((props: IContainerProps) => {
+const Container = React.memo(React.forwardRef<HTMLDivElement, IContainerProps>((props, ref) => {
     const showSVG = props.loading != 'Loading' && props.hasData;
 
     return (
-        <div data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
+        <div ref={ref} data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
             {props.loading === 'Loading' ? <LoadingIcon /> : null}
             {props.loading != 'Loading' && props.loading != 'Error' && !props.hasData ? <NoDataIcon /> : null}
             {props.loading === 'Error' ? <ErrorIcon /> : null}
@@ -1219,7 +1221,7 @@ const Container = React.memo((props: IContainerProps) => {
             </svg>
         </div>
     )
-})
+}));
 
 const PolyLine = (props: { height: number, left: number, style: React.CSSProperties, class: string }) => {
     return (
