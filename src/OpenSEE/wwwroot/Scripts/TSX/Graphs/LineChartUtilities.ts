@@ -60,7 +60,7 @@ export interface IFormatTimeContext {
 }
 
 export function formatTimeTick(d: number, ctx: IFormatTimeContext): string {
-    let TS = moment(d);
+    const TS = moment(d);
     let h = ctx.xDomainWidth;
 
     if (ctx.isOverlappingWaveform) {
@@ -143,7 +143,7 @@ export function formatTimeTick(d: number, ctx: IFormatTimeContext): string {
     }
 
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since record') {
-        let cyc = (d - ctx.startTime) * 60.0 / 1000.0;
+        const cyc = (d - ctx.startTime) * 60.0 / 1000.0;
 
         h = h * 60.0 / 1000.0;
         if (h < 2)
@@ -154,7 +154,7 @@ export function formatTimeTick(d: number, ctx: IFormatTimeContext): string {
             return cyc.toFixed(1)
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since inception') {
-        let cyc = (d - ctx.startTime) * 60.0 / 1000.0;
+        const cyc = (d - ctx.startTime) * 60.0 / 1000.0;
 
         h = h * 60.0 / 1000.0;
         if (h < 2)

@@ -135,7 +135,7 @@ const BarChart = (props: iProps) => {
         });
 
         if (barData && barData.length > 0) {
-            let domain = barData[0].DataPoints.filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
+            const domain = barData[0].DataPoints.filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
             xScaleRef.current.domain(domain);
             xScaleLblRef.current.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
         }
@@ -194,12 +194,12 @@ const BarChart = (props: iProps) => {
     }, [props.dataKey, analytic]);
 
     React.useEffect(() => {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         if (container == null || container.select(".yAxisLabel") == null)
             return;
 
-        let yLabelLeft = container.select(`.yAxisLabel.left`)
+        const yLabelLeft = container.select(`.yAxisLabel.left`)
 
         yLabelLeft.style('font-size', yLblFontSize.toString() + 'rem');
         yLabelLeft.text(yLabels[primaryAxis])
@@ -213,7 +213,7 @@ const BarChart = (props: iProps) => {
 
 
     React.useLayoutEffect(() => {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (container == null || container.select(".yAxisLabel") == null || yLabels[primaryAxis].length == 0)
             return;
 
@@ -265,12 +265,12 @@ const BarChart = (props: iProps) => {
 
     // This Function needs to be called whenever Data is Added
     function UpdateData() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         //draw bars for Mag 
         const rectData = barData?.filter(d => d.LegendHorizontal === "Mag") ?? [];
 
-        let rectangles = container.select(".DataContainer").selectAll(".Bar")
+        const rectangles = container.select(".DataContainer").selectAll(".Bar")
             .data(rectData)
             .enter().append("g")
             .classed("Bar", true)
@@ -280,13 +280,13 @@ const BarChart = (props: iProps) => {
             .enter()
             .append('rect')
             .attr("x", d => {
-                let x = xScaleRef.current(d.data[0]);
+                const x = xScaleRef.current(d.data[0]);
                 return (x == null || isNaN(x)) ? 0 : x
             })
-            .attr("y", d => { let y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
+            .attr("y", d => { const y = yScaleRef.current[d.unit](d.data[1]); return isNaN(y) ? 0 : y })
             .attr("width", xScaleRef.current.bandwidth())
             .attr("height", d => {
-                let h = yScaleRef.current[d.unit](d.data[1])
+                const h = yScaleRef.current[d.unit](d.data[1])
                 return isNaN(h) ? 0 : Math.max(((props.height - 60) - yScaleRef.current[d.unit](d.data[1])), 0)
             })
             .attr("fill", "none")
@@ -300,7 +300,7 @@ const BarChart = (props: iProps) => {
 
         //draw circles for Ang
         const pointData = barData?.filter(d => d.LegendHorizontal === "Ang") ?? [];
-        let circles = container.select(".DataContainer").selectAll(".Point")
+        const circles = container.select(".DataContainer").selectAll(".Point")
             .data(pointData)
             .enter().append("g")
             .classed("Point", true)
@@ -321,14 +321,14 @@ const BarChart = (props: iProps) => {
 
 
         //draw lines to connect Ang circles
-        let lines = container.select(".DataContainer").selectAll(".Line").data(pointData);
+        const lines = container.select(".DataContainer").selectAll(".Line").data(pointData);
         lines.enter().append("path").classed("Line", true)
             .attr("type", d => `axis-${d.Unit}`)
             .attr("fill", "none")
             .attr("stroke", d => (Object.keys(colors).indexOf(d.Color) > -1 ? colors[d.Color] : colors.random))
             .attr("stroke-dasharray", d => (d.LineType == undefined || d.LineType == "-" ? 0 : 5))
             .attr("d", d => {
-                let lineGen = createLineGen(d.Unit);
+                const lineGen = createLineGen(d.Unit);
 
                 if (d.SmoothDataPoints.length > 0)
                     return lineGen.curve(d3.curveNatural)(d.SmoothDataPoints);
@@ -348,7 +348,7 @@ const BarChart = (props: iProps) => {
 
     // This Function should be called anytime the Scale changes as it will adjust the Axis, Path and Points
     function updateLimits() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         container.selectAll(".xAxis").transition().call(d3.axisBottom(xScaleLblRef.current).tickFormat(d => formatFrequencyTick(d as number)).tickSizeOuter(0) as any);
 
@@ -359,7 +359,7 @@ const BarChart = (props: iProps) => {
         container.select('.xAxisExtLeft').attr("x2", 60 + offsetLeft)
         container.select('.xAxisExtRight').attr("x2", props.width - 110 - offsetRight)
 
-        let barGen = (unit: OpenSee.Unit, base: number) => {
+        const barGen = (unit: OpenSee.Unit, base: number) => {
             //Determine Factors
             let factor: number | undefined = 1.0;
             if (activeUnit?.[unit]) {
@@ -376,17 +376,17 @@ const BarChart = (props: iProps) => {
         container.select(".DataContainer").selectAll<SVGGElement, OpenSee.iD3DataSeries>(".Bar")
             .selectAll<SVGRectElement, OpenSee.BarSeries>('rect')
             .attr("x", d => {
-                let v = xScaleRef.current(d.data[0]);
+                const v = xScaleRef.current(d.data[0]);
                 return v == null || isNaN(v) ? 0 : v;
             })
             .style("opacity", (d) => {
-                let v = xScaleRef.current(d.data[0]);
+                const v = xScaleRef.current(d.data[0]);
                 return ((v == null || isNaN(v)) ? 0.0 : 1.0)
             })
-            .attr("y", (d) => { let y = barGen(d.unit, d.base)(d); return (isNaN(y) ? 0 : y) })
+            .attr("y", (d) => { const y = barGen(d.unit, d.base)(d); return (isNaN(y) ? 0 : y) })
             .attr("width", Math.max(xScaleRef.current.bandwidth()))
             .attr("height", (d) => {
-                let h = barGen(d.unit, d.base)(d)
+                const h = barGen(d.unit, d.base)(d)
                 if (isNaN(h))
                     return 0
                 return Math.max(((props.height - 40) - barGen(d.unit, d.base)(d)), 0)
@@ -395,16 +395,16 @@ const BarChart = (props: iProps) => {
         container.select(".DataContainer").selectAll<SVGGElement, OpenSee.iD3DataSeries>(".Point")
             .selectAll<SVGCircleElement, OpenSee.BarSeries>('circle')
             .attr("cx", (d) => {
-                let v = (xScaleRef.current(d.data[0])) ?? 0 + (xScaleRef.current.bandwidth() / 2);
+                const v = (xScaleRef.current(d.data[0])) ?? 0 + (xScaleRef.current.bandwidth() / 2);
                 return (isNaN(v) ? 0 : v)
             })
             .style("opacity", (d) => {
-                let v = xScaleRef.current(d.data[0]);
+                const v = xScaleRef.current(d.data[0]);
                 return (v == null || isNaN(v) ? 0.0 : 1.0)
             })
             .attr("cy", (d) => (isNaN(yScaleRef.current[d.unit](d.data[0])) ? -1 : (barGen(d.unit, d.base)(d))))
             .attr("r", (d) => {
-                let v = xScaleRef.current(d.data[0]);
+                const v = xScaleRef.current(d.data[0]);
                 return (v == null || isNaN(v) ? 0.0 : 5)
             })
 
@@ -416,7 +416,7 @@ const BarChart = (props: iProps) => {
     function createPlot() {
         d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId + ">svg").select("g.root").remove()
 
-        let svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
+        const svg = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId).select("svg")
             .append("g").classed("root", true)
             .attr("transform", "translate(10,0)");
 
@@ -431,7 +431,7 @@ const BarChart = (props: iProps) => {
         }
 
         // We can assume consistent sampling rate for now
-        let domain = (barData?.[0]?.DataPoints ?? []).filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
+        const domain = (barData?.[0]?.DataPoints ?? []).filter(pt => pt[0] >= plotState.fftLimits[0] && pt[0] <= plotState.fftLimits[1]).map(pt => pt[0]);
         xScaleRef.current = d3.scaleBand(domain, [60, props.width - 150])
 
         const offsetLeft = xScaleRef.current.step() * xScaleRef.current.paddingOuter() * xScaleRef.current.align() * 2 + 0.5 * xScaleRef.current.bandwidth();
@@ -447,7 +447,7 @@ const BarChart = (props: iProps) => {
 
         //Create yAxises
         relevantUnits.forEach(unit => {
-            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
+            const axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
             const enabledUnit = enabledUnits.includes(unit)
 
             svg.append("g")
@@ -458,7 +458,7 @@ const BarChart = (props: iProps) => {
                 .style("opacity", enabledUnit ? 1 : 0)
 
             // Create axis label
-            let labelYPos = isAxisLeft ? 2 : props.width - 70;
+            const labelYPos = isAxisLeft ? 2 : props.width - 70;
 
             svg.append("text")
                 .classed(isAxisLeft ? `yAxisLabelLeft` : `yAxisLabelRight`, true)
@@ -574,21 +574,21 @@ const BarChart = (props: iProps) => {
 
     function MouseMove(evt) {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
-        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
-        let t0 = getXbucket(x0);
-        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        const y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+        const t0 = getXbucket(x0);
+        const d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
         setHover([t0, d0])
     }
 
     function MouseDown(evt) {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
-        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        const y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
-        let t0 = getXbucket(x0);
-        let d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
+        const t0 = getXbucket(x0);
+        const d0 = (yScaleRef.current[primaryAxis] as any).invert(y0);
 
         setMouseDown(true);
         setPointMouse([t0, d0]);
@@ -596,7 +596,7 @@ const BarChart = (props: iProps) => {
     }
 
     function MouseUp() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0);
 
@@ -604,10 +604,10 @@ const BarChart = (props: iProps) => {
 
     function getXbucket(pixel: number) {
 
-        let scaleSize = xScaleRef.current.range();
-        let p = pixel - scaleSize[0];
+        const scaleSize = xScaleRef.current.range();
+        const p = pixel - scaleSize[0];
 
-        let eachBand = xScaleRef.current.step();
+        const eachBand = xScaleRef.current.step();
 
         let index = Math.floor((p / eachBand));
         if (index == xScaleRef.current.domain().length)
@@ -619,7 +619,7 @@ const BarChart = (props: iProps) => {
     // This function needs to be called if hover is updated
     function updateHover() {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         if (mouseMode == 'zoom' && mouseDown) {
             if (zoomMode == "x")
@@ -642,8 +642,8 @@ const BarChart = (props: iProps) => {
                     .attr("y", Math.min((yScaleRef.current[primaryAxis] as any)(pointMouse[1]), (yScaleRef.current[primaryAxis] as any)(hover[1])))
         }
 
-        let deltaT = hover[0] - pointMouse[0];
-        let deltaData = hover[1] - pointMouse[1];
+        const deltaT = hover[0] - pointMouse[0];
+        const deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode == 'pan' && mouseDown && (zoomMode == "x" || zoomMode == "xy") && Math.abs(deltaT) > 0)
             stateActions.SetFFTLimits((plotState.fftLimits[0] - deltaT), (plotState.fftLimits[1] - deltaT), plotData);
@@ -653,8 +653,8 @@ const BarChart = (props: iProps) => {
     }
 
     function updateYAxises() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
-        let svg = container.select(".DataContainer");
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const svg = container.select(".DataContainer");
 
         if (container === undefined)
             return
@@ -665,9 +665,9 @@ const BarChart = (props: iProps) => {
 
         //Update yAxises
         enabledUnits?.forEach(unit => {
-            let axisType = `[type='${unit}']`;
-            let firstLeftAxisType = `[type='${enabledUnits[0]}']`
-            let firstRightAxisType = `[type='${enabledUnits[1]}']`
+            const axisType = `[type='${unit}']`;
+            const firstLeftAxisType = `[type='${enabledUnits[0]}']`
+            const firstRightAxisType = `[type='${enabledUnits[1]}']`
 
             if (isAxisLeft) {
                 container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) as any);
@@ -702,8 +702,8 @@ const BarChart = (props: iProps) => {
         if (enabledUnits.length < 3)
             return
 
-        let clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
-        let evtOverlay = container.select(`rect.Overlay`)
+        const clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
+        const evtOverlay = container.select(`rect.Overlay`)
 
         if (enabledUnits.length === 3) {
             clipPath.attr("x", 120).attr("width", props.width - 270)
@@ -717,7 +717,7 @@ const BarChart = (props: iProps) => {
     }
 
     function MouseOut() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
@@ -725,7 +725,7 @@ const BarChart = (props: iProps) => {
 
     //This Function needs to be called whenever (a) Color Setting changes occur
     function updateColors() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
 
         function GetColor(col: OpenSee.Color) {
             return colors[col as string]
@@ -739,7 +739,7 @@ const BarChart = (props: iProps) => {
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         if (barData) {
             //.transition().duration(1000) leads to a performance issue. need to investigate how to avoid this
             const rectData = barData.filter(d => d.LegendHorizontal === "Mag")
@@ -761,8 +761,8 @@ const BarChart = (props: iProps) => {
             let isAxisLeft = true;
 
             relevantUnits.forEach(unit => {
-                let enabledUnit = enabledUnits?.includes(unit);
-                let axisType = `[type='${unit}']`;
+                const enabledUnit = enabledUnits?.includes(unit);
+                const axisType = `[type='${unit}']`;
 
                 if (enabledUnit) {
                     container.selectAll(`.yAxis${axisType}`).style("opacity", 1);
@@ -783,7 +783,7 @@ const BarChart = (props: iProps) => {
     // This Function needs to be called whenever height or width change
     function updateSize() {
 
-        let container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
+        const container = d3.select("#graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId);
         container.select(".xAxis").attr("transform", "translate(0," + (props.height - 40) + ")");
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")

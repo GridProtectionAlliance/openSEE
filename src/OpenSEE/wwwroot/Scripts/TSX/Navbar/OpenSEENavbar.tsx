@@ -44,12 +44,12 @@ const OpenSeeNavBar = (props: IProps) => {
 
     React.useEffect(() => {
         if (props.OpenDrawers.AccumulatedPoints) {
-            let oldMode = clone(mouseMode);
+            const oldMode = clone(mouseMode);
             dispatch(SetMouseMode('select'));
             return () => { dispatch(SetMouseMode(oldMode)); };
         }
         return () => { };
-    }, [props.OpenDrawers.AccumulatedPoints]);
+    }, [props.OpenDrawers.AccumulatedPoints, mouseMode, dispatch]);
 
     return (
         <>

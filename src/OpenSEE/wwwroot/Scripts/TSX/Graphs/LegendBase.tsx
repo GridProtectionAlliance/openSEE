@@ -143,7 +143,7 @@ const Legend = (props: iProps) => {
 
     function clickGroup(group: string, type: 'vertical' | 'horizontal') {
         let isAny = false;
-        let updates: SeriesKey[] = [];
+        const updates: SeriesKey[] = [];
 
         if (type == 'vertical') {
             const gv = grid.get(group);

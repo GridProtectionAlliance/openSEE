@@ -118,7 +118,7 @@ const SettingsWidget = () => {
 
         const baseDate = new Date(isStart ? startTime : endTime);
         const parts = time.split(':');
-        let [seconds, milliseconds] = parts[2].split('.');
+        const [seconds, milliseconds] = parts[2].split('.');
         baseDate.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(seconds), parseInt(milliseconds));
 
         const newTime = baseDate.getTime();

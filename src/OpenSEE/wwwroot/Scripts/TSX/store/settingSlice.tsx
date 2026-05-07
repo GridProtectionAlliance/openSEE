@@ -22,8 +22,6 @@
 //******************************************************************************************************
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import * as _ from 'lodash';
-import { createSelector } from 'reselect';
 import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { OpenSee } from '../global';
 import { RootState } from './store';
@@ -49,7 +47,7 @@ export const SettingsReducer = createSlice({
     } as OpenSee.ISettingsState,
     reducers: {
         LoadSettings: (state) => {
-            let preserved = getSettings();
+            const preserved = getSettings();
 
             if (preserved) {
                 state.Colors = preserved.Colors === undefined ? defaultSettings.Colors : preserved.Colors
@@ -74,8 +72,8 @@ export const SettingsReducer = createSlice({
                 state.UseOverlappingTime = defaultSettings.UseOverlappingTime
                 state.PlotMarkers = defaultSettings.PlotMarkers
                 state.OverlappingWaveTimeUnit = defaultSettings.OverlappingWaveTimeUnit.current
-                state.MouseMode = state.MouseMode
-                state.ZoomMode = state.ZoomMode
+                state.MouseMode = defaultSettings.MouseMode
+                state.ZoomMode = defaultSettings.ZoomMode
             }
 
             return state
@@ -165,7 +163,7 @@ function saveSettings(state: OpenSee.ISettingsState) {
     const units = currentSettings?.Units;
 
     try {
-        let saveState = {
+        const saveState = {
             Units: units,
             Colors: state.Colors,
             TimeUnit: state.TimeUnit,
@@ -193,7 +191,7 @@ function getSettings(): OpenSee.ISettingsState | undefined {
             return undefined;
         
         // overwrite options if new options are available
-        let storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
+        const storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
 
         const timeUnitValid = storageState.TimeUnit !== undefined && storageState.TimeUnit.current >= 0 && storageState.TimeUnit.current < TimeUnitOptions.length;
 

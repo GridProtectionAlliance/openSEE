@@ -111,7 +111,7 @@ export function selectListGraphs(
     meta: Record<PlotKey, IPlotMeta>,
     singlePlot: boolean
 ): _.Dictionary<OpenSee.IGraphProps[]> {
-    let keys = Object.values(meta).map(m => m.key);
+    const keys = Object.values(meta).map(m => m.key);
     if (singlePlot)
         return _.groupBy(keys.filter(k => k.EventId === -1), 'EventId');
     return _.groupBy(keys.filter(k => k.EventId !== -1), 'EventId');
@@ -165,7 +165,7 @@ export function selectHoverPoints(
         const firstIndex = getIndex(hover[0], d[0].DataPoints);
         if (isNaN(firstIndex)) return;
 
-        d.forEach((series, i) => {
+        d.forEach((series) => {
             if (!m.enabled[seriesToKey(series)]) return;
             const idx = getIndex(hover[0], series.DataPoints);
             const unitOpt = defaultSettings.Units[series.Unit]?.options?.[m.yLimits[series.Unit]?.current] ?? defaultOption;
@@ -203,7 +203,7 @@ export function selectDeltaHoverPoints(
 
         const selIdx = m.selectedIndices;
 
-        d.forEach((series, i) => {
+        d.forEach((series) => {
             if (!m.enabled[seriesToKey(series)]) return;
             const idx = getIndex(hover[0], series.DataPoints);
             const unitOpt = defaultSettings.Units[series.Unit]?.options?.[m.yLimits[series.Unit]?.current] ?? defaultOption;
@@ -289,7 +289,7 @@ export function selectSelectedPoints(
         const d = plotData[pk] ?? [];
         if (d.length === 0) return;
 
-        d.forEach((series, i) => {
+        d.forEach((series) => {
             if (!m.enabled[seriesToKey(series)]) return;
             const unitType = series.Unit;
             const unitOpt = defaultSettings.Units[unitType]?.options?.[m.yLimits[unitType]?.current] ?? defaultOption;

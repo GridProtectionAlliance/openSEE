@@ -61,8 +61,8 @@ export function sortGraph(item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps
     if (item1.DataType == item2.DataType)
         return 0
 
-    let index1 = defaultSettings.PlotOrder.findIndex((v) => v == item1.DataType);
-    let index2 = defaultSettings.PlotOrder.findIndex((v) => v == item2.DataType);
+    const index1 = defaultSettings.PlotOrder.findIndex((v) => v == item1.DataType);
+    const index2 = defaultSettings.PlotOrder.findIndex((v) => v == item2.DataType);
 
     if (index1 != -1 && index2 != -1)
         return (index1 > index2 ? 1 : -1);

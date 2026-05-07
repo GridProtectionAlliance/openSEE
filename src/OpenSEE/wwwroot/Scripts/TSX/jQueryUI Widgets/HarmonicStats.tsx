@@ -42,7 +42,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
         });
 
         handle.done((data) => {
-            let rows: JSX.Element[] = [];
+            const rows: JSX.Element[] = [];
             rows.push(
                 <tr>
                     <th colSpan={1}><button className='btn btn-primary' style={{ width: 75 }} onClick={() => props.ExportCallback('harmonics')}>Export</button></th>
@@ -56,15 +56,15 @@ const HarmonicStatsWidget = (props: Iprops) => {
                 </tr>)
 
 
-            let numChannels = data.length;
-            let jsons = data.map(x => JSON.parse(x.SpectralData));
-            let numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
+            const numChannels = data.length;
+            const jsons = data.map(x => JSON.parse(x.SpectralData));
+            const numHarmonics = Math.max(...jsons.map(x => Object.keys(x).length));
 
-            for (var index = 1; index <= numHarmonics; ++index) {
-                let tds: JSX.Element[] = [];
-                let label = 'H' + index
+            for (let index = 1; index <= numHarmonics; ++index) {
+                const tds: JSX.Element[] = [];
+                const label = 'H' + index
                 for (let j = 0; j < numChannels; ++j) {
-                    let key = data[j].Channel + label
+                    const key = data[j].Channel + label
                     if (jsons[j][label] != undefined) {
                         tds.push(<td key={key + 'Mag'}>{jsons[j][label].Magnitude.toFixed(2)}</td>);
                         tds.push(<td key={key + 'Ang'}>{jsons[j][label].Angle.toFixed(2)}</td>);

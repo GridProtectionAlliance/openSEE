@@ -51,7 +51,7 @@ const ScalarStatsWidget = (props: Iprops) => {
             async: true
         });
         handle.done((d) => {
-            let t: IEventData[] = []
+            const t: IEventData[] = []
             Object.keys(d).forEach(stat => {
                 t.push({ Stat: stat, Value: d[stat], ID: CreateGuid() })
             })

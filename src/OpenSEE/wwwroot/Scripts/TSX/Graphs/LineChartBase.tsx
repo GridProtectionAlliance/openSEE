@@ -611,7 +611,7 @@ const LineChart = (props: iProps) => {
 
     function MouseMove(evt) {
 
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
         let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
         let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
@@ -625,18 +625,18 @@ const LineChart = (props: iProps) => {
         if (y0 > (props.height - 40))
             y0 = props.height - 40;
 
-        let t0 = xScaleRef.current.invert(x0)
-        let d0 = yScaleRef.current[primaryAxis].invert(y0);
+        const t0 = xScaleRef.current.invert(x0)
+        const d0 = yScaleRef.current[primaryAxis].invert(y0);
         setHover([t0, d0])
     }
 
     function MouseDown(evt) {
-        let container = d3.select(containerRef.current);
-        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+        const container = d3.select(containerRef.current);
+        const x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        const y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
-        let t0 = xScaleRef.current.invert(x0);
-        let d0 = yScaleRef.current[primaryAxis].invert(y0);
+        const t0 = xScaleRef.current.invert(x0);
+        const d0 = yScaleRef.current[primaryAxis].invert(y0);
 
         setMouseDown(true);
         setPointMouse([t0, d0]);
@@ -656,12 +656,12 @@ const LineChart = (props: iProps) => {
     function FFTMouseDown(evt) {
         setFFTMouseDown(true);
 
-        let container = d3.select(containerRef.current);
-        let x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
-        let y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
+        const container = d3.select(containerRef.current);
+        const x0 = d3.pointer(evt, container.select(".Overlay").node())[0];
+        const y0 = d3.pointer(evt, container.select(".Overlay").node())[1];
 
-        let t0 = xScaleRef.current.invert(x0);
-        let d0 = yScaleRef.current[primaryAxis].invert(y0);
+        const t0 = xScaleRef.current.invert(x0);
+        const d0 = yScaleRef.current[primaryAxis].invert(y0);
 
         setPointMouse([t0, d0]);
 
@@ -672,7 +672,7 @@ const LineChart = (props: iProps) => {
     }
 
     function MouseUp() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
         setMouseDown(false);
         container.select(".zoomWindow").style("opacity", 0)
     }
@@ -680,7 +680,7 @@ const LineChart = (props: iProps) => {
     // This function needs to be called if hover is updated
     function updateHover() {
 
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -708,8 +708,8 @@ const LineChart = (props: iProps) => {
                     .attr("y", Math.min(yScaleRef.current[primaryAxis](pointMouse[1]), yScaleRef.current[primaryAxis](hover[1])))
         }
 
-        let deltaT = hover[0] - pointMouse[0];
-        let deltaData = hover[1] - pointMouse[1];
+        const deltaT = hover[0] - pointMouse[0];
+        const deltaData = hover[1] - pointMouse[1];
 
         if (mouseMode === 'pan' && mouseDown && (zoomMode === "x" || zoomMode === "xy")) {
             if (!isOverlappingWaveform) {
@@ -734,7 +734,7 @@ const LineChart = (props: iProps) => {
         if (props.dataKey.DataType != 'Voltage' && props.dataKey.DataType != 'Current')
             return;
 
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
         if (xScaleRef.current == undefined || yScaleRef.current == undefined)
             return;
 
@@ -747,7 +747,7 @@ const LineChart = (props: iProps) => {
     }
 
     function updateYAxises() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         //Flag to alternate axis placement
         if (container === undefined)
@@ -758,9 +758,9 @@ const LineChart = (props: iProps) => {
 
         //Update yAxises
         enabledUnits?.forEach(unit => {
-            let axisType = `[type='${unit}']`;
-            let firstLeftAxisType = `[type='${enabledUnits[0]}']`;
-            let firstRightAxisType = `[type='${enabledUnits[1]}']`;
+            const axisType = `[type='${unit}']`;
+            const firstLeftAxisType = `[type='${enabledUnits[0]}']`;
+            const firstRightAxisType = `[type='${enabledUnits[1]}']`;
             const yScale = yScaleRef.current[unit];
             if (yScale == null) return;
 
@@ -786,8 +786,8 @@ const LineChart = (props: iProps) => {
         if (enabledUnits.length < 3)
             return
 
-        let clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
-        let evtOverlay = container.select(`rect.Overlay`)
+        const clipPath = container.select(`#clipData-${props.dataKey.DataType}-${props.dataKey.EventId} > rect`)
+        const evtOverlay = container.select(`rect.Overlay`)
 
         if (enabledUnits.length === 3) {
             clipPath.attr("x", 120).attr("width", props.width - 270)
@@ -807,7 +807,7 @@ const LineChart = (props: iProps) => {
         setInceptionLocation(xScaleRef.current(evt.Context.EventInfo?.Inception));
         setDurationLocation(xScaleRef.current(evt.Context.EventInfo?.DurationEndTime));
 
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         let width = 1
         let x = 1
@@ -827,8 +827,8 @@ const LineChart = (props: iProps) => {
         })
         .on("zoom", (event) => {
             //need to scale here whenever since inception is enabled and overlapping stuff..
-            let newTime = event.transform.rescaleX(xScaleRef.current).domain();
-            let newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
+            const newTime = event.transform.rescaleX(xScaleRef.current).domain();
+            const newYLimits = event.transform.rescaleX(yScaleRef.current[primaryAxis]).domain();
 
             if (mouseMode == 'zoom' && zoomMode == "x" && !isOverlappingWaveform)
                 stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
@@ -849,14 +849,14 @@ const LineChart = (props: iProps) => {
 
     // Mouse Left only get's called if we left for a minimum of time
     function MouseLeft() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
         container.select(".zoomWindow").style("opacity", 0);
         setMouseDown(false);
     }
 
     //This function needs to be called whenever (a) Unit Changes (b) Data Changes (c) Data Visibility changes (d) Limits change (due to auto Units)s
     function updateLabels() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         function GetTLabel() {
             let h = 100;
@@ -889,7 +889,7 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever (a) Color Setting changes occur
     function updateColors() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         function GetColor(col: OpenSee.Color) {
             return colors[col as string]
@@ -901,7 +901,7 @@ const LineChart = (props: iProps) => {
 
     //This Function needs to be called whenever a item is selected or deselected in the Legend
     function updateVisibility() {
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         // Use the keyed enabled map from plot metadata instead of the stale
         // Enabled flag on the data object itself
@@ -919,8 +919,8 @@ const LineChart = (props: iProps) => {
         let isAxisLeft = true;
 
         relevantUnits.forEach(unit => {
-            let enabledUnit = enabledUnits?.includes(unit);
-            let axisType = `[type='${unit}']`;
+            const enabledUnit = enabledUnits?.includes(unit);
+            const axisType = `[type='${unit}']`;
             if (enabledUnit) {
                 container.selectAll(`.yAxis${axisType}`).style("opacity", 1);
                 container.selectAll(`.yAxisLabel${axisType}`).style("opacity", 1);
@@ -937,7 +937,7 @@ const LineChart = (props: iProps) => {
     // This Function needs to be called whenever height or width change
     function updateSize() {
 
-        let container = d3.select(containerRef.current);
+        const container = d3.select(containerRef.current);
 
         container.select(".xAxisLabel").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + " ," + (props.height - 5) + ")")
         container.select(".plotTitle").attr("transform", "translate(" + ((props.width - 210) / 2 + 60) + ",20)").style("font-weight", "bold")
@@ -953,8 +953,8 @@ const LineChart = (props: iProps) => {
             //Update yScale
             yScaleRef.current[unit].range([props.height - 40, 20]);
 
-            let axisType = `[type='${unit}']`;
-            let axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
+            const axisType = `[type='${unit}']`;
+            const axisTransform = isAxisLeft ? "translate(60,0)" : `translate(${props.width - 110},0)`;
 
             if (isAxisLeft)
                 container.selectAll(`.yAxis${axisType}`).attr("transform", axisTransform);

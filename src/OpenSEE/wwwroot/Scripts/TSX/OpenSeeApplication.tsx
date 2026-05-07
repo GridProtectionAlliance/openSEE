@@ -69,14 +69,14 @@ const OpenSeeApplication = React.memo(() => {
     const plotRef = React.useRef<HTMLDivElement>(null);
     const applicationRef = React.useRef<IApplicationRefs>(null);
     const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
-        Settings: () => { },
-        AccumulatedPoints: () => { },
-        PolarChart: () => { },
-        ScalarStats: () => { },
-        CorrelatedSags: () => { },
-        Lightning: () => { },
-        FFTTable: () => { },
-        HarmonicStats: () => { },
+        Settings: () => { /* noop */ },
+        AccumulatedPoints: () => { /* noop */ },
+        PolarChart: () => { /* noop */ },
+        ScalarStats: () => { /* noop */ },
+        CorrelatedSags: () => { /* noop */ },
+        Lightning: () => { /* noop */ },
+        FFTTable: () => { /* noop */ },
+        HarmonicStats: () => { /* noop */ },
     });
 
     const evt = React.useContext(EventContext);
@@ -255,7 +255,7 @@ const OpenSeeApplication = React.memo(() => {
         const curStateActions = stateActionsRef.current;
         const curAnalytic = analyticRef.current;
 
-        let parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
+        const parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
 
         let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
@@ -408,7 +408,7 @@ const OpenSeeApplication = React.memo(() => {
     // Tooltip select mode effect
     React.useEffect(() => {
         if (openDrawers.ToolTipDelta) {
-            let oldMode = _.clone(mouseMode);
+            const oldMode = _.clone(mouseMode);
             dispatch(SetMouseMode('select'));
             return () => { dispatch(SetMouseMode(oldMode)); };
         }
@@ -567,13 +567,13 @@ export default OpenSeeApplication;
 
 function ToInt(arg: any) {
     if (arg == undefined) return undefined;
-    let val = parseInt(arg);
+    const val = parseInt(arg);
     return isNaN(val) ? undefined : val;
 }
 
 function ToFloat(arg: any) {
     if (arg == undefined) return undefined;
-    let val = parseFloat(arg);
+    const val = parseFloat(arg);
     return isNaN(val) ? undefined : val;
 }
 
@@ -586,7 +586,7 @@ function ToBool(arg: any) {
 
 function queryStringToNums(arg: OpenSee.IAnalyticContext) {
     if (arg == undefined) return undefined;
-    let query = {};
+    const query = {};
     Object.keys(arg).forEach(key => {
         const num = parseFloat(arg[key]);
         query[key] = isNaN(num) ? arg[key] : num;

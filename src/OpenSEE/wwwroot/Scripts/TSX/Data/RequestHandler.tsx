@@ -22,11 +22,11 @@
 //******************************************************************************************************
 
 import { OpenSee } from "../global";
-var HandleStore = new Map<string, JQuery.jqXHR<any>[]>();
+const HandleStore = new Map<string, JQuery.jqXHR<any>[]>();
 
 //Functions to Handle Requests.
 function AddRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
-    let target = key.DataType.toString() + '-' + key.EventId.toString();
+    const target = key.DataType.toString() + '-' + key.EventId.toString();
 
     const targetValue = HandleStore.get(target);
 
@@ -36,7 +36,7 @@ function AddRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
 }
 
 function CancelAnalytics() {
-    for (let key of HandleStore.keys()) {
+    for (const key of HandleStore.keys()) {
         if (key.startsWith('Voltage-') || key.startsWith('Current-') || key.startsWith("Analogs-") || key.startsWith("Digitals-") || key.startsWith('TripCoil-'))
             continue;
         
@@ -49,7 +49,7 @@ function CancelAnalytics() {
 }
 
 function CancelCompare(baseEventID: number) {
-    for (let key of HandleStore.keys()) {
+    for (const key of HandleStore.keys()) {
         if (key.endsWith('-' + baseEventID.toString()))
             continue;
 
@@ -62,7 +62,7 @@ function CancelCompare(baseEventID: number) {
 }
 
 function CancelEvent(eventId: number) {
-    for (let key of HandleStore.keys()) {
+    for (const key of HandleStore.keys()) {
         if (!key.endsWith('-' + eventId.toString()))
             continue;
 
@@ -75,7 +75,7 @@ function CancelEvent(eventId: number) {
 }
 
 function AppendRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
-    let target = key.DataType.toString() + '-' + key.EventId.toString();
+    const target = key.DataType.toString() + '-' + key.EventId.toString();
     let r = requests;
 
     const targetValue = HandleStore.get(target);

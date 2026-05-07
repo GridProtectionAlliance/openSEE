@@ -67,13 +67,13 @@ export const emptygraph: OpenSee.IGraphstate = {
 
 //This Function Grabs the Data for this Graph - Note that cases with multiple Event ID's need to be treated seperatly at the end
 export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticContext, appendCallBack: (data: OpenSee.iD3DataSeries[], type: 'time'|'frequency') => void, detailedCallBack: (key: OpenSee.IGraphProps) => void): Array<JQuery.jqXHR<any>> {
-    let result: Array<JQuery.jqXHR<any>> = [];
+    const result: Array<JQuery.jqXHR<any>> = [];
 
     switch (key.DataType) {
 
         case ('Current'):
         case ('Voltage'):
-            let handlePOW = $.ajax({
+            const handlePOW = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
                     `&type=${key.DataType}` +
@@ -83,7 +83,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
                 cache: true,
                 async: true
             });
-            let handleFreq = $.ajax({
+            const handleFreq = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
                     `&type=${key.DataType}` +
@@ -107,7 +107,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(handleFreq);
             break;
         case ('Analogs'):
-            let breakerAnalogsDataHandle = $.ajax({
+            const breakerAnalogsDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetAnalogsData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -120,7 +120,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(breakerAnalogsDataHandle);
             break;
         case ('Digitals'):
-            let breakerDigitalsDataHandle = $.ajax({
+            const breakerDigitalsDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetBreakerData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -133,7 +133,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(breakerDigitalsDataHandle);
             break;
         case ('TripCoil'):
-            let waveformTCEDataHandle = $.ajax({
+            const waveformTCEDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}` +
                     `&type=TripCoilCurrent` +
@@ -148,7 +148,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(waveformTCEDataHandle);
             break;
         case ('FirstDerivative'):
-            let derivativeDataHandle = $.ajax({
+            const derivativeDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetFirstDerivativeData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -160,7 +160,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(derivativeDataHandle);
             break
         case ('ClippedWaveforms'):
-            let clippedWaveformDataHandle = $.ajax({
+            const clippedWaveformDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetClippedWaveformsData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -172,7 +172,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(clippedWaveformDataHandle);
             break
         case ('Frequency'):
-            let freqencyAnalyticDataHandle = $.ajax({
+            const freqencyAnalyticDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetFrequencyData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -184,7 +184,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(freqencyAnalyticDataHandle);
             break
         case ('HighPassFilter'):
-            let highPassFilterDataHandle = $.ajax({
+            const highPassFilterDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetHighPassFilterData?eventId=${key.EventId}` +
                     `&filter=${options.HPFOrder}`,
@@ -197,7 +197,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(highPassFilterDataHandle);
             break
         case ('LowPassFilter'):
-            let lowPassFilterDataHandle = $.ajax({
+            const lowPassFilterDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetLowPassFilterData?eventId=${key.EventId}` +
                     `&filter=${options.LPFOrder}`,
@@ -211,7 +211,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             break
 
         case ('Impedance'):
-            let impedanceDataHandle = $.ajax({
+            const impedanceDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetImpedanceData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -224,7 +224,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(impedanceDataHandle);
             break
         case ('Power'):
-            let powerDataHandle = $.ajax({
+            const powerDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetPowerData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -236,7 +236,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(powerDataHandle);
             break
         case ('MissingVoltage'):
-            let missingVoltageDataHandle = $.ajax({
+            const missingVoltageDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetMissingVoltageData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -248,7 +248,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(missingVoltageDataHandle);
             break
         case ('OverlappingWave'):
-            let overlappingWaveformDataHandle = $.ajax({
+            const overlappingWaveformDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetOverlappingWaveformData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -261,7 +261,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(overlappingWaveformDataHandle);
             break
         case ('Rectifier'):
-            let rectifierDataHandle = $.ajax({
+            const rectifierDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetRectifierData?eventId=${key.EventId}` +
                     `&Trc=${options.Trc}`,
@@ -274,7 +274,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(rectifierDataHandle);
             break
         case ('RapidVoltage'):
-            let rapidVoltageChangeDataHandle = $.ajax({
+            const rapidVoltageChangeDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetRapidVoltageChangeData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -286,7 +286,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(rapidVoltageChangeDataHandle);
             break
         case ('RemoveCurrent'):
-            let removeCurrentDataHandle = $.ajax({
+            const removeCurrentDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetRemoveCurrentData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -298,7 +298,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(removeCurrentDataHandle);
             break
         case ('Harmonic'):
-            let specifiedHarmonicDataHandle = $.ajax({
+            const specifiedHarmonicDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetSpecifiedHarmonicData?eventId=${key.EventId}` +
                     `&specifiedHarmonic=${options.Harmonic}`,
@@ -314,7 +314,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(specifiedHarmonicDataHandle);
             break
         case ('SymetricComp'):
-            let symmetricalComponentsDataHandle = $.ajax({
+            const symmetricalComponentsDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetSymmetricalComponentsData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -326,7 +326,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(symmetricalComponentsDataHandle);
             break
         case ('THD'):
-            let thdDataHandle = $.ajax({
+            const thdDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -341,7 +341,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(thdDataHandle);
             break
         case ('Unbalance'):
-            let unbalanceDataHandle = $.ajax({
+            const unbalanceDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetUnbalanceData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -353,7 +353,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(unbalanceDataHandle);
             break
         case ('FaultDistance'):
-            let faultDistanceDataHandle = $.ajax({
+            const faultDistanceDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetFaultDistanceData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -365,7 +365,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(faultDistanceDataHandle);
             break
         case ('Restrike'):
-            let breakerRestrikeDataHandle = $.ajax({
+            const breakerRestrikeDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetBreakerRestrikeData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -377,7 +377,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(breakerRestrikeDataHandle);
             break
         case ('FFT'):
-            let fftAnalyticDataHandle = $.ajax({
+            const fftAnalyticDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetFFTData?eventId=${key.EventId}&cycles=${options.FFTCycles}&startDate=${options.FFTStartTime}`,
                 contentType: "application/json; charset=utf-8",
@@ -392,7 +392,7 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
             result.push(fftAnalyticDataHandle);
             break
         case ('I2T'):
-            let i2tDataHandle = $.ajax({
+            const i2tDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetI2tData?eventId=${key.EventId}`,
                 contentType: "application/json; charset=utf-8",
@@ -413,12 +413,12 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
 }
 
 export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticContext, callBack: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void): Array<JQuery.jqXHR<any>> {
-    let result: Array<JQuery.jqXHR<any>> = [];
+    const result: Array<JQuery.jqXHR<any>> = [];
 
     switch (key.DataType) {
         case ('Current'):
         case ('Voltage'):
-            let handlePOW = $.ajax({
+            const handlePOW = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
                     `&type=${key.DataType}` +
@@ -429,7 +429,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
                 cache: true,
                 async: true
             });
-            let handleFreq = $.ajax({
+            const handleFreq = $.ajax({
                 type: "GET",
                 url: `${homePath}api/OpenSEE/GetData?eventId=${key.EventId}&fullRes=1` +
                     `&type=${key.DataType}` +
@@ -449,7 +449,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
             break;
 
         case ('THD'):
-            let thdDataHandle = $.ajax({
+            const thdDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetTHDData?eventId=${key.EventId}&fullRes=1`,
                 contentType: "application/json; charset=utf-8",
@@ -462,7 +462,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
             break;
 
         case ('Harmonic'):
-            let specifiedHarmonicDataHandle = $.ajax({
+            const specifiedHarmonicDataHandle = $.ajax({
                 type: "GET",
                 url: `${homePath}api/Analytic/GetSpecifiedHarmonicData?eventId=${key.EventId}&fullRes=1` +
                     `&specifiedHarmonic=${options.Harmonic}`,
@@ -484,7 +484,7 @@ export function getDetailedData(key: OpenSee.IGraphProps, options: OpenSee.IAnal
 // This function is to get data for overlapping events
 export function getOverlappingEvents(eventID: number, eventStartTime: string | null, eventEndTime: string | null): JQuery.jqXHR<any> {
 
-    let overlappingEventHandle = $.ajax({
+    const overlappingEventHandle = $.ajax({
         type: "GET",
         url: `${homePath}api/OpenSEE/GetOverlappingEvents?eventId=${eventID}` +
             `${eventStartTime != undefined ? `&startDate=${eventStartTime}` : ``}` +
