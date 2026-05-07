@@ -22,7 +22,6 @@
 //******************************************************************************************************
 
 import * as d3 from "d3";
-import moment from "moment";
 import * as React from 'react';
 import { AnalyticContext, SelectAnalyticOptions } from '../Context/AnalyticContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
@@ -32,15 +31,15 @@ import { toPlotKey, seriesToKey } from '../Context/PlotKeys';
 import { selectYLimits, selectYLabels, selectActiveUnit, selectRelevantUnits, selectEnabledUnits, selectFFTEnabled, selectDeltaHoverPoints } from '../PlotSelectors';
 import EventContext from '../Context/EventContext';
 import HoverContext from '../Context/HoverContext';
-import { defaultSettings } from '../defaults';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../store/settingSlice';
 import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import Legend from './LegendBase';
 import { GetDisplayLabel } from './Utilities';
+import { formatValueTick, formatTimeTick, IFormatTimeContext } from './LineChartUtilities';
 import { getPrimaryAxis } from '../Context/PlotUtilities';
-import { useStringMemonization } from '@gpa-gemstone/helper-functions';
+import { useStringMemonization, GetTextWidth } from '@gpa-gemstone/helper-functions';
 
 interface iProps {
     height: number,
@@ -80,7 +79,7 @@ const LineChart = (props: iProps) => {
     const overlapping = React.useContext(OverlappingStateContext);
     const pk = toPlotKey(props.dataKey);
     const plotMeta = plotState.meta[pk];
-    
+
 
     //Eventually we should use this if we are passing this complex object thru props.. 
     const memoizedDataKey = useStringMemonization(props.dataKey);
@@ -450,7 +449,7 @@ const LineChart = (props: iProps) => {
         container.selectAll(".xAxis")
             .transition()
             .call(d3.axisBottom(xScaleRef.current)
-                .tickFormat(d => formatTimeTick(d as number)) as any);
+                .tickFormat(d => formatTimeTick(d as number, buildTimeCtx())) as any);
 
         if (xScaleRef.current != null && showFFT)
             setCurrentFFTWindow([(xScaleRef.current(fftWindow[0])), (xScaleRef.current(fftWindow[1]))]);
@@ -478,7 +477,7 @@ const LineChart = (props: iProps) => {
         xScaleRef.current = d3.scaleLinear().domain([startTime, endTime]).range([60, props.width - 110])
 
         //Create xAxis
-        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d) => formatTimeTick(d as number)));
+        svg.append("g").classed("xAxis", true).attr("transform", "translate(0," + (props.height - 40) + ")").call(d3.axisBottom(xScaleRef.current).tickFormat((d) => formatTimeTick(d as number, buildTimeCtx())));
 
         let isAxisLeft = true;
 
@@ -490,7 +489,7 @@ const LineChart = (props: iProps) => {
                 .classed(`yAxis`, true)
                 .attr("type", `${unit}`)
                 .attr("transform", axisTransform)
-                .call(isAxisLeft ? d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)) : d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit)))
+                .call(isAxisLeft ? d3.axisLeft(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit, yScaleRef.current)) : d3.axisRight(yScaleRef.current[unit]).tickFormat(d => formatValueTick(d as number, unit, yScaleRef.current)))
                 .style("opacity", 1)
 
             // Create axis label
@@ -594,136 +593,20 @@ const LineChart = (props: iProps) => {
 
     }
 
-    function formatTimeTick(d: number) {
-        let TS = moment(d);
-        let h = 100;
-
-        if (xScaleRef.current != undefined)
-            h = xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0]
-
-        if (isOverlappingWaveform) {
-            if (defaultSettings.OverlappingWaveTimeUnit.options?.[overlappingWaveTimeUnit]?.short === "ms") {
-                if (h < 2)
-                    return d.toFixed(3)
-                if (h < 5)
-                    return d.toFixed(2)
-                else
-                    return d.toFixed(1)
-            } else if (defaultSettings.OverlappingWaveTimeUnit.options?.[overlappingWaveTimeUnit]?.short === "cycles") {
-                const cyc = d * 60.0 / 1000.0;
-                h = h * 60.0 / 1000.0;
-                if (h < 2)
-                    return cyc.toFixed(3)
-                if (h < 5)
-                    return cyc.toFixed(2)
-                else
-                    return cyc.toFixed(1)
-            }
-
-        }
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'auto') {
-            if (h < 100)
-                return TS.format("SSS.S")
-            else if (h < 1000)
-                return TS.format("ss.SS")
-            else
-                return TS.format("ss.S")
-        }
-        else if (timeUnit.options?.[timeUnit.current]?.short == 's') {
-            if (h < 100)
-                return TS.format("ss.SSS")
-            else if (h < 1000)
-                return TS.format("ss.SS")
-            else
-                return TS.format("ss.S")
-        }
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms')
-            if (h < 100)
-                return TS.format("SSS.S")
-            else
-                return TS.format("SSS")
-
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'min')
-            return TS.format("mm:ss")
-
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms since record') {
-            let ms = d - originalStartTime;
-
-            if (useRelevantTime && !isOriginalEvt) {
-                const evt = overlapping.events.find(evt => evt.EventID === props.dataKey.EventId);
-                if (evt != null)
-                    ms = d - evt?.StartTime
-            }
-
-            if (h < 2)
-                return ms.toFixed(3)
-            if (h < 5)
-                return ms.toFixed(2)
-            else
-                return ms.toFixed(1)
-        }
-
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'ms since inception') {
-            let ms = d - (new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime());
-
-            if (useRelevantTime && !isOriginalEvt) {
-                const evt = overlapping.events.find(evt => evt.EventID === props.dataKey.EventId);
-                if (evt != null)
-                    ms = d - evt?.Inception
-            }
-
-            if (h < 2)
-                return ms.toFixed(3)
-            if (h < 5)
-                return ms.toFixed(2)
-            else
-                return ms.toFixed(1)
-        }
-
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'cycles since record') {
-            let cyc = (d - startTime) * 60.0 / 1000.0;
-
-            h = h * 60.0 / 1000.0;
-            if (h < 2)
-                return cyc.toFixed(3)
-            if (h < 5)
-                return cyc.toFixed(2)
-            else
-                return cyc.toFixed(1)
-        }
-        else if (timeUnit.options?.[timeUnit.current]?.short == 'cycles since inception') {
-            let cyc = (d - startTime) * 60.0 / 1000.0;
-
-            h = h * 60.0 / 1000.0;
-            if (h < 2)
-                return cyc.toFixed(3)
-            if (h < 5)
-                return cyc.toFixed(2)
-            else
-                return cyc.toFixed(1)
-        }
-
-        return d.toFixed(1);
-    }
-
-    function formatValueTick(d: number, unit: OpenSee.Unit) {
-        let h = 1;
-
-        if (yScaleRef.current)
-            h = yScaleRef.current[unit].domain()[1] - yScaleRef.current[unit].domain()[0]
-
-        if (Math.abs(d) >= 100000) {
-            return d.toString().slice(0, 4) + '...';
-        }
-
-        if (h > 100)
-            return d.toFixed(0)
-
-        if (h > 10)
-            return d.toFixed(1)
-        else
-            return d.toFixed(2)
-
+    function buildTimeCtx(): IFormatTimeContext {
+        return {
+            xDomainWidth: xScaleRef.current != undefined ? xScaleRef.current.domain()[1] - xScaleRef.current.domain()[0] : 100,
+            isOverlappingWaveform,
+            overlappingWaveTimeUnit,
+            timeUnit,
+            originalStartTime,
+            useRelevantTime,
+            isOriginalEvt,
+            overlappingEvents: overlapping.events,
+            dataKeyEventId: props.dataKey.EventId,
+            inceptionTime: new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime(),
+            startTime,
+        };
     }
 
     function MouseMove(evt) {
@@ -886,14 +769,14 @@ const LineChart = (props: iProps) => {
                     container.selectAll(`.yAxis${firstLeftAxisType}`).attr("transform", "translate(120, 0)")
                     container.selectAll(`.yAxisLabelLeft${firstLeftAxisType}`).attr("y", "62")
                 }
-                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScale).tickFormat(d => formatValueTick(d as number, unit)) as any);
+                container.selectAll(`.yAxis${axisType}`).transition().call(d3.axisLeft(yScale).tickFormat(d => formatValueTick(d as number, unit, yScaleRef.current)) as any);
             }
             else {
                 if (currentAxis > 2) {
                     container.selectAll(`.yAxis${firstRightAxisType}`).attr("transform", `translate(${props.width - 170},0)`)
                     container.selectAll(`.yAxisLabelRight${firstRightAxisType}`).attr("y", props.width - 135)
                 }
-                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScale).tickFormat(d => formatValueTick(d as number, unit)) as any);
+                container.selectAll(`.yAxis`).selectAll(`[type='${unit}']`).transition().call(d3.axisRight(yScale).tickFormat(d => formatValueTick(d as number, unit, yScaleRef.current)) as any);
             }
 
             isAxisLeft = !isAxisLeft;
@@ -1096,25 +979,6 @@ const LineChart = (props: iProps) => {
         container.select(".fftwindow").attr("height", props.height - 60);
         container.select(".Overlay").attr("width", props.width - 110)
         updateLimits();
-    }
-
-    // Helper Function
-    function GetTextWidth(font: string, fontSize: string, word: string): number {
-
-        const text = document.createElement("span");
-        document.body.appendChild(text);
-
-        text.style.font = font;
-        text.style.fontSize = fontSize;
-        text.style.height = 'auto';
-        text.style.width = 'auto';
-        text.style.position = 'absolute';
-        text.style.whiteSpace = 'no-wrap';
-        text.innerHTML = word;
-
-        const width = Math.ceil(text.clientWidth);
-        document.body.removeChild(text);
-        return width;
     }
 
     return (
