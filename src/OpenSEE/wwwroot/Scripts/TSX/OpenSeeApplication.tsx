@@ -41,7 +41,7 @@ import { PlotDataStateContext } from './Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotStateContext';
 import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
 import BarChart from './Graphs/BarChartBase';
-import LineChart from './Graphs/LineChartBase';
+import LineChart from './Graphs/LineChart';
 import { sortGraph } from './Graphs/Utilities';
 import OpenSeeNavBar from './Navbar/OpenSEENavbar';
 import { OpenSee } from './global';
