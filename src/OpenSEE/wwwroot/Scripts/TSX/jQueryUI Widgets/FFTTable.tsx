@@ -25,69 +25,66 @@ import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { selectFFTData } from '../PlotSelectors';
+import { OpenSee } from '../global';
 
 const FFTTable = () => {
     const { plots } = React.useContext(PlotDataStateContext);
     const { meta } = React.useContext(PlotStateStateContext);
     const evt = React.useContext(EventContext);
 
-    const fftPoints = React.useMemo(
-        () => selectFFTData(evt.Context.EventID, plots, meta),
-        [evt.Context.EventID, plots, meta]
-    );
+    const fftPoints = React.useMemo(() => selectFFTData(evt.Context.EventID, plots, meta), [evt.Context.EventID, plots, meta]);
 
-    const showAng = (index: number, row: number) => {
-        const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
-        const val = fftPoints[index].Angle[row] * (f ?? 1);
-        return isNaN(val) ? <td key={`ang-${index}-${row}`}>N/A</td> : <td key={`ang-${index}-${row}`}>{val.toFixed(2)}</td>;
-    };
-
-    const showMag = (index: number, row: number) => {
-        const f = (fftPoints?.[index]?.Unit?.factor === undefined ? 1.0 / fftPoints?.[index]?.BaseValue : fftPoints[index]?.Unit?.factor);
-        const val = fftPoints?.[index]?.Magnitude[row] * f;
-        return isNaN(val) ? <td key={`mag-${index}-${row}`}>N/A</td> : <td key={`mag-${index}-${row}`}>{val.toFixed(2)}</td>;
-    };
+    if (fftPoints.length === 0)
+        return null
 
     return (
-        <>
-            {fftPoints.length > 0 ?
-                <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
-                    <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
-                        <thead>
-                            <tr>
-                                <th></th>
-                                {fftPoints.map((item, index) => (
-                                    <th colSpan={2} key={`header-${index}`}><span>{item.Asset} {item.Phase}</span></th>
-                                ))}
-                            </tr>
-                            <tr>
-                                <th>Harmonic [Hz]</th>
-                                {fftPoints.map((item, index) => (
-                                    <React.Fragment key={`headerFrag-${index}`}>
-                                        <th key={`mag-${index}`}><span>Mag ({item?.Unit?.short})</span></th>
-                                        <th key={`ang-${index}`}><span>Ang ({item?.PhaseUnit?.short})</span></th>
-                                    </React.Fragment>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {fftPoints[0].Angle.map((a, row) => (
-                                <tr key={a + row}>
-                                    <td key={a + row}>{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
-                                    {fftPoints.map((_, index) => (
-                                        <React.Fragment key={`row-${index}-${row}`}>
-                                            {showMag(index, row)}
-                                            {showAng(index, row)}
-                                        </React.Fragment>
-                                    ))}
-                                </tr>
+        <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
+            <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
+                <thead>
+                    <tr>
+                        <th></th>
+                        {fftPoints.map((item, index) => (
+                            <th colSpan={2} key={`header-${index}`}><span>{item.Asset} {item.Phase}</span></th>
+                        ))}
+                    </tr>
+                    <tr>
+                        <th>Harmonic [Hz]</th>
+                        {fftPoints.map((item, index) => (
+                            <React.Fragment key={`headerFrag-${index}`}>
+                                <th key={`mag-${index}`}><span>Mag ({item?.Unit?.short})</span></th>
+                                <th key={`ang-${index}`}><span>Ang ({item?.PhaseUnit?.short})</span></th>
+                            </React.Fragment>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {fftPoints[0].Angle.map((a, row) => (
+                        <tr key={a + row}>
+                            <td key={a + row}>{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
+                            {fftPoints.map((_, index) => (
+                                <React.Fragment key={`row-${index}-${row}`}>
+                                    {showMag(index, row, fftPoints)}
+                                    {showAng(index, row, fftPoints)}
+                                </React.Fragment>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
-                : null}
-        </>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
+};
+
+const showAng = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
+    const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
+    const val = fftPoints[index].Angle[row] * (f ?? 1);
+    return isNaN(val) ? <td key={`ang-${index}-${row}`}>N/A</td> : <td key={`ang-${index}-${row}`}>{val.toFixed(2)}</td>;
+};
+
+const showMag = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
+    const f = (fftPoints?.[index]?.Unit?.factor === undefined ? 1.0 / fftPoints?.[index]?.BaseValue : fftPoints[index]?.Unit?.factor);
+    const val = fftPoints?.[index]?.Magnitude[row] * f;
+    return isNaN(val) ? <td key={`mag-${index}-${row}`}>N/A</td> : <td key={`mag-${index}-${row}`}>{val.toFixed(2)}</td>;
 };
 
 export default FFTTable;

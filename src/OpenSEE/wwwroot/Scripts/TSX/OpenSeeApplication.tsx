@@ -49,7 +49,7 @@ import { useAppDispatch, useAppSelector } from './hooks';
 import { usePlotLifecycle } from './hooks/usePlotLifeCycle';
 import { selectListGraphs, selectPlotKeys, selectDisplayed, selectEnabledPlots, selectFFTEnabled } from './PlotSelectors';
 import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
-import EventInfo from './jQueryUI Widgets/EventInfo';
+import EventInfo from './jQueryUI Widgets/EventInfo/EventInfo';
 import FFTTable from './jQueryUI Widgets/FFTTable';
 import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
 import LightningDataWidget from './jQueryUI Widgets/LightningData';

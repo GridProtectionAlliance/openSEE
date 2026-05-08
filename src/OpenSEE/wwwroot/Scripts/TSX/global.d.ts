@@ -125,7 +125,9 @@ export namespace OpenSee {
         SagDepth?: string,
         StartTime?: string,
         enableLightningData?: boolean,
-        InceptionDate: string
+        InceptionDate: string,
+        DurationCycles: number,
+        DurationSeconds: number
     }
 
     type graphType = ("Voltage" | "Current" | "Analogs" | 'Digitals' | 'TripCoil' | 'FirstDerivative' | 'ClippedWaveforms' | 'Frequency' | 'HighPassFilter' | 'LowPassFilter' | 'MissingVoltage' | 'OverlappingWave' | 'Power' | 'Impedance' | 'Rectifier' | 'RapidVoltage' | 'RemoveCurrent' | 'Harmonic' | 'SymetricComp' | 'THD' | 'Unbalance' | 'FaultDistance' | 'Restrike' | 'FFT' | 'I2T')
