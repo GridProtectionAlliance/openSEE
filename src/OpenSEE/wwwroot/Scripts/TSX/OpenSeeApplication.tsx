@@ -48,17 +48,17 @@ import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { usePlotLifecycle } from './hooks/usePlotLifeCycle';
 import { selectListGraphs, selectPlotKeys, selectDisplayed, selectEnabledPlots, selectFFTEnabled } from './PlotSelectors';
-import PointWidget from './jQueryUI Widgets/AccumulatedPoints';
-import EventInfo from './jQueryUI Widgets/EventInfo/EventInfo';
-import FFTTable from './jQueryUI Widgets/FFTTable';
-import HarmonicStatsWidget from './jQueryUI Widgets/HarmonicStats';
-import LightningDataWidget from './jQueryUI Widgets/LightningData';
-import PhasorChartWidget from './jQueryUI Widgets/PhasorChart';
-import ScalarStatsWidget from './jQueryUI Widgets/ScalarStats';
-import SettingsWidget from './jQueryUI Widgets/SettingWindow';
-import TimeCorrelatedSagsWidget from './jQueryUI Widgets/TimeCorrelatedSags';
-import ToolTipWidget from './jQueryUI Widgets/Tooltip';
-import ToolTipDeltaWidget from './jQueryUI Widgets/TooltipWithDelta';
+import PointWidget from './Widgets/AccumulatedPoints';
+import EventInfo from './Widgets/EventInfo/EventInfo';
+import FFTTable from './Widgets/FFTTable';
+import HarmonicStatsWidget from './Widgets/HarmonicStats';
+import LightningDataWidget from './Widgets/LightningData';
+import PhasorChartWidget from './Widgets/PhasorChart';
+import ScalarStatsWidget from './Widgets/ScalarStats';
+import SettingsWidget from './Widgets/SettingWindow';
+import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
+import ToolTipWidget from './Widgets/Tooltip';
+import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
 import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './store/settingSlice';
 
 

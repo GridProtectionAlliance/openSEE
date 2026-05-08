@@ -42,6 +42,7 @@ const ToolTipWidget = () => {
 
     const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta),[hover, evt.Context.EventID, plots, meta]);
 
+    //probably cleaner to just do a row/col flex grid here
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
             <table className="table" style={{ height: '100%', marginBottom: 0, overflowY: 'auto', margin: "3%" }}>
