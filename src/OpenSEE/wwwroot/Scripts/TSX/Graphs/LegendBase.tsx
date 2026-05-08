@@ -32,6 +32,7 @@ import { MultiCheckBoxSelect } from "@gpa-gemstone/react-forms";
 import { PlotDataStateContext } from "../Context/PlotDataContext";
 import { PlotStateStateContext, PlotStateActionContext } from "../Context/PlotStateContext";
 import { toPlotKey, seriesToKey, SeriesKey } from "../Context/PlotKeys";
+import { GetScrollbarWidth } from "@gpa-gemstone/helper-functions";
 
 const hrow = 26;
 interface iProps { height: number, dataKey: OpenSee.IGraphProps }
@@ -95,10 +96,9 @@ const Legend = (props: iProps) => {
     const [verticalHeader, setVerticalHeader] = React.useState<[string, string][]>([]);
     const [horizontalHeader, setHorizontalHeader] = React.useState<string[]>([]);
     const [grid, setGrid] = React.useState<Map<string, ILegendGrid[]>>(new Map());
-    const [wScroll, setWScroll] = React.useState<number>(0);
+    const scrollWidth = GetScrollbarWidth();
 
     React.useEffect(() => { const id = setTimeout(buildGrid, 250); return () => clearTimeout(id); }, [dataPoints, enabled]);
-    React.useEffect(() => { setWScroll(measureScrollbarWidth()); }, []);
 
     function buildGrid() {
         const cats: ICategory[] = [];
@@ -172,7 +172,7 @@ const Legend = (props: iProps) => {
                     <MultiCheckBoxSelect Options={categories} OnChange={(_, options) => { options.forEach(o => { const i = categories.findIndex(c => c.Label == o.Label); changeCategory(i, categories[i]); }); }} Label="" />
                 </div>
                 <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", overflowY: "hidden", maxHeight: props.height - 42 }}>
-                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: isScroll ? wScroll : 0 }}>
+                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", paddingRight: isScroll ? scrollWidth : 0 }}>
                         <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
                         {horizontalHeader.map((item, i) => <Header key={i} label={item} index={i} width={hwidth} onClick={clickGroup} />)}
                     </div>
@@ -251,15 +251,6 @@ const TraceButton = (props: { data: ILegendGrid, width: React.CSSProperties, dat
 function convertHex(hex: string, opacity: number) {
     hex = hex.replace("#", "");
     return `rgba(${parseInt(hex.substring(0, 2), 16)},${parseInt(hex.substring(2, 4), 16)},${parseInt(hex.substring(4, 6), 16)},${opacity / 100})`;
-}
-
-function measureScrollbarWidth(): number {
-    const el = document.createElement('div');
-    el.style.overflow = 'scroll';
-    document.body.appendChild(el);
-    const w = el.offsetWidth - el.clientWidth;
-    document.body.removeChild(el);
-    return w;
 }
 
 export default Legend;
