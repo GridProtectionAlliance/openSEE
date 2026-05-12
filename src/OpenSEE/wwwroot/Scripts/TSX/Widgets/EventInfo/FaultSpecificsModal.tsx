@@ -101,16 +101,13 @@ const FaultSpecificsModal = (props: Iprops) => {
                             Key='Label'
                             Field="Label"
                             AllowSort={false}
-                            Content={({item}) => <></>}
                         >
                             {''}
                         </Column>
                         <Column<Gemstone.TSX.Interfaces.ILabelValue<string>>
                             Key='Value'
-                            //Content={({ item }) => (item.Enabled ?? false) ? <ReactIcons.CheckMark Color='green' /> : <ReactIcons.CrossMark Color='red' />}
                             Field='Value'
                             AllowSort={false}
-
                         >
                             {''}
                         </Column>
