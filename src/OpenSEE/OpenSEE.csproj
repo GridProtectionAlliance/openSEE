@@ -46,7 +46,15 @@
     <None Include="wwwroot\Scripts\TSX\global.d.ts" />
     <None Include="wwwroot\Scripts\TSX\Graphs\BarChartBase.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\ChartIcons.tsx" />
-    <None Include="wwwroot\Scripts\TSX\Graphs\LegendBase.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\BuildLegendGrid.ts" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\Header.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\index.ts" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\LegendBase.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\Row.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\TraceButton.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\Types.ts" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\Utilities.ts" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Legend\VCategory.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\LineChartBase.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\Utils\Utilities.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\Utils\Types.ts" />
