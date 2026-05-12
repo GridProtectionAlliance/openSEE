@@ -33,7 +33,6 @@ import { TimeUnitOptions } from '../defaults';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 
 interface IProps {
-    // Passed from OpenSeeApplication where usePlotLifecycle is consumed
     EnableOverlappingEvent: (eventId: number) => void;
 }
 
