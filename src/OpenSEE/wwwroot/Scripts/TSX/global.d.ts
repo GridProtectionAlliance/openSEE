@@ -223,6 +223,14 @@ export namespace OpenSee {
         faultDistModTakagi: string,
         faultDistNovosel: string,
         faultDistDoubleEnd: string,
+        Generic1: string,
+        Generic2: string,
+        Generic3: string,
+        Generic4: string,
+        Generic5: string,
+        Generic6: string,
+        Generic7: string,
+        Generic8: string,
     }
 
     interface IGraphCollection<T> {
@@ -364,7 +372,7 @@ export namespace OpenSee {
         manualLimits: [number, number],
         zoomedLimits: [number, number],
         isAuto: boolean,
-        current: number
+        currentUnitIndex: number
     }
 
     interface IOverlayHandlers {

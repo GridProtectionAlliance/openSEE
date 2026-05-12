@@ -26,25 +26,29 @@ import { defaultSettings } from '../../defaults';
 import { Select } from '@gpa-gemstone/react-forms';
 
 interface IProps {
-    label: string,
     setter: (index: number) => void,
     unitType: OpenSee.Unit,
     axisSetting: OpenSee.IAxisSettings
 }
 
-//probably doesnt have to be memoized but leaving for now
+//probably doesnt have to be memoized here
 const AxisUnitSelector = React.memo((props: IProps) => {
-    const buttonLabel = props.axisSetting.isAuto ?
-        props.label + " [auto]" :
-        props.label + " [" + defaultSettings.Units[props.unitType].options?.[props.axisSetting.current]?.short + "]";
+    const options = React.useMemo(() => {
+        const unit: OpenSee.IUnitSetting = defaultSettings.Units[props.unitType];
+
+        if(unit == null || unit?.options == null)
+            return []
+
+        return unit.options.map((option, index) => ({ Label: option.label, Value: index }))
+    },[props.unitType]);
 
     return (
         <Select
             Label={''}
-            Record={{ buttonLabel }}
-            Field='buttonLabel'
+            Record={{ value: props.axisSetting.currentUnitIndex }}
+            Field='value'
             Setter={(_, option) => props.setter(option.Value as number)}
-            Options={defaultSettings.Units[props.unitType].options.map((option, index) => ({ Label: option.label, Value: index }))}
+            Options={options}
         />
     );
 });

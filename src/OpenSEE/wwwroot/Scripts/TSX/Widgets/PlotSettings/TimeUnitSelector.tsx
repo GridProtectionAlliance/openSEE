@@ -21,36 +21,30 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { OpenSee } from '../../global';
-import { defaultSettings, TimeUnitOptions } from '../../defaults';
+import { defaultSettings } from '../../defaults';
 import { Select } from '@gpa-gemstone/react-forms';
 
 interface IProps {
-    label: string,
     setter: (index: number) => void,
     timeUnitIndex: number,
     overlappingWave?: boolean
 }
 
 const TimeUnitSelector = React.memo((props: IProps) => {
-    let options: OpenSee.iUnitOptions[];
-    let buttonLabel: string;
-
-    if (props.overlappingWave) {
-        options = defaultSettings.OverlappingWaveTimeUnit.options ?? [];
-        buttonLabel = props.label + " [" + (defaultSettings.OverlappingWaveTimeUnit.options?.[props.timeUnitIndex]?.short ?? '') + "]";
-    } else {
-        options = defaultSettings.TimeUnit.options ?? [];
-        buttonLabel = props.label + " [" + TimeUnitOptions[props.timeUnitIndex].short + "]";
-    }
+    const options = React.useMemo(() => {
+        const src = props.overlappingWave
+            ? (defaultSettings.OverlappingWaveTimeUnit.options ?? [])
+            : (defaultSettings.TimeUnit.options ?? []);
+        return src.map((option, index) => ({ Label: option.label, Value: index }));
+    }, [props.overlappingWave]);
 
     return (
         <Select
             Label={''}
-            Record={{ buttonLabel }}
-            Field='buttonLabel'
+            Record={{ value: props.timeUnitIndex }}
+            Field='value'
             Setter={(_, option) => props.setter(option.Value as number)}
-            Options={options.map((option, index) => ({ Label: option.label, Value: index }))}
+            Options={options}
         />
     );
 });

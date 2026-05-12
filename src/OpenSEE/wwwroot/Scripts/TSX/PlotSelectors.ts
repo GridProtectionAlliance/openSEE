@@ -248,7 +248,7 @@ export function selectPhaseVectors(
 
     const unitKey = dataType as OpenSee.Unit;
     const unit = defaultSettings.Units[unitKey]?.options?.[activeUnits[unitKey]?.current] ?? defaultOption;
-    const phaseUnit = defaultSettings.Units.Angle?.options?.[activeUnits['Angle']?.current] ?? defaultOption;
+    const phaseUnit = defaultSettings.Units.Angle?.options?.[activeUnits['Angle']?.currentUnitIndex] ?? defaultOption;
 
     const result: OpenSee.IVector[] = [];
 
@@ -334,7 +334,7 @@ export function selectFFTData(
             if (!angCh || !magCh) return;
 
             const magUnit = defaultSettings.Units[magCh.Unit]?.options?.[m.yLimits[magCh.Unit]?.current] ?? defaultOption;
-            const angUnit = defaultSettings.Units.Angle?.options?.[m.yLimits['Angle']?.current] ?? defaultOption;
+            const angUnit = defaultSettings.Units.Angle?.options?.[m.yLimits['Angle']?.currentUnitIndex] ?? defaultOption;
 
             result.push({
                 Color: angCh.Color,

@@ -214,7 +214,6 @@ const SettingsWidget = () => {
                                 <div className="form-row">
                                     <div className="col-12">
                                         <TimeUnitSelector
-                                            label={"Time"}
                                             timeUnitIndex={timeUnit.current}
                                             setter={handleSetTimeUnit}
                                         />

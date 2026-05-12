@@ -81,7 +81,7 @@ const PlotCard = (props: IProps) => {
 
     const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits> | null>(null);
     const [overlappingLimits, setOverlappingLimits] = React.useState<Record<string, Record<string, ILimits>> | null>(null);
-    const [limitsPayload, setLimitsPayload] = React.useState<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number } | null>(null);
+    const limitsPayloadRef = React.useRef<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number } | null>(null);
     const [valid, setValid] = React.useState<boolean>(true);
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
@@ -89,19 +89,20 @@ const PlotCard = (props: IProps) => {
     const unitSettings: OpenSee.Unit[] = _.uniq(data.map(item => item.Unit));
 
     React.useEffect(() => {
-        if (limitsPayload?.limits) {
-            const timeOutId = setTimeout(() => {
-                if (limitsPayload.limits[0] < limitsPayload.limits[1]) {
-                    setValid(true);
-                    const d = plotData[toPlotKey(limitsPayload.key)] ?? [];
-                    stateActions.SetManualLimits(limitsPayload.limits, limitsPayload.key, limitsPayload.axis, limitsPayload.auto, d, limitsPayload.factor);
-                } else {
-                    setValid(false);
-                }
-            }, 1500);
-            setLimitsPayload(null);
-            return () => clearTimeout(timeOutId);
-        }
+        if (limitsPayloadRef.current == null) return;
+        const timeOutId = setTimeout(() => {
+            const payload = limitsPayloadRef.current;
+            if (payload == null) return;
+            limitsPayloadRef.current = null;
+            if (payload.limits[0] < payload.limits[1]) {
+                setValid(true);
+                const d = plotData[toPlotKey(payload.key)] ?? [];
+                stateActions.SetManualLimits(payload.limits, payload.key, payload.axis, payload.auto, d, payload.factor);
+            } else {
+                setValid(false);
+            }
+        }, 1500);
+        return () => clearTimeout(timeOutId);
     }, [curLimits]);
 
     const handleLimitChange = (axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean) => {
@@ -109,8 +110,8 @@ const PlotCard = (props: IProps) => {
         if (axisSettings && defaultSettings.Units[axis].options[axisSettings[axis].current].factor !== 1)
             factor = defaultSettings.Units[axis].options[axisSettings[axis].current].factor;
 
+        limitsPayloadRef.current = { axis, limits, key, auto, factor };
         setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: { min: limits[0], max: limits[1] } }));
-        setLimitsPayload({ axis, limits, key, auto, factor });
     };
 
     const handleSetOverlapTimeUnit = React.useCallback((index: number) => dispatch(SetOverlappingWaveTimeUnit(index)), [dispatch]);
@@ -144,6 +145,7 @@ const PlotCard = (props: IProps) => {
     // Sync local limits state when context limits change
     React.useEffect(() => {
         if (!axisSettings) return;
+        if (limitsPayloadRef.current != null) return;
         const limits = {};
         Object.keys(yLimits).forEach(unit => {
             if (axisSettings[unit]?.isManual || false) {
@@ -202,7 +204,6 @@ const PlotCard = (props: IProps) => {
                             <div className="form-row">
                                 <div className="col-6">
                                     <AxisUnitSelector
-                                        label={item as string}
                                         setter={(index) => handleUnitChange(item, index, props)} unitType={item}
                                         axisSetting={axisSettings[item]}
                                     />
@@ -319,7 +320,6 @@ const PlotCard = (props: IProps) => {
                             <div className="row">
                                 <div className="col-12">
                                     <TimeUnitSelector
-                                        label={"Time"}
                                         timeUnitIndex={overlapWaveTimeUnit}
                                         setter={handleSetOverlapTimeUnit}
                                         overlappingWave={true}
