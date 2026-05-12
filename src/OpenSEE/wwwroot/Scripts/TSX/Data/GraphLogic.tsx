@@ -96,12 +96,11 @@ export function getData(key: OpenSee.IGraphProps, options: OpenSee.IAnalyticCont
 
             handlePOW.then(data => {
                 appendCallBack(data.Data, 'time')
-                detailedCallBack(key);
             });
             handleFreq.then((data) => {
                 appendCallBack(data.Data, 'frequency');
-                detailedCallBack(key);
             });
+            Promise.all([handlePOW, handleFreq]).then(() => detailedCallBack(key));
 
             result.push(handlePOW);
             result.push(handleFreq);
