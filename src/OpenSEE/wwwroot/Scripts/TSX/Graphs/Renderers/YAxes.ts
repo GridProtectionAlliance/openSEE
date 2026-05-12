@@ -1,7 +1,7 @@
 //******************************************************************************************************
-//  YAxes.tsx - Gbtc
+//  YAxes.ts - Gbtc
 //
-//  Copyright © 2025, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -16,14 +16,14 @@
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/08/2025 - Preston Crawford
+//  05/08/2026 - Preston Crawford
 //       Generated original version of source code
 //
 //******************************************************************************************************
 
 import * as d3 from "d3";
-import { OpenSee } from "../../../global";
-import { formatValueTick } from "../../Utilities";
+import { OpenSee } from "../../global";
+import { formatValueTick } from "../Utils/Utilities";
 
 export const createYAxes = (
     svg: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -110,10 +110,14 @@ export const updateYAxes = (
         currentAxis++;
     });
 
-    if (enabledUnits.length < 3) return;
-
     const clipPath = sel.select(`#clipData-${dataType}-${eventId} > rect`);
     const evtOverlay = sel.select("rect.Overlay");
+
+    if (enabledUnits.length < 3) {
+        clipPath.attr("x", 60).attr("width", width - 170);
+        evtOverlay.attr("x", 20).attr("width", width - 110);
+        return;
+    }
 
     if (enabledUnits.length === 3) {
         clipPath.attr("x", 120).attr("width", width - 270);
@@ -154,10 +158,12 @@ export const updateYAxisVisibility = (
         const axisType = `[type='${unit}']`;
         if (enabledUnits?.includes(unit)) {
             sel.selectAll(`.yAxis${axisType}`).style("opacity", 1);
-            sel.selectAll(`.yAxisLabel${axisType}`).style("opacity", 1);
+            sel.selectAll(`.yAxisLabelLeft${axisType}`).style("opacity", 1);
+            sel.selectAll(`.yAxisLabelRight${axisType}`).style("opacity", 1);
         } else {
-            sel.selectAll(`.yAxis${axisType}`).remove();
-            sel.selectAll(`.yAxisLabel${axisType}`).remove();
+            sel.selectAll(`.yAxis${axisType}`).style("opacity", 0);
+            sel.selectAll(`.yAxisLabelLeft${axisType}`).style("opacity", 0);
+            sel.selectAll(`.yAxisLabelRight${axisType}`).style("opacity", 0);
         }
     });
 }

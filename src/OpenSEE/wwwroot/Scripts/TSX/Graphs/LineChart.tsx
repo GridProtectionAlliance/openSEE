@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  LineChartBase.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright � 2020, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -35,21 +35,19 @@ import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../store/settingSlice';
 import Legend from './LegendBase';
-import LineChartContainer from './LineChart/LineChartContainer';
-import { GetDisplayLabel } from './Utilities';
-import { getPrimaryAxis } from '../Context/PlotUtilities';
-import { useYLabelFontSize } from './LineChart/hooks/useYLabelFontSize';
-import { useChartScales } from './LineChart/hooks/useChartScales';
+import ChartContainer from './ChartContainer';
+import { GetDisplayLabel, useChartScales, useTooltipLocations, useYLabelFontSize } from './Utils/Utilities';
+import { getPrimaryAxis } from '../Context/PlotStateUtilities';
 import { useFFTWindow } from './LineChart/hooks/useFFTWindow';
-import { useTooltipLocations } from './LineChart/hooks/useTooltipLocations';
 import { useTimeFormatContext } from './LineChart/hooks/useTimeFormatContext';
 import { useMouseInteractions } from './LineChart/hooks/useMouseInteractions';
-import { CreatePlot } from './LineChart/Renderers/CreatePlot';
+import { CreateLinePlot } from './LineChart/Renderers/CreatePlot';
 import { drawLines, updateLineGeometry, updateLineColors, updateLineVisibility, IScales } from './LineChart/Renderers/Lines';
-import { drawMarkers, updateMarkerGeometry, updateMarkerColors, updateMarkerVisibility } from './LineChart/Renderers/Markers';
+import { drawMarkers, updateMarkerGeometry, updateMarkerColors, updateMarkerVisibility } from './Renderers/Markers';
 import { updateXAxisTicks, updateXAxisLabel, updateXAxisPositionOnResize } from './LineChart/Renderers/XAxes';
-import { updateYAxes, updateYAxisLabels, updateYAxisVisibility, updateYAxisPositionsOnResize } from './LineChart/Renderers/YAxes';
-import { updateFFTWindow as updateFFTWindowD3, updateDurationWindowRect, updateZoomWindow } from './LineChart/Renderers/Overlays';
+import { updateYAxes, updateYAxisLabels, updateYAxisVisibility, updateYAxisPositionsOnResize } from './Renderers/YAxes';
+import { updateFFTWindow as updateFFTWindowD3, updateDurationWindowRect } from './LineChart/Renderers/Overlays';
+import { updateZoomWindow } from './Renderers/ZoomWindow';
 
 interface IProps {
     height: number,
@@ -102,7 +100,7 @@ const LineChart = (props: IProps) => {
     const inceptionTime = new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime();
 
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const { xScaleRef, yScaleRef } = useChartScales();
+    const { xScaleRef, yScaleRef } = useChartScales(d3.scaleLinear());
 
     const buildTimeCtx = useTimeFormatContext(
         xScaleRef,
@@ -157,7 +155,7 @@ const LineChart = (props: IProps) => {
             drawMarkers(containerRef.current, lineData, getScales(), colors);
         }
 
-        CreatePlot(
+        CreateLinePlot(
             containerRef.current,
             xScaleRef,
             yScaleRef as { current: Record<string, d3.ScaleLinear<number, number>> },
@@ -233,7 +231,7 @@ const LineChart = (props: IProps) => {
         if (xScaleRef.current == null || yScaleRef.current == null) return;
 
         const scales = getScales();
-        updateZoomWindow(containerRef.current, scales.x, scales.y[primaryAxis], hover, pointMouse, mouseMode, zoomMode, mouseDown, startTime, endTime, props.height);
+        updateZoomWindow(containerRef.current, d => scales.x(d), scales.y[primaryAxis], hover, pointMouse, mouseMode, zoomMode, mouseDown, startTime, endTime, props.height);
     }, [hover]);
 
     // Colors: update line and marker colors on theme change
@@ -262,7 +260,7 @@ const LineChart = (props: IProps) => {
             return;
         }
 
-        CreatePlot(
+        CreateLinePlot(
             containerRef.current,
             xScaleRef,
             yScaleRef as { current: Record<string, d3.ScaleLinear<number, number>> },
@@ -302,20 +300,22 @@ const LineChart = (props: IProps) => {
 
     return (
         <>
-            <LineChartContainer
+            <ChartContainer
                 ref={containerRef}
                 key={props.dataKey.DataType + props.dataKey.EventId + 'container'}
                 dataKey={props.dataKey}
                 height={props.height}
                 loading={loading}
-                hover={toolTipLocation}
                 hasData={lineData?.length > 0}
                 hasTrace={Object.values(enabledLine).some(v => v)}
-                selectedPointLocation={selectedPointLocation}
-                showToolTip={props.showToolTip}
-                inceptionLocation={inceptionLocation}
-                durationLocation={durationLocation}
-                plotMarkers={plotMarkers}
+                polyLines={[
+                    { className: 'hover', left: toolTipLocation, style: { stroke: "#000", opacity: 0.5 } },
+                    ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', left: selectedPointLocation, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),
+                    ...(plotMarkers ? [
+                        { className: 'inception', left: inceptionLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } },
+                        { className: 'duration', left: durationLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
+                    ] : [])
+                ]}
             />
             {loading === 'Loading' || lineData?.length === 0 ? null :
                 <Legend

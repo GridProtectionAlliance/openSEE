@@ -24,12 +24,9 @@ import {
     getLocalUnitSettings,
     saveUnitSettings,
     getIndex
-} from './PlotUtilities';
+} from './PlotStateUtilities';
 
-// -- Shorthand for the data map callers pass in
 export type PlotDataMap = Record<PlotKey, OpenSee.iD3DataSeries[]>;
-
-// -- State shape --
 
 export interface IPlotStateState {
     startTime: number;
@@ -39,9 +36,7 @@ export interface IPlotStateState {
     meta: Record<PlotKey, IPlotMeta>;
 }
 
-// -- Action interface --
 // Actions that need DataPoints for recomputation take a data param.
-
 export interface IPlotStateActions {
     SetTimeLimit: (start: number, end: number, plotData: PlotDataMap) => void;
     SetCycleLimit: (start: number, end: number, plotData: PlotDataMap) => void;
@@ -61,8 +56,7 @@ export interface IPlotStateActions {
     OnDataAppended: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], enabled: Record<SeriesKey, boolean>) => void;
 }
 
-// -- Defaults --
-
+// Defaults
 const defaultState: IPlotStateState = {
     startTime: 0,
     endTime: 0,
@@ -90,12 +84,11 @@ const defaultActions: IPlotStateActions = {
     OnDataAppended: () => { /* noop */ },
 };
 
-// -- Contexts --
-
+// Contexts
 export const PlotStateStateContext = React.createContext<IPlotStateState>(defaultState);
 export const PlotStateActionContext = React.createContext<IPlotStateActions>(defaultActions);
 
-// -- Provider --
+// Provider
 
 export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
     const [state, setState] = React.useState<IPlotStateState>(defaultState);

@@ -24,7 +24,8 @@
 
 import * as d3 from "d3";
 import { OpenSee } from "../../../global";
-import { formatTimeTick, IFormatTimeContext } from "../../Utilities";
+import { formatTimeTick } from "../../Utils/Utilities";
+import { IFormatTimeContext } from "../../Utils/Types";
 
 export function createXAxis(
     svg: d3.Selection<SVGGElement, unknown, null, undefined>,

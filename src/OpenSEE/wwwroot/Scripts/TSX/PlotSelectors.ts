@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { OpenSee } from './global';
 import { defaultSettings } from './defaults';
 import { PlotKey, toPlotKey, seriesToKey } from './Context/PlotKeys';
-import { IPlotMeta, getIndex, getDisplayName, getPrimaryAxis } from './Context/PlotUtilities';
+import { IPlotMeta, getIndex, getDisplayName, getPrimaryAxis } from './Context/PlotStateUtilities';
 import { PlotDataMap } from './Context/PlotStateContext';
 
 const defaultOption: OpenSee.iUnitOptions = { label: '', factor: 1, short: '' };

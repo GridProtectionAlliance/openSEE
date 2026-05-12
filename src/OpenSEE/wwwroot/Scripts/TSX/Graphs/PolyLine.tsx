@@ -1,7 +1,7 @@
 //******************************************************************************************************
 //  PolyLine.tsx - Gbtc
 //
-//  Copyright © 2025, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -16,26 +16,29 @@
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/08/2025 - Preston Crawford
+//  05/08/2026 - Preston Crawford
 //       Generated original version of source code
 //
 //******************************************************************************************************
 
 import * as React from 'react';
 
-interface IProps {
-    height: number,
-    left: number,
-    style: React.CSSProperties,
-    class: string
+export interface PolyLineSpec {
+    className: string;
+    left: number;
+    style: React.CSSProperties;
+}
+
+interface IProps extends PolyLineSpec {
+    height: number;
 }
 
 const PolyLine = (props: IProps) => {
     return (
-        <g className={props.class}>
+        <g className={props.className}>
             <polyline className="polyLine" points={`${props.left + 10},20 ${props.left + 10},${props.height}`} style={props.style} />
         </g>
-    )
+    );
 }
 
 export default PolyLine;

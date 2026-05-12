@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 import { OpenSee } from '../../../global';
-import { IFormatTimeContext } from '../../Utilities';
+import { IFormatTimeContext } from '../../Utils/Types';
 
 export function useTimeFormatContext(
     xScaleRef: React.MutableRefObject<d3.ScaleLinear<number, number>>,

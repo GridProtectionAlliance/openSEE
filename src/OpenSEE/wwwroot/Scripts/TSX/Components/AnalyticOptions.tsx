@@ -1,7 +1,7 @@
-﻿//******************************************************************************************************
+//******************************************************************************************************
 //  RadioselectWindow.tsx - Gbtc
 //
-//  Copyright © 2019, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright � 2019, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -27,13 +27,13 @@ import { OpenSee } from '../global';
 import { BtnDropdown } from "@gpa-gemstone/react-interactive";
 import { Select, Input } from "@gpa-gemstone/react-forms";
 import * as _ from 'lodash';
-import { GetDisplayLabel } from '../Graphs/Utilities';
+import { GetDisplayLabel } from '../Graphs/Utils/Utilities';
 import AnalyticContext from '../Context/AnalyticContext';
 import EventContext from '../Context/EventContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { selectPlotKeys, selectEventIDs } from '../PlotSelectors';
-import { sortGraph } from '../Graphs/Utilities';
+import { sortGraph } from '../Graphs/Utils/Utilities';
 import { useAppSelector } from '../hooks';
 import { SelectSinglePlot } from '../store/settingSlice';
 import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';

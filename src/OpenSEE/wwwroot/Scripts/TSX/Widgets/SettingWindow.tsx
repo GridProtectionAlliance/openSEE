@@ -1,7 +1,7 @@
-﻿//******************************************************************************************************
+//******************************************************************************************************
 //  SettingWindow.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright � 2020, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -31,7 +31,7 @@ import {
     SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
     SetOverlappingWaveTimeUnit, SetTimeUnit
 } from '../store/settingSlice';
-import { GetDisplayLabel } from '../Graphs/Utilities';
+import { GetDisplayLabel } from '../Graphs/Utils/Utilities';
 import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { DatePicker, Select, Input, CheckBox, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
@@ -40,7 +40,7 @@ import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotSt
 import EventContext from '../Context/EventContext';
 import { toPlotKey } from '../Context/PlotKeys';
 import { selectPlotKeys, selectYLimits, selectOverlappingPlotKeys } from '../PlotSelectors';
-import { sortGraph } from '../Graphs/Utilities';
+import { sortGraph } from '../Graphs/Utils/Utilities';
 
 interface TimeLimit {
     start: string,
@@ -240,7 +240,7 @@ export const AxisUnitSelector = React.memo((props: { label: string, setter: (ind
     const buttonLabel = props.axisSetting.isAuto ?
         props.label + " [auto]" :
         props.label + " [" + defaultSettings.Units[props.unitType].options?.[props.axisSetting.current]?.short + "]";
-
+        
     return (
         <Select Label={''} Record={{ buttonLabel }} Field='buttonLabel'
             Setter={(_, option) => props.setter(option.Value as number)}

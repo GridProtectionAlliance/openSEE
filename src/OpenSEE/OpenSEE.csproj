@@ -48,7 +48,8 @@
     <None Include="wwwroot\Scripts\TSX\Graphs\ChartIcons.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\LegendBase.tsx" />
     <None Include="wwwroot\Scripts\TSX\Graphs\LineChartBase.tsx" />
-    <None Include="wwwroot\Scripts\TSX\Graphs\Utilities.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Utils\Utilities.tsx" />
+    <None Include="wwwroot\Scripts\TSX\Graphs\Utils\Types.ts" />
     <None Include="wwwroot\Scripts\TSX\hooks.ts" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\AccumulatedPoints.tsx" />
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\EventInfo.tsx" />

@@ -14,7 +14,7 @@ import { toPlotKey, seriesToKey } from '../Context/PlotKeys';
 import { PlotDataStateContext, PlotDataActionContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import { OverlappingActionContext, OverlappingStateContext } from '../Context/OverlappingContext';
-import { getDefaultEnabled } from '../Context/PlotUtilities';
+import { getDefaultEnabled } from '../Context/PlotStateUtilities';
 import AnalyticContext from '../Context/AnalyticContext';
 import { getData, getDetailedData } from '../Data/GraphLogic';
 import { AddRequest, CancelEvent, AppendRequest } from '../Data/RequestHandler';
@@ -34,7 +34,7 @@ export interface IPlotLifecycleActions {
     EnableOverlappingEvent: (eventId: number) => void;
 }
 
-export function usePlotLifecycle(): IPlotLifecycleActions {
+export const usePlotLifecycle = (): IPlotLifecycleActions => {
     const { plots: plotData } = React.useContext(PlotDataStateContext);
     const dataActions = React.useContext(PlotDataActionContext);
     const plotState = React.useContext(PlotStateStateContext);
@@ -196,11 +196,11 @@ export function usePlotLifecycle(): IPlotLifecycleActions {
 
 // Starts the high-resolution data fetch that replaces compressed series with full-resolution versions. Runs in the background after initial load.
 // Does not trigger OnDataAppended since enabled flags are preserved from the original series and limits don't need recomputation.
-function initiateDetailed(
+const initiateDetailed = (
     key: OpenSee.IGraphProps,
     analytic: OpenSee.IAnalyticContext,
     dataActions: { ReplaceDetailedData: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void }
-): void {
+): void => {
     const handles = getDetailedData(key, analytic, (detailedKey, data) => {
         if (data == null || data.length === 0) return;
         dataActions.ReplaceDetailedData(detailedKey, data);

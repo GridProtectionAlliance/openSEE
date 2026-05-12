@@ -1,7 +1,7 @@
 //******************************************************************************************************
-//  Markers.tsx - Gbtc
+//  Markers.ts - Gbtc
 //
-//  Copyright © 2025, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -16,15 +16,19 @@
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/08/2025 - Preston Crawford
+//  05/08/2026 - Preston Crawford
 //       Generated original version of source code
 //
 //******************************************************************************************************
 
 import * as d3 from "d3";
-import { seriesToKey } from "../../../Context/PlotKeys";
-import { OpenSee } from "../../../global";
-import { IScales } from "./Lines";
+import { seriesToKey } from "../../Context/PlotKeys";
+import { OpenSee } from "../../global";
+
+export interface ILinearScales {
+    x: d3.ScaleLinear<number, number>;
+    y: Record<string, d3.ScaleLinear<number, number>>;
+}
 
 interface IMarker {
     x: number;
@@ -36,12 +40,11 @@ interface IMarker {
 export const drawMarkers = (
     container: HTMLDivElement | null,
     lineData: OpenSee.iD3DataSeries[],
-    scales: IScales,
+    scales: ILinearScales,
     colors: OpenSee.IColorCollection
 ) => {
     if (container == null) return;
 
-    // Preserving original behavior: d[0] on IMarker is intentional (always NaN → cx always null)
     const points = d3.select(container).select(".DataContainer")
         .selectAll(".Markers")
         .data(lineData)
@@ -66,7 +69,7 @@ export const drawMarkers = (
 
 export const updateMarkerGeometry = (
     container: HTMLDivElement | null,
-    scales: IScales,
+    scales: ILinearScales,
     activeUnit: Partial<OpenSee.IUnitCollection<OpenSee.iUnitOptions>> | null
 ) => {
     if (container == null) return;
@@ -91,7 +94,7 @@ export const updateMarkerColors = (container: HTMLDivElement | null, colors: Ope
         .attr("fill", d => colors[d.Color as string] ?? colors.random);
 }
 
-export function updateMarkerVisibility(container: HTMLDivElement | null,lineData: OpenSee.iD3DataSeries[],enabledLine: Record<string, boolean>) {
+export const updateMarkerVisibility = (container: HTMLDivElement | null, lineData: OpenSee.iD3DataSeries[], enabledLine: Record<string, boolean>) => {
     if (container == null) return;
 
     d3.select(container).selectAll(".Markers")
