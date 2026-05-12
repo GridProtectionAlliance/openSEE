@@ -55,7 +55,7 @@ import HarmonicStatsWidget from './Widgets/HarmonicStats';
 import LightningDataWidget from './Widgets/LightningData';
 import PhasorChartWidget from './Widgets/PhasorChart';
 import ScalarStatsWidget from './Widgets/ScalarStats';
-import SettingsWidget from './Widgets/SettingWindow';
+import SettingsWidget from './Widgets/PlotSettings/SettingWindow';
 import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
 import ToolTipWidget from './Widgets/Tooltip';
 import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
