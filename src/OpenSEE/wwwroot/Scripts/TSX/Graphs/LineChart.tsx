@@ -101,6 +101,16 @@ const LineChart = (props: IProps) => {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const { xScaleRef, yScaleRef } = useChartScales(d3.scaleLinear());
+    const xRange = React.useMemo<[number, number]>(() => {
+        if (enabledUnits?.length > 2)
+            return [120, props.width - 110];
+        return [60, props.width - 110];
+    }, [enabledUnits, props.width]);
+
+    React.useLayoutEffect(() => {
+        if (xScaleRef.current == null) return;
+        xScaleRef.current.domain([startTime, endTime]).range(xRange);
+    }, [startTime, endTime, xRange]);
 
     const buildTimeCtx = useTimeFormatContext(
         xScaleRef,
@@ -118,7 +128,7 @@ const LineChart = (props: IProps) => {
 
     const { currentFFTWindow, setCurrentFFTWindow, oldFFTWindow, setOldFFTWindow } = useFFTWindow(xScaleRef, fftWindow);
     const yLblFontSize = useYLabelFontSize(yLabels, primaryAxis, props.height);
-    const { toolTipLocation, selectedPointLocation, inceptionLocation, durationLocation } = useTooltipLocations(xScaleRef, hover, points, evt.Context.EventInfo, startTime, endTime);
+    const { toolTipLocation, selectedPointLocation, inceptionLocation, durationLocation } = useTooltipLocations(xScaleRef, hover, points, evt.Context.EventInfo, startTime, endTime, xRange);
 
     const { handlers, wheelZoom, mouseDown, pointMouse } = useMouseInteractions({
         containerRef, xScaleRef, yScaleRef, primaryAxis,
@@ -186,11 +196,7 @@ const LineChart = (props: IProps) => {
         updateXAxisPositionOnResize(containerRef.current, props.height, props.width);
         updateYAxisPositionsOnResize(containerRef.current, relevantUnits, getScales().y, props.height, props.width);
 
-        xScaleRef.current.range([60, props.width - 110]);
-        if (enabledUnits?.length > 2)
-            xScaleRef.current.range([120, props.width - 110]);
-        else if (enabledUnits?.length > 3)
-            xScaleRef.current.range([120, props.width - 170]);
+        xScaleRef.current.domain([startTime, endTime]).range(xRange);
 
         const container = d3.select(containerRef.current);
         container.select('.clip').attr('width', props.width - 110).attr('height', props.height - 60);
@@ -217,10 +223,7 @@ const LineChart = (props: IProps) => {
                 (yScaleRef.current as any)[unit].domain(yLimits[unit]);
         });
 
-        if (enabledUnits?.length > 2)
-            xScaleRef.current.range([120, props.width - 110]);
-        else if (enabledUnits?.length > 3)
-            xScaleRef.current.range([120, props.width - 170]);
+        xScaleRef.current.domain([startTime, endTime]).range(xRange);
 
         if (yLimits) updateLimits();
 
@@ -313,7 +316,7 @@ const LineChart = (props: IProps) => {
                     ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', left: selectedPointLocation, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),
                     ...(plotMarkers ? [
                         { className: 'inception', left: inceptionLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } },
-                        { className: 'duration', left: durationLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
+                        { className: 'duration', left: durationLocation + 20, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
                     ] : [])
                 ]}
             />

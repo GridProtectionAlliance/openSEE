@@ -36,7 +36,7 @@ interface IProps extends PolyLineSpec {
 const PolyLine = (props: IProps) => {
     return (
         <g className={props.className}>
-            <polyline className="polyLine" points={`${props.left + 10},20 ${props.left + 10},${props.height}`} style={props.style} />
+            <polyline className="polyLine" points={`${props.left},20 ${props.left},${props.height}`} style={props.style} />
         </g>
     );
 }

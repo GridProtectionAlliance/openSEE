@@ -90,8 +90,9 @@ export const CreateLinePlot = (
             .attr("clip-path", `url(#${clipId})`)
             .attr("stroke", "#d3d3d3")
             .attr("x", xScaleRef.current(eventInfo.Inception))
-            .attr("width", eventInfo.DurationEndTime - eventInfo.Inception)
+            .attr("width", xScaleRef.current(eventInfo.DurationEndTime) - xScaleRef.current(eventInfo.Inception))
             .style("opacity", plotMarkers ? 0.25 : 0)
+            .style("pointer-events", "none")
             .attr("y", 20).attr("height", height - 60)
             .attr("fill", "black");
 
@@ -105,9 +106,19 @@ export const CreateLinePlot = (
             .attr("width", currentFFTWindow[1] - currentFFTWindow[0])
             .style("opacity", showFFT ? 0.5 : 0)
             .style("cursor", mouseMode === "fftMove" && showFFT ? "grab" : "default")
+            .style("pointer-events", mouseMode === "fftMove" && showFFT ? "auto" : "none")
             .attr("y", 20).attr("height", height - 60)
             .attr("fill", "black")
-            .on("mousemove", evt => handlers.onMouseMove(evt))
-            .on("mousedown", evt => handlers.onFFTMouseDown(evt))
-            .on("mouseup", () => handlers.onFFTMouseUp());
+            .on("mousemove", evt => {
+                evt.stopPropagation();
+                handlers.onMouseMove(evt);
+            })
+            .on("mousedown", evt => {
+                evt.stopPropagation();
+                handlers.onFFTMouseDown(evt);
+            })
+            .on("mouseup", evt => {
+                evt.stopPropagation();
+                handlers.onFFTMouseUp();
+            });
 }

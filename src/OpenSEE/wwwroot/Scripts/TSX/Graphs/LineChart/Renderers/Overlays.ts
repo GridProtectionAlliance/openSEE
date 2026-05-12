@@ -38,7 +38,8 @@ export const updateFFTWindow = (
         .attr("x", currentFFTWindow[0])
         .attr("width", currentFFTWindow[1] - currentFFTWindow[0])
         .style("opacity", showFFT ? 0.5 : 0)
-        .style("cursor", mouseMode === "fftMove" && showFFT ? "grab" : "default");
+        .style("cursor", mouseMode === "fftMove" && showFFT ? "grab" : "default")
+        .style("pointer-events", mouseMode === "fftMove" && showFFT ? "auto" : "none");
 }
 
 export const updateDurationWindowRect = (container: HTMLDivElement | null, xScale: d3.ScaleLinear<number, number>, inception: number, durationEndTime: number, plotMarkers: boolean) => {
@@ -48,5 +49,6 @@ export const updateDurationWindowRect = (container: HTMLDivElement | null, xScal
         .select(".DurationWindow")
         .attr("x", xScale(inception))
         .attr("width", xScale(durationEndTime) - xScale(inception))
-        .style("opacity", plotMarkers ? 0.25 : 0);
+        .style("opacity", plotMarkers ? 0.25 : 0)
+        .style("pointer-events", "none");
 }

@@ -99,16 +99,34 @@ export const CreatePlotSVG = (
         .attr("x", 20)
         .attr("y", 0)
         .style("opacity", 0)
-        .on("mousemove", evt => handlers.onMouseMove(evt))
-        .on("mouseout", () => handlers.onMouseOut())
-        .on("mousedown", evt => handlers.onMouseDown(evt))
-        .on("mouseup", () => handlers.onMouseUp());
+        .on("mousemove", evt => {
+            evt.stopPropagation();
+            handlers.onMouseMove(evt);
+        })
+        .on("mouseout", evt => {
+            evt.stopPropagation();
+            handlers.onMouseOut();
+        })
+        .on("mousedown", evt => {
+            evt.stopPropagation();
+            handlers.onMouseDown(evt);
+        })
+        .on("mouseup", evt => {
+            evt.stopPropagation();
+            handlers.onMouseUp();
+        });
 
     if (handlers.onMouseEnter != null)
-        overlay.on("mouseenter", () => handlers.onMouseEnter?.());
+        overlay.on("mouseenter", evt => {
+            evt.stopPropagation();
+            handlers.onMouseEnter?.();
+        });
 
     if (handlers.wheelZoom != null)
-        overlay.call(handlers.wheelZoom).on("wheel", evt => evt.preventDefault());
+        overlay.call(handlers.wheelZoom).on("wheel.overlayBlock", evt => {
+            evt.preventDefault();
+            evt.stopPropagation();
+        });
 
     return svg;
 }

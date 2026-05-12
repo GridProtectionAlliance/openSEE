@@ -219,7 +219,8 @@ export const useTooltipLocations = (
     points: OpenSee.IPoint[],
     evtInfo: OpenSee.IEventInfo | null,
     startTime: number,
-    endTime: number
+    endTime: number,
+    xRange: [number, number]
 ): ITooltipLocations => {
     const [toolTipLocation, setTooltipLocation] = React.useState<number>(10);
     const [selectedPointLocation, setSelectedPointLocation] = React.useState<number | null>(null);
@@ -236,13 +237,13 @@ export const useTooltipLocations = (
         const newTime = points.length > 0 ? points[0].Time : null;
         if (newTime != null)
             setSelectedPointLocation(xScaleRef.current(newTime));
-    }, [points, startTime, endTime]);
+    }, [points, startTime, endTime, xRange[0], xRange[1]]);
 
     React.useEffect(() => {
         if (!xScaleRef.current || evtInfo == null) return;
         setInceptionLocation(xScaleRef.current(evtInfo.Inception));
         setDurationLocation(xScaleRef.current(evtInfo.DurationEndTime));
-    }, [startTime, endTime, evtInfo]);
+    }, [startTime, endTime, evtInfo, xRange[0], xRange[1]]);
 
     return { toolTipLocation, selectedPointLocation, inceptionLocation, durationLocation };
 };
