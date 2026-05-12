@@ -34,7 +34,7 @@ import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../store/settingSlice';
-import Legend from './LegendBase';
+import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
 import { GetDisplayLabel, useChartScales, useTooltipLocations, useYLabelFontSize } from './Utils/Utilities';
 import { getPrimaryAxis } from '../Context/PlotStateUtilities';

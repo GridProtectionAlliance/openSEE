@@ -27,7 +27,7 @@ import { getPrimaryAxis } from '../Context/PlotStateUtilities';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectZoomMode } from '../store/settingSlice';
-import Legend from './LegendBase';
+import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
 import { updateZoomWindow } from './Renderers/ZoomWindow';
 import { updateYAxes, updateYAxisLabels, updateYAxisPositionsOnResize, updateYAxisVisibility } from './Renderers/YAxes';
