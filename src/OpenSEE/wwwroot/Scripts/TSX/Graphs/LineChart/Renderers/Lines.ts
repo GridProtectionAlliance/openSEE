@@ -49,7 +49,12 @@ export const createLineGen = (
     return d3.line<[number, number]>()
         .x(d => xScale ? xScale(d[0]) : 0)
         .y(d => yScale != null ? yScale(d[1] * factor) : 0)
-        .defined(d => Number.isFinite(d[0]) && Number.isFinite(d[1]));
+        .defined(d => {
+            if (xScale == null || yScale == null || !Number.isFinite(factor) || !Number.isFinite(d[0]) || !Number.isFinite(d[1]))
+                return false;
+
+            return Number.isFinite(xScale(d[0])) && Number.isFinite(yScale(d[1] * factor));
+        });
 }
 
 export const drawLines = (
