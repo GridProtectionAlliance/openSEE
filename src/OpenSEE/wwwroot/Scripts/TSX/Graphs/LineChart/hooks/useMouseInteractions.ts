@@ -44,7 +44,15 @@ export interface IMouseInteractionResult {
     pointMouse: [number, number];
 }
 
-export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInteractionResult {
+interface IPanOrigin {
+    xLimits: [number, number];
+    yLimits: Partial<OpenSee.IUnitCollection<[number, number]>>;
+    xScale: d3.ScaleLinear<number, number>;
+    yScale: d3.ScaleLinear<number, number> | null;
+    mouse: [number, number];
+}
+
+export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInteractionResult => {
     const {
         containerRef, xScaleRef, yScaleRef, primaryAxis,
         hover, setHover, isOverlappingWaveform,
@@ -53,7 +61,7 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
         width, height, fftWindow,
         startTime, endTime, yLimits,
         oldFFTWindow, setOldFFTWindow, setCurrentFFTWindow,
-    } = inputs;
+    } = params;
 
     const stateActions = React.useContext(PlotStateActionContext);
 
@@ -62,9 +70,9 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
     const [mouseDownInit, setMouseDownInit] = React.useState<boolean>(false);
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
+    const panOriginRef = React.useRef<IPanOrigin | null>(null);
 
-    // rAF coalescing for hover updates: many mousemove events per frame collapse
-    // to a single setHover at most once per animation frame.
+    // rAF coalescing for hover updates: many mousemove events per frame collapse to a single setHover at most once per animation frame.
     const pendingHoverRef = React.useRef<[number, number] | null>(null);
     const hoverRafRef = React.useRef<number | null>(null);
 
@@ -110,24 +118,8 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
         }
     }, [mouseDown, fftMouseDown]);
 
-    // Pan and FFT-drag: update state while mouse moves
+    // FFT-drag: update state while mouse moves
     React.useEffect(() => {
-        const deltaT = hover[0] - pointMouse[0];
-        const deltaData = hover[1] - pointMouse[1];
-
-        if (mouseMode === 'pan' && mouseDown && (zoomMode === 'x' || zoomMode === 'xy')) {
-            if (!isOverlappingWaveform)
-                stateActions.SetTimeLimit(startTime - deltaT, endTime - deltaT, plotData);
-            else
-                stateActions.SetCycleLimit(startTime - deltaT, endTime - deltaT, plotData);
-        }
-
-        if (mouseMode === 'pan' && mouseDown && (zoomMode === 'y' || zoomMode === 'xy'))
-            stateActions.SetZoomedLimits(
-                [(yLimits as any)[primaryAxis]?.[0] - deltaData, (yLimits as any)[primaryAxis]?.[1] - deltaData],
-                dataKey, lineData
-            );
-
         if (mouseMode === 'fftMove' && fftMouseDown && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0])
             setCurrentFFTWindow([
                 xScaleRef.current(oldFFTWindow[0] + hover[0] - pointMouse[0]),
@@ -135,33 +127,25 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
             ]);
     }, [hover]);
 
-    function MouseMove(evt: any) {
-        let x0 = d3.pointer(evt, evt.currentTarget)[0];
-        let y0 = d3.pointer(evt, evt.currentTarget)[1];
+    const MouseMove = (evt: any) => {
+        const [x0, y0] = getClampedPointer(evt, width, height);
 
-        if (x0 < 60) x0 = 60;
-        if (x0 > (width - 140)) x0 = width - 140;
-        if (y0 < 20) y0 = 20;
-        if (y0 > (height - 40)) y0 = height - 40;
-
-        const t0 = xScaleRef.current.invert(x0);
-        const d0 = (yScaleRef.current as any)[primaryAxis].invert(y0);
-
-        pendingHoverRef.current = [t0, d0];
+        pendingHoverRef.current = [x0, y0];
         if (hoverRafRef.current == null) {
             hoverRafRef.current = requestAnimationFrame(() => {
                 hoverRafRef.current = null;
                 if (pendingHoverRef.current != null) {
-                    setHover(pendingHoverRef.current);
+                    applyPan(pendingHoverRef.current);
+                    setHover(getDataPoint(pendingHoverRef.current));
                     pendingHoverRef.current = null;
                 }
             });
         }
     }
 
-    function MouseDown(evt: any) {
-        const x0 = d3.pointer(evt, evt.currentTarget)[0];
-        const y0 = d3.pointer(evt, evt.currentTarget)[1];
+    const MouseDown = (evt: any) => {
+        const rawPointer = d3.pointer(evt, evt.currentTarget);
+        const [x0, y0] = clampPointer(rawPointer[0], rawPointer[1], width, height);
 
         const t0 = xScaleRef.current.invert(x0);
         const d0 = (yScaleRef.current as any)[primaryAxis].invert(y0);
@@ -169,15 +153,28 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
         setMouseDown(true);
         setPointMouse([t0, d0]);
 
+        if (mouseMode === 'pan') {
+            const yScale = (yScaleRef.current as any)[primaryAxis] as d3.ScaleLinear<number, number> | undefined;
+            panOriginRef.current = {
+                xLimits: [startTime, endTime],
+                yLimits: copyYLimits(yLimits),
+                xScale: xScaleRef.current.copy(),
+                yScale: yScale?.copy() ?? null,
+                mouse: [x0, y0],
+            };
+        }
+        else
+            panOriginRef.current = null;
+
         if (isOverlappingWaveform) return;
 
-        if (x0 > 60 && x0 < width - 140 && mouseMode === 'select')
+        if (rawPointer[0] > 60 && rawPointer[0] < width - 110 && mouseMode === 'select')
             stateActions.SetSelectPoint(t0, plotData);
 
         setOldFFTWindow(() => fftWindow);
     }
 
-    function FFTMouseDown(evt: any) {
+    const FFTMouseDown = (evt: any) => {
         setFFTMouseDown(true);
         const x0 = d3.pointer(evt, evt.currentTarget)[0];
         const y0 = d3.pointer(evt, evt.currentTarget)[1];
@@ -189,30 +186,60 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
         setOldFFTWindow(() => fftWindow);
     }
 
-    function flushPendingHover() {
+    const flushPendingHover = () => {
         if (hoverRafRef.current != null) {
             cancelAnimationFrame(hoverRafRef.current);
             hoverRafRef.current = null;
         }
         if (pendingHoverRef.current != null) {
-            setHover(pendingHoverRef.current);
+            applyPan(pendingHoverRef.current);
+            setHover(getDataPoint(pendingHoverRef.current));
             pendingHoverRef.current = null;
         }
     }
 
-    function MouseUp() {
+    const MouseUp = () => {
         flushPendingHover();
         setMouseDown(false);
+        panOriginRef.current = null;
         d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
     }
 
-    function MouseOut() {
-        setLeftSelectCounter(() => -1);
-    }
+    const MouseOut = () => setLeftSelectCounter(() => -1);
 
-    function MouseLeft() {
+    const MouseLeft = () => {
         d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
         setMouseDown(false);
+        panOriginRef.current = null;
+    }
+
+    const applyPan = (pointer: [number, number]) => {
+        const panOrigin = panOriginRef.current;
+        if (mouseMode !== 'pan' || panOrigin == null) return;
+
+        const deltaT = panOrigin.xScale.invert(pointer[0]) - panOrigin.xScale.invert(panOrigin.mouse[0]);
+        const deltaData = panOrigin.yScale == null ? 0 : panOrigin.yScale.invert(pointer[1]) - panOrigin.yScale.invert(panOrigin.mouse[1]);
+
+        if (zoomMode === 'x' || zoomMode === 'xy') {
+            if (!isOverlappingWaveform)
+                stateActions.SetTimeLimit(panOrigin.xLimits[0] - deltaT, panOrigin.xLimits[1] - deltaT, plotData);
+            else
+                stateActions.SetCycleLimit(panOrigin.xLimits[0] - deltaT, panOrigin.xLimits[1] - deltaT, plotData);
+        }
+
+        const initialYLimits = (panOrigin.yLimits as any)[primaryAxis];
+        if (initialYLimits != null && (zoomMode === 'y' || zoomMode === 'xy'))
+            stateActions.SetZoomedLimits(
+                [initialYLimits[0] - deltaData, initialYLimits[1] - deltaData],
+                dataKey, lineData
+            );
+    }
+
+    const getDataPoint = (pointer: [number, number]): [number, number] => {
+        return [
+            xScaleRef.current.invert(pointer[0]),
+            (yScaleRef.current as any)[primaryAxis].invert(pointer[1]),
+        ];
     }
 
     const wheelZoom = d3.zoom<SVGRectElement, unknown>()
@@ -248,4 +275,31 @@ export function useMouseInteractions(inputs: IMouseInteractionInputs): IMouseInt
         fftMouseDown,
         pointMouse,
     };
+}
+
+const getClampedPointer = (evt: any, width: number, height: number): [number, number] => {
+    const pointer = d3.pointer(evt, evt.currentTarget);
+    return clampPointer(pointer[0], pointer[1], width, height);
+}
+
+const clampPointer = (x: number, y: number, width: number, height: number): [number, number] => {
+    let x0 = x;
+    let y0 = y;
+
+    if (x0 < 60) x0 = 60;
+    if (x0 > (width - 110)) x0 = width - 110;
+    if (y0 < 20) y0 = 20;
+    if (y0 > (height - 40)) y0 = height - 40;
+
+    return [x0, y0];
+}
+
+const copyYLimits = (currentYLimits: Partial<OpenSee.IUnitCollection<[number, number]>>): Partial<OpenSee.IUnitCollection<[number, number]>> => {
+    const copied = {} as Partial<OpenSee.IUnitCollection<[number, number]>>;
+    Object.keys(currentYLimits).forEach(unit => {
+        const limits = (currentYLimits as any)[unit];
+        if (limits != null)
+            (copied as any)[unit] = [limits[0], limits[1]];
+    });
+    return copied;
 }
