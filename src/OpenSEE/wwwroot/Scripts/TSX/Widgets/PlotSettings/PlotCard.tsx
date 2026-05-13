@@ -103,15 +103,26 @@ const PlotCard = (props: IProps) => {
             }
         }, 1500);
         return () => clearTimeout(timeOutId);
-    }, [curLimits]);
+    }, [curLimits, overlappingLimits]);
 
     const handleLimitChange = (axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean) => {
         let factor = 1;
-        if (axisSettings && defaultSettings.Units[axis].options[axisSettings[axis].current].factor !== 1)
-            factor = defaultSettings.Units[axis].options[axisSettings[axis].current].factor;
+        const keyString = toPlotKey(key);
+        const targetAxisSettings = plotState.meta[keyString]?.yLimits ?? axisSettings;
+        if (targetAxisSettings && defaultSettings.Units[axis].options[targetAxisSettings[axis].current].factor !== 1)
+            factor = defaultSettings.Units[axis].options[targetAxisSettings[axis].current].factor;
 
         limitsPayloadRef.current = { axis, limits, key, auto, factor };
-        setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: { min: limits[0], max: limits[1] } }));
+        if (keyString === pk)
+            setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: { min: limits[0], max: limits[1] } }));
+        else
+            setOverlappingLimits(prevLimits => ({
+                ...(prevLimits ?? {}),
+                [keyString]: {
+                    ...(prevLimits?.[keyString] ?? {}),
+                    [axis]: { min: limits[0], max: limits[1] }
+                }
+            }));
     };
 
     const handleSetOverlapTimeUnit = React.useCallback((index: number) => dispatch(SetOverlappingWaveTimeUnit(index)), [dispatch]);
@@ -131,7 +142,7 @@ const PlotCard = (props: IProps) => {
                 const idx = opts.findIndex(item => item.factor === 1);
                 return opts[idx].short;
             }
-            return defaultSettings.Units[unit].options[axisSettings[unit].current].short;
+            return defaultSettings.Units[unit].options[overMeta?.yLimits[unit]?.current ?? axisSettings[unit].current].short;
         }
 
         if (axisSettings[unit]?.isManual && axisSettings[unit]?.isAuto) {
@@ -178,7 +189,7 @@ const PlotCard = (props: IProps) => {
                         l[unit] = { min: oYLimits[unit]?.[0], max: oYLimits[unit]?.[1] };
                     }
                 });
-                overLimits[oKey.DataType] = l;
+                overLimits[oPk] = l;
             });
             setOverlappingLimits(overLimits);
         }
@@ -269,7 +280,7 @@ const PlotCard = (props: IProps) => {
                                                 <div className="form-row" style={{ marginLeft: '5px' }}>
                                                     <div className="col-6">
                                                         <Input<ILimits>
-                                                            Record={overlappingLimits?.[key.DataType]?.[item] ?? { min: 0, max: 1 }}
+                                                            Record={overlappingLimits?.[toPlotKey(key)]?.[item] ?? { min: 0, max: 1 }}
                                                             Field={'min'}
                                                             Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
                                                             Valid={() => valid}
@@ -280,7 +291,7 @@ const PlotCard = (props: IProps) => {
                                                     </div>
                                                     <div className="col-6">
                                                         <Input<ILimits>
-                                                            Record={overlappingLimits?.[key.DataType]?.[item] ?? { min: 0, max: 1 }}
+                                                            Record={overlappingLimits?.[toPlotKey(key)]?.[item] ?? { min: 0, max: 1 }}
                                                             Field={'max'}
                                                             Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
                                                             Valid={() => valid}
