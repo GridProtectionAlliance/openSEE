@@ -10,7 +10,7 @@
 import * as React from 'react';
 import _ from 'lodash';
 import { OpenSee } from '../global';
-import { toPlotKey, seriesToKey } from '../Context/PlotKeys';
+import { toPlotKey } from '../Context/PlotKeys';
 import { PlotDataStateContext, PlotDataActionContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import { OverlappingActionContext, OverlappingStateContext } from '../Context/OverlappingContext';
@@ -32,6 +32,8 @@ export interface IPlotLifecycleActions {
     RemovePlot: (key: OpenSee.IGraphProps) => void;
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void;
     EnableOverlappingEvent: (eventId: number) => void;
+    RebuildSinglePlots: () => void;
+    RemoveSinglePlots: () => void;
 }
 
 export const usePlotLifecycle = (): IPlotLifecycleActions => {
@@ -45,6 +47,9 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
     const singlePlot = useAppSelector(SelectSinglePlot);
     const defaultTrace = useAppSelector(SelectDefaultTraces);
     const defaultVType = useAppSelector(SelectVTypeDefault);
+    const singlePlotRef = React.useRef(singlePlot);
+    const overlayDataRef = React.useRef<Record<string, OpenSee.iD3DataSeries[]>>({});
+    singlePlotRef.current = singlePlot;
 
     const AddPlot = React.useCallback((
         key: OpenSee.IGraphProps,
@@ -57,7 +62,7 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
         dataActions.InitPlotData(key);
         stateActions.InitPlotMeta(key, yLimits, isZoomed);
 
-        if (singlePlot) {
+        if (singlePlotRef.current) {
             const overlayKey: OpenSee.IGraphProps = { DataType: key.DataType, EventId: -1 };
             dataActions.InitPlotData(overlayKey);
             stateActions.InitPlotMeta(overlayKey);
@@ -65,7 +70,6 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
 
         // Track accumulated data locally so OnDataAppended always gets the full picture
         const accumulated: OpenSee.iD3DataSeries[] = [];
-        const overlayAccumulated: OpenSee.iD3DataSeries[] = [];
 
         const handles = getData(
             key,
@@ -80,12 +84,16 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
                 dataActions.AppendPlotData(key, data, key.EventId);
                 stateActions.OnDataAppended(key, [...accumulated], enabledMap);
 
-                if (singlePlot) {
+                if (singlePlotRef.current) {
                     const overlayKey: OpenSee.IGraphProps = { DataType: key.DataType, EventId: -1 };
-                    overlayAccumulated.push(...stamped);
-                    const overlayEnabledMap = getDefaultEnabled(key.DataType, defaultTrace, defaultVType, [...overlayAccumulated]);
+                    const overlayPk = toPlotKey(overlayKey);
+                    const previousOverlayData = overlayDataRef.current[overlayPk] ?? plotData[overlayPk] ?? [];
+                    const nextOverlayData = [...previousOverlayData, ...stamped];
+                    overlayDataRef.current[overlayPk] = nextOverlayData;
+
+                    const overlayEnabledMap = getDefaultEnabled(key.DataType, defaultTrace, defaultVType, nextOverlayData);
                     dataActions.AppendPlotData(overlayKey, data, key.EventId);
-                    stateActions.OnDataAppended(overlayKey, [...overlayAccumulated], overlayEnabledMap);
+                    stateActions.OnDataAppended(overlayKey, nextOverlayData, overlayEnabledMap);
                 }
             },
             (detailedKey) => {
@@ -98,7 +106,7 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
         Promise.all(handles).then(
             () => {
                 stateActions.SetPlotLoading(key, 'Idle');
-                if (singlePlot)
+                if (singlePlotRef.current)
                     stateActions.SetPlotLoading({ DataType: key.DataType, EventId: -1 }, 'Idle');
 
                 if (fftLimits != null)
@@ -108,11 +116,11 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
             },
             () => {
                 stateActions.SetPlotLoading(key, 'Error');
-                if (singlePlot)
+                if (singlePlotRef.current)
                     stateActions.SetPlotLoading({ DataType: key.DataType, EventId: -1 }, 'Error');
             }
         );
-    }, [analytic, singlePlot, plotData, dataActions, stateActions, defaultTrace, defaultVType]);
+    }, [analytic, plotData, dataActions, stateActions, defaultTrace, defaultVType]);
 
     const RemovePlot = React.useCallback((key: OpenSee.IGraphProps) => {
         CancelEvent(key.EventId);
@@ -120,14 +128,15 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
         stateActions.RemovePlotMeta(key);
 
         // Clean up the overlay plot if in singlePlot mode
-        if (singlePlot) {
+        if (singlePlotRef.current) {
             const overlayKey: OpenSee.IGraphProps = { DataType: key.DataType, EventId: -1 };
             const overlayPk = toPlotKey(overlayKey);
             dataActions.FilterPlotDataByEvent(overlayKey, key.EventId);
 
-            // If no data remains in the overlay, remove it entirely
-            const remaining = (plotData[overlayPk] ?? []).filter(d => d.EventID !== key.EventId);
+            const remaining = (overlayDataRef.current[overlayPk] ?? plotData[overlayPk] ?? []).filter(d => d.EventID !== key.EventId);
+            overlayDataRef.current[overlayPk] = remaining;
             if (remaining.length === 0) {
+                delete overlayDataRef.current[overlayPk];
                 dataActions.RemovePlotData(overlayKey);
                 stateActions.RemovePlotMeta(overlayKey);
             } else {
@@ -135,7 +144,7 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
                 stateActions.OnDataAppended(overlayKey, remaining, remainingEnabled);
             }
         }
-    }, [singlePlot, dataActions, stateActions, plotData, defaultTrace, defaultVType]);
+    }, [dataActions, stateActions, plotData, defaultTrace, defaultVType]);
 
     const UpdateAnalyticPlot = React.useCallback((key: OpenSee.IGraphProps) => {
         const pk = toPlotKey(key);
@@ -191,7 +200,59 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
         overlappingActions.ToggleEventSelection(eventId);
     }, [overlapping.events, plotState.meta, AddPlot, RemovePlot, overlappingActions]);
 
-    return { AddPlot, RemovePlot, UpdateAnalyticPlot, EnableOverlappingEvent };
+    const RebuildSinglePlots = React.useCallback(() => {
+        const sourceMeta = Object.values(plotState.meta).filter(m => m.key.EventId !== -1);
+        const dataTypes = _.uniq(sourceMeta.map(m => m.key.DataType));
+
+        Object.values(plotState.meta)
+            .filter(m => m.key.EventId === -1 && !dataTypes.includes(m.key.DataType))
+            .forEach(m => {
+                delete overlayDataRef.current[toPlotKey(m.key)];
+                dataActions.RemovePlotData(m.key);
+                stateActions.RemovePlotMeta(m.key);
+            });
+
+        dataTypes.forEach(dataType => {
+            const overlayKey: OpenSee.IGraphProps = { DataType: dataType, EventId: -1 };
+            const overlayPk = toPlotKey(overlayKey);
+            const matchingMeta = sourceMeta.filter(m => m.key.DataType === dataType);
+            const overlayData: OpenSee.iD3DataSeries[] = [];
+
+            dataActions.ClearPlotData(overlayKey);
+            stateActions.InitPlotMeta(overlayKey);
+
+            matchingMeta.forEach(m => {
+                const data = plotData[toPlotKey(m.key)] ?? [];
+                if (data.length === 0) return;
+
+                overlayData.push(...data.map(d => ({ ...d, EventID: m.key.EventId })));
+                dataActions.AppendPlotData(overlayKey, data, m.key.EventId);
+            });
+
+            overlayDataRef.current[overlayPk] = overlayData;
+
+            if (overlayData.length > 0) {
+                const enabledMap = getDefaultEnabled(dataType, defaultTrace, defaultVType, overlayData);
+                stateActions.OnDataAppended(overlayKey, overlayData, enabledMap);
+            }
+
+            const loading = matchingMeta.some(m => m.loading === 'Error') ? 'Error' :
+                matchingMeta.some(m => m.loading === 'Loading') ? 'Loading' : 'Idle';
+            stateActions.SetPlotLoading(overlayKey, loading);
+        });
+    }, [plotState.meta, plotData, dataActions, stateActions, defaultTrace, defaultVType]);
+
+    const RemoveSinglePlots = React.useCallback(() => {
+        Object.values(plotState.meta)
+            .filter(m => m.key.EventId === -1)
+            .forEach(m => {
+                delete overlayDataRef.current[toPlotKey(m.key)];
+                dataActions.RemovePlotData(m.key);
+                stateActions.RemovePlotMeta(m.key);
+            });
+    }, [plotState.meta, dataActions, stateActions]);
+
+    return { AddPlot, RemovePlot, UpdateAnalyticPlot, EnableOverlappingEvent, RebuildSinglePlots, RemoveSinglePlots };
 }
 
 // Starts the high-resolution data fetch that replaces compressed series with full-resolution versions. Runs in the background after initial load.

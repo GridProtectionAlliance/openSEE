@@ -169,18 +169,10 @@ const OpenSeeApplication = React.memo(() => {
 
     // Handle singlePlot toggle
     React.useEffect(() => {
-        if (singlePlot) {
-            Object.values(plotState.meta).forEach(m => {
-                if (m.key.EventId === -1) return;
-                const overlayKey: OpenSee.IGraphProps = { DataType: m.key.DataType, EventId: -1 };
-                // TODO: wire up singlePlot overlay init through lifecycle
-            });
-        } else {
-            Object.values(plotState.meta).forEach(m => {
-                if (m.key.EventId !== -1) return;
-                stateActions.RemovePlotMeta(m.key);
-            });
-        }
+        if (singlePlot)
+            lifecycle.RebuildSinglePlots();
+        else
+            lifecycle.RemoveSinglePlots();
     }, [singlePlot]);
 
     const queryStr = React.useMemo(() => {

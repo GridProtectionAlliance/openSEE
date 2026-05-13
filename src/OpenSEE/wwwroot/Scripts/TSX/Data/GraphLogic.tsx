@@ -30,7 +30,7 @@ const defaultLimits = {
     manualLimits: [0, 1],
     zoomedLimits: [0, 1],
     isAuto: true,
-    currentUnitIndex: 0
+    current: 0
 } as OpenSee.IAxisSettings;
 
 export const emptygraph: OpenSee.IGraphstate = {

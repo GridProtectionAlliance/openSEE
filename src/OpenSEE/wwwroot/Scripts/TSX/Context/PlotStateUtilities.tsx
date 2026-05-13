@@ -25,7 +25,7 @@ export const defaultAxisSettings: OpenSee.IAxisSettings = {
     manualLimits: [0, 1],
     zoomedLimits: [0, 1],
     isAuto: false,
-    currentUnitIndex: 0
+    current: 0
 };
 
 export function createDefaultYLimits(): OpenSee.IUnitCollection<OpenSee.IAxisSettings> {

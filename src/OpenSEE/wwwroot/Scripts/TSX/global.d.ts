@@ -372,7 +372,7 @@ export namespace OpenSee {
         manualLimits: [number, number],
         zoomedLimits: [number, number],
         isAuto: boolean,
-        currentUnitIndex: number
+        current: number
     }
 
     interface IOverlayHandlers {

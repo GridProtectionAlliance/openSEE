@@ -45,7 +45,7 @@ const AxisUnitSelector = React.memo((props: IProps) => {
     return (
         <Select
             Label={''}
-            Record={{ value: props.axisSetting.currentUnitIndex }}
+            Record={{ value: props.axisSetting.current }}
             Field='value'
             Setter={(_, option) => props.setter(option.Value as number)}
             Options={options}
