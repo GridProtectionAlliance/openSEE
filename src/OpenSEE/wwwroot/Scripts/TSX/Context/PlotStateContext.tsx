@@ -42,7 +42,7 @@ export interface IPlotStateActions {
     SetCycleLimit: (start: number, end: number, plotData: PlotDataMap) => void;
     SetFFTLimits: (start: number, end: number, plotData: PlotDataMap) => void;
     ResetZoom: (start: number, end: number, plotData: PlotDataMap) => void;
-    SetZoomedLimits: (limits: [number, number], key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void;
+    SetZoomedLimits: (limits: [number, number], key: OpenSee.IGraphProps, plotData: PlotDataMap) => void;
     SetUnit: (unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps, plotData: PlotDataMap) => void;
     EnableTrace: (key: OpenSee.IGraphProps, traces: SeriesKey[], enabled: boolean, data: OpenSee.iD3DataSeries[]) => void;
     SetIsManual: (key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean) => void;
@@ -193,22 +193,24 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
             });
         },
 
-        SetZoomedLimits: (limits, key, data) => {
+        SetZoomedLimits: (limits, key, plotData) => {
             const pk = toPlotKey(key);
             setState(prev => {
                 const meta = prev.meta[pk];
-                if (!meta) return prev;
+                if (meta == null) return prev;
+
+                const getActiveLimits = (meta: IPlotMeta, axis: OpenSee.Unit): [number, number] => {
+                    if (meta.yLimits[axis].isManual)
+                        return meta.yLimits[axis].manualLimits;
+                    if (meta.isZoomed)
+                        return meta.yLimits[axis].zoomedLimits;
+                    return meta.yLimits[axis].dataLimits;
+                };
 
                 const primaryAxis = getPrimaryAxis(meta.key);
-                let oldLimits: [number, number];
-                if (meta.yLimits[primaryAxis].isManual)
-                    oldLimits = meta.yLimits[primaryAxis].manualLimits;
-                else if (meta.isZoomed)
-                    oldLimits = meta.yLimits[primaryAxis].zoomedLimits;
-                else
-                    oldLimits = meta.yLimits[primaryAxis].dataLimits;
-
+                const oldLimits = getActiveLimits(meta, primaryAxis);
                 const newLimits = { ...meta.yLimits };
+                const data = plotData[pk] ?? [];
                 const enabledAxes = _.uniq(
                     data.filter(s => meta.enabled[seriesToKey(s)]).map(s => s.Unit)
                 );
@@ -217,11 +219,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                     if (axis === primaryAxis) {
                         newLimits[axis] = { ...newLimits[axis], zoomedLimits: limits };
                     } else {
-                        const current = meta.yLimits[axis].isManual
-                            ? meta.yLimits[axis].manualLimits
-                            : meta.isZoomed
-                                ? meta.yLimits[axis].zoomedLimits
-                                : meta.yLimits[axis].dataLimits;
+                        const current = getActiveLimits(meta, axis);
                         newLimits[axis] = {
                             ...newLimits[axis],
                             zoomedLimits: recomputeNonAutoLimits(oldLimits, limits, current)

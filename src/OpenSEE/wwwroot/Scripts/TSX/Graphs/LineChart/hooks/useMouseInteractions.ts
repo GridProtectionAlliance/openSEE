@@ -15,7 +15,6 @@ export interface IMouseInteractionInputs {
     zoomMode: OpenSee.ZoomMode;
     setAnalytic: React.Dispatch<React.SetStateAction<OpenSee.IAnalyticContext>>;
     plotData: PlotDataMap;
-    lineData: OpenSee.iD3DataSeries[];
     dataKey: OpenSee.IGraphProps;
     width: number;
     height: number;
@@ -57,7 +56,7 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         containerRef, xScaleRef, yScaleRef, primaryAxis,
         hover, setHover, isOverlappingWaveform,
         mouseMode, zoomMode, setAnalytic,
-        plotData, lineData, dataKey,
+        plotData, dataKey,
         width, height, fftWindow,
         startTime, endTime, yLimits,
         oldFFTWindow, setOldFFTWindow, setCurrentFFTWindow,
@@ -104,9 +103,10 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'x' && !isOverlappingWaveform)
             stateActions.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
         else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'y')
-            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, lineData);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
         else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'xy' && !isOverlappingWaveform) {
-            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, lineData);
+            stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+            stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
         }
         else if (!fftMouseDown && mouseMode === 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
             const deltaT = pointMouse[0] - oldFFTWindow[0];
@@ -231,7 +231,7 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         if (initialYLimits != null && (zoomMode === 'y' || zoomMode === 'xy'))
             stateActions.SetZoomedLimits(
                 [initialYLimits[0] - deltaData, initialYLimits[1] - deltaData],
-                dataKey, lineData
+                dataKey, plotData
             );
     }
 
@@ -252,11 +252,11 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
                 stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
 
             if (mouseMode === 'zoom' && zoomMode === 'y' && !isOverlappingWaveform)
-                stateActions.SetZoomedLimits(newYLimits, dataKey, lineData);
+                stateActions.SetZoomedLimits(newYLimits, dataKey, plotData);
 
             if (mouseMode === 'zoom' && zoomMode === 'xy' && !isOverlappingWaveform) {
                 stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
-                stateActions.SetZoomedLimits(newYLimits, dataKey, lineData);
+                stateActions.SetZoomedLimits(newYLimits, dataKey, plotData);
             }
         });
 

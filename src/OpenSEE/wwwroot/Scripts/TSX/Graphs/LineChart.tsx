@@ -134,7 +134,7 @@ const LineChart = (props: IProps) => {
         containerRef, xScaleRef, yScaleRef, primaryAxis,
         hover, setHover, isOverlappingWaveform,
         mouseMode, zoomMode, setAnalytic,
-        plotData, lineData, dataKey: props.dataKey,
+        plotData, dataKey: props.dataKey,
         width: props.width, height: props.height,
         fftWindow, startTime, endTime, yLimits,
         oldFFTWindow, setOldFFTWindow, setCurrentFFTWindow,

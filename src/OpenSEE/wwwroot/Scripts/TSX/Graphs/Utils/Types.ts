@@ -56,7 +56,6 @@ export interface IPanZoomInteractionInputs {
     mouseMode: OpenSee.MouseMode;
     zoomMode: OpenSee.ZoomMode;
     plotData: PlotDataMap;
-    chartData: OpenSee.iD3DataSeries[];
     dataKey: OpenSee.IGraphProps;
     height: number;
     width: number;
@@ -66,7 +65,7 @@ export interface IPanZoomInteractionInputs {
     pxToDomainX: (px: number) => number;
     pxAtDomainX: (d: number) => number;
     setXLimits: (lo: number, hi: number, plotData: PlotDataMap) => void;
-    setYLimits: (limits: [number, number], key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[]) => void;
+    setYLimits: (limits: [number, number], key: OpenSee.IGraphProps, plotData: PlotDataMap) => void;
 }
 
 export interface IPanZoomInteractionResult {

@@ -59,7 +59,6 @@ interface IInputs {
     mouseMode: OpenSee.MouseMode;
     zoomMode: OpenSee.ZoomMode;
     plotData: PlotDataMap;
-    barData: OpenSee.iD3DataSeries[];
     dataKey: OpenSee.IGraphProps;
     height: number;
     width: number;
@@ -71,7 +70,7 @@ export const useBarMouseInteractions = (inputs: IInputs) => {
     const stateActions = React.useContext(PlotStateActionContext);
     const {
         containerRef, xScaleRef, yScaleRef, primaryAxis,
-        hover, setHover, mouseMode, zoomMode, plotData, barData,
+        hover, setHover, mouseMode, zoomMode, plotData,
         dataKey, height, width, fftLimits, yLimits
     } = inputs;
 
@@ -84,7 +83,6 @@ export const useBarMouseInteractions = (inputs: IInputs) => {
         mouseMode,
         zoomMode,
         plotData,
-        chartData: barData,
         dataKey,
         height,
         width,

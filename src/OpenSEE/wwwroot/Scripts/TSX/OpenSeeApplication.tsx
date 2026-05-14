@@ -309,9 +309,10 @@ const OpenSeeApplication = React.memo(() => {
                 const cycleLimits: [number, number] | undefined =
                     cycleStart != null && cycleEnd != null && !isCycleLimitsEqual ? [cycleStart, cycleEnd] : undefined;
 
-                if (plotChange && plot.key.EventId !== -1) {
+                if (plotChange && oldPlot == null && plot.key.EventId !== -1) {
                     if (parsedSinglePlot ?? false) {
                         parsedPlots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType)
+                            .filter(p => enabledPlots.find(ep => ep.key.DataType === p.key.DataType && ep.key.EventId === p.key.EventId) == null)
                             .forEach(p => curLifecycle.AddPlot(
                                 p.key,
                                 !isYLimitsEqual ? plot.yLimits : undefined,

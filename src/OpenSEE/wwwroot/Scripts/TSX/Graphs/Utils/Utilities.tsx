@@ -275,7 +275,7 @@ export const useYLabelFontSize = (
 export const usePanZoomInteractions = (inputs: IPanZoomInteractionInputs): IPanZoomInteractionResult => {
     const {
         containerRef, yScaleRef, primaryAxis, hover, setHover,
-        mouseMode, zoomMode, plotData, chartData, dataKey,
+        mouseMode, zoomMode, plotData, dataKey,
         width, height, xDomainStart, xDomainEnd, yLimits,
         pxToDomainX, setXLimits, setYLimits
     } = inputs;
@@ -309,10 +309,10 @@ export const usePanZoomInteractions = (inputs: IPanZoomInteractionInputs): IPanZ
         if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'x')
             setXLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
         else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'y')
-            setYLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, chartData);
+            setYLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
         else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'xy') {
             setXLimits(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
-            setYLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, chartData);
+            setYLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
         }
     }, [mouseDown]);
 
@@ -327,7 +327,7 @@ export const usePanZoomInteractions = (inputs: IPanZoomInteractionInputs): IPanZ
             setYLimits(
                 [(yLimits as any)[primaryAxis]?.[0] - deltaData, (yLimits as any)[primaryAxis]?.[1] - deltaData],
                 dataKey,
-                chartData
+                plotData
             );
     }, [hover]);
 

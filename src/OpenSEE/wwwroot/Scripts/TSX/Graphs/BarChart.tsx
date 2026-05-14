@@ -85,7 +85,6 @@ const BarChart = (props: IProps) => {
         mouseMode,
         zoomMode,
         plotData,
-        barData,
         dataKey,
         height: props.height,
         width: props.width,
@@ -175,7 +174,7 @@ const BarChart = (props: IProps) => {
     }, [props.height, props.width]);
 
     React.useEffect(() => {
-        if (barData == null|| barData.length === 0) return;
+        if (barData == null || barData.length === 0) return;
         updateVisibility();
     }, [enabledBar]);
 
