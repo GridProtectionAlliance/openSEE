@@ -338,9 +338,13 @@ const OpenSeeApplication = React.memo(() => {
     React.useLayoutEffect(() => {
         const timeoutId = setTimeout(() => {
             if (applicationRef.current == null || applicationRef.current.navBarDiv == null) return;
-            const newHeight = ((window.innerHeight - applicationRef.current?.navBarDiv?.offsetHeight) / Math.min(plotKeys.length, 3));
-            const newWidth = plotRef.current ? plotRef.current.offsetWidth : 0;
-            const newNavBarWidth = applicationRef.current?.navBarDiv?.offsetWidth;
+            const plotRect = plotRef.current?.getBoundingClientRect();
+            const navBarRect = applicationRef.current.navBarDiv.getBoundingClientRect();
+            const plotAreaHeight = plotRect?.height ?? (window.innerHeight - navBarRect.height);
+            const newHeight = plotAreaHeight / Math.min(plotKeys.length, 3);
+            const newWidth = plotRect?.width ?? 0;
+            const newNavBarWidth = navBarRect.width;
+
             if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
                 setPlotHeight(newHeight);
             if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
