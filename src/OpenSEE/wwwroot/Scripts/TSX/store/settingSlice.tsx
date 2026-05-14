@@ -26,9 +26,33 @@ import { defaultSettings, TimeUnitOptions } from '../defaults';
 import { OpenSee } from '../global';
 import { RootState } from './store';
 
-export const plotTypes = ["Voltage", "Current", "TripCoil", "Digitals", "Analogs", 'FirstDerivative', 'ClippedWaveforms', 'Frequency',
-    'HighPassFilter', 'LowPassFilter', 'MissingVoltage', 'OverlappingWave', 'Power', 'Impedance', 'Rectifier', 'RapidVoltage', 'RemoveCurrent',
-    'Harmonic', 'SymetricComp', 'THD', 'Unbalance', 'FaultDistance', 'Restrike', 'FFT', 'I2T'];
+export const plotTypes = [
+    "Voltage", 
+    "Current", 
+    "TripCoil", 
+    "Digitals", 
+    "Analogs", 
+    'FirstDerivative', 
+    'ClippedWaveforms', 
+    'Frequency',
+    'HighPassFilter', 
+    'LowPassFilter', 
+    'MissingVoltage', 
+    'OverlappingWave', 
+    'Power', 
+    'Impedance', 
+    'Rectifier', 
+    'RapidVoltage', 
+    'RemoveCurrent',
+    'Harmonic', 
+    'SymetricComp', 
+    'THD', 
+    'Unbalance', 
+    'FaultDistance', 
+    'Restrike', 
+    'FFT', 
+    'I2T'
+];
 
 export const SettingsReducer = createSlice({
     name: 'Settings',
