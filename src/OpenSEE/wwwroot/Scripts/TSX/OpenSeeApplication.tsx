@@ -60,6 +60,7 @@ import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
 import ToolTipWidget from './Widgets/Tooltip';
 import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
 import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './store/settingSlice';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 
 
 const OpenSeeApplication = React.memo(() => {
@@ -123,12 +124,11 @@ const OpenSeeApplication = React.memo(() => {
         ToolTipDelta: false,
         HarmonicStats: false
     });
-    const [resizeCount, setResizeCount] = React.useState<number>(0);
-    const [plotWidth, setPlotWidth] = React.useState<number>(window.innerWidth - 300);
-    const [plotHeight, setPlotHeight] = React.useState<number>(250);
-    const [navWidth, setNavWidth] = React.useState<number>(100);
 
-    // -- Coordination effects --
+    const { width: plotWidth, height: plotAreaHeight } = useGetContainerPosition(plotRef);
+    const plotCount = Math.min(plotKeys.length, 3);
+    const plotHeight = plotCount > 0 ? plotAreaHeight / plotCount : plotAreaHeight;
+    const [navWidth, setNavWidth] = React.useState<number>(100);
 
     // Analytic change tracking ref
     const oldAnalyticRef = React.useRef<{ [key: string]: number }>({});
@@ -336,28 +336,24 @@ const OpenSeeApplication = React.memo(() => {
 
     // Resize effects
     React.useLayoutEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (applicationRef.current == null || applicationRef.current.navBarDiv == null) return;
-            const plotRect = plotRef.current?.getBoundingClientRect();
-            const navBarRect = applicationRef.current.navBarDiv.getBoundingClientRect();
-            const plotAreaHeight = plotRect?.height ?? (window.innerHeight - navBarRect.height);
-            const newHeight = plotAreaHeight / Math.min(plotKeys.length, 3);
-            const newWidth = plotRect?.width ?? 0;
-            const newNavBarWidth = navBarRect.width;
+        const navBar = applicationRef.current?.navBarDiv;
+        if (navBar == null) return;
 
-            if (newHeight !== plotHeight && !isNaN(newHeight) && isFinite(newHeight))
-                setPlotHeight(newHeight);
-            if (newWidth !== plotWidth && !isNaN(newWidth) && isFinite(newWidth))
-                setPlotWidth(newWidth);
-            if (navWidth !== newNavBarWidth && !isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
+        const updateNavWidth = () => {
+            const newNavBarWidth = navBar.getBoundingClientRect().width;
+
+            if (!isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
                 setNavWidth(newNavBarWidth);
-        }, 100);
-        return () => clearTimeout(timeoutId);
-    }, [plotState, openDrawers, resizeCount]);
+        };
 
-    React.useEffect(() => {
-        window.addEventListener("resize", () => setResizeCount(x => x + 1));
-        return () => { $(window).off('resize'); };
+        const resizeObserver = new ResizeObserver(updateNavWidth);
+
+        updateNavWidth();
+        resizeObserver.observe(navBar);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
     }, []);
 
     // Reset time limits when a new event finishes loading
@@ -419,10 +415,11 @@ const OpenSeeApplication = React.memo(() => {
             Version={version}
             Logo={`${homePath}Images/openSEE.png`}
             NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} lifecycle={lifecycle} />}
+            NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
             UseLegacyNavigation={true}
             ref={applicationRef}
         >
-            <VerticalSplit style={{ height: '100%' }}>
+            <VerticalSplit style={{ height: '100%', width: '100%' }}>
                 <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
                     <EventInfo />
                 </SplitDrawer>
