@@ -64,6 +64,9 @@ const ScalarStatsWidget = (props: Iprops) => {
     return (
         <>
             <div className="d-flex flex-column h-100 w-100" style={{ padding: '10px' }}>
+                <div className="d-flex justify-content-end mb-2">
+                    <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
+                </div>
                 <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto' }}>
                     <Table<IEventData>
                         TableClass="table table-hover w-100"
@@ -86,15 +89,10 @@ const ScalarStatsWidget = (props: Iprops) => {
                         <Column<IEventData>
                             Key={'Value'}
                             AllowSort={false}
-                            HeaderStyle={{ width: "60%" }}
-                            RowStyle={{ width: "60%" }}
+                            HeaderStyle={{ width: "70%" }}
+                            RowStyle={{ width: "70%" }}
                             Field={'Value'}>
                             Value
-                        </Column>
-                        <Column<IEventData>
-                            Key={'Export'}
-                            AllowSort={false}>
-                            <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
                         </Column>
                     </Table>
                 </div>

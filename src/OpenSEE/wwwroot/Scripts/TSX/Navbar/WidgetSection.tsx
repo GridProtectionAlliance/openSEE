@@ -79,9 +79,16 @@ const WidgetSection = (props: IWidgets) => {
     if (showFFT)
         optionList.push({ Label: "Export FFT", Callback: () => exportData('fft') });
 
+    const statsOptionList = [
+        { Label: "Scalar Stats", Callback: () => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats) }
+    ];
+
+    if (evt.Context.EventInfo?.EventName === "Snapshot")
+        statsOptionList.push({ Label: "Harmonic Stats", Callback: () => props.ToggleDrawer('HarmonicStats', !props.OpenDrawers.HarmonicStats) });
+
     return (
         <>
-            <li className="nav-item" style={{ width: 'calc(100% - 909px)', textAlign: 'center' }}></li>
+            <li className="nav-item" style={{ width: 'calc(100% - 939px)', textAlign: 'center' }}></li>
             <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Waveform')}
@@ -134,26 +141,18 @@ const WidgetSection = (props: IWidgets) => {
                 </ToolTip>
             </li>
 
-            <li className={"nav-item dropdown"} style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => setHover('Stat')}
-                    onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
-                >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{statsIcon}</i>
-                </button>
-                <div className="dropdown-menu" style={{ position: "absolute" }}>
-                    <a key={"option-scalar"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)} style={{ cursor: 'pointer' }}>
-                        <i style={{ fontStyle: "normal" }}>Scalar Stats</i>
-                    </a>
-                    {evt.Context.EventInfo?.EventName === "Snapshot" ?
-                        <a key={"option-harmonic"} className="dropdown-item" onClick={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.HarmonicStats)} style={{ cursor: 'pointer' }}>
-                            <i style={{ fontStyle: "normal" }}>Harmonic Stats</i>
-                        </a>
-                        : null}
+            <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
+                <div style={{ position: 'absolute' }}>
+                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{statsIcon}</i>}
+                        Callback={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)}
+                        Size={'sm'}
+                        Options={statsOptionList}
+                        ShowToolTip={true}
+                        BtnClass={'btn-primary'}
+                        TooltipContent={<p>Stats</p>}
+                        TooltipLocation={'bottom'}
+                    />
                 </div>
-                <ToolTip Show={hover == 'Stat'} Position={'bottom'} Target={'stats-btn'}>
-                    <p>Stats</p>
-                </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
