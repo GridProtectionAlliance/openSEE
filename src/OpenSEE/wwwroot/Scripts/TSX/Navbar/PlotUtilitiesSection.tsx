@@ -24,7 +24,7 @@ import { Point } from '@gpa-gemstone/gpa-symbols';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import React from "react";
-import About from '../Components/About';
+import About from './About';
 import { OpenSee } from "../global";
 import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } from '../Graphs/ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
