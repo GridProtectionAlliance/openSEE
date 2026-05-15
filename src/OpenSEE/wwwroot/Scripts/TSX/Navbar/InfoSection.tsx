@@ -55,7 +55,7 @@ const InfoSection = (props: InfoSectionProps) => {
                     data-tooltip={'station'}
                     style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}
                 >
-                    <div style={{ textAlign: 'center', color: 'white' }}>Station:</div>
+                    <div style={{ textAlign: 'center', color: 'white' }}>Substation:</div>
                     <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.StationName}</div>
                     <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
                         <p>{evt.Context.EventInfo?.StationName}</p>

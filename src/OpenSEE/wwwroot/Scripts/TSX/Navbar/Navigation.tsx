@@ -103,7 +103,7 @@ const Navigation = () => {
                         </div>
                         <select id="next-back-selection" value={navigation} onChange={e => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
                             <option value="system">System</option>
-                            <option value="station">Station</option>
+                            <option value="station">SubStation</option>
                             <option value="meter">Meter</option>
                             <option value="asset">Asset</option>
                         </select>

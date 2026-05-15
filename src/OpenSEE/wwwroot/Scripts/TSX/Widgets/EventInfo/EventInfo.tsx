@@ -185,7 +185,7 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
             return 'Meter';
 
         case 'StationName':
-            return 'Station';
+            return 'Substation';
 
         case 'AssetName':
             return 'Asset';
