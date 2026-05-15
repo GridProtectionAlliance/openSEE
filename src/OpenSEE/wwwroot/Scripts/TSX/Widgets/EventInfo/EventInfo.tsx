@@ -41,7 +41,7 @@ interface TableData extends Gemstone.TSX.Interfaces.ILabelValue<string> {
 const skippedKeys: (keyof OpenSee.IEventInfo)[] = [
     'Inception',
     'InceptionDate',
-    'EventMilliseconds',
+    'EventDate',
     'xdaInstance',
     'enableLightningData',
     'LineLength',
@@ -193,7 +193,7 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
         case 'EventName':
             return 'Event Type';
 
-        case 'EventDate':
+        case 'EventMilliseconds':
             return 'Event Date';
 
         case 'Inception':
@@ -253,8 +253,8 @@ const getValue = (
                     Fault
                 </a>
 
-        case 'Inception':
-            return moment(tableData.Value)
+        case 'EventMilliseconds':
+            return moment(Number(tableData.Value))
                 .format('YYYY-MM-DD HH:mm:ss.SSS');
 
         case 'PQBrowser' as keyof OpenSee.IEventInfo:
