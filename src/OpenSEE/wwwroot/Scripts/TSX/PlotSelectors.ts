@@ -188,13 +188,16 @@ export function selectDeltaHoverPoints(
     hover: [number, number],
     eventId: number,
     plotData: PlotDataMap,
-    meta: Record<PlotKey, IPlotMeta>
+    meta: Record<PlotKey, IPlotMeta>,
+    dataKey?: OpenSee.IGraphProps
 ): OpenSee.IPoint[] {
     const result: OpenSee.IPoint[] = [];
 
     Object.keys(meta).forEach(pk => {
         const m = meta[pk];
         if (m.key.EventId !== eventId) return;
+        if (dataKey != null && (m.key.DataType !== dataKey.DataType || m.key.EventId !== dataKey.EventId)) return;
+
         const d = plotData[pk] ?? [];
         if (d.length === 0) return;
 
@@ -208,6 +211,7 @@ export function selectDeltaHoverPoints(
             const idx = getIndex(hover[0], series.DataPoints);
             const unitOpt = defaultSettings.Units[series.Unit]?.options?.[m.yLimits[series.Unit]?.current] ?? defaultOption;
             const lastSel = selIdx.length > 0 ? selIdx[selIdx.length - 1] : -1;
+            const selectedTime = m.selectedTimes?.length > 0 ? m.selectedTimes[m.selectedTimes.length - 1] : null;
             result.push({
                 Color: series.Color,
                 Unit: unitOpt,
@@ -215,7 +219,7 @@ export function selectDeltaHoverPoints(
                 Name: getDisplayName(series, m.key.DataType),
                 PrevValue: lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][1] : NaN,
                 BaseValue: series.BaseValue,
-                Time: lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][0] : NaN
+                Time: selectedTime ?? (lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][0] : NaN)
             });
         });
     });

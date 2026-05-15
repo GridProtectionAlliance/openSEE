@@ -83,7 +83,7 @@ const LineChart = (props: IProps) => {
     const options = React.useMemo(() => SelectAnalyticOptions(analytic, props.dataKey.DataType), [analytic, props.dataKey]);
     const fftWindow = React.useMemo(() => ([analytic.FFTStartTime, analytic.FFTStartTime + (analytic.FFTCycles * 1 / 60.0 * 1000.0)] as [number, number]), [analytic]);
     const showFFT = React.useMemo(() => selectFFTEnabled(plotState.meta), [plotState.meta]);
-    const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plotData, plotState.meta), [hover, evt.Context.EventID, plotData, plotState.meta]);
+    const points = React.useMemo(() => selectDeltaHoverPoints(hover, props.dataKey.EventId, plotData, plotState.meta, props.dataKey), [hover, props.dataKey, plotData, plotState.meta]);
 
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
@@ -316,7 +316,7 @@ const LineChart = (props: IProps) => {
                     ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', left: selectedPointLocation, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),
                     ...(plotMarkers ? [
                         { className: 'inception', left: inceptionLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } },
-                        { className: 'duration', left: durationLocation + 20, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
+                        { className: 'duration', left: durationLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
                     ] : [])
                 ]}
             />

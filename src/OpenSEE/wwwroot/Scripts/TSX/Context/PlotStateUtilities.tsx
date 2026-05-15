@@ -15,6 +15,7 @@ export interface IPlotMeta {
     loading: OpenSee.LoadingState;
     enabled: Record<SeriesKey, boolean>;
     selectedIndices: number[];
+    selectedTimes: number[];
     isZoomed: boolean;
     yLimits: OpenSee.IUnitCollection<OpenSee.IAxisSettings>;
 }
@@ -55,6 +56,7 @@ export function createEmptyMeta(key: OpenSee.IGraphProps): IPlotMeta {
         loading: 'Idle',
         enabled: {},
         selectedIndices: [],
+        selectedTimes: [],
         isZoomed: false,
         yLimits: createDefaultYLimits()
     };

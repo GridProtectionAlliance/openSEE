@@ -422,7 +422,8 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
 
                     newMeta[pk] = {
                         ...m,
-                        selectedIndices: [...m.selectedIndices, idx]
+                        selectedIndices: [...m.selectedIndices, idx],
+                        selectedTimes: [...(m.selectedTimes ?? []), time]
                     };
                 });
                 return { ...prev, meta: newMeta };
@@ -433,7 +434,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
             setState(prev => {
                 const newMeta = { ...prev.meta };
                 Object.keys(newMeta).forEach(pk => {
-                    newMeta[pk] = { ...newMeta[pk], selectedIndices: [] };
+                    newMeta[pk] = { ...newMeta[pk], selectedIndices: [], selectedTimes: [] };
                 });
                 return { ...prev, meta: newMeta };
             });
@@ -444,8 +445,10 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                 const newMeta = { ...prev.meta };
                 Object.keys(newMeta).forEach(pk => {
                     const indices = [...newMeta[pk].selectedIndices];
+                    const times = [...(newMeta[pk].selectedTimes ?? [])];
                     indices.splice(index, 1);
-                    newMeta[pk] = { ...newMeta[pk], selectedIndices: indices };
+                    times.splice(index, 1);
+                    newMeta[pk] = { ...newMeta[pk], selectedIndices: indices, selectedTimes: times };
                 });
                 return { ...prev, meta: newMeta };
             });

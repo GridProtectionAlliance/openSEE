@@ -235,8 +235,10 @@ export const useTooltipLocations = (
     React.useEffect(() => {
         if (!xScaleRef.current) return;
         const newTime = points.length > 0 ? points[0].Time : null;
-        if (newTime != null)
+        if (newTime != null && !isNaN(newTime))
             setSelectedPointLocation(xScaleRef.current(newTime));
+        else
+            setSelectedPointLocation(null);
     }, [points, startTime, endTime, xRange[0], xRange[1]]);
 
     React.useEffect(() => {
