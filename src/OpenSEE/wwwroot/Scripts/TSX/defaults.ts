@@ -36,6 +36,9 @@ export const TimeUnitOptions = [
     { label: "minutes", short: "min", factor: 0 },
 ];
 
+// Non-Analytic plots
+export const BasePlots: OpenSee.graphType[] = ["Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'];
+
 type DefaultSettings = {
     DefaultVType: 'L-L' | 'L-N';
     snapToPoint: boolean;

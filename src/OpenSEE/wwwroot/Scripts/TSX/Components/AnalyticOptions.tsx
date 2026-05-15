@@ -36,6 +36,7 @@ import { selectPlotKeys, selectEventIDs } from '../PlotSelectors';
 import { useAppSelector } from '../hooks';
 import { SelectSinglePlot } from '../store/settingSlice';
 import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
+import { BasePlots } from '../defaults';
 
 interface IProps {
     lifecycle: IPlotLifecycleActions;
@@ -54,8 +55,6 @@ const options = {
     ],
     cycles: Array.from({ length: 15 }, (_, i) => ({ Label: `${i + 1}`, Value: `${i + 1}` }))
 };
-
-const basePlots = ["Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'];
 
 const AnalyticOptions = (props: IProps) => {
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
@@ -106,7 +105,7 @@ const AnalyticOptions = (props: IProps) => {
     };
 
     const renderPlotOptions = (key: OpenSee.IGraphProps) => {
-        if (basePlots.includes(key.DataType))
+        if (BasePlots.includes(key.DataType))
             return null;
 
         if (key.DataType === "Harmonic")

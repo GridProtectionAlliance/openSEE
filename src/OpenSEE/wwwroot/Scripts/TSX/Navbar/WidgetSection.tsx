@@ -20,19 +20,20 @@
 //       Moved code to here from OpenSEENavbar.tsx
 //
 //******************************************************************************************************
-import { ToolTip } from '@gpa-gemstone/react-forms';
+import { ToggleSwitch, ToolTip } from '@gpa-gemstone/react-forms';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import React from "react";
 import AnalyticContext from '../Context/AnalyticContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
+import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
 import { useAppDispatch } from '../hooks';
 import { SetMouseMode } from '../store/settingSlice';
-import PlotTable from './PlotTable';
-import { selectFFTEnabled, selectDisplayed, selectAnalytics } from '../PlotSelectors';
+import { selectFFTEnabled, selectDisplayed, selectAnalytics, selectEventIDs } from '../PlotSelectors';
 import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
+import { BasePlots } from '../defaults';
 
 interface IWidgets {
     OpenDrawers: OpenSee.Drawers,
@@ -43,15 +44,32 @@ interface IWidgets {
 const WidgetSection = (props: IWidgets) => {
     const dispatch = useAppDispatch();
     const evt = React.useContext(EventContext);
+    const overlapping = React.useContext(OverlappingStateContext);
     const [analytic] = React.useContext(AnalyticContext);
     const plotState = React.useContext(PlotStateStateContext);
 
     const [hover, setHover] = React.useState<string>('None');
 
     const showFFT = React.useMemo(() => selectFFTEnabled(plotState.meta), [plotState.meta]);
+    const showPlots = React.useMemo(() => selectDisplayed(plotState.meta), [plotState.meta]);
+
+    const togglePlots = (type: OpenSee.graphType) => {
+        let display: boolean | undefined;
+        if (type === 'Voltage') display = showPlots.Voltage;
+        else if (type === 'Current') display = showPlots.Current;
+        else if (type === 'Analogs') display = showPlots.Analogs;
+        else if (type === 'Digitals') display = showPlots.Digitals;
+        else if (type === 'TripCoil') display = showPlots.TripCoil;
+
+        const eventIds = selectEventIDs(evt.Context.EventID, overlapping.events);
+
+        if (display)
+            eventIds.forEach(id => props.lifecycle.RemovePlot({ DataType: type, EventId: id }));
+        else
+            eventIds.forEach(id => props.lifecycle.AddPlot({ DataType: type, EventId: id }));
+    }
 
     const exportData = (type: string) => {
-        const showPlots = selectDisplayed(plotState.meta);
         const analytics = selectAnalytics(plotState.meta, evt.Context.EventID);
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventInfo?.EventId}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
@@ -79,6 +97,30 @@ const WidgetSection = (props: IWidgets) => {
     if (showFFT)
         optionList.push({ Label: "Export FFT", Callback: () => exportData('fft') });
 
+    const waveformOptionList = BasePlots.map(type => {
+        const enabled = showPlots[type] === true;
+        const label = type === 'TripCoil' ? 'Trip Coil E.' : type;
+
+        return {
+            Label: (
+                <div className="container-fluid p-0">
+                    <div className="row no-gutters align-items-center">
+                        <div className="col">
+                            <ToggleSwitch<{ Enabled: boolean }>
+                                Record={{ Enabled: enabled }}
+                                Field={'Enabled'}
+                                Label={label}
+                                Setter={() => togglePlots(type)}
+                                Style={{ marginBottom: 0 }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            ),
+            Callback: () => { }
+        };
+    });
+
     const statsOptionList = [
         { Label: "Scalar Stats", Callback: () => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats) }
     ];
@@ -88,31 +130,19 @@ const WidgetSection = (props: IWidgets) => {
 
     return (
         <>
-            <li className="nav-item" style={{ width: 'calc(100% - 939px)', textAlign: 'center' }}></li>
-            <li className="nav-item dropdown" style={{ width: '54px', position: 'relative', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    onMouseEnter={() => setHover('Waveform')}
-                    onMouseLeave={() => setHover('None')}
-                    data-tooltip={'waveform-btn'}
-                >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{WaveformViews}</i>
-                </button>
-                <div className="dropdown-menu"
-                    style={{
-                        maxHeight: window.innerHeight * 0.75,
-                        overflowY: 'auto',
-                        padding: '10 5',
-                        position: 'absolute',
-                        backgroundColor: '#fff',
-                        boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)',
-                        zIndex: 401,
-                        minWidth: '100%'
-                    }}>
-                    <PlotTable lifecycle={props.lifecycle} />
+            <li className="nav-item" style={{ width: 'calc(100% - 969px)', textAlign: 'center' }}></li>
+            <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
+                <div style={{ position: 'absolute' }}>
+                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{WaveformViews}</i>}
+                        Callback={() => togglePlots('Voltage')}
+                        Size={'sm'}
+                        Options={waveformOptionList}
+                        ShowToolTip={true}
+                        BtnClass={'btn-primary'}
+                        TooltipContent={<p>Waveform Views</p>}
+                        TooltipLocation={'bottom'}
+                    />
                 </div>
-                <ToolTip Show={hover == 'Waveform'} Position={'bottom'} Target={'waveform-btn'}>
-                    <p>Waveform Views</p>
-                </ToolTip>
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
