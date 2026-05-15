@@ -42,7 +42,6 @@ import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotSta
 import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
 import BarChart from './Graphs/BarChart';
 import LineChart from './Graphs/LineChart';
-import { sortGraph } from './Graphs/Utils/Utilities';
 import OpenSeeNavBar from './Navbar/OpenSEENavbar';
 import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
@@ -107,7 +106,7 @@ const OpenSeeApplication = React.memo(() => {
     analyticRef.current = analytic;
 
     const groupedKeys = React.useMemo(() => selectListGraphs(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
-    const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot, sortGraph), [plotState.meta, singlePlot]);
+    const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
 
     const [openDrawers, setOpenDrawers] = React.useState<OpenSee.Drawers>({
         Settings: false,
@@ -407,6 +406,28 @@ const OpenSeeApplication = React.memo(() => {
         }
     }, [openDrawers.ToolTipDelta]);
 
+    const renderPlot = (item: OpenSee.IGraphProps) => {
+        if (item.DataType === 'FFT')
+            return (
+                <BarChart
+                    key={item.DataType + item.EventId}
+                    width={plotWidth}
+                    height={plotHeight}
+                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                />
+            );
+
+        return (
+            <LineChart
+                key={item.DataType + item.EventId}
+                width={plotWidth}
+                height={plotHeight}
+                showToolTip={openDrawers.ToolTipDelta}
+                dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+            />
+        );
+    };
+
     return (
         <Application
             HomePath={homePath}
@@ -484,24 +505,7 @@ const OpenSeeApplication = React.memo(() => {
                     <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
                         {groupedKeys[evt.Context.EventID] != undefined ? (
                             <>
-                                {groupedKeys[evt.Context.EventID].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                    <LineChart
-                                        key={item.DataType + item.EventId}
-                                        width={plotWidth}
-                                        height={plotHeight}
-                                        showToolTip={openDrawers.ToolTipDelta}
-                                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                    />
-                                ))}
-
-                                {groupedKeys[evt.Context.EventID].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                    <BarChart
-                                        key={item.DataType + item.EventId}
-                                        width={plotWidth}
-                                        height={plotHeight}
-                                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                    />
-                                ))}
+                                {groupedKeys[evt.Context.EventID].map(renderPlot)}
                             </>
                         ) : null}
 
@@ -530,23 +534,7 @@ const OpenSeeApplication = React.memo(() => {
                                     </div>
                                 ) : null}
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {groupedKeys[key].filter(item => item.DataType !== 'FFT').sort(sortGraph).map(item => (
-                                        <LineChart
-                                            key={item.DataType + item.EventId}
-                                            width={plotWidth}
-                                            height={plotHeight}
-                                            showToolTip={openDrawers.ToolTipDelta}
-                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                        />
-                                    ))}
-                                    {groupedKeys[key].filter(item => item.DataType === 'FFT').sort(sortGraph).map(item => (
-                                        <BarChart
-                                            key={item.DataType + item.EventId}
-                                            width={plotWidth}
-                                            height={plotHeight}
-                                            dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                                        />
-                                    ))}
+                                    {groupedKeys[key].map(renderPlot)}
                                 </div>
                             </div>
                         )}

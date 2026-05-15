@@ -22,25 +22,26 @@
 //  01/26/2024 - Preston Crawford
 //       Cleaned up layout and introduced manual time&y limits
 //******************************************************************************************************
-import * as React from 'react';
+import React from 'react';
 import moment from 'moment';
-import * as _ from 'lodash';
-import { OpenSee } from '../../global';
 import {
-    SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces, SelectPlotMarkers, SetPlotMarkers,
-    SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
-    SetOverlappingWaveTimeUnit, SetTimeUnit
+    SelectTimeUnit,
+    SelectDefaultTraces,
+    SelectPlotMarkers,
+    SetPlotMarkers,
+    SetDefaultTrace,
+    SelectVTypeDefault,
+    SetDefaultVType,
+    SelectSinglePlot,
+    SetTimeUnit
 } from '../../store/settingSlice';
-import { GetDisplayLabel } from '../../Graphs/Utils/Utilities';
-import { defaultSettings, TimeUnitOptions } from '../../defaults';
+import { TimeUnitOptions } from '../../defaults';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { DatePicker, Select, Input, CheckBox, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
+import { DatePicker, Input, CheckBox, RadioButtons } from '@gpa-gemstone/react-forms';
 import { PlotDataStateContext } from '../../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../../Context/PlotStateContext';
 import EventContext from '../../Context/EventContext';
-import { toPlotKey } from '../../Context/PlotKeys';
-import { selectPlotKeys, selectYLimits, selectOverlappingPlotKeys } from '../../PlotSelectors';
-import { sortGraph } from '../../Graphs/Utils/Utilities';
+import { selectPlotKeys } from '../../PlotSelectors';
 import PlotCard from './PlotCard';
 import TimeUnitSelector from './TimeUnitSelector';
 
@@ -63,10 +64,7 @@ const SettingsWidget = () => {
     const stateActions = React.useContext(PlotStateActionContext);
     const evt = React.useContext(EventContext);
 
-    const plotKeys = React.useMemo(
-        () => selectPlotKeys(plotState.meta, singlePlot, sortGraph),
-        [plotState.meta, singlePlot]
-    );
+    const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
 
     const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
     const inceptionOffset = ((evt.Context.EventInfo?.Inception ?? 0) - originalStartTime);
@@ -137,7 +135,7 @@ const SettingsWidget = () => {
             const offset = container?.scrollTop;
             if (offset != null) setScrollOffset(offset);
         };
-        
+
         if (container != null)
             container.addEventListener("scroll", handleScroll, { passive: true });
         return () => {

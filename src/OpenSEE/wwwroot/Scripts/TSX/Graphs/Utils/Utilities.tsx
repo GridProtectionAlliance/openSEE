@@ -62,23 +62,6 @@ export const GetDisplayLabel = (type: OpenSee.graphType): string => {
     }
 };
 
-export const sortGraph = (item1: OpenSee.IGraphProps, item2: OpenSee.IGraphProps): number => {
-    if (item1.DataType == item2.DataType)
-        return 0
-
-    const index1 = defaultSettings.PlotOrder.findIndex((v) => v == item1.DataType);
-    const index2 = defaultSettings.PlotOrder.findIndex((v) => v == item2.DataType);
-
-    if (index1 != -1 && index2 != -1)
-        return (index1 > index2 ? 1 : -1);
-    if (index1 != -1)
-        return -1;
-    if (index2 != -1)
-        return 1;
-
-    return (item1 > item2 ? 1 : -1);
-};
-
 export const formatValueTick = (d: number, unit: OpenSee.Unit, yScaleCollection: OpenSee.IUnitCollection<d3.ScaleLinear<number, number>> | {}): string => {
     let h = 1;
 

@@ -33,7 +33,6 @@ import EventContext from '../Context/EventContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { selectPlotKeys, selectEventIDs } from '../PlotSelectors';
-import { sortGraph } from '../Graphs/Utils/Utilities';
 import { useAppSelector } from '../hooks';
 import { SelectSinglePlot } from '../store/settingSlice';
 import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
@@ -56,6 +55,8 @@ const options = {
     cycles: Array.from({ length: 15 }, (_, i) => ({ Label: `${i + 1}`, Value: `${i + 1}` }))
 };
 
+const basePlots = ["Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'];
+
 const AnalyticOptions = (props: IProps) => {
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
     const evt = React.useContext(EventContext);
@@ -69,7 +70,7 @@ const AnalyticOptions = (props: IProps) => {
     );
 
     const plotKeys = React.useMemo(
-        () => selectPlotKeys(meta, singlePlot, sortGraph),
+        () => selectPlotKeys(meta, singlePlot),
         [meta, singlePlot]
     );
 
@@ -104,8 +105,149 @@ const AnalyticOptions = (props: IProps) => {
         setTimeout(() => { setAnalytic(newAnalytic); }, 500);
     };
 
-    // Plot types that have parameter UIs or are base waveforms (not generic remove buttons)
-    const dynamicPlots = ["Harmonic", "HighPassFilter", "LowPassFilter", "Rectifier", "FFT", "Voltage", "Current", "Analogs", 'Digitals', 'TripCoil'];
+    const renderPlotOptions = (key: OpenSee.IGraphProps) => {
+        if (basePlots.includes(key.DataType))
+            return null;
+
+        if (key.DataType === "Harmonic")
+            return (
+                <div className="form-row" key={key.DataType}>
+                    <fieldset className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Specified Harmonic</legend>
+                        <div className="row">
+                            <div className="col-6 d-flex flex-column justify-content-end">
+                                <Input<OpenSee.IAnalyticContext>
+                                    Record={analytic}
+                                    Field={'Harmonic'}
+                                    Type={'integer'}
+                                    Setter={analyticDebounce}
+                                    Label={"Harmonic:"}
+                                    Valid={() => analytic.Harmonic != null}
+                                    Feedback="Harmonic value can not be empty"
+                                />
+                            </div>
+                            <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "Harmonic" }))}>Remove</button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            );
+
+        if (key.DataType === "HighPassFilter")
+            return (
+                <div className="form-row" key={key.DataType}>
+                    <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>High Pass Filter</legend>
+                        <div className="row">
+                            <div className="col-6 d-flex flex-column justify-content-end">
+                                <Select<OpenSee.IAnalyticContext>
+                                    Record={analytic}
+                                    Field={'HPFOrder'}
+                                    Options={options.order}
+                                    Setter={setAnalytic}
+                                    Label={"Order:"}
+                                />
+                            </div>
+                            <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "HighPassFilter" }))}>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            );
+
+        if (key.DataType === "LowPassFilter")
+            return (
+                <div className="form-row" key={key.DataType}>
+                    <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Low Pass Filter</legend>
+                        <div className="row">
+                            <div className="col-6 d-flex flex-column justify-content-end">
+                                <Select<OpenSee.IAnalyticContext>
+                                    Record={analytic}
+                                    Field={'LPFOrder'}
+                                    Options={options.order}
+                                    Setter={setAnalytic}
+                                    Label={"Order:"}
+                                />
+                            </div>
+                            <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "LowPassFilter" }))}>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            );
+
+        if (key.DataType === "Rectifier")
+            return (
+                <div className="form-row" key={key.DataType}>
+                    <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
+                        <div className="row">
+                            <div className="col-6 d-flex flex-column justify-content-end">
+                                <Select<OpenSee.IAnalyticContext>
+                                    Record={analytic}
+                                    Field={'Trc'}
+                                    Options={options.trc}
+                                    Setter={setAnalytic}
+                                    Label={"RC Time Const. (ms):"}
+                                />
+                            </div>
+                            <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "Rectifier" }))}>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            );
+
+        if (key.DataType === "FFT")
+            return (
+                <div className="form-row" key={key.DataType}>
+                    <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
+                        <div className="row">
+                            <div className="col-6 d-flex flex-column justify-content-end">
+                                <Input<OpenSee.IAnalyticContext>
+                                    Record={analytic} Field={'FFTCycles'} Type={"integer"}
+                                    Setter={analyticDebounce} Label={"Length(Cycles):"}
+                                    Valid={() => analytic.FFTCycles != null}
+                                    Feedback="FFT Cycles value can not be empty"
+                                />
+                            </div>
+                            <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                                <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "FFT" }))}>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            );
+
+        return (
+            <div className="form-row" key={key.DataType}>
+                <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
+                    <legend className="w-auto" style={{ fontSize: 'large' }}>{GetDisplayLabel(key.DataType)}</legend>
+                    <div className="row">
+                        <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
+                            <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: key.DataType }))}>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        );
+    };
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
@@ -119,134 +261,7 @@ const AnalyticOptions = (props: IProps) => {
                         />
                     </div>
                 )}
-                {plotKeys.some(type => type.DataType === "Harmonic") && (
-                    <div className="form-row">
-                        <fieldset className="border" style={{ padding: '10px', width: '100%', marginBottom: '20px' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>Specified Harmonic</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end">
-                                    <Input<OpenSee.IAnalyticContext>
-                                        Record={analytic}
-                                        Field={'Harmonic'}
-                                        Type={'integer'}
-                                        Setter={analyticDebounce}
-                                        Label={"Harmonic:"}
-                                        Valid={() => analytic.Harmonic != null}
-                                        Feedback="Harmonic value can not be empty"
-                                    />
-                                </div>
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "Harmonic" }))}>Remove</button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                )}
-                {plotKeys.some(type => type.DataType === "HighPassFilter") && (
-                    <div className="form-row">
-                        <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>High Pass Filter</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end">
-                                    <Select<OpenSee.IAnalyticContext>
-                                        Record={analytic}
-                                        Field={'HPFOrder'}
-                                        Options={options.order}
-                                        Setter={setAnalytic}
-                                        Label={"Order:"}
-                                    />
-                                </div>
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "HighPassFilter" }))}>
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                )}
-                {plotKeys.some(type => type.DataType === "LowPassFilter") && (
-                    <div className="form-row">
-                        <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>Low Pass Filter</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end">
-                                    <Select<OpenSee.IAnalyticContext>
-                                        Record={analytic}
-                                        Field={'LPFOrder'}
-                                        Options={options.order}
-                                        Setter={setAnalytic}
-                                        Label={"Order:"}
-                                    />
-                                </div>
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "LowPassFilter" }))}>
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                )}
-                {plotKeys.some(type => type.DataType === "Rectifier") && (
-                    <div className="form-row">
-                        <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end">
-                                    <Select<OpenSee.IAnalyticContext>
-                                        Record={analytic}
-                                        Field={'Trc'}
-                                        Options={options.trc}
-                                        Setter={setAnalytic}
-                                        Label={"RC Time Const. (ms):"}
-                                    />
-                                </div>
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "Rectifier" }))}>
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                )}
-                {plotKeys.some(type => type.DataType === "FFT") && (
-                    <div className="form-row">
-                        <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>FFT</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end">
-                                    <Input<OpenSee.IAnalyticContext>
-                                        Record={analytic} Field={'FFTCycles'} Type={"integer"}
-                                        Setter={analyticDebounce} Label={"Length(Cycles):"}
-                                        Valid={() => analytic.FFTCycles != null}
-                                        Feedback="FFT Cycles value can not be empty"
-                                    />
-                                </div>
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: "FFT" }))}>
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                )}
-                {_.uniqBy(plotKeys, "DataType").map(key => !dynamicPlots.includes(key.DataType) && (
-                    <div className="form-row" key={key.DataType}>
-                        <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                            <legend className="w-auto" style={{ fontSize: 'large' }}>{GetDisplayLabel(key.DataType)}</legend>
-                            <div className="row">
-                                <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
-                                    <button className="btn btn-primary" onClick={() => eventIDs.forEach(id => props.lifecycle.RemovePlot({ EventId: id, DataType: key.DataType }))}>
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                ))}
+                {_.uniqBy(plotKeys, "DataType").map(renderPlotOptions)}
             </form>
         </div>
     );

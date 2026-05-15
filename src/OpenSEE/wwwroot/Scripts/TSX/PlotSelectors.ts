@@ -92,17 +92,15 @@ export function selectDisplayed(meta: Record<PlotKey, IPlotMeta>): OpenSee.IDisp
     };
 }
 
-// Sorted, unique plot keys for rendering
+// Unique plot keys in metadata insertion order
 export function selectPlotKeys(
     meta: Record<PlotKey, IPlotMeta>,
-    singlePlot: boolean,
-    sortFn: (a: OpenSee.IGraphProps, b: OpenSee.IGraphProps) => number
+    singlePlot: boolean
 ): OpenSee.IGraphProps[] {
     let keys = Object.values(meta).map(m => m.key);
     if (singlePlot)
         keys = keys.filter(k => k.EventId === -1);
     keys = _.uniqWith(keys, _.isEqual);
-    keys.sort(sortFn);
     return keys;
 }
 
