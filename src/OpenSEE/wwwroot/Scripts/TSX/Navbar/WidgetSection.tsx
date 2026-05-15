@@ -87,7 +87,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseEnter={() => setHover('Waveform')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'waveform-btn'}
-                    data-toggle="dropdown" data-placement="bottom">
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{WaveformViews}</i>
                 </button>
                 <div className="dropdown-menu"
@@ -112,7 +112,8 @@ const WidgetSection = (props: IWidgets) => {
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Show Points')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints); }}>
+                    onClick={() => props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints)}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{ShowPoints}</i>
                 </button>
                 <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
@@ -124,7 +125,8 @@ const WidgetSection = (props: IWidgets) => {
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Clock')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart); }}>
+                    onClick={() => props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart)}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }}>{PhasorClock}</i>
                 </button>
                 <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
@@ -133,10 +135,10 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className={"nav-item dropdown"} style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Stat')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'stats-btn'}
-                    data-placement="bottom">
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{statsIcon}</i>
                 </button>
                 <div className="dropdown-menu" style={{ position: "absolute" }}>
@@ -158,7 +160,8 @@ const WidgetSection = (props: IWidgets) => {
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Sags')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags); }}>
+                    onClick={() => props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags)}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{CorrelatedSags}</i>
                 </button>
                 <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
@@ -167,11 +170,18 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
-                    disabled={!showFFT}
+                <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                    aria-disabled={!showFFT}
                     onMouseEnter={() => setHover('FFTTable')}
-                    onMouseLeave={() => setHover('None')} data-tooltip={'fftTable-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("fftMove")); props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable); }}>
+                    onMouseLeave={() => setHover('None')}
+                    data-tooltip={'fftTable-btn'}
+                    onClick={() => {
+                        if (showFFT) {
+                            dispatch(SetMouseMode("fftMove"));
+                            props.ToggleDrawer('FFTTable', !props.OpenDrawers.FFTTable);
+                        }
+                    }}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{FFT}</i>
                 </button>
                 <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
@@ -183,7 +193,8 @@ const WidgetSection = (props: IWidgets) => {
                 <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Lightning')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => { props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning); }}>
+                    onClick={() => props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning)}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{lightningData}</i>
                 </button>
                 <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>

@@ -52,6 +52,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
     const mouseMode = useAppSelector(SelectMouseMode);
     const showFFT = React.useMemo(() => selectFFTEnabled(meta), [meta]);
     const [hover, setHover] = React.useState<string>('None');
+    const selectDisabled = !props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta;
 
     return (
         <>
@@ -84,30 +85,39 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                     <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Pan')}
                         onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
-                        data-toggle="tooltip" data-placement="bottom" onClick={() => dispatch(SetMouseMode("pan"))}>
+                        onClick={() => dispatch(SetMouseMode("pan"))}>
                         <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Pan}</i>
                     </button>
                     <ToolTip Show={hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
                         <p>Pan</p>
                     </ToolTip>
 
-                    <button type="button" className={"btn btn-" + (props.OpenDrawers.AccumulatedPoints || props.OpenDrawers.ToolTipDelta ? "primary" : "secondary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
-                        disabled={!props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta}
+                    <button type="button" className={"btn btn-" + (selectDisabled ? "secondary disabled" : "primary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                        aria-disabled={selectDisabled}
                         onMouseEnter={() => setHover('Select')}
-                        onMouseLeave={() => setHover('None')} data-tooltip={'select-btn'}
-                        data-toggle="tooltip" data-placement="bottom" onClick={() => { dispatch(SetMouseMode("select")); }}>
+                        onMouseLeave={() => setHover('None')}
+                        data-tooltip={'select-btn'}
+                        onClick={() => {
+                            if (!selectDisabled)
+                                dispatch(SetMouseMode("select"));
+                        }}
+                    >
                         <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Point}</i>
                     </button>
                     <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
                         <p>Select</p>
                     </ToolTip>
 
-                    <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
-                        onClick={() => dispatch(SetMouseMode("fftMove"))}
-                        disabled={!showFFT}
+                    <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
+                        onClick={() => {
+                            if (showFFT)
+                                dispatch(SetMouseMode("fftMove"));
+                        }}
+                        aria-disabled={!showFFT}
                         onMouseEnter={() => setHover('FFTMove')}
-                        onMouseLeave={() => setHover('None')} data-tooltip={'fftMove-btn'}
-                        data-toggle="tooltip" data-placement="bottom">
+                        onMouseLeave={() => setHover('None')}
+                        data-tooltip={'fftMove-btn'}
+                    >
                         <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
                     </button>
                     <ToolTip Show={hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
@@ -118,7 +128,6 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                         onMouseEnter={() => setHover('Reset Zoom')}
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'reset-btn'}
-                        data-toggle="tooltip" data-placement="bottom"
                         onClick={() => stateActions.ResetZoom(
                             new Date(evt.Context.EventInfo?.EventDate + "Z").getTime(),
                             new Date(evt.Context.EventInfo?.EventEnd + "Z").getTime(),
@@ -136,8 +145,9 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
                 <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Settings')}
-                    onMouseLeave={() => setHover('None')} data-tooltip={'settings-btn'} data-toggle="tooltip" data-placement="bottom"
-                    onClick={() => { props.ToggleDrawer('Settings', !props.OpenDrawers.Settings); }}
+                    onMouseLeave={() => setHover('None')}
+                    data-tooltip={'settings-btn'}
+                    onClick={() => props.ToggleDrawer('Settings', !props.OpenDrawers.Settings)}
                 >
                     <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
                 </button>
@@ -152,7 +162,8 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                 <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }}
                     onMouseEnter={() => setHover('Help')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
-                    data-toggle="tooltip" data-placement="bottom" onClick={() => props.setShowAbout(true)}>
+                    onClick={() => props.setShowAbout(true)}
+                >
                     <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
                 </button>
                 <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'}>

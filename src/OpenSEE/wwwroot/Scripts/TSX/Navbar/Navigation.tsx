@@ -39,7 +39,12 @@ const Navigation = () => {
             {evt.Context.LookupInfo != null ?
                 <li className="nav-item" style={{ width: '210px', marginTop: "10px", minWidth: '155px' }}>
                     <div className="input-group mb-3">
-                        <div className="input-group-prepend">
+                        <div
+                            className="input-group-prepend"
+                            onMouseEnter={() => setHover('NavLeft')}
+                            onMouseLeave={() => setHover('None')}
+                            data-tooltip={'back-btn'}
+                        >
 
                             <ToolTip Show={hover == 'NavLeft'} Position={'bottom'} Target={'back-btn'}>
                                 <p>Navigate to Previous Event in the {navigation}</p>
@@ -56,11 +61,6 @@ const Navigation = () => {
                                     id="system-back"
                                     key="system-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.Item1 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavLeft')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'back-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
@@ -72,11 +72,6 @@ const Navigation = () => {
                                     id="station-back"
                                     key="station-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.Item1 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavLeft')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'back-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
@@ -89,11 +84,6 @@ const Navigation = () => {
                                     id="meter-back"
                                     key="meter-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.Item1 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavLeft')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'back-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
@@ -105,11 +95,6 @@ const Navigation = () => {
                                     id="line-back"
                                     key="line-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.Item1 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavLeft')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'back-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
@@ -122,7 +107,12 @@ const Navigation = () => {
                             <option value="meter">Meter</option>
                             <option value="asset">Asset</option>
                         </select>
-                        <div className="input-group-append">
+                        <div
+                            className="input-group-append"
+                            onMouseEnter={() => setHover('NavRight')}
+                            onMouseLeave={() => setHover('None')}
+                            data-tooltip={'next-btn'}
+                        >
                             <ToolTip Show={hover == 'NavRight'} Position={'bottom'} Target={'next-btn'}>
                                 <p>Navigate to Next Event in the {navigation}</p>
                                 {navigation === "system" && (<p style={{ textAlign: "center" }}>({evt.Context.LookupInfo?.System?.Item2 != null ? evt.Context.LookupInfo.System.Item2.StartTime : ''})</p>)}
@@ -136,11 +126,6 @@ const Navigation = () => {
                                     id="system-next"
                                     key="system-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.Item2 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavRight')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'next-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
@@ -151,11 +136,6 @@ const Navigation = () => {
                                     id="station-next"
                                     key="station-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.Item2 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavRight')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'next-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
@@ -166,11 +146,6 @@ const Navigation = () => {
                                     id="meter-next"
                                     key="meter-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.Item2 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavRight')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'next-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
@@ -181,11 +156,6 @@ const Navigation = () => {
                                     id="line-next"
                                     key="line-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.Item2 == null ? ' disabled' : '')}
-                                    onMouseEnter={() => setHover('NavRight')}
-                                    onMouseLeave={() => setHover('None')}
-                                    data-tooltip={'next-btn'}
-                                    data-toggle="tooltip"
-                                    data-placement="bottom"
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
