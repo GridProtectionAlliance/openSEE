@@ -48,6 +48,7 @@ import { updateXAxisTicks, updateXAxisLabel, updateXAxisPositionOnResize } from 
 import { updateYAxes, updateYAxisLabels, updateYAxisVisibility, updateYAxisPositionsOnResize } from './Renderers/YAxes';
 import { updateFFTWindow as updateFFTWindowD3, updateDurationWindowRect } from './LineChart/Renderers/Overlays';
 import { updateZoomWindow } from './Renderers/ZoomWindow';
+import { PolyLineSpec } from './PolyLine';
 
 interface IProps {
     height: number,
@@ -55,6 +56,8 @@ interface IProps {
     showToolTip: boolean,
     dataKey: OpenSee.IGraphProps
 }
+
+const hoverLineStyle: React.CSSProperties = { stroke: "#000", opacity: 0.5 };
 
 const LineChart = (props: IProps) => {
     const [hover, setHover] = React.useContext(HoverContext);
@@ -129,6 +132,12 @@ const LineChart = (props: IProps) => {
     const { currentFFTWindow, setCurrentFFTWindow, oldFFTWindow, setOldFFTWindow } = useFFTWindow(xScaleRef, fftWindow);
     const yLblFontSize = useYLabelFontSize(yLabels, primaryAxis, props.height);
     const { toolTipLocation, selectedPointLocation, inceptionLocation, durationLocation } = useTooltipLocations(xScaleRef, hover, points, evt.Context.EventInfo, startTime, endTime, xRange);
+    const hoverValueLocation = React.useMemo(() => {
+        const scale = (yScaleRef.current as Record<string, d3.ScaleLinear<number, number>>)[primaryAxis];
+        const location = scale?.(hover[1]);
+
+        return location == null || !Number.isFinite(location) ? null : location;
+    }, [hover, primaryAxis, activeUnit, yLimits]);
 
     const { handlers, wheelZoom, mouseDown, pointMouse } = useMouseInteractions({
         containerRef, xScaleRef, yScaleRef, primaryAxis,
@@ -141,6 +150,18 @@ const LineChart = (props: IProps) => {
     });
 
     const [isCreated, setCreated] = React.useState<boolean>(false);
+    const lineBottom = props.height - 40;
+    const hoverLines = React.useMemo<PolyLineSpec[]>(() => {
+        const lines: PolyLineSpec[] = [];
+
+        if (zoomMode === 'x' || zoomMode === 'xy')
+            lines.push({ className: 'hoverX', points: `${toolTipLocation},20 ${toolTipLocation},${lineBottom}`, style: hoverLineStyle });
+
+        if ((zoomMode === 'y' || zoomMode === 'xy') && hoverValueLocation != null)
+            lines.push({ className: 'hoverY', points: `${xRange[0]},${hoverValueLocation} ${xRange[1]},${hoverValueLocation}`, style: hoverLineStyle });
+
+        return lines;
+    }, [zoomMode, toolTipLocation, hoverValueLocation, lineBottom, xRange]);
 
     const getScales = (): IScales => ({ x: xScaleRef.current, y: yScaleRef.current as Record<string, d3.ScaleLinear<number, number>> });
 
@@ -312,11 +333,11 @@ const LineChart = (props: IProps) => {
                 hasData={lineData?.length > 0}
                 hasTrace={Object.values(enabledLine).some(v => v)}
                 polyLines={[
-                    { className: 'hover', left: toolTipLocation, style: { stroke: "#000", opacity: 0.5 } },
-                    ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', left: selectedPointLocation, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),
+                    ...hoverLines,
+                    ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', points: `${selectedPointLocation},20 ${selectedPointLocation},${lineBottom}`, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),
                     ...(plotMarkers ? [
-                        { className: 'inception', left: inceptionLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } },
-                        { className: 'duration', left: durationLocation, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
+                        { className: 'inception', points: `${inceptionLocation},20 ${inceptionLocation},${lineBottom}`, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } },
+                        { className: 'duration', points: `${durationLocation},20 ${durationLocation},${lineBottom}`, style: { stroke: "#a30000", strokeDasharray: "5,5", opacity: 0.5 } }
                     ] : [])
                 ]}
             />

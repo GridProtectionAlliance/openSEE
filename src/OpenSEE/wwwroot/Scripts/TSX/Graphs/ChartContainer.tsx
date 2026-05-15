@@ -51,8 +51,7 @@ const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerPro
                             <PolyLine
                                 className={line.className}
                                 key={line.className}
-                                height={props.height - 40}
-                                left={line.left}
+                                points={line.points}
                                 style={line.style}
                             />
                         ))}

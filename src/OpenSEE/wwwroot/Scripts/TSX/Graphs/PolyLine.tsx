@@ -25,18 +25,14 @@ import * as React from 'react';
 
 export interface PolyLineSpec {
     className: string;
-    left: number;
+    points: string;
     style: React.CSSProperties;
 }
 
-interface IProps extends PolyLineSpec {
-    height: number;
-}
-
-const PolyLine = (props: IProps) => {
+const PolyLine = (props: PolyLineSpec) => {
     return (
         <g className={props.className}>
-            <polyline className="polyLine" points={`${props.left},20 ${props.left},${props.height}`} style={props.style} />
+            <polyline className="polyLine" points={props.points} style={props.style} />
         </g>
     );
 }
