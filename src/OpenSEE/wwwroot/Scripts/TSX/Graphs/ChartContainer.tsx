@@ -45,15 +45,19 @@ const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerPro
             {props.loading === 'Error' ? <ErrorIcon /> : null}
 
             <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
-                {showSVG ? (props.polyLines ?? []).map(line => (
-                    <PolyLine
-                        className={line.className}
-                        key={line.className}
-                        height={props.height - 40}
-                        left={line.left}
-                        style={line.style}
-                    />
-                )) : null}
+                {showSVG ? (
+                    <g className="polyLineOverlay" transform="translate(10,0)">
+                        {(props.polyLines ?? []).map(line => (
+                            <PolyLine
+                                className={line.className}
+                                key={line.className}
+                                height={props.height - 40}
+                                left={line.left}
+                                style={line.style}
+                            />
+                        ))}
+                    </g>
+                ) : null}
 
                 {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
                     <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text>
