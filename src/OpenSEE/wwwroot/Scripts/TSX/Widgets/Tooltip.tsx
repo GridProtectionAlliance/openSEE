@@ -40,30 +40,30 @@ const ToolTipWidget = () => {
     const evt = React.useContext(EventContext);
     const colors = useSelector(SelectColor);
 
-    const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta),[hover, evt.Context.EventID, plots, meta]);
+    const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta), [hover, evt.Context.EventID, plots, meta]);
 
-    //probably cleaner to just do a row/col flex grid here
     return (
-        <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
-            <table className="table" style={{ height: '100%', marginBottom: 0, overflowY: 'auto', margin: "3%" }}>
-                <thead>
-                    <td colSpan={3} style={{ textAlign: 'center' }}>
+        <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center', overflowY: 'hidden' }}>
+            <div className="d-flex flex-column" style={{ height: '100%', marginBottom: 0, overflowY: 'hidden', padding: "3%", width: '100%', boxSizing: 'border-box' }}>
+                <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
+                    <div className="col" style={{ textAlign: 'center' }}>
                         <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
-                    </td>
-                </thead>
-                <tbody>
+                    </div>
+                </div>
+                <div className="d-flex flex-column" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
                     {points.map((p, i) =>
-                        <tr key={i}>
-                            <td className="dot" style={{ background: colors[p.Color], width: 12 }}><b>&nbsp;&nbsp;&nbsp;</b></td>
-                            <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'left' }}>
+                        <div className="row no-gutters border-top" key={i} style={{ flex: '1 0 auto' }}>
+                            <div className="col-1 dot" style={{ background: colors[p.Color] }} />
+                            <div className="col" style={{ textAlign: 'left' }}>
                                 <b>{p.Name}</b>
-                            </td>
-                            <td style={{ width: 120, paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5, textAlign: 'right' }}>
+                            </div>
+                            <div className="col-auto" style={{ textAlign: 'right' }}>
                                 <b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b>
-                            </td>
-                        </tr>)}
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

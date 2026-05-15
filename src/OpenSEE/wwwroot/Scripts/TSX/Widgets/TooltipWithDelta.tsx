@@ -23,7 +23,7 @@
 //       Refactored layout  
 //
 //******************************************************************************************************
-import * as React from 'react';
+import React from 'react';
 import moment from 'moment';
 import { SelectColor } from '../store/settingSlice';
 import { useAppSelector } from '../hooks';
@@ -33,6 +33,8 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { selectDeltaHoverPoints } from '../PlotSelectors';
 
+const columnTextStyle = { minWidth: 0, overflowWrap: 'anywhere' } as React.CSSProperties;
+
 const ToolTipDeltaWidget = () => {
     const [hover] = React.useContext(HoverContext);
     const { plots } = React.useContext(PlotDataStateContext);
@@ -40,48 +42,57 @@ const ToolTipDeltaWidget = () => {
     const evt = React.useContext(EventContext);
     const colors = useAppSelector(SelectColor);
 
-    const points = React.useMemo(
-        () => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta),
-        [hover, evt.Context.EventID, plots, meta]
-    );
-
-    const dataPoints = points.map((p, i) => <tr key={i}>
-        <td className="dot" style={{ background: colors[p.Color], width: '12px' }}>&nbsp;&nbsp;&nbsp;</td>
-        <td style={{ textAlign: 'left' }}><b>{p.Name}</b></td>
-        <td style={{ textAlign: "right" }}><b>{(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{((p.PrevValue ?? 1) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-        <td style={{ textAlign: "right" }}><b>{((p.Value - (p.PrevValue ?? 0)) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})</b></td>
-    </tr>);
+    const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta), [hover, evt.Context.EventID, plots, meta]);
 
     const firstDate = hover[0];
     const secondDate = points.length > 0 ? points[0].Time : NaN;
 
     return (
-        <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
-            <div style={{ height: '100%', overflow: 'auto' }}>
-                <table className="table" style={{ minWidth: '100%', overflow: 'auto', height: '100%', boxSizing: 'border-box' }}>
-                    <thead>
-                        <tr><td></td>
-                            <td></td>
-                            <td style={{ paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
-                                <b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b>
-                            </td>
-                            {!isNaN(secondDate) ? <>
-                                <td style={{ paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
-                                    <b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b>
-                                </td>
-                                <td style={{ paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }}>
-                                    <b>{(!isNaN(firstDate) ? ((secondDate - firstDate) / 1000).toFixed(9) + ' (s)' : '')}</b>
-                                </td>
-                            </> : <td colSpan={2} style={{ paddingLeft: 5, paddingRight: 5, paddingTop: 0, paddingBottom: 5 }} >
-                                <b>Select a Point</b>
-                            </td>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {dataPoints}
-                    </tbody>
-                </table>
+        <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px', overflowX: 'hidden', overflowY: 'hidden', boxSizing: 'border-box' }}>
+            <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
+                <div className={`${!isNaN(secondDate) ? 'col-4' : 'col-6'} px-1 pb-1 text-center`} style={columnTextStyle}>
+                    <b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b>
+                </div>
+                {!isNaN(secondDate) ?
+                    <>
+                        <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
+                            <b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b>
+                        </div>
+                        <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
+                            <b>{(!isNaN(firstDate) ? ((secondDate - firstDate) / 1000).toFixed(9) + ' (s)' : '')}</b>
+                        </div>
+                    </> :
+                    <div className="col-6 px-1 pb-1 text-center" style={columnTextStyle}>
+                        <b>Select a Point</b>
+                    </div>
+                }
+            </div>
+            <div className="d-flex flex-column" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+                {points.map((p, i) =>
+                    <div className="row no-gutters border-top" key={i} style={{ flex: '1 0 auto' }}>
+                        <div className="col-1 dot border-left border-right" style={{ background: colors[p.Color] }} />
+                        <div className="col-5 text-left border-left border-right" style={columnTextStyle}>
+                            <b>
+                                {p.Name}
+                            </b>
+                        </div>
+                        <div className="col-2 text-right border-left border-right" style={columnTextStyle}>
+                            <b>
+                                {(p.Value * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})
+                            </b>
+                        </div>
+                        <div className="col-2 text-right border-left border-right" style={columnTextStyle}>
+                            <b>
+                                {((p.PrevValue ?? 1) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})
+                            </b>
+                        </div>
+                        <div className="col-2 text-right border-left border-right" style={columnTextStyle}>
+                            <b>
+                                {((p.Value - (p.PrevValue ?? 0)) * (p.Unit.factor === undefined ? 1.0 / p.BaseValue : p.Unit.factor)).toFixed(2)} ({p.Unit.short})
+                            </b>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
