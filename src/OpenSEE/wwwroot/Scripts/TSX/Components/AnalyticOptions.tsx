@@ -217,10 +217,13 @@ const AnalyticOptions = (props: IProps) => {
                         <div className="row">
                             <div className="col-6 d-flex flex-column justify-content-end">
                                 <Input<OpenSee.IAnalyticContext>
-                                    Record={analytic} Field={'FFTCycles'} Type={"integer"}
-                                    Setter={analyticDebounce} Label={"Length(Cycles):"}
+                                    Record={analytic} 
+                                    Field={'FFTCycles'} 
+                                    Setter={analyticDebounce} 
+                                    Label={"Length(Cycles):"}
                                     Valid={() => analytic.FFTCycles != null}
                                     Feedback="FFT Cycles value can not be empty"
+                                    Type="integer"
                                 />
                             </div>
                             <div className="col-6 d-flex flex-column justify-content-end" style={{ marginBottom: '1rem' }}>
