@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
 import { Alert } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table'
 import EventContext from '../Context/EventContext';
 
@@ -64,7 +65,6 @@ const LightningDataWidget = () => {
 
     const [lightningData, setLightningData] = React.useState<LightningData[]>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
-    React.useDebugValue(status);
 
     React.useEffect(() => {
         setStatus('loading');
@@ -89,6 +89,11 @@ const LightningDataWidget = () => {
 
     return (
         <>
+            {status === 'loading' || status === 'uninitiated' ?
+                <div className="d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%' }}>
+                    <ReactIcons.SpiningIcon Size={'100%'} />
+                </div>
+                : null}
             {status === 'error' ?
                 <div className="row justify-content-center">
                     <div className="col-12">
@@ -98,7 +103,7 @@ const LightningDataWidget = () => {
                     </div>
                 </div>
                 : null}
-            {lightningData.length > 0 ?
+            {status === 'idle' && lightningData.length > 0 ?
                 <div style={{ width: '100%', height: '100%', maxHeight: '100%', overflowY: 'hidden' }}>
                     <ConfigurableTable<LightningData>
                         LocalStorageKey={"OpenSee.Lightning.TableCols"}

@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
 import { Alert } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 
 interface Iprops {
     EventID: number,
@@ -33,7 +34,6 @@ interface Iprops {
 const HarmonicStatsWidget = (props: Iprops) => {
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
-    React.useDebugValue(status);
     
     React.useEffect(() => {
         setStatus('loading');
@@ -96,6 +96,11 @@ const HarmonicStatsWidget = (props: Iprops) => {
 
     return (
         <>
+            {status === 'loading' || status === 'uninitiated' ?
+                <div className="d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%' }}>
+                    <ReactIcons.SpiningIcon Size={'100%'} />
+                </div>
+                : null}
             {status === 'error' ?
                 <div className="row justify-content-center">
                     <div className="col-12">
@@ -105,7 +110,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
                     </div>
                 </div>
                 : null}
-            <div className="d-flex" style={{ width: '100%', height: '100%' }}>
+            {status === 'idle' ?
+                <div className="d-flex" style={{ width: '100%', height: '100%' }}>
                 <table className="table" style={{ fontSize: 'large', marginBottom: 0, height: '100%', width: '100%' }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
                         {tblData[0]}
@@ -115,7 +121,8 @@ const HarmonicStatsWidget = (props: Iprops) => {
                         {tblData.slice(2)}
                     </tbody>
                 </table>
-            </div>
+                </div>
+                : null}
         </>
     );
 

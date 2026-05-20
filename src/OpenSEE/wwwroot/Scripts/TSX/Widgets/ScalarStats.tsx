@@ -26,6 +26,7 @@
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
 import { Alert } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import { Table, Column } from '@gpa-gemstone/react-table';
 import { CreateGuid } from '@gpa-gemstone/helper-functions';
 
@@ -43,7 +44,6 @@ interface Iprops {
 const ScalarStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<IEventData[]>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
-    React.useDebugValue(status);
 
     React.useEffect(() => {
         setStatus('loading');
@@ -72,6 +72,11 @@ const ScalarStatsWidget = (props: Iprops) => {
     return (
         <>
             <div className="d-flex flex-column h-100 w-100" style={{ padding: '10px' }}>
+                {status === 'loading' || status === 'uninitiated' ?
+                    <div className="d-flex justify-content-center align-items-center flex-grow-1" style={{ width: '100%' }}>
+                        <ReactIcons.SpiningIcon Size={'100%'} />
+                    </div>
+                    : null}
                 {status === 'error' ?
                     <div className="row justify-content-center">
                         <div className="col-12">
@@ -81,38 +86,42 @@ const ScalarStatsWidget = (props: Iprops) => {
                         </div>
                     </div>
                     : null}
-                <div className="d-flex justify-content-end mb-2">
-                    <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
-                </div>
-                <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto' }}>
-                    <Table<IEventData>
-                        TableClass="table table-hover w-100"
-                        Data={stats}
-                        SortKey={""}
-                        Ascending={true}
-                        OnSort={() => { }}
-                        OnClick={() => { }}
-                        Selected={() => false}
-                        KeySelector={(item) => item.ID}
-                    >
-                        <Column<IEventData>
-                            Key={'Stat'}
-                            AllowSort={false}
-                            HeaderStyle={{ width: "30%" }}
-                            RowStyle={{ width: "30%" }}
-                            Field={'Stat'}>
-                            Stat
-                        </Column>
-                        <Column<IEventData>
-                            Key={'Value'}
-                            AllowSort={false}
-                            HeaderStyle={{ width: "70%" }}
-                            RowStyle={{ width: "70%" }}
-                            Field={'Value'}>
-                            Value
-                        </Column>
-                    </Table>
-                </div>
+                {status === 'idle' ?
+                    <>
+                        <div className="d-flex justify-content-end mb-2">
+                            <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
+                        </div>
+                        <div className="table-responsive h-100" style={{ maxHeight: '100%', overflowY: 'auto' }}>
+                            <Table<IEventData>
+                                TableClass="table table-hover w-100"
+                                Data={stats}
+                                SortKey={""}
+                                Ascending={true}
+                                OnSort={() => { }}
+                                OnClick={() => { }}
+                                Selected={() => false}
+                                KeySelector={(item) => item.ID}
+                            >
+                                <Column<IEventData>
+                                    Key={'Stat'}
+                                    AllowSort={false}
+                                    HeaderStyle={{ width: "30%" }}
+                                    RowStyle={{ width: "30%" }}
+                                    Field={'Stat'}>
+                                    Stat
+                                </Column>
+                                <Column<IEventData>
+                                    Key={'Value'}
+                                    AllowSort={false}
+                                    HeaderStyle={{ width: "70%" }}
+                                    RowStyle={{ width: "70%" }}
+                                    Field={'Value'}>
+                                    Value
+                                </Column>
+                            </Table>
+                        </div>
+                    </>
+                    : null}
             </div>
         </>
     );

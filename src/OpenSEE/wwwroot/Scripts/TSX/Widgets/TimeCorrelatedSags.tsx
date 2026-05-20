@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
 import { Alert } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
@@ -45,7 +46,6 @@ interface ICorrelatedSags {
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
-    React.useDebugValue(status);
 
     React.useEffect(() => {
         setStatus('loading');
@@ -70,6 +70,11 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
 
     return (
         <>
+            {status === 'loading' || status === 'uninitiated' ?
+                <div className="d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%' }}>
+                    <ReactIcons.SpiningIcon Size={'100%'} />
+                </div>
+                : null}
             {status === 'error' ?
                 <div className="row justify-content-center">
                     <div className="col-12">
@@ -79,7 +84,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                     </div>
                 </div>
                 : null}
-            {sagsData.length > 0 ?
+            {status === 'idle' && sagsData.length > 0 ?
                 <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
                     <ConfigurableTable<ICorrelatedSags>
                         LocalStorageKey={"OpenSee.Correlated.TableCols"}

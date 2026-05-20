@@ -28,8 +28,8 @@ import EventContext from '../../Context/EventContext';
 import { Column, Table } from '@gpa-gemstone/react-table';
 import { OpenSee } from '../../global';
 import { Application, Gemstone } from '@gpa-gemstone/application-typings';
-import { Alert, LoadingIcon } from '@gpa-gemstone/react-interactive';
-import { ToolTip } from '@gpa-gemstone/react-forms';
+import { Alert } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 
 const eventDateFormat = "YYYY-MM-DD HH:mm:ss.fffffff";
 const dateFormat = "MM/DD/YYYY";
@@ -62,8 +62,6 @@ const EventInfo = () => {
     const [pqBrowserStatus, setPQBrowserStatus] = React.useState<Application.Types.Status>('uninitiated');
     const [pqBrowserParams, setPQBrowserParams] = React.useState<string>("")
     const [showFaultSpecifics, setShowFaultSpecifics] = React.useState<boolean>(false)
-    const [tooltip, setTooltip] = React.useState<{ Target: string, Content: string } | null>(null);
-    React.useDebugValue(pqBrowserStatus);
 
     React.useEffect(() => {
         setPQBrowserStatus('loading');
@@ -125,12 +123,15 @@ const EventInfo = () => {
         return data;
     }, [Context.EventInfo, pqBrowserURL, pqBrowserParams]);
 
-    if (Context.EventInfo == null)
-        return null;
+    const isLoading = Context.Status === 'loading' || Context.Status === 'uninitiated' || pqBrowserStatus === 'loading' || pqBrowserStatus === 'uninitiated';
 
     return (
         <div className="d-flex flex-column w-100 h-100 p-1">
-            <LoadingIcon Show={Context.Status === 'loading' || Context.Status === 'uninitiated'} Size={150} />
+            {isLoading ?
+                <div className="d-flex justify-content-center align-items-center w-100 h-100">
+                    <ReactIcons.SpiningIcon Size={'100%'} />
+                </div>
+                : null}
             {Context.Status === 'error' ?
                 <div className="row justify-content-center">
                     <div className="col-12">
@@ -149,7 +150,7 @@ const EventInfo = () => {
                     </div>
                 </div>
                 : null}
-            {Context.Status === 'idle' ?
+            {Context.Status === 'idle' && !isLoading && Context.EventInfo != null ?
                 <Table<TableData>
                     Data={tableData}
                     SortKey={'Key'}
@@ -171,37 +172,22 @@ const EventInfo = () => {
                         Key="Value"
                         Field="Value"
                         AllowSort={false}
-                        Content={({ item, index, key }) => {
-                            const target = `event-info-${key}-${item.Key}-${index}`;
-                            const value = getValue(item, Context.EventInfo, setShowFaultSpecifics, pqBrowserURL, pqBrowserParams);
-
-                            return (
-                                <>
-                                    <span
-                                        data-tooltip={target}
-                                        onMouseEnter={() => setTooltip({ Target: target, Content: getTooltipValue(item, Context.EventInfo) })}
-                                        onMouseLeave={() => setTooltip(null)}
-                                        style={{ display: 'inline-block', maxWidth: '100%' }}
-                                    >
-                                        {value}
-                                    </span>
-                                </>
-                            );
-                        }}
+                        Content={({ item }) => (
+                            <>{getValue(item, Context.EventInfo, setShowFaultSpecifics, pqBrowserURL, pqBrowserParams)}</>
+                        )}
                     >
                         {''}
                     </Column>
                 </Table>
                 : null}
-            <ToolTip Show={tooltip != null} Position={'left'} Target={tooltip?.Target}>
-                <p>{tooltip?.Content}</p>
-            </ToolTip>
 
-            <FaultSpecificsModal
-                SetShow={setShowFaultSpecifics}
-                Show={showFaultSpecifics}
-                EventID={Context.EventInfo.EventId}
-            />
+            {Context.EventInfo != null ?
+                <FaultSpecificsModal
+                    SetShow={setShowFaultSpecifics}
+                    Show={showFaultSpecifics}
+                    EventID={Context.EventInfo.EventId}
+                />
+                : null}
         </div>
     )
 }
@@ -211,7 +197,7 @@ const getPQUrl = () => {
         type: "GET",
         url: `${homePath}api/OpenSEE/GetPQBrowser/`,
         contentType: "application/json; charset=utf-8",
-        dataType: 'json',
+        dataType: 'text',
         cache: true,
         async: true
     });
@@ -266,31 +252,6 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
 
         default:
             return key;
-    }
-}
-
-const getTooltipValue = (
-    tableData: TableData,
-    record: OpenSee.IEventInfo | null
-): string => {
-    if (record == null)
-        return '';
-
-    switch (tableData.Key) {
-        case 'EventName':
-            return record.EventName !== 'Fault'
-                ? record.EventName
-                : 'Click for fault details';
-
-        case 'EventMilliseconds':
-            return moment(Number(tableData.Value))
-                .format('YYYY-MM-DD HH:mm:ss.SSS');
-
-        case 'PQBrowser' as keyof OpenSee.IEventInfo:
-            return 'Edit Event and Manage Notes';
-
-        default:
-            return tableData.Value;
     }
 }
 
