@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { Application } from '@gpa-gemstone/application-typings';
 
 interface Iprops {
     EventID: number,
@@ -30,8 +31,12 @@ interface Iprops {
 
 const HarmonicStatsWidget = (props: Iprops) => {
     const [tblData, setTblData] = React.useState<Array<JSX.Element>>([]);
+    const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
+    React.useDebugValue(status);
     
     React.useEffect(() => {
+        setStatus('loading');
+
         const handle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetHarmonics?eventId=${props.EventID}`,
@@ -81,7 +86,9 @@ const HarmonicStatsWidget = (props: Iprops) => {
                     </tr>);
             }
             setTblData(rows);
+            setStatus('idle');
         });
+        handle.fail(() => setStatus('error'));
 
         return () => { if (handle?.abort != null) handle.abort(); }
     }, [props.EventID])

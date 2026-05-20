@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { Application } from '@gpa-gemstone/application-typings';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table'
 import EventContext from '../Context/EventContext';
 
@@ -61,8 +62,12 @@ const LightningDataWidget = () => {
     const evt = React.useContext(EventContext);
 
     const [lightningData, setLightningData] = React.useState<LightningData[]>([]);
+    const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
+    React.useDebugValue(status);
 
     React.useEffect(() => {
+        setStatus('loading');
+
         const handle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetLightningData?eventID=${evt.Context.EventID}`,
@@ -74,7 +79,9 @@ const LightningDataWidget = () => {
 
         handle.done(lightningData => {
             setLightningData(lightningData)
+            setStatus('idle');
         });
+        handle.fail(() => setStatus('error'));
 
         return () => { if (handle !== undefined && handle.abort !== undefined) handle.abort(); }
     }, [evt.Context.EventID]);

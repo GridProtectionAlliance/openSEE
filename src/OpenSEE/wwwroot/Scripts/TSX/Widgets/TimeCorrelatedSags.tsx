@@ -22,6 +22,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { Application } from '@gpa-gemstone/application-typings';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
@@ -42,8 +43,12 @@ interface ICorrelatedSags {
 
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>([]);
+    const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
+    React.useDebugValue(status);
 
     React.useEffect(() => {
+        setStatus('loading');
+
         const handle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetTimeCorrelatedSags?eventId=${props.EventID}`,
@@ -53,7 +58,11 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
             async: true
         });
 
-        handle.done(setSagsData);
+        handle.done(data => {
+            setSagsData(data);
+            setStatus('idle');
+        });
+        handle.fail(() => setStatus('error'));
 
         return () => { if (handle?.abort != null) handle.abort(); }
     }, [props.EventID]);

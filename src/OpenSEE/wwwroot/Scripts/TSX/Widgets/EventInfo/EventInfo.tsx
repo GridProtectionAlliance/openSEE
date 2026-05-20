@@ -27,8 +27,9 @@ import FaultSpecificsModal from './FaultSpecificsModal';
 import EventContext from '../../Context/EventContext';
 import { Column, Table } from '@gpa-gemstone/react-table';
 import { OpenSee } from '../../global';
-import { Gemstone } from '@gpa-gemstone/application-typings';
+import { Application, Gemstone } from '@gpa-gemstone/application-typings';
 import { Alert, LoadingIcon } from '@gpa-gemstone/react-interactive';
+import { ToolTip } from '@gpa-gemstone/react-forms';
 
 const eventDateFormat = "YYYY-MM-DD HH:mm:ss.fffffff";
 const dateFormat = "MM/DD/YYYY";
@@ -58,13 +59,22 @@ const EventInfo = () => {
     const { Context } = React.useContext(EventContext);
 
     const [pqBrowserURL, setPqBrowserURL] = React.useState<string>('http://localhost:44368')
+    const [pqBrowserStatus, setPQBrowserStatus] = React.useState<Application.Types.Status>('uninitiated');
     const [pqBrowserParams, setPQBrowserParams] = React.useState<string>("")
     const [showFaultSpecifics, setShowFaultSpecifics] = React.useState<boolean>(false)
+    const [tooltip, setTooltip] = React.useState<{ Target: string, Content: string } | null>(null);
+    React.useDebugValue(pqBrowserStatus);
 
     React.useEffect(() => {
+        setPQBrowserStatus('loading');
+
         const handle = getPQUrl();
 
-        handle.done((data) => setPqBrowserURL(data));
+        handle.done((data) => {
+            setPqBrowserURL(data);
+            setPQBrowserStatus('idle');
+        });
+        handle.fail(() => setPQBrowserStatus('error'));
 
         return () => {
             if (handle?.abort != null)
@@ -150,14 +160,31 @@ const EventInfo = () => {
                         Key="Value"
                         Field="Value"
                         AllowSort={false}
-                        Content={({ item }) => (
-                            <>{getValue(item, Context.EventInfo, setShowFaultSpecifics, pqBrowserURL, pqBrowserParams)}</>
-                        )}
+                        Content={({ item, index, key }) => {
+                            const target = `event-info-${key}-${item.Key}-${index}`;
+                            const value = getValue(item, Context.EventInfo, setShowFaultSpecifics, pqBrowserURL, pqBrowserParams);
+
+                            return (
+                                <>
+                                    <span
+                                        data-tooltip={target}
+                                        onMouseEnter={() => setTooltip({ Target: target, Content: getTooltipValue(item, Context.EventInfo) })}
+                                        onMouseLeave={() => setTooltip(null)}
+                                        style={{ display: 'inline-block', maxWidth: '100%' }}
+                                    >
+                                        {value}
+                                    </span>
+                                </>
+                            );
+                        }}
                     >
                         {''}
                     </Column>
                 </Table>
                 : null}
+            <ToolTip Show={tooltip != null} Position={'left'} Target={tooltip?.Target}>
+                <p>{tooltip?.Content}</p>
+            </ToolTip>
 
             <FaultSpecificsModal
                 SetShow={setShowFaultSpecifics}
@@ -231,6 +258,31 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
     }
 }
 
+const getTooltipValue = (
+    tableData: TableData,
+    record: OpenSee.IEventInfo | null
+): string => {
+    if (record == null)
+        return '';
+
+    switch (tableData.Key) {
+        case 'EventName':
+            return record.EventName !== 'Fault'
+                ? record.EventName
+                : 'Click for fault details';
+
+        case 'EventMilliseconds':
+            return moment(Number(tableData.Value))
+                .format('YYYY-MM-DD HH:mm:ss.SSS');
+
+        case 'PQBrowser' as keyof OpenSee.IEventInfo:
+            return 'Edit Event and Manage Notes';
+
+        default:
+            return tableData.Value;
+    }
+}
+
 const getValue = (
     tableData: TableData,
     record: OpenSee.IEventInfo | null,
@@ -247,7 +299,6 @@ const getValue = (
                 ? record.EventName
                 : <a
                     href="#"
-                    title="Click for fault details"
                     onClick={() => setShowFaultSpecs(true)}
                 >
                     Fault

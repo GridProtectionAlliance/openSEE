@@ -24,6 +24,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import { Application } from '@gpa-gemstone/application-typings';
 import { Table, Column } from '@gpa-gemstone/react-table';
 import { CreateGuid } from '@gpa-gemstone/helper-functions';
 
@@ -40,8 +41,12 @@ interface Iprops {
 
 const ScalarStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<IEventData[]>([]);
+    const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
+    React.useDebugValue(status);
 
     React.useEffect(() => {
+        setStatus('loading');
+
         const handle = $.ajax({
             type: "GET",
             url: `${homePath}api/OpenSEE/GetScalarStats?eventId=${props.EventID}`,
@@ -56,7 +61,9 @@ const ScalarStatsWidget = (props: Iprops) => {
                 t.push({ Stat: stat, Value: d[stat], ID: CreateGuid() })
             })
             setStats(t);
+            setStatus('idle');
         });
+        handle.fail(() => setStatus('error'));
 
         return () => { if (handle != undefined && handle.abort != undefined) handle.abort(); }
     }, [props.EventID]);
