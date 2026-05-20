@@ -25,6 +25,7 @@
 
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
+import { Alert } from '@gpa-gemstone/react-interactive';
 import { Table, Column } from '@gpa-gemstone/react-table';
 import { CreateGuid } from '@gpa-gemstone/helper-functions';
 
@@ -71,6 +72,15 @@ const ScalarStatsWidget = (props: Iprops) => {
     return (
         <>
             <div className="d-flex flex-column h-100 w-100" style={{ padding: '10px' }}>
+                {status === 'error' ?
+                    <div className="row justify-content-center">
+                        <div className="col-12">
+                            <Alert Class='alert-danger'>
+                                Error retrieving scalar stats.
+                            </Alert>
+                        </div>
+                    </div>
+                    : null}
                 <div className="d-flex justify-content-end mb-2">
                     <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>
                 </div>

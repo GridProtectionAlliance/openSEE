@@ -29,6 +29,7 @@ import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverla
 import { CheckBox } from '@gpa-gemstone/react-forms';
 import _ from 'lodash';
 import { LoadingIcon } from '../Graphs/ChartIcons';
+import { Alert } from '@gpa-gemstone/react-interactive';
 import { TimeUnitOptions } from '../defaults';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 
@@ -47,7 +48,15 @@ const OverlappingEventWindow = (props: IProps) => {
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', padding: '10px' }}>
-            {overlapping.loading !== 'Idle' ? (
+            {overlapping.loading === 'Error' ? (
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-danger'>
+                            Error retrieving overlapping events.
+                        </Alert>
+                    </div>
+                </div>
+            ) : overlapping.loading !== 'Idle' ? (
                 <LoadingIcon />
             ) : (
                 <form style={{ backgroundColor: 'white', borderRadius: '10px', border: '1px solid #000000', height: '100%', width: '100%', overflowY: 'auto', padding: '10px', marginTop: 0 }}>

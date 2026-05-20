@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 interface Iprops {
     EventID: number,
@@ -94,6 +95,16 @@ const HarmonicStatsWidget = (props: Iprops) => {
     }, [props.EventID])
 
     return (
+        <>
+            {status === 'error' ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-danger'>
+                            Error retrieving harmonic stats.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
             <div className="d-flex" style={{ width: '100%', height: '100%' }}>
                 <table className="table" style={{ fontSize: 'large', marginBottom: 0, height: '100%', width: '100%' }}>
                     <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
@@ -105,6 +116,7 @@ const HarmonicStatsWidget = (props: Iprops) => {
                     </tbody>
                 </table>
             </div>
+        </>
     );
 
 }

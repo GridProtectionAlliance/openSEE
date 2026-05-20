@@ -129,13 +129,24 @@ const EventInfo = () => {
         return null;
 
     return (
-        <div className="d-flex w-100 h-100 p-1">
-            <LoadingIcon Show={Context.Status === 'loading' || status === 'uninitiated'} Size={150} />
+        <div className="d-flex flex-column w-100 h-100 p-1">
+            <LoadingIcon Show={Context.Status === 'loading' || Context.Status === 'uninitiated'} Size={150} />
             {Context.Status === 'error' ?
                 <div className="row justify-content-center">
-                    <Alert Class='alert-danger' >
-                        Error retrieving fault information.
-                    </Alert>
+                    <div className="col-12">
+                        <Alert Class='alert-danger' >
+                            Error retrieving fault information.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
+            {pqBrowserStatus === 'error' ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-danger'>
+                            Error retrieving PQ Browser URL.
+                        </Alert>
+                    </div>
                 </div>
                 : null}
             {Context.Status === 'idle' ?

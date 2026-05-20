@@ -81,9 +81,11 @@ const FaultSpecificsModal = (props: Iprops) => {
             <LoadingIcon Show={status === 'loading' || status === 'uninitiated'} Size={150} />
             {status === 'error' ?
                 <div className="row justify-content-center">
-                    <Alert Class='alert-danger' >
-                        Error retrieving fault information.
-                    </Alert>
+                    <div className="col-12">
+                        <Alert Class='alert-danger' >
+                            Error retrieving fault information.
+                        </Alert>
+                    </div>
                 </div>
                 : null}
             {status === 'idle' ?

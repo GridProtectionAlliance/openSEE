@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { Application } from '@gpa-gemstone/application-typings';
+import { Alert } from '@gpa-gemstone/react-interactive';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
 
 interface Iprops {
@@ -69,6 +70,15 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
 
     return (
         <>
+            {status === 'error' ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-danger'>
+                            Error retrieving time-correlated sags.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
             {sagsData.length > 0 ?
                 <div className="d-flex" style={{ width: '100%', height: '100%', maxHeight: '100vh', overflowY: 'hidden' }}>
                     <ConfigurableTable<ICorrelatedSags>
