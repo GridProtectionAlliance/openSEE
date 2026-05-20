@@ -80,7 +80,7 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                                 AllowSort={true}
                                 Field={'EventID'}
                                 Content={({ item }) => (
-                                    <a id="eventLink" target="_blank" href={`./?eventid=${item.EventID}`}>
+                                    <a id="eventLink" target="_blank" href={`${homePath}?eventid=${item.EventID}`}>
                                         <div style={{ width: '100%', height: '100%' }}>{item.EventID}</div>
                                     </a>
                                 )}
@@ -153,7 +153,6 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                         </Column>
                     </ConfigurableTable>
                 </div>
-
                 : null}
         </>
     );
