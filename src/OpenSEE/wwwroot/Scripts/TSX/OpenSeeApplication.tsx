@@ -446,6 +446,7 @@ const OpenSeeApplication = React.memo(() => {
             Logo={`${homePath}Images/openSEE.png`}
             NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} lifecycle={lifecycle} />}
             NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
+            NavBarImgStyle={{ maxHeight: 55, margin: -5 }}
             UseLegacyNavigation={true}
             ref={applicationRef}
         >
