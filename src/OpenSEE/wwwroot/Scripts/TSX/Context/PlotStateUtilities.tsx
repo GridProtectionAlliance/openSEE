@@ -251,20 +251,52 @@ export function getPrimaryAxis(key: OpenSee.IGraphProps): OpenSee.Unit {
 }
 
 // Build a display name for tooltip entries
-export function getDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType): string {
-    if (type === 'Voltage' || type === 'Current')
-        return d.LegendGroup + (type === 'Voltage' ? ' V ' : ' I ') + d.LegendVertical + ' ' + d.LegendHorizontal;
-    if (type === 'FirstDerivative')
-        return d.LegendGroup + ' ' + d.LegendVGroup + ' derivative ' + d.LegendHorizontal + ' ' + d.LegendVertical;
-    if (type === 'ClippedWaveforms')
-        return d.LegendGroup + ' clipped WaveForm ' + d.LegendVertical;
-    if (type === 'Frequency')
-        return d.LegendGroup + ' Frequency ' + d.LegendVertical;
-    if (type === 'HighPassFilter')
-        return d.LegendGroup + ' ' + d.LegendHorizontal + ' HPF ' + d.LegendVertical;
-    if (type === 'LowPassFilter')
-        return d.LegendGroup + ' ' + d.LegendHorizontal + ' LPF ' + d.LegendVertical;
-    return type;
+export function getDisplayName(d: OpenSee.iD3DataSeries, type: OpenSee.graphType, harmonic?: number): string {
+    const harmonicLabel = harmonic == null ? '' : ` ${harmonic}`;
+
+    switch (type) {
+        case 'Voltage':
+        case 'Current':
+            return d.LegendGroup + (type === 'Voltage' ? ' V ' : ' I ') + d.LegendVertical + ' ' + d.LegendHorizontal;
+        case 'FirstDerivative':
+            return `${d.LegendGroup} Derivative`;
+        case 'ClippedWaveforms':
+            return `${d.LegendGroup} Fixed Clipped Waveform`;
+        case 'Frequency':
+            return `${d.LegendGroup} Frequency${d.LegendVertical === 'Avg' ? ' Avg' : ''}`;
+        case 'HighPassFilter':
+            return `${d.LegendGroup} HPF`;
+        case 'LowPassFilter':
+            return `${d.LegendGroup} LPF`;
+        case 'FaultDistance':
+            return d.LegendVertical;
+        case 'FFT':
+            return `FFT ${d.LegendGroup} ${d.LegendHorizontal}`;
+        case 'Impedance':
+        case 'Power':
+        case 'SymetricComp':
+            return `${d.LegendHorizontal} ${d.LegendVertical}`;
+        case 'MissingVoltage':
+            return `${d.LegendGroup} Missing Voltage (${d.LegendHorizontal}-Fault)`;
+        case 'OverlappingWave':
+            return `${d.LegendGroup} Overlapping Waveform`;
+        case 'RapidVoltage':
+            return `${d.LegendGroup} Rapid Voltage Change`;
+        case 'Rectifier':
+            return `Rectifier ${d.LegendHorizontal === 'I' ? 'Current' : 'Voltage'}`;
+        case 'RemoveCurrent':
+            return `${d.LegendGroup} Removed Current (${d.LegendHorizontal}-Fault)`;
+        case 'Harmonic':
+            return `${d.LegendGroup} Harmonic${harmonicLabel} ${d.LegendHorizontal}`;
+        case 'THD':
+            return `${d.LegendGroup} THD`;
+        case 'Unbalance':
+            return `${d.LegendHorizontal}${d.LegendVertical} Unbalance`;
+        case 'I2T':
+            return `${d.LegendGroup} I2T`;
+        default:
+            return type;
+    }
 }
 
 // Compute default enabled flags for each series based on graph type and user prefs
@@ -338,7 +370,7 @@ export function getDefaultEnabled(
         case 'SymetricComp':
             return buildMap(item => item.LegendVertical === 'Pos');
         case 'Unbalance':
-            return buildMap(item => item.LegendVertical === 'S2/S1');
+            return buildMap(item => item.LegendVertical === 'Neg/Pos');
         case 'FFT':
             return buildMap(item => item.LegendHorizontal === 'Mag' && item.LegendVGroup === 'Volt.');
         case 'Harmonic':

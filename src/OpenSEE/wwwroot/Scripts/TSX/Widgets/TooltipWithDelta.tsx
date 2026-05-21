@@ -31,6 +31,7 @@ import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
+import AnalyticContext from '../Context/AnalyticContext';
 import { selectDeltaHoverPoints } from '../PlotSelectors';
 
 const columnTextStyle = { minWidth: 0, overflowWrap: 'anywhere' } as React.CSSProperties;
@@ -40,9 +41,10 @@ const ToolTipDeltaWidget = () => {
     const { plots } = React.useContext(PlotDataStateContext);
     const { meta } = React.useContext(PlotStateStateContext);
     const evt = React.useContext(EventContext);
+    const [analytic] = React.useContext(AnalyticContext);
     const colors = useAppSelector(SelectColor);
 
-    const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta), [hover, evt.Context.EventID, plots, meta]);
+    const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta, undefined, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
 
     const firstDate = hover[0];
     const secondDate = points.length > 0 ? points[0].Time : NaN;

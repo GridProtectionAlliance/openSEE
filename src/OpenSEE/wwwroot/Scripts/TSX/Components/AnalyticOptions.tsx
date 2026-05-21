@@ -77,11 +77,11 @@ const AnalyticOptions = (props: IProps) => {
         { Label: 'Fault Distance', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'FaultDistance', EventId: id })), DataType: 'FaultDistance' },
         { Label: 'FFT', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'FFT', EventId: id })), DataType: 'FFT' },
         { Label: 'First Derivative', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'FirstDerivative', EventId: id })), DataType: "FirstDerivative" },
-        { Label: 'Fix Clipped Waveforms', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'ClippedWaveforms', EventId: id })), DataType: 'ClippedWaveforms' },
+        { Label: 'Fixed Clipped Waveforms', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'ClippedWaveforms', EventId: id })), DataType: 'ClippedWaveforms' },
         { Label: 'Frequency', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'Frequency', EventId: id })), DataType: 'Frequency' },
-        { Label: 'High Pass', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'HighPassFilter', EventId: id })), DataType: 'HighPassFilter' },
+        { Label: 'High Pass Filter', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'HighPassFilter', EventId: id })), DataType: 'HighPassFilter' },
         { Label: 'Impedance', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'Impedance', EventId: id })), DataType: 'Impedance' },
-        { Label: 'Low Pass', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'LowPassFilter', EventId: id })), DataType: 'LowPassFilter' },
+        { Label: 'Low Pass Filter', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'LowPassFilter', EventId: id })), DataType: 'LowPassFilter' },
         { Label: 'Missing Voltage', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'MissingVoltage', EventId: id })), DataType: 'MissingVoltage' },
         { Label: 'Overlapping Waveform', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'OverlappingWave', EventId: id })), DataType: 'OverlappingWave' },
         { Label: 'Power', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'Power', EventId: id })), DataType: 'Power' },
@@ -92,7 +92,7 @@ const AnalyticOptions = (props: IProps) => {
         { Label: 'Symmetrical Components', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'SymetricComp', EventId: id })), DataType: 'SymetricComp' },
         { Label: 'THD', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'THD', EventId: id })), DataType: 'THD' },
         { Label: 'Unbalance', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'Unbalance', EventId: id })), DataType: 'Unbalance' },
-        { Label: 'i2t', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'I2T', EventId: id })), DataType: 'I2T' }
+        { Label: 'I2T', Callback: () => eventIDs.forEach(id => props.lifecycle.AddPlot({ DataType: 'I2T', EventId: id })), DataType: 'I2T' }
     ];
 
     const analyticBtns = React.useMemo(() => {
@@ -187,7 +187,7 @@ const AnalyticOptions = (props: IProps) => {
             return (
                 <div className="form-row" key={key.DataType}>
                     <fieldset className="border" style={{ padding: '10px', width: '100%' }}>
-                        <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier</legend>
+                        <legend className="w-auto" style={{ fontSize: 'large' }}>Rectifier Output</legend>
                         <div className="row">
                             <div className="col-6 d-flex flex-column justify-content-end">
                                 <Select<OpenSee.IAnalyticContext>

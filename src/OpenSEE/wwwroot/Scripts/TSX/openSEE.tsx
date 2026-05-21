@@ -27,9 +27,9 @@
 // # Fix Dowload.ash to include Analytics
 //
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom/client';
+import 'bootstrap/dist/css/bootstrap.min.css'; // this could be served statically from server instead of bundling in app
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { AnalyticProvider } from './Context/AnalyticContext';
 import { EventProvider } from './Context/EventContext';

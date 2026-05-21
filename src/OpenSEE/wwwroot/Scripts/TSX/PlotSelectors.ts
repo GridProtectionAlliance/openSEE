@@ -150,7 +150,8 @@ export function selectHoverPoints(
     hover: [number, number],
     eventId: number,
     plotData: PlotDataMap,
-    meta: Record<PlotKey, IPlotMeta>
+    meta: Record<PlotKey, IPlotMeta>,
+    harmonic?: number
 ): OpenSee.IPoint[] {
     const result: OpenSee.IPoint[] = [];
 
@@ -171,7 +172,7 @@ export function selectHoverPoints(
                 Color: series.Color,
                 Unit: unitOpt,
                 Value: idx > series.DataPoints.length - 1 ? NaN : series.DataPoints[idx][1],
-                Name: getDisplayName(series, m.key.DataType),
+                Name: getDisplayName(series, m.key.DataType, harmonic),
                 BaseValue: series.BaseValue,
                 Time: 0
             });
@@ -187,7 +188,8 @@ export function selectDeltaHoverPoints(
     eventId: number,
     plotData: PlotDataMap,
     meta: Record<PlotKey, IPlotMeta>,
-    dataKey?: OpenSee.IGraphProps
+    dataKey?: OpenSee.IGraphProps,
+    harmonic?: number
 ): OpenSee.IPoint[] {
     const result: OpenSee.IPoint[] = [];
 
@@ -214,7 +216,7 @@ export function selectDeltaHoverPoints(
                 Color: series.Color,
                 Unit: unitOpt,
                 Value: idx > series.DataPoints.length - 1 ? NaN : series.DataPoints[idx][1],
-                Name: getDisplayName(series, m.key.DataType),
+                Name: getDisplayName(series, m.key.DataType, harmonic),
                 PrevValue: lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][1] : NaN,
                 BaseValue: series.BaseValue,
                 Time: selectedTime ?? (lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][0] : NaN)

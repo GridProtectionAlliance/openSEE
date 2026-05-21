@@ -86,7 +86,7 @@ const LineChart = (props: IProps) => {
     const options = React.useMemo(() => SelectAnalyticOptions(analytic, props.dataKey.DataType), [analytic, props.dataKey]);
     const fftWindow = React.useMemo(() => ([analytic.FFTStartTime, analytic.FFTStartTime + (analytic.FFTCycles * 1 / 60.0 * 1000.0)] as [number, number]), [analytic]);
     const showFFT = React.useMemo(() => selectFFTEnabled(plotState.meta), [plotState.meta]);
-    const points = React.useMemo(() => selectDeltaHoverPoints(hover, props.dataKey.EventId, plotData, plotState.meta, props.dataKey), [hover, props.dataKey, plotData, plotState.meta]);
+    const points = React.useMemo(() => selectDeltaHoverPoints(hover, props.dataKey.EventId, plotData, plotState.meta, props.dataKey, options?.[0]), [hover, props.dataKey, plotData, plotState.meta, options]);
 
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
@@ -104,6 +104,7 @@ const LineChart = (props: IProps) => {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const { xScaleRef, yScaleRef } = useChartScales(d3.scaleLinear());
+    const firstAnalyticOption = options?.[0];
     const xRange = React.useMemo<[number, number]>(() => {
         if (enabledUnits?.length > 2)
             return [120, props.width - 110];
@@ -194,7 +195,7 @@ const LineChart = (props: IProps) => {
                 height: props.height, width: props.width, dataKey: props.dataKey,
                 yLimits, enabledUnits, yLabels, startTime, endTime,
                 showFFT, plotMarkers, fftWindow, currentFFTWindow, mouseMode,
-                timeCtx: buildTimeCtx(), displayLabel: GetDisplayLabel(props.dataKey.DataType),
+                timeCtx: buildTimeCtx(), displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
                 eventInfo: evt.Context.EventInfo,
             },
             { ...handlers, wheelZoom }
@@ -208,7 +209,7 @@ const LineChart = (props: IProps) => {
         updateMarkerVisibility(containerRef.current, lineData, enabledLine);
         updateYAxisVisibility(containerRef.current, relevantUnits, enabledUnits);
         setCreated(true);
-    }, [lineData, loading]);
+    }, [lineData, loading, firstAnalyticOption]);
 
     // Resize: reposition axes, recompute scale ranges
     React.useEffect(() => {
@@ -303,7 +304,7 @@ const LineChart = (props: IProps) => {
                 currentFFTWindow,
                 mouseMode,
                 timeCtx: buildTimeCtx(),
-                displayLabel: GetDisplayLabel(props.dataKey.DataType),
+                displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
                 eventInfo: evt.Context.EventInfo,
             },
             { ...handlers, wheelZoom }
@@ -315,7 +316,7 @@ const LineChart = (props: IProps) => {
         updateLineVisibility(containerRef.current, lineData, enabledLine);
         updateMarkerVisibility(containerRef.current, lineData, enabledLine);
         updateYAxisVisibility(containerRef.current, relevantUnits, enabledUnits);
-    }, [props.dataKey, options]);
+    }, [props.dataKey, firstAnalyticOption]);
 
     // Y-axis labels: re-render when labels or font size change
     React.useEffect(() => {

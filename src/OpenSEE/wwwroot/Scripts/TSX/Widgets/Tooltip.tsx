@@ -31,6 +31,7 @@ import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
+import AnalyticContext from '../Context/AnalyticContext';
 import { selectHoverPoints } from '../PlotSelectors';
 
 const ToolTipWidget = () => {
@@ -38,9 +39,10 @@ const ToolTipWidget = () => {
     const { plots } = React.useContext(PlotDataStateContext);
     const { meta } = React.useContext(PlotStateStateContext);
     const evt = React.useContext(EventContext);
+    const [analytic] = React.useContext(AnalyticContext);
     const colors = useSelector(SelectColor);
 
-    const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta), [hover, evt.Context.EventID, plots, meta]);
+    const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center', overflowY: 'hidden' }}>

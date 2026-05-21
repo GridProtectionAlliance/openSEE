@@ -216,6 +216,33 @@ function getSettings(): OpenSee.ISettingsState | undefined {
         
         // overwrite options if new options are available
         const storageState: OpenSee.ISettingsState = JSON.parse(serializedState);
+        storageState.Colors = storageState.Colors ?? defaultSettings.Colors;
+
+        const colorMigrations: Partial<Record<string, OpenSee.Color>> = {
+            freqAll: 'All',
+            VS0: 'VZero',
+            VS1: 'VPos',
+            VS2: 'VNeg',
+            IS0: 'IZero',
+            IS1: 'IPos',
+            IS2: 'INeg',
+            Pfa: 'PFa',
+            Pfb: 'PFb',
+            Pfc: 'PFc',
+            Pft: 'PFt',
+            faultDistSimple: 'Simple',
+            faultDistReact: 'Reactance',
+            faultDistTakagi: 'Takagi',
+            faultDistModTakagi: 'ModifiedTakagi',
+            faultDistNovosel: 'Novosel',
+            faultDistDoubleEnd: 'DoubleEnded'
+        };
+
+        Object.keys(colorMigrations).forEach((oldKey) => {
+            const newKey = colorMigrations[oldKey];
+            if (newKey != null && storageState.Colors[newKey] === undefined && storageState.Colors[oldKey] !== undefined)
+                storageState.Colors[newKey] = storageState.Colors[oldKey];
+        });
 
         const timeUnitValid = storageState.TimeUnit !== undefined && storageState.TimeUnit.current >= 0 && storageState.TimeUnit.current < TimeUnitOptions.length;
 

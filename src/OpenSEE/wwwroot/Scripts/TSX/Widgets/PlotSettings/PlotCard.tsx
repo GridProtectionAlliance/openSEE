@@ -317,7 +317,7 @@ const PlotCard = (props: IProps) => {
                                         <ColorPicker<OpenSee.IColorCollection>
                                             Record={colors}
                                             Field={c}
-                                            Label={c as string}
+                                            Label={getColorLabel(c, props.DataType)}
                                             Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
                                             Style={{ background: colors[c], marginBottom: 5 }}
                                         />
@@ -346,3 +346,24 @@ const PlotCard = (props: IProps) => {
 };
 
 export default PlotCard;
+
+const getColorLabel = (color: OpenSee.Color, dataType: OpenSee.graphType): string => {
+    if (dataType === 'Unbalance') {
+        switch (color) {
+            case 'VZero': return 'V Zero/Pos';
+            case 'VNeg': return 'V Neg/Pos';
+            case 'IZero': return 'I Zero/Pos';
+            case 'INeg': return 'I Neg/Pos';
+        }
+    }
+
+    switch (color) {
+        case 'VZero': return 'V Zero';
+        case 'VPos': return 'V Pos';
+        case 'VNeg': return 'V Neg';
+        case 'IZero': return 'I Zero';
+        case 'IPos': return 'I Pos';
+        case 'INeg': return 'I Neg';
+        default: return color as string;
+    }
+}

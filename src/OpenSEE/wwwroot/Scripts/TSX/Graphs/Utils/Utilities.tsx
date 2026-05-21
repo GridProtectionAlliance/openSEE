@@ -29,7 +29,7 @@ import { GetTextWidth } from '@gpa-gemstone/helper-functions';
 import * as d3 from 'd3';
 import { IChartScales, IFormatTimeContext, IPanZoomInteractionInputs, IPanZoomInteractionResult, ITooltipLocations } from './Types';
 
-export const GetDisplayLabel = (type: OpenSee.graphType): string => {
+export const GetDisplayLabel = (type: OpenSee.graphType, harmonic?: number): string => {
     switch (type) {
         case ('FirstDerivative'):
             return "First Derivative"
@@ -38,7 +38,7 @@ export const GetDisplayLabel = (type: OpenSee.graphType): string => {
         case ('LowPassFilter'):
             return "Low Pass Filter"
         case ('ClippedWaveforms'):
-            return "Fixed Waveforms"
+            return "Fixed Clipped Waveforms"
         case ('OverlappingWave'):
             return "Overlapping Waveform"
         case ('MissingVoltage'):
@@ -50,13 +50,15 @@ export const GetDisplayLabel = (type: OpenSee.graphType): string => {
         case ('RemoveCurrent'):
             return "Remove Current"
         case ('Harmonic'):
-            return "Specified Harmonic"
+            return harmonic == null ? "Specified Harmonic" : `Specified Harmonic (${harmonic})`
         case ('SymetricComp'):
             return "Symmetrical Components"
         case ('FaultDistance'):
             return "Fault Distance"
         case ('Restrike'):
             return "Breaker Restrike"
+        case ('I2T'):
+            return "I2T"
         default:
             return (type as string)
     }

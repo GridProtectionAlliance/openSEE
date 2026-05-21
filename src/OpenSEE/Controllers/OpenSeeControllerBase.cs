@@ -205,21 +205,20 @@ namespace OpenSEE
         /// <returns>A color designation</returns>
         protected string GetFaultDistanceColor(string algorithm)
         {
-            string random = string.Format("#{0:X6}", m_random.Next(0x1000001));
             switch (algorithm)
             {
                 case ("Simple"):
-                    return "faultDistSimple";
+                    return "Simple";
                 case ("Reactance"):
-                    return "faultDistReact";
+                    return "Reactance";
                 case ("Takagi"):
-                    return "faultDistTakagi";
+                    return "Takagi";
                 case ("ModifiedTakagi"):
-                    return "faultDistModTakagi";
+                    return "ModifiedTakagi";
                 case ("Novosel"):
-                    return "faultDistNovosel";
+                    return "Novosel";
                 case ("DoubleEnded"):
-                    return "faultDistDoubleEnd";
+                    return "DoubleEnded";
                 default:
                     return "random";
             }
@@ -236,13 +235,13 @@ namespace OpenSEE
             switch (phase)
             {
                 case ("Avg"):
-                    return "freqAll";
+                    return "All";
                 case ("AN"):
-                    return "freqVa";
+                    return "Va";
                 case ("BN"):
-                    return "freqVb";
+                    return "Vb";
                 case ("CN"):
-                    return "freqVc";
+                    return "Vc";
                                 
                 default:
                     return "random";

@@ -22,9 +22,9 @@
 //******************************************************************************************************
 import { ILegendGrid } from './Types';
 
-const horizontalSort = ['W', 'Pk', 'RMS', 'Ph', 'V', 'I', 'Pre', 'Post', 'P', 'Q', 'S', 'Pf', 'R', 'X', 'Z', 'Mag', 'Ang'];
+const horizontalSort = ['W', 'Pk', 'RMS', 'Ph', 'V', 'I', 'Pre', 'Post', 'P', 'Q', 'S', 'PF', 'R', 'X', 'Z', 'Mag', 'Ang'];
 const verticalGroupSort = ['L-N', 'L-L', 'Volt.', 'Curr.', 'V', 'I'];
-const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero', 'S0/S1', 'S2/S1', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel'];
+const verticalSort = ['AN', 'BN', 'CN', 'NG', 'RES', 'AB', 'BC', 'CA', 'Avg', 'Total', 'Pos', 'Neg', 'Zero', 'Zero/Pos', 'Neg/Pos', 'Simple', 'Reactance', 'Takagi', 'ModifiedTakagi', 'Novosel', 'DoubleEnded'];
 
 export const sortHorizontal = (a: string, b: string): number => {
     if (a == b) return 0;
