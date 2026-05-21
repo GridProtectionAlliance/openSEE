@@ -28,6 +28,7 @@
 //
 
 import { Application, SplitDrawer, SplitSection, VerticalSplit, IApplicationRefs } from '@gpa-gemstone/react-interactive';
+import { ErrorBoundary } from '@gpa-gemstone/common-pages';
 import createHistory from "history/createBrowserHistory";
 import * as _ from "lodash";
 import moment from 'moment';
@@ -60,7 +61,6 @@ import ToolTipWidget from './Widgets/Tooltip';
 import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
 import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './store/settingSlice';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
-
 
 const OpenSeeApplication = React.memo(() => {
     const dispatch = useAppDispatch();
@@ -416,22 +416,24 @@ const OpenSeeApplication = React.memo(() => {
     const renderPlot = (item: OpenSee.IGraphProps) => {
         if (item.DataType === 'FFT')
             return (
-                <BarChart
-                    key={item.DataType + item.EventId}
-                    width={plotWidth}
-                    height={plotHeight}
-                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-                />
+                <OpenSeeErrorBoundary key={item.DataType + item.EventId} message="Error loading plot.">
+                    <BarChart
+                        width={plotWidth}
+                        height={plotHeight}
+                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                    />
+                </OpenSeeErrorBoundary>
             );
 
         return (
-            <LineChart
-                key={item.DataType + item.EventId}
-                width={plotWidth}
-                height={plotHeight}
-                showToolTip={openDrawers.ToolTipDelta}
-                dataKey={{ DataType: item.DataType, EventId: item.EventId }}
-            />
+            <OpenSeeErrorBoundary key={item.DataType + item.EventId} message="Error loading plot.">
+                <LineChart
+                    width={plotWidth}
+                    height={plotHeight}
+                    showToolTip={openDrawers.ToolTipDelta}
+                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                />
+            </OpenSeeErrorBoundary>
         );
     };
 
@@ -449,63 +451,89 @@ const OpenSeeApplication = React.memo(() => {
         >
             <VerticalSplit style={{ height: '100%', width: '100%' }}>
                 <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
-                    <EventInfo />
+                    <OpenSeeErrorBoundary message="Error loading info.">
+                        <EventInfo />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                    <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
+                    <OpenSeeErrorBoundary message="Error loading compare.">
+                        <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                    <AnalyticOptions lifecycle={lifecycle} />
+                    <OpenSeeErrorBoundary message="Error loading analytics.">
+                        <AnalyticOptions lifecycle={lifecycle} />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
-                    <ToolTipWidget />
+                    <OpenSeeErrorBoundary message="Error loading tooltip.">
+                        <ToolTipWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}>
-                    <ToolTipDeltaWidget />
+                    <OpenSeeErrorBoundary message="Error loading tooltip.">
+                        <ToolTipDeltaWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("Settings", item)}>
-                    <SettingsWidget />
+                    <OpenSeeErrorBoundary message="Error loading settings.">
+                        <SettingsWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
-                    <PointWidget />
+                    <OpenSeeErrorBoundary message="Error loading accumulated points.">
+                        <PointWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
-                    <ScalarStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    <OpenSeeErrorBoundary message="Error loading scalar stats.">
+                        <ScalarStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
-                    <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    <OpenSeeErrorBoundary message="Error loading correlated sags.">
+                        <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("Lightning", item)}>
-                    <LightningDataWidget />
+                    <OpenSeeErrorBoundary message="Error loading lightning.">
+                        <LightningDataWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("FFTTable", item)}>
-                    <FFTTable />
+                    <OpenSeeErrorBoundary message="Error loading FFT table.">
+                        <FFTTable />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("PolarChart", item)}>
-                    <PhasorChartWidget />
+                    <OpenSeeErrorBoundary message="Error loading phasor chart.">
+                        <PhasorChartWidget />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
                     OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
-                    <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    <OpenSeeErrorBoundary message="Error loading harmonic stats.">
+                        <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                    </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
                 <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
@@ -582,3 +610,13 @@ const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
     });
     return query as OpenSee.IAnalyticContext;
 }
+
+interface IOpenSeeErrorBoundaryProps {
+    message: string;
+}
+
+const OpenSeeErrorBoundary = (props: React.PropsWithChildren<IOpenSeeErrorBoundaryProps>) => (
+    <ErrorBoundary ErrorMessage={props.message} Style={{ height: '100%', width: '100%' }}>
+        {props.children}
+    </ErrorBoundary>
+);
