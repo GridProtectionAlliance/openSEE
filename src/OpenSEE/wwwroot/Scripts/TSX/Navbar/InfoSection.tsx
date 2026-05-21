@@ -41,10 +41,10 @@ const InfoSection = (props: InfoSectionProps) => {
                     onMouseEnter={() => setHover('Meter')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'meter'}
-                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}
+                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}
                 >
                     <div style={{ textAlign: 'center', color: 'white' }}>Meter:</div>
-                    <div style={{ textAlign: 'center', color: 'white' }}> {evt.Context.EventInfo?.MeterName?.split(" ")[0]}</div>
+                    <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}> {evt.Context.EventInfo?.MeterName}</div>
                     <ToolTip Show={hover == 'Meter'} Position={'bottom'} Target={'meter'} Zindex={9999}>
                         <p>{evt.Context.EventInfo?.MeterName}</p>
                     </ToolTip>
@@ -53,10 +53,10 @@ const InfoSection = (props: InfoSectionProps) => {
                     onMouseEnter={() => setHover('Station')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'station'}
-                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}
+                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}
                 >
                     <div style={{ textAlign: 'center', color: 'white' }}>Substation:</div>
-                    <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.StationName}</div>
+                    <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.Context.EventInfo?.StationName}</div>
                     <ToolTip Show={hover == 'Station'} Position={'bottom'} Target={'station'} Zindex={9999}>
                         <p>{evt.Context.EventInfo?.StationName}</p>
                     </ToolTip>
@@ -65,10 +65,10 @@ const InfoSection = (props: InfoSectionProps) => {
                     onMouseEnter={() => setHover('Asset')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'asset'}
-                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px' }}
+                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}
                 >
                     <div style={{ textAlign: 'center', color: 'white' }}>Asset:</div>
-                    <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.AssetName?.split(" ")[0]}</div>
+                    <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.Context.EventInfo?.AssetName}</div>
                     <ToolTip Show={hover == 'Asset'} Position={'bottom'} Target={'asset'} Zindex={9999}>
                         <p>{evt.Context.EventInfo?.AssetName}</p>
                     </ToolTip>
@@ -77,9 +77,9 @@ const InfoSection = (props: InfoSectionProps) => {
                     onMouseEnter={() => setHover('EType')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'etype'}
-                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px' }}>
+                    style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}>
                     <div style={{ textAlign: 'center', color: 'white' }}>Type:</div>
-                    <div style={{ textAlign: 'center', color: 'white' }}>{evt.Context.EventInfo?.EventName}</div>
+                    <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.Context.EventInfo?.EventName}</div>
                     <ToolTip Show={hover == 'EType'} Position={'bottom'} Target={'etype'} Zindex={9999}>
                         <p>{evt.Context.EventInfo?.EventName}</p>
                     </ToolTip>
@@ -89,7 +89,7 @@ const InfoSection = (props: InfoSectionProps) => {
                         onMouseEnter={() => setHover('EInception')}
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'einception'}
-                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', minWidth: "60px", marginRight: "10px" }}
+                        style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '15px', paddingRight: '15px', flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}
                     >
                         <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
                         <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
