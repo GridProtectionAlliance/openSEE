@@ -223,7 +223,7 @@ const OpenSeeApplication = React.memo(() => {
         setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
     };
 
-    function exportData(type: string) {
+    const exportData = (type: string) => {
         const showPlots = selectDisplayed(plotState.meta);
         const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventID}` +
             `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
@@ -238,7 +238,7 @@ const OpenSeeApplication = React.memo(() => {
         window.open(uri, "_blank");
     }
 
-    function DispatchQuery(argQuery: string, initial: boolean) {
+    const DispatchQuery = (argQuery: string, initial: boolean) => {
         // Read current values from refs to avoid stale closures in the history listener
         const curPlotState = plotStateRef.current;
         const curPlotData = plotDataRef.current;
@@ -251,6 +251,13 @@ const OpenSeeApplication = React.memo(() => {
         let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
             parsedPlots = JSON.parse(atob(parsedQuery.plots));
+        }
+
+        if (parsedQuery?.overlappingInfo != null) {
+            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo))
+                .map(ToInt)
+                .filter((eventId: number | undefined) => eventId != null);
+            overlappingActions.SetSelectedEvents(parsedOverlappingEventIds);
         }
 
         const enabledPlots = selectEnabledPlots(curPlotState.meta, curPlotData);
@@ -547,26 +554,26 @@ const OpenSeeApplication = React.memo(() => {
 
 export default OpenSeeApplication;
 
-function ToInt(arg: any) {
+const ToInt = (arg: any) => {
     if (arg == undefined) return undefined;
     const val = parseInt(arg);
     return isNaN(val) ? undefined : val;
 }
 
-function ToFloat(arg: any) {
+const ToFloat = (arg: any) => {
     if (arg == undefined) return undefined;
     const val = parseFloat(arg);
     return isNaN(val) ? undefined : val;
 }
 
-function ToBool(arg: any) {
+const ToBool = (arg: any) => {
     if (arg == undefined) return undefined;
     if (arg == "True" || arg == "true" || arg == "1") return true;
     if (arg == "False" || arg == "false" || arg == "0") return false;
     return undefined;
 }
 
-function queryStringToNums(arg: OpenSee.IAnalyticContext) {
+const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
     if (arg == undefined) return undefined;
     const query = {};
     Object.keys(arg).forEach(key => {

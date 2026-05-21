@@ -14,6 +14,7 @@ interface IOverlappingState {
 interface IOverlappingActions {
     LoadOverlappingEvents: (eventId: number) => void;
     ToggleEventSelection: (eventId: number) => void;
+    SetSelectedEvents: (eventIds: number[]) => void;
     // Called externally after adding plot data for an overlapping event
     SetEventSelected: (eventId: number, selected: boolean) => void;
 }
@@ -26,6 +27,7 @@ const defaultState: IOverlappingState = {
 const defaultActions: IOverlappingActions = {
     LoadOverlappingEvents: () => { /* noop */ },
     ToggleEventSelection: () => { /* noop */ },
+    SetSelectedEvents: () => { /* noop */ },
     SetEventSelected: () => { /* noop */ },
 };
 
@@ -34,6 +36,7 @@ export const OverlappingActionContext = React.createContext<IOverlappingActions>
 
 export const OverlappingProvider = (props: React.PropsWithChildren<{}>) => {
     const [state, setState] = React.useState<IOverlappingState>(defaultState);
+    const selectedEventIdsRef = React.useRef<Set<number>>(new Set());
 
     const actions = React.useMemo<IOverlappingActions>(() => ({
         LoadOverlappingEvents: (eventId) => {
@@ -49,7 +52,7 @@ export const OverlappingProvider = (props: React.PropsWithChildren<{}>) => {
                         data.forEach((event: any) => {
                             const idx = newEvents.findIndex(e => e.EventID === event.EventID);
                             const parsed: OpenSee.OverlappingEvents = {
-                                Selected: idx >= 0 ? newEvents[idx].Selected : false,
+                                Selected: selectedEventIdsRef.current.has(event.EventID) || (idx >= 0 ? newEvents[idx].Selected : false),
                                 AssetName: event.AssetName,
                                 MeterName: event.MeterName,
                                 EventID: event.EventID,
@@ -79,12 +82,35 @@ export const OverlappingProvider = (props: React.PropsWithChildren<{}>) => {
                 if (idx < 0) return prev;
 
                 const newEvents = [...prev.events];
-                newEvents[idx] = { ...newEvents[idx], Selected: !newEvents[idx].Selected };
+                const selected = !newEvents[idx].Selected;
+                if (selected)
+                    selectedEventIdsRef.current.add(eventId);
+                else
+                    selectedEventIdsRef.current.delete(eventId);
+
+                newEvents[idx] = { ...newEvents[idx], Selected: selected };
+                return { ...prev, events: newEvents };
+            });
+        },
+
+        SetSelectedEvents: (eventIds) => {
+            selectedEventIdsRef.current = new Set(eventIds);
+            setState(prev => {
+                const newEvents = prev.events.map(event => ({
+                    ...event,
+                    Selected: selectedEventIdsRef.current.has(event.EventID)
+                }));
+
                 return { ...prev, events: newEvents };
             });
         },
 
         SetEventSelected: (eventId, selected) => {
+            if (selected)
+                selectedEventIdsRef.current.add(eventId);
+            else
+                selectedEventIdsRef.current.delete(eventId);
+
             setState(prev => {
                 const idx = prev.events.findIndex(e => e.EventID === eventId);
                 if (idx < 0) return prev;
