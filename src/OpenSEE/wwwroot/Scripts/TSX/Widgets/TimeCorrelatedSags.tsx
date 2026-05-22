@@ -178,10 +178,18 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                     </ConfigurableTable>
                 </div>
                 : null}
+            {status === 'idle' && sagsData.length === 0 ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-info'>
+                            No data for Correlated Sags.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
         </>
     );
 
 }
 
 export default TimeCorrelatedSagsWidget
-

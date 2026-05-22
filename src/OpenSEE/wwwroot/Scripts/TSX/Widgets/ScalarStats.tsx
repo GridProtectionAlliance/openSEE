@@ -86,7 +86,16 @@ const ScalarStatsWidget = (props: Iprops) => {
                         </div>
                     </div>
                     : null}
-                {status === 'idle' ?
+                {status === 'idle' && stats.length === 0 ?
+                    <div className="row justify-content-center">
+                        <div className="col-12">
+                            <Alert Class='alert-info'>
+                                No data for Scalar Stats.
+                            </Alert>
+                        </div>
+                    </div>
+                    : null}
+                {status === 'idle' && stats.length > 0 ?
                     <>
                         <div className="d-flex justify-content-end mb-2">
                             <button className="btn btn-primary" onClick={() => props.ExportCallback('stats')}>Export(csv)</button>

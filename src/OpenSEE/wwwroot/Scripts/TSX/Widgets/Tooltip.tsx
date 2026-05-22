@@ -33,6 +33,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectHoverPoints } from '../PlotSelectors';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 const ToolTipWidget = () => {
     const [hover] = React.useContext(HoverContext);
@@ -43,6 +44,17 @@ const ToolTipWidget = () => {
     const colors = useSelector(SelectColor);
 
     const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
+
+    if (points.length === 0)
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for Tooltip.
+                    </Alert>
+                </div>
+            </div>
+        );
 
     return (
         <div className="d-flex" style={{ width: '100%', height: '100%', textAlign: 'center', overflowY: 'hidden' }}>

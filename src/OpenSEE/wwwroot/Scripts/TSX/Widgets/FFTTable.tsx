@@ -26,6 +26,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { selectFFTData } from '../PlotSelectors';
 import { OpenSee } from '../global';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 const FFTTable = () => {
     const { plots } = React.useContext(PlotDataStateContext);
@@ -35,7 +36,15 @@ const FFTTable = () => {
     const fftPoints = React.useMemo(() => selectFFTData(evt.Context.EventID, plots, meta), [evt.Context.EventID, plots, meta]);
 
     if (fftPoints.length === 0)
-        return null
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for FFT Table.
+                    </Alert>
+                </div>
+            </div>
+        );
 
     return (
         <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>

@@ -31,6 +31,7 @@ import { OpenSee } from '../global';
 import { SelectColor } from '../store/settingSlice';
 import { selectPhaseVectors } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 const PhasorChartWidget = () => {
     const [hover] = React.useContext(HoverContext);
@@ -91,6 +92,17 @@ const PhasorChartWidget = () => {
             </React.Fragment>
         );
     }
+
+    if (VVector.length === 0 && IVector.length === 0)
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for Phasor Chart.
+                    </Alert>
+                </div>
+            </div>
+        );
 
     return (
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>

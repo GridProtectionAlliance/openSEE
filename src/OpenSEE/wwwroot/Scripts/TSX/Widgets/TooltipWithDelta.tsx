@@ -33,6 +33,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectDeltaHoverPoints } from '../PlotSelectors';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 const columnTextStyle = { minWidth: 0, overflowWrap: 'anywhere' } as React.CSSProperties;
 
@@ -48,6 +49,17 @@ const ToolTipDeltaWidget = () => {
 
     const firstDate = hover[0];
     const secondDate = points.length > 0 ? points[0].Time : NaN;
+
+    if (points.length === 0)
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for Tooltip w/ Delta.
+                    </Alert>
+                </div>
+            </div>
+        );
 
     return (
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px', overflowX: 'hidden', overflowY: 'hidden', boxSizing: 'border-box' }}>

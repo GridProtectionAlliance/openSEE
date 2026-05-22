@@ -150,6 +150,15 @@ const EventInfo = () => {
                     </div>
                 </div>
                 : null}
+            {Context.Status === 'idle' && !isLoading && Context.EventInfo == null ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-info'>
+                            No data for Info.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
             {Context.Status === 'idle' && !isLoading && Context.EventInfo != null ?
                 <Table<TableData>
                     Data={tableData}

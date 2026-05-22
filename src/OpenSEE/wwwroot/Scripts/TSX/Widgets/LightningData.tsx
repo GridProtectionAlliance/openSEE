@@ -318,9 +318,17 @@ const LightningDataWidget = () => {
                 </div>
 
                 : null}
+            {status === 'idle' && lightningData.length === 0 ?
+                <div className="row justify-content-center">
+                    <div className="col-12">
+                        <Alert Class='alert-info'>
+                            No data for Lightning.
+                        </Alert>
+                    </div>
+                </div>
+                : null}
         </>
     );
 }
 
 export default LightningDataWidget;
-

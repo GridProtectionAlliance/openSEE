@@ -48,6 +48,12 @@ const HarmonicStatsWidget = (props: Iprops) => {
         });
 
         handle.done((data) => {
+            if (data.length === 0) {
+                setTblData([]);
+                setStatus('idle');
+                return;
+            }
+
             const rows: JSX.Element[] = [];
             rows.push(
                 <tr>
@@ -111,17 +117,26 @@ const HarmonicStatsWidget = (props: Iprops) => {
                 </div>
                 : null}
             {status === 'idle' ?
-                <div className="d-flex" style={{ width: '100%', height: '100%' }}>
-                <table className="table" style={{ fontSize: 'large', marginBottom: 0, height: '100%', width: '100%' }}>
-                    <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
-                        {tblData[0]}
-                        {tblData[1]}
-                    </thead>
-                    <tbody style={{ fontSize: 'medium', height: 500, maxHeight: 500, overflowY: 'auto', display: 'block' }}>
-                        {tblData.slice(2)}
-                    </tbody>
-                </table>
-                </div>
+                tblData.length === 0 ?
+                    <div className="row justify-content-center">
+                        <div className="col-12">
+                            <Alert Class='alert-info'>
+                                No data for Harmonic Stats.
+                            </Alert>
+                        </div>
+                    </div>
+                    :
+                    <div className="d-flex" style={{ width: '100%', height: '100%' }}>
+                    <table className="table" style={{ fontSize: 'large', marginBottom: 0, height: '100%', width: '100%' }}>
+                        <thead style={{ display: 'table', tableLayout: 'fixed', width: 'calc(100% - 1em)' }}>
+                            {tblData[0]}
+                            {tblData[1]}
+                        </thead>
+                        <tbody style={{ fontSize: 'medium', height: 500, maxHeight: 500, overflowY: 'auto', display: 'block' }}>
+                            {tblData.slice(2)}
+                        </tbody>
+                    </table>
+                    </div>
                 : null}
         </>
     );
@@ -129,5 +144,3 @@ const HarmonicStatsWidget = (props: Iprops) => {
 }
 
 export default HarmonicStatsWidget;
-
-

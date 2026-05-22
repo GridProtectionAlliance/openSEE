@@ -31,6 +31,7 @@ import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotSt
 import EventContext from '../Context/EventContext';
 import { selectSelectedPoints } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
+import { Alert } from '@gpa-gemstone/react-interactive';
 
 const PointWidget = () => {
     const { plots } = React.useContext(PlotDataStateContext);
@@ -59,6 +60,17 @@ const PointWidget = () => {
     React.useLayoutEffect(() => {
         setLeftPosition({ secondCell: firstCellWidth, thirdCell: firstCellWidth + secondCellWidth });
     }, [firstCellWidth, secondCellWidth]);
+
+    if (points.length === 0)
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for Accumulated Points.
+                    </Alert>
+                </div>
+            </div>
+        );
 
     return (
         <div className="d-flex flex-column" ref={flexRef} style={{ height: '100%', width: '100%', padding: '10px' }}>
