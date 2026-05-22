@@ -27,6 +27,7 @@ import EventContext from '../Context/EventContext';
 import { selectFFTData } from '../PlotSelectors';
 import { OpenSee } from '../global';
 import { Alert } from '@gpa-gemstone/react-interactive';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 
 const FFTTable = () => {
     const { plots } = React.useContext(PlotDataStateContext);
@@ -34,6 +35,9 @@ const FFTTable = () => {
     const evt = React.useContext(EventContext);
 
     const fftPoints = React.useMemo(() => selectFFTData(evt.Context.EventID, plots, meta), [evt.Context.EventID, plots, meta]);
+
+    const topRowRef = React.useRef<HTMLTableRowElement>(null);
+    const {offsetHeight: topRowHeight} = useGetContainerPosition(topRowRef);
 
     if (fftPoints.length === 0)
         return (
@@ -47,21 +51,22 @@ const FFTTable = () => {
         );
 
     return (
-        <div className="d-flex flex-column" style={{ height: '95%', width: '100%', overflow: 'auto', padding: '10px' }}>
+        <div className="d-flex flex-column" style={{ height: '95%', width: '100%', padding: '10px' }}>
+            <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
             <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
                 <thead>
-                    <tr>
-                        <th></th>
+                    <tr ref={topRowRef}>
+                        <th style={getStickyHeaderStyle(0)}></th>
                         {fftPoints.map((item, index) => (
-                            <th colSpan={2} key={`header-${index}`}><span>{item.Asset} {item.Phase}</span></th>
+                            <th colSpan={2} key={`header-${index}`} style={getStickyHeaderStyle(0)}><span>{item.Asset} {item.Phase}</span></th>
                         ))}
                     </tr>
                     <tr>
-                        <th>Harmonic [Hz]</th>
+                        <th style={getStickyHeaderStyle(topRowHeight)}>Harmonic [Hz]</th>
                         {fftPoints.map((item, index) => (
                             <React.Fragment key={`headerFrag-${index}`}>
-                                <th key={`mag-${index}`}><span>Mag ({item?.Unit?.short})</span></th>
-                                <th key={`ang-${index}`}><span>Ang ({item?.PhaseUnit?.short})</span></th>
+                                <th key={`mag-${index}`} style={getStickyHeaderStyle(topRowHeight)}><span>Mag ({item?.Unit?.short})</span></th>
+                                <th key={`ang-${index}`} style={getStickyHeaderStyle(topRowHeight)}><span>Ang ({item?.PhaseUnit?.short})</span></th>
                             </React.Fragment>
                         ))}
                     </tr>
@@ -80,9 +85,18 @@ const FFTTable = () => {
                     ))}
                 </tbody>
             </table>
+            </div>
         </div>
     );
 };
+
+const getStickyHeaderStyle = (top: number): React.CSSProperties => ({
+    position: 'sticky',
+    top,
+    zIndex: 1,
+    backgroundColor: '#fff',
+    boxShadow: 'inset 0 -1px 0 #dee2e6'
+});
 
 const showAng = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
     const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
