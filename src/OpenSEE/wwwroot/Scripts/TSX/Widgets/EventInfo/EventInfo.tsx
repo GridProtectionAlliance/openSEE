@@ -250,6 +250,9 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
         case 'BreakerOperation':
             return 'Operation';
 
+        case 'EventId':
+            return 'Event ID';
+
         default:
             return key;
     }
