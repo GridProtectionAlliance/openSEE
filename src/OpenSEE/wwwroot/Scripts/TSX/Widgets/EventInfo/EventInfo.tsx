@@ -224,7 +224,7 @@ const getLabel = (key: keyof OpenSee.IEventInfo): string => {
             return 'Inception';
 
         case 'StartTime':
-            return 'Event Start';
+            return 'Record Start Time';
 
         case 'Phase':
             return 'Phase';
