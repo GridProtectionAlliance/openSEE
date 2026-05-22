@@ -529,6 +529,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                 let newStart = prev.startTime;
                 let newEnd = prev.endTime;
                 let newFft = prev.fftLimits;
+                let newCycleLimits = prev.cycleLimits;
 
                 if (key.DataType === 'FFT') {
                     const enabledData = data.filter(isEnabled);
@@ -548,23 +549,28 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                             newEnd = dataMax;
                         }
                     }
+                } else {
+                    const enabledData = data.filter(s => isEnabled(s) && s.DataPoints.length > 0);
+                    const xValues = enabledData.flatMap(s => s.DataPoints.map(p => p[0]).filter(Number.isFinite));
+                    if (xValues.length > 0)
+                        newCycleLimits = [Math.min(...xValues), Math.max(...xValues)];
                 }
 
                 // NOW compute limits with the corrected time range
                 const newLimits = { ...meta.yLimits };
-                const axes = _.uniq(data.map(s => s.Unit));
-                axes.forEach(axis => {
-                    const filtered = data.filter(s => isEnabled(s) && s.Unit === axis);
-                    const autoIdx = updateActiveUnits(newLimits, axis, filtered, newStart, newEnd, null);
-                    if (autoIdx >= 0)
-                        newLimits[axis] = { ...newLimits[axis], current: autoIdx };
-                });
-
                 const [s, e] = key.DataType === 'FFT'
                     ? newFft
                     : key.DataType === 'OverlappingWave'
-                        ? prev.cycleLimits
+                        ? newCycleLimits
                         : [newStart, newEnd];
+
+                const axes = _.uniq(data.map(s => s.Unit));
+                axes.forEach(axis => {
+                    const filtered = data.filter(s => isEnabled(s) && s.Unit === axis);
+                    const autoIdx = updateActiveUnits(newLimits, axis, filtered, s, e, null);
+                    if (autoIdx >= 0)
+                        newLimits[axis] = { ...newLimits[axis], current: autoIdx };
+                });
 
                 const updatedMeta: IPlotMeta = {
                     ...meta,
@@ -577,6 +583,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                     startTime: newStart,
                     endTime: newEnd,
                     fftLimits: newFft,
+                    cycleLimits: newCycleLimits,
                     meta: { ...prev.meta, [pk]: updatedMeta }
                 };
             });

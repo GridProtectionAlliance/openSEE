@@ -97,15 +97,19 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
             return;
         }
 
-        // TODO: SetCycleLimit condition duplicates SetTimeLimit condition — likely a bug in the original
-        if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'x' && !isOverlappingWaveform)
-            stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
-        if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'x' && !isOverlappingWaveform)
-            stateActions.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+        if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'x') {
+            if (isOverlappingWaveform)
+                stateActions.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+            else
+                stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+        }
         else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'y')
             stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
-        else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'xy' && !isOverlappingWaveform) {
-            stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+        else if (!mouseDown && mouseMode === 'zoom' && zoomMode === 'xy') {
+            if (isOverlappingWaveform)
+                stateActions.SetCycleLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
+            else
+                stateActions.SetTimeLimit(Math.min(pointMouse[0], hover[0]), Math.max(pointMouse[0], hover[0]), plotData);
             stateActions.SetZoomedLimits([Math.min(pointMouse[1], hover[1]), Math.max(pointMouse[1], hover[1])], dataKey, plotData);
         }
         else if (!fftMouseDown && mouseMode === 'fftMove' && pointMouse[0] < oldFFTWindow[1] && pointMouse[0] > oldFFTWindow[0]) {
@@ -246,16 +250,23 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         .filter(event => event.type === 'wheel')
         .on('zoom', (event) => {
             const newTime = event.transform.rescaleX(xScaleRef.current).domain();
-            const newYLimits = event.transform.rescaleX((yScaleRef.current as any)[primaryAxis]).domain();
+            const newYLimits = event.transform.rescaleY((yScaleRef.current as any)[primaryAxis]).domain();
 
-            if (mouseMode === 'zoom' && zoomMode === 'x' && !isOverlappingWaveform)
-                stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
+            if (mouseMode === 'zoom' && zoomMode === 'x') {
+                if (isOverlappingWaveform)
+                    stateActions.SetCycleLimit(newTime[0], newTime[1], plotData);
+                else
+                    stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
+            }
 
-            if (mouseMode === 'zoom' && zoomMode === 'y' && !isOverlappingWaveform)
+            if (mouseMode === 'zoom' && zoomMode === 'y')
                 stateActions.SetZoomedLimits(newYLimits, dataKey, plotData);
 
-            if (mouseMode === 'zoom' && zoomMode === 'xy' && !isOverlappingWaveform) {
-                stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
+            if (mouseMode === 'zoom' && zoomMode === 'xy') {
+                if (isOverlappingWaveform)
+                    stateActions.SetCycleLimit(newTime[0], newTime[1], plotData);
+                else
+                    stateActions.SetTimeLimit(newTime[0], newTime[1], plotData);
                 stateActions.SetZoomedLimits(newYLimits, dataKey, plotData);
             }
         });
