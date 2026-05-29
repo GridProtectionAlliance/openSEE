@@ -33,14 +33,20 @@ interface IProps {
 
 //probably doesnt have to be memoized here
 const AxisUnitSelector = React.memo((props: IProps) => {
+    const { current, isAuto } = props.axisSetting;
+
     const options = React.useMemo(() => {
         const unit: OpenSee.IUnitSetting = defaultSettings.Units[props.unitType];
 
         if(unit == null || unit?.options == null)
             return []
 
-        return unit.options.map((option, index) => ({ Label: option.label, Value: index }))
-    },[props.unitType]);
+        return unit.options.map((option, index) => ({
+            Label: isAuto && current === index && option.factor !== 0 ?
+                `${option.label} (auto)` : option.label,
+            Value: index
+        }))
+    }, [props.unitType, current, isAuto]);
 
     return (
         <Select
