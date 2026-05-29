@@ -165,7 +165,7 @@ const SettingsWidget = () => {
                                             Record={defaultTraces}
                                             Field={'W'}
                                             Setter={(item) => dispatch(SetDefaultTrace(item))}
-                                            Label={"WaveForm"}
+                                            Label={"Waveform"}
                                         />
                                     </div>
                                     <div className="col-6 mr-0">
