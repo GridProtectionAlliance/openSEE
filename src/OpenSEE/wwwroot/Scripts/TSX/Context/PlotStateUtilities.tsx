@@ -29,24 +29,29 @@ export const defaultAxisSettings: OpenSee.IAxisSettings = {
     current: 0
 };
 
+function createDefaultAxisSettings(unit: keyof OpenSee.IUnitCollection<number>): OpenSee.IAxisSettings {
+    const setting = defaultSettings.Units[unit];
+    return { ...defaultAxisSettings, current: setting.current, isAuto: setting.autoUnit };
+}
+
 export function createDefaultYLimits(): OpenSee.IUnitCollection<OpenSee.IAxisSettings> {
     return {
-        Voltage: { ...defaultAxisSettings },
-        Current: { ...defaultAxisSettings },
-        Angle: { ...defaultAxisSettings },
-        VoltageperSecond: { ...defaultAxisSettings },
-        CurrentperSecond: { ...defaultAxisSettings },
-        Freq: { ...defaultAxisSettings },
-        Impedance: { ...defaultAxisSettings },
-        PowerP: { ...defaultAxisSettings },
-        PowerQ: { ...defaultAxisSettings },
-        PowerS: { ...defaultAxisSettings },
-        PowerPf: { ...defaultAxisSettings },
-        TCE: { ...defaultAxisSettings },
-        Distance: { ...defaultAxisSettings },
-        Unbalance: { ...defaultAxisSettings },
-        THD: { ...defaultAxisSettings },
-        [""]: { ...defaultAxisSettings }
+        Voltage: createDefaultAxisSettings('Voltage'),
+        Current: createDefaultAxisSettings('Current'),
+        Angle: createDefaultAxisSettings('Angle'),
+        VoltageperSecond: createDefaultAxisSettings('VoltageperSecond'),
+        CurrentperSecond: createDefaultAxisSettings('CurrentperSecond'),
+        Freq: createDefaultAxisSettings('Freq'),
+        Impedance: createDefaultAxisSettings('Impedance'),
+        PowerP: createDefaultAxisSettings('PowerP'),
+        PowerQ: createDefaultAxisSettings('PowerQ'),
+        PowerS: createDefaultAxisSettings('PowerS'),
+        PowerPf: createDefaultAxisSettings('PowerPf'),
+        TCE: createDefaultAxisSettings('TCE'),
+        Distance: createDefaultAxisSettings('Distance'),
+        Unbalance: createDefaultAxisSettings('Unbalance'),
+        THD: createDefaultAxisSettings('THD'),
+        [""]: createDefaultAxisSettings('')
     };
 }
 
@@ -266,12 +271,14 @@ export function updateActiveUnits(
     if (!isFinite(min) || !isFinite(max))
         return -1;
 
+    const magnitude = Math.max(Math.abs(min), Math.abs(max));
+
     let autoFactor = 0.000001;
-    if (Math.max(max, min) < 1)
+    if (magnitude < 1)
         autoFactor = 1000;
-    else if (Math.max(max, min) < 1000)
+    else if (magnitude < 1000)
         autoFactor = 1;
-    else if (Math.max(max, min) < 1000000)
+    else if (magnitude < 1000000)
         autoFactor = 0.001;
 
     const options = defaultSettings.Units[unit].options;
