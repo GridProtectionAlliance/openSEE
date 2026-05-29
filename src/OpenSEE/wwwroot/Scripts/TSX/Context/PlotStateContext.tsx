@@ -306,7 +306,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
 
                 // Figure out which axes were affected by looking up the toggled series
                 const affectedAxes = _.uniq(
-                    data.filter(s => traces.includes(seriesToKey(s))).map(s => s.Unit).filter(Boolean)
+                    data.filter(s => traces.includes(seriesToKey(s))).map(s => s.Unit).filter(unit => unit != null)
                 );
                 const newLimits = { ...meta.yLimits };
                 const primaryAxis = getPrimaryAxis(key);

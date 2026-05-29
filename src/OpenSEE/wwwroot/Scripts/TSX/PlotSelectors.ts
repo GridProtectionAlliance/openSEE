@@ -70,7 +70,7 @@ export function selectEnabledUnits(
 ): OpenSee.Unit[] {
     let units: OpenSee.Unit[] = [];
     data.forEach(d => {
-        if (d.Unit && enabled[seriesToKey(d)]) units.push(d.Unit);
+        if (d.Unit != null && enabled[seriesToKey(d)]) units.push(d.Unit);
     });
     const primary = getPrimaryAxis(key);
     if (units.includes(primary)) {
