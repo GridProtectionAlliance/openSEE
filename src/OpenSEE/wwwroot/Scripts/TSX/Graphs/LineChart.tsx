@@ -168,7 +168,7 @@ const LineChart = (props: IProps) => {
 
     function updateLimits() {
         const scales = getScales();
-        updateLineGeometry(containerRef.current, scales, activeUnit);
+        updateLineGeometry(containerRef.current, enabledLine, scales, activeUnit);
         updateMarkerGeometry(containerRef.current, scales, activeUnit);
         updateYAxes(containerRef.current, enabledUnits, scales.y, props.width, props.dataKey.DataType, props.dataKey.EventId);
         updateXAxisTicks(containerRef.current, scales.x, buildTimeCtx());
@@ -183,7 +183,7 @@ const LineChart = (props: IProps) => {
         if (!lineData || lineData.length === 0 || loading === 'Loading') return;
 
         if (isCreated) {
-            drawLines(containerRef.current, lineData, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
+            drawLines(containerRef.current, lineData, enabledLine, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
             drawMarkers(containerRef.current, lineData, getScales(), colors);
         }
 
@@ -201,7 +201,7 @@ const LineChart = (props: IProps) => {
             { ...handlers, wheelZoom }
         );
 
-        drawLines(containerRef.current, lineData, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
+        drawLines(containerRef.current, lineData, enabledLine, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
         drawMarkers(containerRef.current, lineData, getScales(), colors);
         updateLimits();
         updateDurationWindowRect(containerRef.current, xScaleRef.current, evt.Context.EventInfo?.Inception ?? 0, evt.Context.EventInfo?.DurationEndTime ?? 0, plotMarkers);
@@ -310,7 +310,7 @@ const LineChart = (props: IProps) => {
             { ...handlers, wheelZoom }
         );
 
-        drawLines(containerRef.current, lineData, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
+        drawLines(containerRef.current, lineData, enabledLine, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
         drawMarkers(containerRef.current, lineData, getScales(), colors);
         updateLimits();
         updateLineVisibility(containerRef.current, lineData, enabledLine);

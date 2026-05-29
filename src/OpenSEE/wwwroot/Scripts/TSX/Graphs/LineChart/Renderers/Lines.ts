@@ -57,9 +57,54 @@ export const createLineGen = (
         });
 }
 
+const timeBisector = d3.bisector((point: [number, number]) => point[0]);
+
+const getVisiblePoints = (
+    dataPoints: Array<[number, number]>,
+    xScale: d3.ScaleLinear<number, number>
+): Array<[number, number]> => {
+    if (dataPoints.length < 3 || xScale == null)
+        return dataPoints;
+
+    const domain = xScale.domain();
+    const start = Math.min(domain[0], domain[1]);
+    const end = Math.max(domain[0], domain[1]);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end))
+        return dataPoints;
+
+    const firstTime = dataPoints[0][0];
+    const lastTime = dataPoints[dataPoints.length - 1][0];
+
+    if (start <= firstTime && end >= lastTime)
+        return dataPoints;
+
+    const from = Math.max(0, timeBisector.left(dataPoints, start) - 1);
+    const to = Math.min(dataPoints.length, timeBisector.right(dataPoints, end) + 1);
+
+    if (to <= from)
+        return [];
+
+    return dataPoints.slice(from, to);
+}
+
+const getPathData = (
+    d: OpenSee.iD3DataSeries,
+    scales: IScales,
+    activeUnit: Partial<OpenSee.IUnitCollection<OpenSee.iUnitOptions>> | null,
+    base: number | null
+): string | null => {
+    const useSmooth = d.SmoothDataPoints.length > 0;
+    const visiblePoints = getVisiblePoints(useSmooth ? d.SmoothDataPoints : d.DataPoints, scales.x);
+    const lineGen = createLineGen(scales, activeUnit, d.Unit, base);
+
+    return useSmooth ? lineGen.curve(d3.curveNatural)(visiblePoints) : lineGen(visiblePoints);
+}
+
 export const drawLines = (
     container: HTMLDivElement | null,
     lineData: OpenSee.iD3DataSeries[],
+    enabledLine: Record<string, boolean>,
     scales: IScales,
     activeUnit: Partial<OpenSee.IUnitCollection<OpenSee.iUnitOptions>> | null,
     colors: OpenSee.IColorCollection,
@@ -80,24 +125,31 @@ export const drawLines = (
         .attr("stroke", d => Object.keys(colors).includes(d.Color) ? colors[d.Color] : colors.random)
         .attr("stroke-dasharray", d => singlePlot && currentEventId !== d.EventID ? 5 : 0)
         .attr("d", d => {
-            if (d.SmoothDataPoints.length > 0)
-                return createLineGen(scales, activeUnit, d.Unit, null).curve(d3.curveNatural)(d.SmoothDataPoints);
-            return createLineGen(scales, activeUnit, d.Unit, null)(d.DataPoints);
+            if (enabledLine[seriesToKey(d)] !== true)
+                return null;
+
+            return getPathData(d, scales, activeUnit, null);
         });
 
     lines.exit().remove();
 }
 
-export const updateLineGeometry = (container: HTMLDivElement | null, scales: IScales, activeUnit: Partial<OpenSee.IUnitCollection<OpenSee.iUnitOptions>> | null) => {
+export const updateLineGeometry = (
+    container: HTMLDivElement | null,
+    enabledLine: Record<string, boolean>,
+    scales: IScales,
+    activeUnit: Partial<OpenSee.IUnitCollection<OpenSee.iUnitOptions>> | null
+) => {
     if (container == null) return;
 
     d3.select(container)
         .select(".DataContainer")
         .selectAll<SVGPathElement, OpenSee.iD3DataSeries>(".Line")
         .attr("d", d => {
-            if (d.SmoothDataPoints.length > 0)
-                return createLineGen(scales, activeUnit, d.Unit, d.BaseValue).curve(d3.curveNatural)(d.SmoothDataPoints);
-            return createLineGen(scales, activeUnit, d.Unit, d.BaseValue)(d.DataPoints);
+            if (enabledLine[seriesToKey(d)] !== true)
+                return null;
+
+            return getPathData(d, scales, activeUnit, d.BaseValue);
         });
 }
 
