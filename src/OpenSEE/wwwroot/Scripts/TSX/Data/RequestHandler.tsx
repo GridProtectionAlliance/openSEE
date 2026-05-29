@@ -24,22 +24,47 @@
 import { OpenSee } from "../global";
 const HandleStore = new Map<string, JQuery.jqXHR<any>[]>();
 
+// Store only in-flight handles. Completed jqXHRs retain responseText/responseJSON, which can be very large for some events, so prune them as soon as they settle.
+const TrackRequests = (target: string, requests: JQuery.jqXHR<any>[]) => {
+    const pendingRequests = requests.filter(item => item != null && item.state() === 'pending');
+
+    pendingRequests.forEach(request => {
+        request.always(() => {
+            const targetValue = HandleStore.get(target);
+            if (targetValue == null)
+                return;
+
+            const remaining = targetValue.filter(item => item !== request);
+            if (remaining.length > 0)
+                HandleStore.set(target, remaining);
+            else
+                HandleStore.delete(target);
+        });
+    });
+
+    if (pendingRequests.length > 0)
+        HandleStore.set(target, pendingRequests);
+    else
+        HandleStore.delete(target);
+}
+
 //Functions to Handle Requests.
-function AddRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
+const AddRequest = (key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) => {
     const target = key.DataType.toString() + '-' + key.EventId.toString();
 
     const targetValue = HandleStore.get(target);
 
     if (targetValue != null)
         targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
-    HandleStore.set(target, requests);
+
+    TrackRequests(target, requests);
 }
 
-function CancelAnalytics() {
+const CancelAnalytics = () => {
     for (const key of HandleStore.keys()) {
         if (key.startsWith('Voltage-') || key.startsWith('Current-') || key.startsWith("Analogs-") || key.startsWith("Digitals-") || key.startsWith('TripCoil-'))
             continue;
-        
+
         const targetValue = HandleStore.get(key);
         if (targetValue != null)
             targetValue.forEach(item => { if (item != null && item.abort != null) item.abort(); })
@@ -48,7 +73,7 @@ function CancelAnalytics() {
     }
 }
 
-function CancelCompare(baseEventID: number) {
+const CancelCompare = (baseEventID: number) => {
     for (const key of HandleStore.keys()) {
         if (key.endsWith('-' + baseEventID.toString()))
             continue;
@@ -61,7 +86,7 @@ function CancelCompare(baseEventID: number) {
     }
 }
 
-function CancelEvent(eventId: number) {
+const CancelEvent = (eventId: number) => {
     for (const key of HandleStore.keys()) {
         if (!key.endsWith('-' + eventId.toString()))
             continue;
@@ -74,15 +99,21 @@ function CancelEvent(eventId: number) {
     }
 }
 
-function AppendRequest(key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) {
+const AppendRequest = (key: OpenSee.IGraphProps, requests: JQuery.jqXHR<any>[]) => {
     const target = key.DataType.toString() + '-' + key.EventId.toString();
     let r = requests;
 
     const targetValue = HandleStore.get(target);
     if (targetValue != null)
         r = [...r, ...targetValue];
-    
-    HandleStore.set(target, r)
+
+    TrackRequests(target, r)
 }
 
-export { CancelAnalytics, AddRequest, CancelEvent, CancelCompare, AppendRequest }
+export {
+    CancelAnalytics,
+    AddRequest,
+    CancelEvent,
+    CancelCompare,
+    AppendRequest
+}
