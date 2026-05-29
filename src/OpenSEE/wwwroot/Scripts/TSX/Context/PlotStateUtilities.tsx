@@ -86,13 +86,22 @@ export function recomputeDataLimits(
     data: OpenSee.iD3DataSeries[],
     activeUnit: number
 ): [number, number] {
-    const limitedData = data.map(item => {
+    if (data.length === 0)
+        return [0, 1];
+
+    let yMin = Number.POSITIVE_INFINITY;
+    let yMax = Number.NEGATIVE_INFINITY;
+
+    data.forEach(item => {
         let dataPoints = item.DataPoints;
         if (item.SmoothDataPoints.length > 0)
             dataPoints = item.SmoothDataPoints;
 
         const indexStart = getIndex(start, dataPoints);
         const indexEnd = getIndex(end, dataPoints);
+
+        if (isNaN(indexStart) || isNaN(indexEnd))
+            return;
 
         let factor = 1;
         const unit: OpenSee.IUnitSetting | undefined = defaultSettings.Units[item.Unit];
@@ -103,14 +112,40 @@ export function recomputeDataLimits(
         if (factor === undefined)
             factor = 1.0 / item.BaseValue;
 
-        const sliced = dataPoints.slice(indexStart, indexEnd);
-        const dt = sliced.map(p => p[1]).filter(p => !isNaN(p) && isFinite(p));
+        const startIndex = Math.max(0, Math.min(indexStart, dataPoints.length));
+        const endIndex = Math.max(startIndex, Math.min(indexEnd, dataPoints.length));
+        let itemMin = Number.POSITIVE_INFINITY;
+        let itemMax = Number.NEGATIVE_INFINITY;
 
-        return [Math.min(...dt) * factor, Math.max(...dt) * factor];
+        for (let i = startIndex; i < endIndex; i++) {
+            const value = dataPoints[i][1];
+            if (isNaN(value) || !isFinite(value))
+                continue;
+
+            if (value < itemMin)
+                itemMin = value;
+            if (value > itemMax)
+                itemMax = value;
+        }
+
+        if (!isFinite(itemMin) || !isFinite(itemMax))
+            return;
+
+        yMin = Math.min(yMin, itemMin * factor);
+        yMax = Math.max(yMax, itemMax * factor);
     });
 
-    const yMin = Math.min(...limitedData.map(item => item[0]));
-    const yMax = Math.max(...limitedData.map(item => item[1]));
+    if (!isFinite(yMin) || !isFinite(yMax))
+        return [0, 1];
+
+    if (yMin === yMax) {
+        if (data.some(item => item.Unit === "" && (yMin === 0 || yMin === 1)))
+            return [-0.05, 1.05];
+
+        const flatPad = Math.max(Math.abs(yMin) / 20, 1);
+        return [yMin - flatPad, yMax + flatPad];
+    }
+
     const pad = (yMax - yMin) / 20;
     return [yMin - pad, yMax + pad];
 }
@@ -198,19 +233,38 @@ export function updateActiveUnits(
     if (!units[unit].isAuto)
         return -1;
 
-    const relevantData = data.filter(d => d.Unit === unit).map(d => {
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+
+    data.filter(d => d.Unit === unit).forEach(d => {
         const startIndex = getIndex(startTime, d.DataPoints);
         const endIndex = getIndex(endTime, d.DataPoints);
-        return d.DataPoints.slice(startIndex, endIndex);
-    });
 
-    let min = Math.min(...relevantData.map(d => Math.min(...d.map(p => p[1]))));
-    let max = Math.max(...relevantData.map(d => Math.max(...d.map(p => p[1]))));
+        if (isNaN(startIndex) || isNaN(endIndex))
+            return;
+
+        const firstIndex = Math.max(0, Math.min(startIndex, d.DataPoints.length));
+        const lastIndex = Math.max(firstIndex, Math.min(endIndex, d.DataPoints.length));
+
+        for (let i = firstIndex; i < lastIndex; i++) {
+            const value = d.DataPoints[i][1];
+            if (isNaN(value) || !isFinite(value))
+                continue;
+
+            if (value < min)
+                min = value;
+            if (value > max)
+                max = value;
+        }
+    });
 
     if (manualLimits) {
         min = manualLimits[0];
         max = manualLimits[1];
     }
+
+    if (!isFinite(min) || !isFinite(max))
+        return -1;
 
     let autoFactor = 0.000001;
     if (Math.max(max, min) < 1)
@@ -237,6 +291,9 @@ export function getPrimaryAxis(key: OpenSee.IGraphProps): OpenSee.Unit {
     switch (key.DataType) {
         case 'Voltage': return 'Voltage';
         case 'Current': return 'Current';
+        case 'Analogs':
+        case 'Digitals':
+            return '';
         case 'FirstDerivative': return 'VoltageperSecond';
         case 'Unbalance': return 'Unbalance';
         case 'THD': return 'THD';
