@@ -80,13 +80,6 @@ export const CreatePlotSVG = (
         .attr("x", 60)
         .attr("y", 20);
 
-    svg.append("rect").classed("zoomWindow", true)
-        .attr("stroke", "#000")
-        .attr("x", 60).attr("width", 0)
-        .attr("y", 20).attr("height", height - 60)
-        .attr("fill", "black")
-        .style("opacity", 0);
-
     svg.append("g").classed("DataContainer", true)
         .attr("clip-path", `url(#${clipId})`)
         .style("transition", "d 0.5s")

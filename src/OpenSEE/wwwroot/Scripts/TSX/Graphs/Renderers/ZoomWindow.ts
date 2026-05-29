@@ -23,8 +23,16 @@
 
 import * as d3 from "d3";
 
-export const updateZoomWindow = (
-    container: HTMLDivElement | null,
+export interface ZoomWindowRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+// Computes the zoom-selection rectangle geometry, or null when no selection is in progress.
+// Coordinates are in the plot's translated (translate(10,0)) coordinate system.
+export const computeZoomWindow = (
     pxAtX: (d: number) => number,
     primaryYScale: d3.ScaleLinear<number, number>,
     hover: [number, number],
@@ -35,27 +43,32 @@ export const updateZoomWindow = (
     xDomainStart: number,
     xDomainEnd: number,
     height: number
-): void  => {
-    if (container == null || mouseMode !== "zoom" || !mouseDown) return;
-
-    const zoomWindow = d3.select(container).select(".zoomWindow");
+): ZoomWindowRect | null => {
+    if (mouseMode !== "zoom" || !mouseDown || primaryYScale == null) return null;
 
     if (zoomMode === "x")
-        zoomWindow.style("opacity", 0.5)
-            .attr("x", pxAtX(Math.min(hover[0], pointMouse[0])))
-            .attr("width", Math.abs(pxAtX(hover[0]) - pxAtX(pointMouse[0])))
-            .attr("height", height - 60)
-            .attr("y", 20);
-    else if (zoomMode === "y")
-        zoomWindow.style("opacity", 0.5)
-            .attr("x", pxAtX(xDomainStart))
-            .attr("width", pxAtX(xDomainEnd) - pxAtX(xDomainStart))
-            .attr("height", Math.abs(primaryYScale(pointMouse[1]) - primaryYScale(hover[1])))
-            .attr("y", Math.min(primaryYScale(pointMouse[1]), primaryYScale(hover[1])));
-    else if (zoomMode === "xy")
-        zoomWindow.style("opacity", 0.5)
-            .attr("x", pxAtX(Math.min(hover[0], pointMouse[0])))
-            .attr("width", Math.abs(pxAtX(hover[0]) - pxAtX(pointMouse[0])))
-            .attr("height", Math.abs(primaryYScale(pointMouse[1]) - primaryYScale(hover[1])))
-            .attr("y", Math.min(primaryYScale(pointMouse[1]), primaryYScale(hover[1])));
+        return {
+            x: pxAtX(Math.min(hover[0], pointMouse[0])),
+            width: Math.abs(pxAtX(hover[0]) - pxAtX(pointMouse[0])),
+            y: 20,
+            height: height - 60,
+        };
+
+    if (zoomMode === "y")
+        return {
+            x: pxAtX(xDomainStart),
+            width: pxAtX(xDomainEnd) - pxAtX(xDomainStart),
+            y: Math.min(primaryYScale(pointMouse[1]), primaryYScale(hover[1])),
+            height: Math.abs(primaryYScale(pointMouse[1]) - primaryYScale(hover[1])),
+        };
+
+    if (zoomMode === "xy")
+        return {
+            x: pxAtX(Math.min(hover[0], pointMouse[0])),
+            width: Math.abs(pxAtX(hover[0]) - pxAtX(pointMouse[0])),
+            y: Math.min(primaryYScale(pointMouse[1]), primaryYScale(hover[1])),
+            height: Math.abs(primaryYScale(pointMouse[1]) - primaryYScale(hover[1])),
+        };
+
+    return null;
 }

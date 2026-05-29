@@ -25,6 +25,7 @@ import * as React from 'react';
 import { OpenSee } from '../global';
 import { ErrorIcon, LoadingIcon, NoDataIcon } from './ChartIcons';
 import PolyLine, { PolyLineSpec } from './PolyLine';
+import { ZoomWindowRect } from './Renderers/ZoomWindow';
 
 interface IContainerProps {
     height: number;
@@ -33,6 +34,7 @@ interface IContainerProps {
     hasData: boolean;
     hasTrace: boolean;
     polyLines?: PolyLineSpec[];
+    zoomWindow?: ZoomWindowRect | null;
 }
 
 const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerProps>((props, ref) => {
@@ -55,6 +57,16 @@ const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerPro
             {showSVG ? (
                 <svg className="overlayRoot" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                     <g className="polyLineOverlay" transform="translate(10,0)">
+                        {props.zoomWindow != null ? (
+                            <rect
+                                className="zoomWindow"
+                                x={props.zoomWindow.x}
+                                y={props.zoomWindow.y}
+                                width={props.zoomWindow.width}
+                                height={props.zoomWindow.height}
+                                style={{ fill: 'black', stroke: '#000', opacity: 0.5 }}
+                            />
+                        ) : null}
                         {(props.polyLines ?? []).map(line => (
                             <PolyLine
                                 className={line.className}

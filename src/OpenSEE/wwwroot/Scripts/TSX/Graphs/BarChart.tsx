@@ -29,7 +29,7 @@ import { useAppSelector } from '../hooks';
 import { SelectColor, SelectMouseMode, SelectZoomMode } from '../store/settingSlice';
 import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
-import { updateZoomWindow } from './Renderers/ZoomWindow';
+import { computeZoomWindow } from './Renderers/ZoomWindow';
 import { updateYAxes, updateYAxisLabels, updateYAxisPositionsOnResize, updateYAxisVisibility } from './Renderers/YAxes';
 import { drawBars, updateBarColors, updateBarGeometry, updateBarVisibility } from './BarChart/Renderers/Bars';
 import { drawAnglePoints, updateAnglePointColors, updateAnglePointGeometry, updateAnglePointVisibility } from './BarChart/Renderers/AnglePoints';
@@ -185,11 +185,10 @@ const BarChart = (props: IProps) => {
             updateLimits();
     }, [activeUnit, yLimits, plotState.fftLimits]);
 
-    React.useEffect(() => {
-        if (xScaleRef.current == null || yScaleRef.current == null) return;
+    const zoomWindow = React.useMemo(() => {
+        if (xScaleRef.current == null || yScaleRef.current == null) return null;
         const scales = getScales();
-        updateZoomWindow(
-            containerRef.current,
+        return computeZoomWindow(
             d => (scales.x(d) ?? 0) + scales.x.bandwidth() / 2,
             scales.y[primaryAxis],
             hover,
@@ -201,7 +200,7 @@ const BarChart = (props: IProps) => {
             plotState.fftLimits[1],
             props.height
         );
-    }, [hover]);
+    }, [hover, pointMouse, mouseDown, mouseMode, zoomMode, plotState.fftLimits, primaryAxis, props.height]);
 
     React.useEffect(() => {
         updateBarColors(containerRef.current, colors);
@@ -234,6 +233,7 @@ const BarChart = (props: IProps) => {
                 loading={loading}
                 hasData={(barData?.length ?? -1) > 0}
                 hasTrace={Object.values(enabledBar).some(v => v)}
+                zoomWindow={zoomWindow}
             />
             {loading === 'Loading' || barData?.length === 0 ? null :
                 <Legend

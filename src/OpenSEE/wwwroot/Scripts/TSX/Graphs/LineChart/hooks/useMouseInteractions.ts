@@ -206,13 +206,11 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         flushPendingHover();
         setMouseDown(false);
         panOriginRef.current = null;
-        d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
     }
 
     const MouseOut = () => setLeftSelectCounter(() => -1);
 
     const MouseLeft = () => {
-        d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
         setMouseDown(false);
         panOriginRef.current = null;
     }

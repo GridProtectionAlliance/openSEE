@@ -47,7 +47,7 @@ import { drawMarkers, updateMarkerGeometry, updateMarkerColors, updateMarkerVisi
 import { updateXAxisTicks, updateXAxisLabel, updateXAxisPositionOnResize } from './LineChart/Renderers/XAxes';
 import { updateYAxes, updateYAxisLabels, updateYAxisVisibility, updateYAxisPositionsOnResize } from './Renderers/YAxes';
 import { updateFFTWindow as updateFFTWindowD3, updateDurationWindowRect } from './LineChart/Renderers/Overlays';
-import { updateZoomWindow } from './Renderers/ZoomWindow';
+import { computeZoomWindow } from './Renderers/ZoomWindow';
 import { PolyLineSpec } from './PolyLine';
 
 interface IProps {
@@ -164,6 +164,12 @@ const LineChart = (props: IProps) => {
         return lines;
     }, [zoomMode, toolTipLocation, hoverValueLocation, lineBottom, xRange]);
 
+    const zoomWindow = React.useMemo(() => {
+        if (xScaleRef.current == null) return null;
+        const yScale = (yScaleRef.current as Record<string, d3.ScaleLinear<number, number>>)[primaryAxis];
+        return computeZoomWindow(d => xScaleRef.current(d), yScale, hover, pointMouse, mouseMode, zoomMode, mouseDown, startTime, endTime, props.height);
+    }, [hover, pointMouse, mouseDown, mouseMode, zoomMode, startTime, endTime, yLimits, primaryAxis, props.height]);
+
     const getScales = (): IScales => ({ x: xScaleRef.current, y: yScaleRef.current as Record<string, d3.ScaleLinear<number, number>> });
 
     function updateLimits() {
@@ -251,14 +257,6 @@ const LineChart = (props: IProps) => {
 
     }, [activeUnit, yLimits, startTime, endTime, isZoomed, timeUnit, lineData, useRelevantTime]);
 
-    // Hover: update zoom window D3 overlay (pan + FFT drag handled inside useMouseInteractions)
-    React.useEffect(() => {
-        if (xScaleRef.current == null || yScaleRef.current == null) return;
-
-        const scales = getScales();
-        updateZoomWindow(containerRef.current, d => scales.x(d), scales.y[primaryAxis], hover, pointMouse, mouseMode, zoomMode, mouseDown, startTime, endTime, props.height);
-    }, [hover]);
-
     // Colors: update line and marker colors on theme change
     React.useEffect(() => {
         updateLineColors(containerRef.current, colors);
@@ -333,6 +331,7 @@ const LineChart = (props: IProps) => {
                 loading={loading}
                 hasData={lineData?.length > 0}
                 hasTrace={Object.values(enabledLine).some(v => v)}
+                zoomWindow={zoomWindow}
                 polyLines={[
                     ...hoverLines,
                     ...(props.showToolTip && selectedPointLocation != null ? [{ className: 'selectedPoint', points: `${selectedPointLocation},20 ${selectedPointLocation},${lineBottom}`, style: { stroke: "#000", opacity: 1, strokeDasharray: "5,5" } }] : []),

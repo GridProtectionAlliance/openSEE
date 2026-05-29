@@ -368,7 +368,6 @@ export const usePanZoomInteractions = (inputs: IPanZoomInteractionInputs): IPanZ
     const MouseUp = (): void => {
         flushPendingHover();
         setMouseDown(false);
-        d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
     };
 
     const MouseOut = (): void => {
@@ -376,7 +375,6 @@ export const usePanZoomInteractions = (inputs: IPanZoomInteractionInputs): IPanZ
     };
 
     const MouseLeft = (): void => {
-        d3.select(containerRef.current).select('.zoomWindow').style('opacity', 0);
         setMouseDown(false);
     };
 
