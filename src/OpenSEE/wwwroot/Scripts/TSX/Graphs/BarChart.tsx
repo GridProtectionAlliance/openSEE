@@ -209,7 +209,7 @@ const BarChart = (props: IProps) => {
     }, [colors]);
 
     React.useEffect(() => {
-        d3.select(containerRef.current).select('svg').select('g.root').remove();
+        d3.select(containerRef.current).select('svg.root').select('g.root').remove();
 
         if (loading === 'Loading' || barData?.length === 0) {
             setCreated(false);

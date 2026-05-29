@@ -39,13 +39,21 @@ const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerPro
     const showSVG = props.loading != 'Loading' && props.hasData;
 
     return (
-        <div ref={ref} data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%' }}>
+        <div ref={ref} data-drawer={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} id={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId} style={{ height: props.height, width: '100%', position: 'relative' }}>
             {props.loading === 'Loading' ? <LoadingIcon /> : null}
             {props.loading != 'Loading' && props.loading != 'Error' && !props.hasData ? <NoDataIcon /> : null}
             {props.loading === 'Error' ? <ErrorIcon /> : null}
 
-            <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0) }}>
-                {showSVG ? (
+            {/* Data SVG - D3 draws axes and the trace paths into this element. */}
+            <svg className="root" style={{ width: (showSVG ? '100%' : 0), height: (showSVG ? '100%' : 0), willChange: 'transform' }}>
+                {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
+                    <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text>
+                    : null}
+            </svg>
+
+            {/* Hover/marker overlay in a separate SVG layered on top, so moving the hover line only repaints these thin lines. */}
+            {showSVG ? (
+                <svg className="overlayRoot" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                     <g className="polyLineOverlay" transform="translate(10,0)">
                         {(props.polyLines ?? []).map(line => (
                             <PolyLine
@@ -56,12 +64,8 @@ const ChartContainer = React.memo(React.forwardRef<HTMLDivElement, IContainerPro
                             />
                         ))}
                     </g>
-                ) : null}
-
-                {props.loading != 'Loading' && props.hasData && !props.hasTrace ?
-                    <text x={'50%'} y={'45%'} style={{ textAnchor: 'middle', fontSize: 'x-large' }} > Select a Trace in the Legend to Display. </text>
-                    : null}
-            </svg>
+                </svg>
+            ) : null}
         </div>
     );
 }));

@@ -50,9 +50,9 @@ export const CreatePlotSVG = (
     if (containerEl == null) return null;
 
     const { height, width, dataKey, yLimits, displayLabel } = params;
-    d3.select(containerEl).select("svg").select("g.root").remove();
+    d3.select(containerEl).select("svg.root").select("g.root").remove();
 
-    const svg = d3.select(containerEl).select("svg")
+    const svg = d3.select(containerEl).select("svg.root")
         .append("g").classed("root", true)
         .attr("transform", "translate(10,0)");
 

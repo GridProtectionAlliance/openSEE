@@ -278,7 +278,7 @@ const LineChart = (props: IProps) => {
 
     // dataKey / options change: clear and recreate the whole plot
     React.useEffect(() => {
-        d3.select(containerRef.current).select('svg').select('g.root').remove();
+        d3.select(containerRef.current).select('svg.root').select('g.root').remove();
 
         if (loading === 'Loading' || lineData?.length === 0) {
             setCreated(false);
