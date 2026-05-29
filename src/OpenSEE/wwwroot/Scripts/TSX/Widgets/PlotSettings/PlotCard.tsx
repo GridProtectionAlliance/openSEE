@@ -30,7 +30,7 @@ import {
     SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces, SelectPlotMarkers, SetPlotMarkers,
     SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
     SetOverlappingWaveTimeUnit, SetTimeUnit
-} from '../../store/settingSlice';
+} from '../../Store/settingSlice';
 import { GetDisplayLabel } from '../../Graphs/Utils/Utilities';
 import { defaultSettings, TimeUnitOptions } from '../../defaults';
 import { useAppDispatch, useAppSelector } from '../../hooks';

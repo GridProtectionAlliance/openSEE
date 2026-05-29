@@ -46,7 +46,7 @@ import LineChart from './Graphs/LineChart';
 import OpenSeeNavBar from './Navbar/OpenSEENavbar';
 import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
-import { usePlotLifecycle } from './hooks/usePlotLifeCycle';
+import { usePlotLifecycle } from './Hooks/usePlotLifeCycle';
 import { selectListGraphs, selectPlotKeys, selectDisplayed, selectEnabledPlots, selectFFTEnabled } from './PlotSelectors';
 import PointWidget from './Widgets/AccumulatedPoints';
 import EventInfo from './Widgets/EventInfo/EventInfo';
@@ -59,7 +59,7 @@ import SettingsWidget from './Widgets/PlotSettings/SettingWindow';
 import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
 import ToolTipWidget from './Widgets/Tooltip';
 import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
-import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './store/settingSlice';
+import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './Store/settingSlice';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 
 const OpenSeeApplication = React.memo(() => {

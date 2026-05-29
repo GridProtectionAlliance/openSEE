@@ -26,7 +26,7 @@ import { OpenSee } from '../../global';
 import { PlotStateActionContext } from '../../Context/PlotStateContext';
 import { SeriesKey } from '../../Context/PlotKeys';
 import { useAppSelector } from '../../hooks';
-import { SelectColor } from '../../store/settingSlice';
+import { SelectColor } from '../../Store/settingSlice';
 import { ILegendGrid } from './Types';
 import { convertHex } from './Utilities';
 

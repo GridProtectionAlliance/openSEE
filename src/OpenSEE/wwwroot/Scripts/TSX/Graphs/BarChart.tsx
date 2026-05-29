@@ -26,7 +26,7 @@ import { selectYLimits, selectYLabels, selectActiveUnit, selectRelevantUnits, se
 import { getPrimaryAxis } from '../Context/PlotStateUtilities';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
-import { SelectColor, SelectMouseMode, SelectZoomMode } from '../store/settingSlice';
+import { SelectColor, SelectMouseMode, SelectZoomMode } from '../Store/settingSlice';
 import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
 import { computeZoomWindow } from './Renderers/ZoomWindow';

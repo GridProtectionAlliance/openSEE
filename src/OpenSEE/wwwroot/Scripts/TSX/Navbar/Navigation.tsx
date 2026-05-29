@@ -25,7 +25,7 @@ import { ToolTip } from '@gpa-gemstone/react-forms';
 import React from "react";
 import { OpenSee } from "../global";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { SelectNavigation, SetNavigation } from "../store/settingSlice";
+import { SelectNavigation, SetNavigation } from "../Store/settingSlice";
 import { EventContext } from '../Context/EventContext';
 
 const Navigation = () => {

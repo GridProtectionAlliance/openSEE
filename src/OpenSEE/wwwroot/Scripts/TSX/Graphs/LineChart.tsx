@@ -33,7 +33,7 @@ import EventContext from '../Context/EventContext';
 import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
-import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../store/settingSlice';
+import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../Store/settingSlice';
 import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
 import { GetDisplayLabel, useChartScales, useTooltipLocations, useYLabelFontSize } from './Utils/Utilities';

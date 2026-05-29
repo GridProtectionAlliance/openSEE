@@ -28,7 +28,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
-import { SelectColor } from '../store/settingSlice';
+import { SelectColor } from '../Store/settingSlice';
 import { selectPhaseVectors } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { Alert } from '@gpa-gemstone/react-interactive';

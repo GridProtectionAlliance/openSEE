@@ -25,7 +25,7 @@
 //******************************************************************************************************
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverlappingTime, SelectTimeUnit } from '../store/settingSlice';
+import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverlappingTime, SelectTimeUnit } from '../Store/settingSlice';
 import { CheckBox } from '@gpa-gemstone/react-forms';
 import _ from 'lodash';
 import { LoadingIcon } from '../Graphs/ChartIcons';

@@ -38,8 +38,8 @@ import { PlotDataProvider } from './Context/PlotDataContext';
 import { PlotStateProvider } from './Context/PlotStateContext';
 import { OverlappingProvider } from './Context/OverlappingContext';
 import OpenSeeApplication from './OpenSeeApplication';
-import { LoadSettings } from './store/settingSlice';
-import store from './store/store';
+import { LoadSettings } from './Store/settingSlice';
+import store from './Store/store';
 
 // PlotDataProvider and PlotStateProvider are independent -- neither consumes the other. Coordination happens in OpenSeeApplicationvia usePlotLifecycle, which reads from both.
 const OpenSEE = () => (

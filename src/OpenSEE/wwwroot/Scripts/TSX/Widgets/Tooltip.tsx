@@ -26,7 +26,7 @@
 import * as React from 'react';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
-import { SelectColor } from '../store/settingSlice';
+import { SelectColor } from '../Store/settingSlice';
 import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';

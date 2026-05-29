@@ -34,7 +34,7 @@ import {
     SetDefaultVType,
     SelectSinglePlot,
     SetTimeUnit
-} from '../../store/settingSlice';
+} from '../../Store/settingSlice';
 import { TimeUnitOptions } from '../../defaults';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { DatePicker, Input, CheckBox, RadioButtons } from '@gpa-gemstone/react-forms';

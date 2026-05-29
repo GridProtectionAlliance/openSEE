@@ -30,9 +30,9 @@ import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { OpenSee } from "../global";
 import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
 import { useAppDispatch } from '../hooks';
-import { SetMouseMode } from '../store/settingSlice';
+import { SetMouseMode } from '../Store/settingSlice';
 import { selectFFTEnabled, selectDisplayed, selectAnalytics, selectEventIDs } from '../PlotSelectors';
-import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
+import { IPlotLifecycleActions } from '../Hooks/usePlotLifeCycle';
 import { BasePlots } from '../defaults';
 
 interface IWidgets {

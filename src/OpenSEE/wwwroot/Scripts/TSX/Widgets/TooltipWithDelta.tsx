@@ -25,7 +25,7 @@
 //******************************************************************************************************
 import React from 'react';
 import moment from 'moment';
-import { SelectColor } from '../store/settingSlice';
+import { SelectColor } from '../Store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';

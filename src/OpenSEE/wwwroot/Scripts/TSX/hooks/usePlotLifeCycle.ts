@@ -19,7 +19,7 @@ import AnalyticContext from '../Context/AnalyticContext';
 import { getData, getDetailedData } from '../Data/GraphLogic';
 import { AddRequest, CancelEvent, AppendRequest } from '../Data/RequestHandler';
 import { useAppSelector } from '../hooks';
-import { SelectSinglePlot, SelectDefaultTraces, SelectVTypeDefault } from '../store/settingSlice';
+import { SelectSinglePlot, SelectDefaultTraces, SelectVTypeDefault } from '../Store/settingSlice';
 
 export interface IPlotLifecycleActions {
     AddPlot: (

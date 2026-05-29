@@ -28,7 +28,7 @@ import About from './About';
 import { OpenSee } from "../global";
 import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } from '../Graphs/ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../store/settingSlice';
+import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../Store/settingSlice';
 import Navigation from './Navigation';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';

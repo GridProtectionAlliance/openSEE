@@ -24,7 +24,7 @@
 //
 //******************************************************************************************************
 import * as React from 'react';
-import { SelectColor } from '../store/settingSlice';
+import { SelectColor } from '../Store/settingSlice';
 import { useAppSelector } from '../hooks';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';

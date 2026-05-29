@@ -34,8 +34,8 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { selectPlotKeys, selectEventIDs } from '../PlotSelectors';
 import { useAppSelector } from '../hooks';
-import { SelectSinglePlot } from '../store/settingSlice';
-import { IPlotLifecycleActions } from '../hooks/usePlotLifeCycle';
+import { SelectSinglePlot } from '../Store/settingSlice';
+import { IPlotLifecycleActions } from '../Hooks/usePlotLifeCycle';
 import { BasePlots } from '../defaults';
 
 interface IProps {
