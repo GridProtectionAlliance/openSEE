@@ -46,7 +46,11 @@ const TraceButton = (props: { data: ILegendGrid, width: React.CSSProperties, dat
     };
 
     return (
-        <div style={{ ...props.width, backgroundColor: convertHex(getColor(props.data.color), props.data.enabled ? 100 : 50), borderLeft: "2px solid #b2b2b2" }} onClick={onClick}>
+        <div
+            className="d-flex justify-content-center align-items-center"
+            style={{ ...props.width, backgroundColor: convertHex(getColor(props.data.color), props.data.enabled ? 100 : 50), borderLeft: "2px solid #b2b2b2", cursor: "pointer" }}
+            onClick={onClick}
+        >
             {props.data.enabled ?
                 <i className="fa fa-minus" /> :
                 <i className="fa fa-plus" />
