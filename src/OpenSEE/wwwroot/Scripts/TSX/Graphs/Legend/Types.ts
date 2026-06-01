@@ -25,3 +25,6 @@ import { SeriesKey } from '../../Context/PlotKeys';
 
 export interface ILegendGrid { enabled: boolean, hLabel: string, vLabel: string, color: OpenSee.Color, traces: Map<string, SeriesKey[]>, category?: string }
 export type LegendGroupType = 'vertical' | 'horizontal';
+
+//This should really be exported via gpa-gemstone
+export interface ICategory { Value: number, Label: string, Selected: boolean }

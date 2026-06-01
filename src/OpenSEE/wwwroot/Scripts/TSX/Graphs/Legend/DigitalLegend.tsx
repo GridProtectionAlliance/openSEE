@@ -1,7 +1,7 @@
 //******************************************************************************************************
-//  LegendBase.tsx - Gbtc
+//  DigitalLegend.tsx - Gbtc
 //
-//  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
+//  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
 //
 //  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
 //  the NOTICE file distributed with this work for additional information regarding copyright ownership.
@@ -16,41 +16,52 @@
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  01/06/2020 - C Lackner
-//       Generated original version of source code.
-//  07/08/2020 - C Lackner
-//       Refactored Trace Picker to work as Grid.
+//  06/01/2026 - Preston Crawford
+//       Generated original version of source code
 //
 //******************************************************************************************************
 import * as React from "react";
 import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
-import { MultiCheckBoxSelect } from "@gpa-gemstone/react-forms";
-import { sortGroup, sortHorizontal, uniq } from './Utilities';
+import { MultiCheckBoxSelect, SearchableSelect } from "@gpa-gemstone/react-forms";
+import { sortHorizontal } from './Utilities';
 import { useLegendGrid, rowKey } from './useLegendGrid';
-import DigitalLegend from './DigitalLegend';
 import Header from './Header';
 import Row from './Row';
-import VCategory from './VCategory';
 import { OpenSee } from '../../global';
 
-const hrow = 26;
+const maxInitialRows = 10;
 
 interface IProps {
     height: number,
     dataKey: OpenSee.IGraphProps
 }
 
-const Legend = (props: IProps) => {
-    if (props.dataKey.DataType === 'Digitals')
-        return <DigitalLegend dataKey={props.dataKey} height={props.height} />;
-
-    return <StandardLegend dataKey={props.dataKey} height={props.height} />;
-};
-
-const StandardLegend = (props: IProps) => {
+const DigitalLegend = (props: IProps) => {
     const { dataPoints, grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup } = useLegendGrid(props.dataKey);
 
+    const [addedKeys, setAddedKeys] = React.useState<string[]>([]);
+
+    const visibleHeader = React.useMemo(() => {
+        if (verticalHeader.length <= maxInitialRows) return verticalHeader;
+        return verticalHeader.filter((v, i) =>
+            i < maxInitialRows
+            || (grid.get(rowKey(v))?.some(g => g.enabled) ?? false)
+            || addedKeys.includes(rowKey(v))
+        );
+    }, [verticalHeader, grid, addedKeys]);
+
+    const hasHidden = verticalHeader.length > visibleHeader.length;
+
     const hwidth = (200 - 4) / (horizontalHeader.length + (verticalHeader.length > 1 ? 2 : 1));
+
+    const search = (text: string) => {
+        const visibleKeys = new Set(visibleHeader.map(rowKey));
+        const opts = verticalHeader
+            .filter(v => !visibleKeys.has(rowKey(v)))
+            .filter(v => v[0].toLowerCase().includes(text.toLowerCase()))
+            .map(v => ({ Label: v[0], Value: rowKey(v) }));
+        return Promise.resolve(opts);
+    };
 
     return (
         <OverlayDrawer Location="right" Title="Traces" Open={false} Target={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId}>
@@ -67,6 +78,21 @@ const StandardLegend = (props: IProps) => {
                         Label=""
                     />
                 </div>
+                {hasHidden ?
+                    <div className="form-group">
+                        <SearchableSelect<{ search: string }>
+                            Record={{search: ''}}
+                            Field={'search'}
+                            Label="Add Channel"
+                            Help="Search for channels to add to the legend."
+                            AllowCustom={false}
+                            ResetSearchOnSelect={true}
+                            Search={search}
+                            Style={{ width: '100%' }}
+                            BtnStyle={{ display: 'flex', paddingLeft: 0, alignItems: 'center' }}
+                            Setter={(_, opt) => setAddedKeys(prev => prev.includes(opt.Value as string) ? prev : [...prev, opt.Value as string])}
+                        />
+                    </div> : null}
                 <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
                     <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", position: "sticky", top: 0, zIndex: 1 }}>
                         <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
@@ -75,48 +101,26 @@ const StandardLegend = (props: IProps) => {
                                 key={i}
                                 label={item}
                                 width={hwidth}
-                                onClick={clickGroup}
+                                onClick={(g, t) => clickGroup(g, t, new Set(visibleHeader.map(rowKey)))}
                             />
                         )}
                     </div>
-                    <div style={{ width: '100%' }}>
-                        {verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ?
-                            <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                                {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((v, i) =>
-                                    <VCategory
-                                        key={i}
-                                        label={v[1]}
-                                        height={hrow * verticalHeader.filter(item => item[1] == v[1]).length}
-                                        width={hwidth}
-                                    />
-                                )}
-                            </div> : null}
-                        <div style={{
-                            width: verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ? `calc(100% - ${hwidth}px)` : "100%",
-                            backgroundColor: "rgb(204,204,204)",
-                            overflow: "hidden",
-                            textAlign: "center",
-                            display: "inline-block",
-                            verticalAlign: "top"
-                        }}>
-                            {verticalHeader.map((v, i) => (
-                                <Row key={i}
-                                    dataKey={props.dataKey}
-                                    category={v[1]}
-                                    label={v[0]}
-                                    data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
-                                    width={hwidth}
-                                    clickHeader={clickGroup}
-                                    horizontalHeaders={horizontalHeader}
-                                    plotData={dataPoints}
-                                />
-                            ))}
-                        </div>
-                    </div>
+                    {visibleHeader.map((v, i) => (
+                        <Row key={i}
+                            dataKey={props.dataKey}
+                            category={v[1]}
+                            label={v[0]}
+                            data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
+                            width={hwidth}
+                            clickHeader={clickGroup}
+                            horizontalHeaders={horizontalHeader}
+                            plotData={dataPoints}
+                        />
+                    ))}
                 </div>
             </div>
         </OverlayDrawer>
     );
 };
 
-export default Legend;
+export default DigitalLegend;
