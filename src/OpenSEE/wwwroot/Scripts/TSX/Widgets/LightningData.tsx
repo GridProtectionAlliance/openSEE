@@ -322,7 +322,7 @@ const LightningDataWidget = () => {
                 <div className="row justify-content-center">
                     <div className="col-12">
                         <Alert Class='alert-info'>
-                            No data for Lightning.
+                            No lightning data found.
                         </Alert>
                     </div>
                 </div>
