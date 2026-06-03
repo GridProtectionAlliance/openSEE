@@ -15,13 +15,11 @@
     <None Include="wwwroot\Images\openSEE - Waveform Viewer Header.png" />
     <None Include="wwwroot\Images\openSEE.png" />
     <None Include="wwwroot\Images\openSEELogo.svg" />
-    <Content Include="Shared\Content\Images\ui-icons_444444_256x240.png" />
-    <Content Include="Shared\Content\Images\ui-icons_555555_256x240.png" />
-    <Content Include="Shared\Content\Images\ui-icons_777620_256x240.png" />
-    <Content Include="Shared\Content\Images\ui-icons_777777_256x240.png" />
-    <Content Include="Shared\Content\Images\ui-icons_cc0000_256x240.png" />
-    <Content Include="Shared\Scripts\default.ployfill.js" />
-    <PackageReference Include="Gemstone.Web" Version="1.0.161" />
+    <ProjectReference Include="C:\Users\pcrawford\source\repos\snapDB\Gemstone\security\src\Gemstone.Security\Gemstone.Security.csproj">
+      <Private>True</Private>
+      <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
+    <PackageReference Include="Gemstone.Web" Version="1.0.175" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.12" />
     <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.0" />

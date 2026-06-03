@@ -21,11 +21,15 @@
 //
 //******************************************************************************************************
 
-using System;
-using System.IO;
+using Gemstone.Configuration;
 using Gemstone.Diagnostics;
 using Gemstone.IO;
+using Gemstone.Security.AuthenticationProviders;
 using Gemstone.Web;
+using Gemstone.Web.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -34,6 +38,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Serialization;
 using OpenSEE.Security;
+using System;
+using System.IO;
 namespace OpenSEE;
 
 public class Startup
@@ -43,6 +49,12 @@ public class Startup
         SetupTempPath();
         Configuration = configuration;
         Env = env;
+    }
+
+    public static class Policies
+    {
+        public const string Authenticated = nameof(Authenticated);
+        public const string ControllerAccess = nameof(ControllerAccess);
     }
 
     public IWebHostEnvironment Env { get; set; }
@@ -58,10 +70,64 @@ public class Startup
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
             });
 
-        // Todo: Temp Auth
-        services.AddAuthentication(TestAuthHandler.AuthenticationScheme)
-            .AddScheme<TestAuthHandlerOptions, TestAuthHandler>(TestAuthHandler.AuthenticationScheme, (options) => { });
+        //probably should wire this up in openSEE in OHEE via global ajax handler
+        services.AddAntiforgery(options => options.HeaderName = "X-GEMSTONE-VERIFY");
 
+        services.AddTransient<WindowsAuthenticationProviderOptions>(_ => new()
+        {
+            //not sure if we should be defining defaults for these, id think so?
+            LDAPPath = Settings.Default.WindowsAuthentication.LDAPPath,
+            AllowLocalAccounts = (bool?)(Settings.Default.WindowsAuthentication.AllowLocalAccounts) ?? false
+        });
+
+        AuthenticationBuilder authenticationBuilder = services.ConfigureGemstoneWebAuthentication<AuthenticationSetup>();
+
+        dynamic oauthSection = Settings.Instance[OAuthAuthenticationProvider.SettingsSection];
+
+        if (oauthSection.Enabled)
+        {
+            OAuthAuthenticationProviderOptions oauthOptions = new()
+            {
+                UserIdClaim = oauthSection.UserIdClaim,
+                Authority = oauthSection.Authority,
+                ClientId = oauthSection.ClientId,
+                ClientSecret = oauthSection.ClientSecret,
+                Scopes = oauthSection.Scopes
+            };
+
+            authenticationBuilder.ConfigureOAuthProvider(oauthOptions);
+        }
+
+        services
+            .AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            .Configure(options =>
+             {
+                 double ticketTimeout = Settings.Default.WebHosting.AuthenticationTicketTimeout;
+                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
+             });
+
+        services
+            .AddOptions<SessionCacheOptions>()
+            .Configure(options =>
+            {
+                double sessionTimeout = Settings.Default.WebHosting.AuthenticationSessionTimeout;
+                options.SlidingExpiration = TimeSpan.FromMinutes(15);
+            });
+
+        services.AddAuthorization(options =>
+        {
+            AuthorizationPolicy controllerAccessPolicy = new AuthorizationPolicyBuilder()
+                .RequireControllerAccess()
+                .RequireAuthenticatedUser()
+                .Build();
+
+            options.AddPolicy(Policies.Authenticated, policy => policy.RequireAuthenticatedUser());
+            options.AddPolicy(Policies.ControllerAccess, controllerAccessPolicy);
+            options.DefaultPolicy = controllerAccessPolicy;
+            options.FallbackPolicy = controllerAccessPolicy;
+        });
+
+        services.AddSingleton<IAuthorizationHandler, ControllerAccessHandler>();
 
         services.AddMvc();
     }
@@ -84,16 +150,19 @@ public class Startup
             ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
         });
 
+        app.UseGemstoneAuthentication();
+
         app.UseStaticFiles(WebExtensions.StaticFileEmbeddedResources());
         app.UseStaticFiles();
 
         app.UseRouting();
 
-        app.UseAuthentication();
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
         {
+            endpoints.MapRazorPages();
+
             endpoints.MapControllerRoute(
             name: "default",
             pattern: "{controller}/{newaction?}/{id?}",

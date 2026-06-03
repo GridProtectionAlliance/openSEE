@@ -33,7 +33,7 @@ namespace OpenSEE.Controllers
     /// <summary>
     /// Represents a MVC controller for the site's main pages.
     /// </summary>
-    [Authorize]
+    [Authorize(Startup.Policies.Authenticated)]
     public class HomeController : Controller
     {
         // This provides some default values for if nothing is supplied in the query string
@@ -42,18 +42,17 @@ namespace OpenSEE.Controllers
             int eventID = -1;
             Event evt;
 
-            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
-            {
-                TableOperations<Event> eventTable = new TableOperations<Event>(connection);
+            using AdoDataConnection connection = new(Settings.Default);
+            TableOperations<Event> eventTable = new(connection);
 
-                eventID = eventTable.QueryRecord("ID > 0").ID;
-                evt = eventTable.QueryRecordWhere("ID = {0}", eventID);
+            eventID = eventTable.QueryRecord("ID > 0").ID;
+            evt = eventTable.QueryRecordWhere("ID = {0}", eventID);
 
-                ViewBag.DefaultEventID = eventID;
-                ViewBag.DefaultEventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                ViewBag.DefaultEventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                return View("Index");
-            }
+            ViewBag.DefaultEventID = eventID;
+            ViewBag.DefaultEventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            ViewBag.DefaultEventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+
+            return View("Index");
         }
     }
 }
