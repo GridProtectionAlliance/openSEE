@@ -22,13 +22,15 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
+
 // global variables declared in openSEE.cshtml scripts section
 declare global {
-    var homePath: string;
-    var version: string;
-    var defaultEventID: number;
-    var defaultEventStartTime: string;
-    var defaultEventEndTime: string;
+    const homePath: string;
+    const version: string;
+    const defaultEventID: number;
+    const defaultEventStartTime: string;
+    const defaultEventEndTime: string;
+    const logoutPath: string;
 }
 
 export namespace OpenSee {
