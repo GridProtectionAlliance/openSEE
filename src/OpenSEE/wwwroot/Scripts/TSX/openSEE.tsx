@@ -25,9 +25,7 @@
 
 // To-DO:
 // # Fix Dowload.ash to include Analytics
-//
 
-import 'bootstrap/dist/css/bootstrap.min.css'; // this could be served statically from server instead of bundling in app
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
@@ -41,7 +39,6 @@ import OpenSeeApplication from './OpenSeeApplication';
 import { LoadSettings } from './Store/settingSlice';
 import store from './Store/store';
 
-// PlotDataProvider and PlotStateProvider are independent -- neither consumes the other. Coordination happens in OpenSeeApplicationvia usePlotLifecycle, which reads from both.
 const OpenSEE = () => (
     <EventProvider>
         <HoverProvider>
