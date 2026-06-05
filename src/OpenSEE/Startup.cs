@@ -75,9 +75,8 @@ public class Startup
 
         services.AddTransient<WindowsAuthenticationProviderOptions>(_ => new()
         {
-            //not sure if we should be defining defaults for these, id think so?
-            LDAPPath = Settings.Default.WindowsAuthentication.LDAPPath,
-            AllowLocalAccounts = (bool?)(Settings.Default.WindowsAuthentication.AllowLocalAccounts) ?? false
+            LDAPPath = Settings.Default[WindowsAuthenticationProvider.SettingsSection].LDAPPath,
+            AllowLocalAccounts = (bool?)(Settings.Default[WindowsAuthenticationProvider.SettingsSection].AllowLocalAccounts) ?? false
         });
 
         AuthenticationBuilder authenticationBuilder = services.ConfigureGemstoneWebAuthentication<AuthenticationSetup>();

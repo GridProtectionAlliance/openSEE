@@ -69,11 +69,11 @@ namespace OpenSEE
 
                 CreateHostBuilder(args).Build().Run();
 
-            #if DEBUG
+#if DEBUG
                 Settings.Save(forceSave: true);
-            #else
+#else
                 Settings.Save();
-            #endif
+#endif
             }
             finally
             {
@@ -91,6 +91,7 @@ namespace OpenSEE
                 DiagnosticsLogger.DefineSettings(settings);
                 AdoDataConnection.DefineSettings(settings);
                 OAuthAuthenticationProvider.DefineSettings(settings);
+                WindowsAuthenticationProvider.DefineSettings(settings);
                 DefineWebHotSettings(settings);
                 DefineAdditionalSystemSettings(settings);
             }
@@ -123,15 +124,15 @@ namespace OpenSEE
                     // Add Gemstone diagnostics logging
                     builder.AddGemstoneDiagnostics();
 
-                #if RELEASE
+#if RELEASE
                     if (OperatingSystem.IsWindows())
                     {
                         builder.AddFilter<EventLogLoggerProvider>("Application", LogLevel.Warning);
                         builder.AddEventLog();
                     }
-                #endif
+#endif
                 });
-    
+
         private static void DefineWebHotSettings(Settings settings)
         {
             dynamic section = settings[DefaultWebHostingCategory];
@@ -144,7 +145,9 @@ namespace OpenSEE
         {
             dynamic section = settings[settingsCatergory];
 
-            section.NodeID = ("00000000-0000-0000-0000-000000000000", "Expiration of the authentication ticket relative to its creation time, in hours");
+            section.NodeID = ("00000000-0000-0000-0000-000000000000", "The applications instance identifier");
+
+            //override the UserClaimID here with objectidentifier
         }
     }
 }
