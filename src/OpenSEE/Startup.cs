@@ -97,6 +97,8 @@ public class Startup
             authenticationBuilder.ConfigureOAuthProvider(oauthOptions);
         }
 
+        services.AddTransient<IClaimsTransformation, OAuthClaimsTransformation>();
+
         services
             .AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
             .Configure(options =>
