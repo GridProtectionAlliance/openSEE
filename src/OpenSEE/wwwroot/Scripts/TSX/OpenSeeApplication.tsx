@@ -466,7 +466,16 @@ const OpenSeeApplication = React.memo(() => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.png`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} lifecycle={lifecycle} />}
+           // OnSignOut={() => window.location.href = logoutPath}
+           //we need to add the above prop back but the navbar is going to need to be adjusted for this to work
+            NavBarContent={
+                <OpenSeeNavBar
+                    ToggleDrawer={ToggleDrawer}
+                    OpenDrawers={openDrawers}
+                    Width={navWidth}
+                    lifecycle={lifecycle}
+                />
+            }
             NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
             NavBarImgStyle={{ maxHeight: 55, margin: -5 }}
             UseLegacyNavigation={true}

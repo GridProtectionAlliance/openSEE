@@ -33,6 +33,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
+#if RELEASE
+using Microsoft.Extensions.Logging.EventLog;
+#endif
 using OpenSEE.Models;
 
 namespace OpenSEE
@@ -125,7 +128,7 @@ namespace OpenSEE
                     builder.AddGemstoneDiagnostics();
 
 #if RELEASE
-                    if (OperatingSystem.IsWindows())
+                    if (System.OperatingSystem.IsWindows())
                     {
                         builder.AddFilter<EventLogLoggerProvider>("Application", LogLevel.Warning);
                         builder.AddEventLog();
