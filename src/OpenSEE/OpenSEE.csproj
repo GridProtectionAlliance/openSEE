@@ -17,6 +17,7 @@
     <None Include="wwwroot\Images\openSEELogo.svg" />
     <PackageReference Include="Gemstone.Security" Version="1.0.175" />
     <PackageReference Include="Gemstone.Web" Version="1.0.175" />
+    <PackageReference Include="Azure.Identity" Version="1.14.2" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.12" />
     <PackageReference Include="Microsoft.Graph" Version="4.52.0" />
