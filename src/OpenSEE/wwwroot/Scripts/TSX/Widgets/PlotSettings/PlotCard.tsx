@@ -23,18 +23,14 @@
 //       Cleaned up layout and introduced manual time&y limits
 //******************************************************************************************************
 import * as React from 'react';
-import moment from 'moment';
 import * as _ from 'lodash';
 import { OpenSee } from '../../global';
-import {
-    SelectColor, SetColor, SelectTimeUnit, SelectDefaultTraces, SelectPlotMarkers, SetPlotMarkers,
-    SetDefaultTrace, SelectVTypeDefault, SetDefaultVType, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
-    SetOverlappingWaveTimeUnit, SetTimeUnit
-} from '../../Store/settingSlice';
+import { SelectColor, SetColor, SelectSinglePlot, SelectOverlappingWaveTimeUnit, SetOverlappingWaveTimeUnit, } from '../../Store/settingSlice';
 import { GetDisplayLabel } from '../../Graphs/Utils/Utilities';
-import { defaultSettings, TimeUnitOptions } from '../../defaults';
+import { defaultSettings } from '../../defaults';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { DatePicker, Select, Input, CheckBox, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
+import { Input, ColorPicker } from '@gpa-gemstone/react-forms';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { PlotDataStateContext } from '../../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../../Context/PlotStateContext';
 import EventContext from '../../Context/EventContext';
@@ -52,6 +48,17 @@ interface IProps extends OpenSee.IGraphProps {
     scrollOffset: number
 }
 
+const colorLabelStyle: React.CSSProperties = {
+    minHeight: '2.5rem',
+    marginBottom: '0.25rem',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word'
+};
+
+const colorPickerStyle: React.CSSProperties = {
+    marginBottom: 0
+};
+
 //TODO: switch radio buttons out for gemstone radio buttons
 //  In addition to that do a quick search for other places that should be doing the same
 
@@ -60,6 +67,8 @@ const PlotCard = (props: IProps) => {
     const singlePlot = useAppSelector(SelectSinglePlot);
     const colors = useAppSelector(SelectColor);
     const overlapWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
+    const colorContainerRef = React.useRef<HTMLDivElement | null>(null);
+    const { width: colorContainerWidth } = useGetContainerPosition(colorContainerRef);
 
     const { plots: plotData } = React.useContext(PlotDataStateContext);
     const plotState = React.useContext(PlotStateStateContext);
@@ -87,6 +96,13 @@ const PlotCard = (props: IProps) => {
 
     const colorSettings: OpenSee.Color[] = _.uniq(data.map(item => item.Color as OpenSee.Color));
     const unitSettings: OpenSee.Unit[] = _.uniq(data.map(item => item.Unit));
+
+    const colorColumnClass = React.useMemo(() => {
+        if (colorContainerWidth < 275) return 'col-12';
+        if (colorContainerWidth < 500) return 'col-6';
+        if (colorContainerWidth < 700) return 'col-4';
+        return 'col-3';
+    }, [colorContainerWidth]);
 
     React.useEffect(() => {
         if (limitsPayloadRef.current == null) return;
@@ -195,7 +211,7 @@ const PlotCard = (props: IProps) => {
         }
     }, [yLimits, overlappingKeys, axisSettings]);
 
-    if (!meta || !axisSettings) 
+    if (meta == null || axisSettings == null)
         return null;
 
     return (
@@ -311,17 +327,24 @@ const PlotCard = (props: IProps) => {
                     {colorSettings.length > 0 ?
                         <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
-                            <div className="row">
-                                {colorSettings.map((c, i) =>
-                                    <div className="col-3" key={i}>
-                                        <ColorPicker<OpenSee.IColorCollection>
-                                            Record={colors}
-                                            Field={c}
-                                            Label={getColorLabel(c, props.DataType)}
-                                            Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
-                                            Style={{ background: colors[c], marginBottom: 5 }}
-                                        />
-                                    </div>)}
+                            <div ref={colorContainerRef} className="row">
+                                {colorSettings.map((c, i) => {
+                                    const label = getColorLabel(c, props.DataType);
+                                    return (
+                                        <div className={`${colorColumnClass} mb-3`} style={{ minWidth: 0 }} key={i}>
+                                            <div className="text-break" style={colorLabelStyle}>
+                                                {label}
+                                            </div>
+                                            <ColorPicker<OpenSee.IColorCollection>
+                                                Record={colors}
+                                                Field={c}
+                                                Label=""
+                                                Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
+                                                Style={colorPickerStyle}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </fieldset> : null}
 
