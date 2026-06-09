@@ -178,11 +178,16 @@ const OpenSeeApplication = React.memo(() => {
         const overlappingEvts: number[] = [];
         const enabledPlots = selectEnabledPlots(plotState.meta, plotData);
 
-        if (overlapping.events.length > 0) {
-            overlapping.events.forEach(e => {
-                if (e.Selected) overlappingEvts.push(e.EventID);
-            });
-        }
+        overlapping.events.forEach(e => {
+            if (e.Selected)
+                overlappingEvts.push(e.EventID);
+        });
+
+        enabledPlots.forEach(plot => {
+            const plotEventId = plot.key.EventId;
+            if (plotEventId !== evt.Context.EventID && plotEventId !== -1)
+                overlappingEvts.push(plotEventId);
+        });
 
         const plotBase64 = btoa(JSON.stringify(enabledPlots));
         const overlappingBase64 = btoa(JSON.stringify(overlappingEvts));
