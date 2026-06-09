@@ -29,7 +29,7 @@ import { SelectColor, SetColor, SelectSinglePlot, SelectOverlappingWaveTimeUnit,
 import { GetDisplayLabel } from '../../Graphs/Utils/Utilities';
 import { defaultSettings } from '../../defaults';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { Input, ColorPicker } from '@gpa-gemstone/react-forms';
+import { Input, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { PlotDataStateContext } from '../../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../../Context/PlotStateContext';
@@ -48,6 +48,12 @@ interface IProps extends OpenSee.IGraphProps {
     scrollOffset: number
 }
 
+type LimitMode = 'Auto' | 'Manual';
+
+interface ILimitModeRecord {
+    mode: LimitMode
+}
+
 const colorLabelStyle: React.CSSProperties = {
     minHeight: '2.5rem',
     marginBottom: '0.25rem',
@@ -59,8 +65,7 @@ const colorPickerStyle: React.CSSProperties = {
     marginBottom: 0
 };
 
-//TODO: switch radio buttons out for gemstone radio buttons
-//  In addition to that do a quick search for other places that should be doing the same
+const manualLimitOptions: Array<{ Label: string, Value: LimitMode }> = [{ Label: "Auto Limits", Value: 'Auto' }, { Label: "Manual Limits", Value: 'Manual' }];
 
 const PlotCard = (props: IProps) => {
     const dispatch = useAppDispatch();
@@ -229,19 +234,22 @@ const PlotCard = (props: IProps) => {
                         <fieldset key={item} className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
                             <div className="form-row">
-                                <div className="col-6">
+                                <div className="col-4">
                                     <AxisUnitSelector
                                         setter={(index) => handleUnitChange(item, index, props)} unitType={item}
                                         axisSetting={axisSettings[item]}
                                     />
                                 </div>
-                                <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                    <input className="form-check-input" type="radio" checked={!axisSettings[item]?.isManual} onChange={(e) => stateActions.SetIsManual(props, item, !e.target.checked)} />
-                                    <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Auto Limits</label>
-                                </div>
-                                <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                    <input className="form-check-input" type="radio" checked={axisSettings[item]?.isManual} onChange={(e) => stateActions.SetIsManual(props, item, e.target.checked)} />
-                                    <label className="form-check-label" style={{ fontSize: '0.8rem' }}>Manual Limits</label>
+                                <div className="col-8 mt-2">
+                                    <RadioButtons<ILimitModeRecord>
+                                        Record={{ mode: axisSettings[item]?.isManual ? 'Manual' : 'Auto' }}
+                                        Field="mode"
+                                        Setter={(record) => stateActions.SetIsManual(props, item, record.mode === 'Manual')}
+                                        Label=""
+                                        Position="horizontal"
+                                        Style={{ marginBottom: 0 }}
+                                        Options={manualLimitOptions}
+                                    />
                                 </div>
                             </div>
 
@@ -280,17 +288,16 @@ const PlotCard = (props: IProps) => {
                                             <div className="col-6">
                                                 <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
                                             </div>
-                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={!oMeta?.yLimits[item]?.isManual} onChange={(e) => stateActions.SetIsManual(key, item, !e.target.checked)} />
-                                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>
-                                                    Auto Limits
-                                                </label>
-                                            </div>
-                                            <div className="col-3 form-check form-check-inline" style={{ margin: 0 }}>
-                                                <input className="form-check-input" type="radio" checked={oMeta?.yLimits[item]?.isManual} onChange={(e) => stateActions.SetIsManual(key, item, e.target.checked)} />
-                                                <label className="form-check-label" style={{ fontSize: '0.8rem' }}>
-                                                    Manual Limits
-                                                </label>
+                                            <div className="col-6">
+                                                <RadioButtons<ILimitModeRecord>
+                                                    Record={{ mode: oMeta?.yLimits[item]?.isManual ? 'Manual' : 'Auto' }}
+                                                    Field="mode"
+                                                    Setter={(record) => stateActions.SetIsManual(key, item, record.mode === 'Manual')}
+                                                    Label=""
+                                                    Position="horizontal"
+                                                    Style={{ marginBottom: 0 }}
+                                                    Options={manualLimitOptions}
+                                                />
                                             </div>
                                             {oMeta?.yLimits[item]?.isManual && (
                                                 <div className="form-row" style={{ marginLeft: '5px' }}>

@@ -26,7 +26,7 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectSinglePlot, SetSinglePlot, SelectUseOverlappingTime, SetUseOverlappingTime, SelectTimeUnit } from '../Store/settingSlice';
-import { CheckBox } from '@gpa-gemstone/react-forms';
+import { CheckBox, RadioButtons } from '@gpa-gemstone/react-forms';
 import _ from 'lodash';
 import { LoadingIcon } from '../Graphs/ChartIcons';
 import { Alert } from '@gpa-gemstone/react-interactive';
@@ -36,6 +36,17 @@ import { OverlappingStateContext } from '../Context/OverlappingContext';
 interface IProps {
     EnableOverlappingEvent: (eventId: number) => void;
 }
+
+type OverlappingTimeMode = 'Original' | 'Selected';
+
+interface IOverlappingTimeModeRecord {
+    mode: OverlappingTimeMode
+}
+
+const overlappingTimeOptions: Array<{ Label: string, Value: OverlappingTimeMode }> = [
+    { Label: "Relative to Original Event", Value: 'Original' },
+    { Label: "Relative to Selected Event", Value: 'Selected' }
+];
 
 const OverlappingEventWindow = (props: IProps) => {
     const dispatch = useAppDispatch();
@@ -75,14 +86,15 @@ const OverlappingEventWindow = (props: IProps) => {
                         {TimeUnitOptions[timeUnit.current].short.includes('since') &&
                             (!singlePlot || (singlePlot && !overlapping.events.some(i => i.Selected))) ?
                             <div className="form-row">
-                                <div className="col-6 form-check-inline" style={{ margin: 0 }}>
-                                    <input className="form-check-input" type="radio" checked={!useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(!e.target.checked))} />
-                                    <label className="form-check-label">Relative to Original Event</label>
-                                </div>
-                                <div className="col-6 form-check-inline" style={{ margin: 0 }}>
-                                    <input className="form-check-input" type="radio" checked={useOverlappingTime} onChange={e => dispatch(SetUseOverlappingTime(e.target.checked))} />
-                                    <label className="form-check-label">Relative to Selected Event</label>
-                                </div>
+                                <RadioButtons<IOverlappingTimeModeRecord>
+                                    Record={{ mode: useOverlappingTime ? 'Selected' : 'Original' }}
+                                    Field="mode"
+                                    Setter={(record) => dispatch(SetUseOverlappingTime(record.mode === 'Selected'))}
+                                    Label=""
+                                    Position="horizontal"
+                                    Style={{ marginBottom: 0 }}
+                                    Options={overlappingTimeOptions}
+                                />
                             </div>
                             : null}
                     </div>
