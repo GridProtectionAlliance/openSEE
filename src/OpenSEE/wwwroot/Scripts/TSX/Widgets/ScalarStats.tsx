@@ -114,17 +114,16 @@ const ScalarStatsWidget = (props: Iprops) => {
                                 <Column<IEventData>
                                     Key={'Stat'}
                                     AllowSort={false}
-                                    HeaderStyle={{ width: "30%" }}
-                                    RowStyle={{ width: "30%" }}
-                                    Field={'Stat'}>
+                                    Field={'Stat'}
+                                    Content={({ item }) => getStatLabel(item.Stat)}
+                                >
                                     Stat
                                 </Column>
                                 <Column<IEventData>
                                     Key={'Value'}
                                     AllowSort={false}
-                                    HeaderStyle={{ width: "70%" }}
-                                    RowStyle={{ width: "70%" }}
-                                    Field={'Value'}>
+                                    Field={'Value'}
+                                >
                                     Value
                                 </Column>
                             </Table>
@@ -134,6 +133,17 @@ const ScalarStatsWidget = (props: Iprops) => {
             </div>
         </>
     );
+}
+
+const getStatLabel = (stat: string) => {
+    switch (stat) {
+        case 'AssetKey':
+            return 'Asset Key';
+        case 'AssetName':
+            return 'Asset Name';
+        default:
+            return stat;
+    }
 }
 
 export default ScalarStatsWidget;
