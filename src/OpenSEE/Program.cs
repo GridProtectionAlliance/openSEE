@@ -150,7 +150,8 @@ namespace OpenSEE
 
             section.NodeID = ("00000000-0000-0000-0000-000000000000", "The applications instance identifier");
 
-            //override the UserClaimID here with objectidentifier
+            dynamic oauthSection = settings[OAuthAuthenticationProvider.SettingsSection];
+            oauthSection.UserIdClaim = ("http://schemas.microsoft.com/identity/claims/objectidentifier", "Defines the claim used to identify the user.");
         }
     }
 }
