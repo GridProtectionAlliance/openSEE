@@ -266,7 +266,7 @@ const LineChart = (props: IProps) => {
     // FFT window D3: render the FFT window overlay
     React.useEffect(() => {
         updateFFTWindowD3(containerRef.current, props.dataKey.DataType, currentFFTWindow, showFFT, mouseMode);
-    }, [fftWindow, showFFT, currentFFTWindow]);
+    }, [fftWindow, showFFT, currentFFTWindow, mouseMode]);
 
     // Duration window: update rect and marker positions
     React.useEffect(() => {

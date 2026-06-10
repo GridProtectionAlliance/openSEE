@@ -70,6 +70,7 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
     const [pointMouse, setPointMouse] = React.useState<[number, number]>([0, 0]);
     const [leftSelectCounter, setLeftSelectCounter] = React.useState<number>(0);
     const panOriginRef = React.useRef<IPanOrigin | null>(null);
+    const fftMouseDownRef = React.useRef<boolean>(false);
 
     // rAF coalescing for hover updates: many mousemove events per frame collapse to a single setHover at most once per animation frame.
     const pendingHoverRef = React.useRef<[number, number] | null>(null);
@@ -83,6 +84,14 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
             }
         };
     }, []);
+
+    React.useEffect(() => {
+        if (!fftMouseDown) return;
+
+        const handleMouseUp = () => { MouseUp(); };
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => { window.removeEventListener('mouseup', handleMouseUp); };
+    }, [fftMouseDown]);
 
     React.useEffect(() => {
         if (leftSelectCounter === 0 || leftSelectCounter === 1) return;
@@ -157,6 +166,14 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
         setMouseDown(true);
         setPointMouse([t0, d0]);
 
+        if (mouseMode === 'fftMove') {
+            setOldFFTWindow(() => fftWindow);
+            const isFFTWindowHit = t0 < fftWindow[1] && t0 > fftWindow[0];
+            fftMouseDownRef.current = isFFTWindowHit;
+            setFFTMouseDown(isFFTWindowHit);
+            return;
+        }
+
         if (mouseMode === 'pan') {
             const yScale = (yScaleRef.current as any)[primaryAxis] as d3.ScaleLinear<number, number> | undefined;
             panOriginRef.current = {
@@ -179,9 +196,11 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
     }
 
     const FFTMouseDown = (evt: any) => {
+        fftMouseDownRef.current = true;
         setFFTMouseDown(true);
-        const x0 = d3.pointer(evt, evt.currentTarget)[0];
-        const y0 = d3.pointer(evt, evt.currentTarget)[1];
+        const pointer = d3.pointer(evt, evt.currentTarget);
+        const x0 = pointer[0];
+        const y0 = pointer[1];
 
         const t0 = xScaleRef.current.invert(x0);
         const d0 = (yScaleRef.current as any)[primaryAxis].invert(y0);
@@ -205,12 +224,18 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
     const MouseUp = () => {
         flushPendingHover();
         setMouseDown(false);
+        fftMouseDownRef.current = false;
+        setFFTMouseDown(false);
         panOriginRef.current = null;
     }
 
-    const MouseOut = () => setLeftSelectCounter(() => -1);
+    const MouseOut = () => {
+        if (fftMouseDownRef.current) return;
+        setLeftSelectCounter(() => -1);
+    }
 
     const MouseLeft = () => {
+        if (fftMouseDownRef.current) return;
         setMouseDown(false);
         panOriginRef.current = null;
     }
@@ -277,7 +302,7 @@ export const useMouseInteractions = (params: IMouseInteractionInputs): IMouseInt
             onMouseOut: MouseOut,
             onMouseEnter: () => setLeftSelectCounter(1),
             onFFTMouseDown: FFTMouseDown,
-            onFFTMouseUp: () => setFFTMouseDown(false),
+            onFFTMouseUp: MouseUp,
         },
         wheelZoom,
         mouseDown,

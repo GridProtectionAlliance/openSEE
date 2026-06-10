@@ -286,13 +286,22 @@ const OpenSeeApplication = React.memo(() => {
         if (parsedStart != undefined && parsedEnd != undefined && (curPlotState.startTime != parsedStart || curPlotState.endTime != parsedEnd))
             curStateActions.SetTimeLimit(parsedStart, parsedEnd, curPlotData);
 
+        const parsedFFTCycles = ToInt(parsedQuery?.FFTCycles) ?? curAnalytic.FFTCycles;
+        let parsedFFTStartTime = ToFloat(parsedQuery.FFTStartTime) ?? curAnalytic.FFTStartTime;
+        if (parsedStart != undefined && parsedEnd != undefined) {
+            const fftDuration = parsedFFTCycles * 1 / 60.0 * 1000.0;
+            const maxFFTStartTime = parsedEnd - fftDuration;
+            if (parsedFFTStartTime < parsedStart || parsedFFTStartTime > maxFFTStartTime)
+                parsedFFTStartTime = parsedStart;
+        }
+
         const analyticQuery: OpenSee.IAnalyticContext = {
             Harmonic: ToInt(parsedQuery?.Harmonic) ?? curAnalytic.Harmonic,
             Trc: ToInt(parsedQuery?.Trc) ?? curAnalytic.Trc,
             LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? curAnalytic.LPFOrder,
             HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? curAnalytic.HPFOrder,
-            FFTCycles: ToInt(parsedQuery?.FFTCycles) ?? curAnalytic.FFTCycles,
-            FFTStartTime: ToFloat(parsedQuery.FFTStartTime) ?? curAnalytic.FFTStartTime
+            FFTCycles: parsedFFTCycles,
+            FFTStartTime: parsedFFTStartTime
         };
 
         const analyticData = queryStringToNums(analyticQuery);
