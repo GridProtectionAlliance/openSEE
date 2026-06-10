@@ -20,13 +20,12 @@
 //       Moved code to here from OpenSEENavbar.tsx
 //
 //******************************************************************************************************
-import { Point } from '@gpa-gemstone/gpa-symbols';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
 import { ToolTip } from '@gpa-gemstone/react-forms';
 import React from "react";
 import About from './About';
 import { OpenSee } from "../global";
-import { FFT, Help, Pan, Reset, Settings, Square, TimeRect, ValueRect, Zoom } from '../Graphs/ChartIcons';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { SelectMouseMode, SetMouseMode, SetZoomMode } from '../Store/settingSlice';
 import Navigation from './Navigation';
@@ -34,6 +33,7 @@ import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { selectFFTEnabled } from '../PlotSelectors';
+import { navIconButtonStyle, navIconDropdownButtonClass, navIconDropdownStyle } from './NavStyles';
 
 interface IPlotUtilities {
     OpenDrawers: OpenSee.Drawers,
@@ -59,40 +59,41 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
             <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
                 <div className="btn-group d-flex" role="group">
                     <BtnDropdown
-                        Label={<i style={{ fontStyle: "normal", fontSize: "25px" }}>{Zoom}</i>}
+                        Label={<ReactIcons.MagnifyingGlass />}
                         Callback={() => dispatch(SetMouseMode("zoom"))}
                         Size={'sm'}
                         Options={[
                             {
-                                Label: <><i style={{ fontStyle: "normal" }}>{TimeRect}</i> Time</>,
+                                Label: <><ReactIcons.HorizontalResize /> Time</>,
                                 Callback: () => { dispatch(SetZoomMode('x')); dispatch(SetMouseMode("zoom")); }
                             },
                             {
-                                Label: <><i style={{ fontStyle: "normal" }}>{ValueRect}</i> Value</>,
+                                Label: <><ReactIcons.VeriticalResize /> Value</>,
                                 Callback: () => { dispatch(SetZoomMode('y')); dispatch(SetMouseMode("zoom")); }
                             },
                             {
-                                Label: <><i style={{ fontStyle: "normal" }}>{Square}</i> Rectangle</>,
+                                Label: <><ReactIcons.MoveArrows /> Rectangle</>,
                                 Callback: () => { dispatch(SetZoomMode('xy')); dispatch(SetMouseMode("zoom")); }
                             }
                         ]}
-                        BtnClass={'btn-primary' + (mouseMode == "zoom" ? " active" : "")}
+                        BtnClass={'btn-primary ' + navIconDropdownButtonClass + (mouseMode == "zoom" ? " active" : "")}
+                        ContainerStyle={navIconDropdownStyle}
                         TooltipContent={<p>Zoom</p>}
                         TooltipLocation={'bottom'}
                         ShowToolTip={true}
                     />
 
-                    <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ padding: '0.195rem' }}
+                    <button type="button" className={"btn btn-primary" + (mouseMode == "pan" ? " active" : "")} style={{ ...navIconButtonStyle, padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Pan')}
                         onMouseLeave={() => setHover('None')} data-tooltip={'pan-btn'}
                         onClick={() => dispatch(SetMouseMode("pan"))}>
-                        <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Pan}</i>
+                        <ReactIcons.PanHand Style={{ strokeWidth: 0.2 }} />
                     </button>
                     <ToolTip Show={hover == 'Pan'} Position={'bottom'} Target={'pan-btn'}>
                         <p>Pan</p>
                     </ToolTip>
 
-                    <button type="button" className={"btn btn-" + (selectDisabled ? "secondary disabled" : "primary") + (mouseMode == "select" ? " active" : "")} style={{ padding: '0.195rem' }}
+                    <button type="button" className={"btn btn-" + (selectDisabled ? "secondary disabled" : "primary") + (mouseMode == "select" ? " active" : "")} style={{ ...navIconButtonStyle, padding: '0.195rem' }}
                         aria-disabled={selectDisabled}
                         onMouseEnter={() => setHover('Select')}
                         onMouseLeave={() => setHover('None')}
@@ -102,13 +103,13 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                                 dispatch(SetMouseMode("select"));
                         }}
                     >
-                        <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Point}</i>
+                        <ReactIcons.FingerSelect />
                     </button>
                     <ToolTip Show={hover == 'Select'} Position={'bottom'} Target={'select-btn'}>
                         <p>Select</p>
                     </ToolTip>
 
-                    <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled") + (mouseMode === "fftMove" ? " active" : "")} style={{ padding: '0.195rem' }}
+                    <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled") + (mouseMode === "fftMove" ? " active" : "")} style={{ ...navIconButtonStyle, padding: '0.195rem' }}
                         onClick={() => {
                             if (showFFT)
                                 dispatch(SetMouseMode("fftMove"));
@@ -118,13 +119,13 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'fftMove-btn'}
                     >
-                        <i style={{ fontStyle: "normal", fontSize: "20px" }}>{FFT}</i>
+                        <ReactIcons.BarChart />
                     </button>
                     <ToolTip Show={hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
                         <p>FFT Move</p>
                     </ToolTip>
 
-                    <button className="btn btn-primary" style={{ padding: '0.195rem' }}
+                    <button className="btn btn-primary" style={{ ...navIconButtonStyle, padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Reset Zoom')}
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'reset-btn'}
@@ -134,7 +135,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                             plots
                         )}
                     >
-                        <i style={{ fontStyle: "normal", fontSize: "21px" }}>{Reset}</i>
+                        <ReactIcons.Refresh />
                     </button>
                     <ToolTip Show={hover == 'Reset Zoom'} Position={'bottom'} Target={'reset-btn'}>
                         <p>Reset Zoom</p>
@@ -142,14 +143,14 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                 </div>
             </li>
 
-            <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                <button className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+            <li className="nav-item" style={{ width: '74px', marginTop: "10px", marginLeft: "10px" }}>
+                <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Settings')}
                     onMouseLeave={() => setHover('None')}
                     data-tooltip={'settings-btn'}
                     onClick={() => props.ToggleDrawer('Settings', !props.OpenDrawers.Settings)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{Settings}</i>
+                    <ReactIcons.Settings />
                 </button>
                 <ToolTip Show={hover == 'Settings'} Position={'bottom'} Target={'settings-btn'}>
                     <p>Settings</p>
@@ -159,12 +160,12 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
             <Navigation />
 
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                <button className="btn btn-primary" style={{ borderRadius: "4rem", padding: "0.495rem" }}
+                <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "4rem", padding: "0.495rem" }}
                     onMouseEnter={() => setHover('Help')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
                     onClick={() => props.setShowAbout(true)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "20px" }}>{Help}</i>
+                    <ReactIcons.QuestionMark />
                 </button>
                 <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
                     <p>Help</p>

@@ -22,18 +22,19 @@
 //******************************************************************************************************
 import { ToggleSwitch, ToolTip } from '@gpa-gemstone/react-forms';
 import { BtnDropdown } from '@gpa-gemstone/react-interactive';
+import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import React from "react";
 import AnalyticContext from '../Context/AnalyticContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { OverlappingStateContext } from '../Context/OverlappingContext';
 import { OpenSee } from "../global";
-import { CorrelatedSags, exportBtn, FFT, lightningData, PhasorClock, ShowPoints, statsIcon, WaveformViews } from '../Graphs/ChartIcons';
 import { useAppDispatch } from '../hooks';
 import { SetMouseMode } from '../Store/settingSlice';
 import { selectFFTEnabled, selectDisplayed, selectAnalytics, selectEventIDs } from '../PlotSelectors';
 import { IPlotLifecycleActions } from '../Hooks/usePlotLifeCycle';
 import { BasePlots } from '../defaults';
+import { navIconButtonStyle, navIconDropdownButtonClass, navIconDropdownStyle } from './NavStyles';
 
 interface IWidgets {
     OpenDrawers: OpenSee.Drawers,
@@ -133,12 +134,13 @@ const WidgetSection = (props: IWidgets) => {
             <li className="nav-item" style={{ width: 'calc(100% - 969px)', textAlign: 'center' }}></li>
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
-                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{WaveformViews}</i>}
+                    <BtnDropdown Label={<ReactIcons.Eye />}
                         Callback={() => togglePlots('Voltage')}
                         Size={'sm'}
                         Options={waveformOptionList}
                         ShowToolTip={true}
-                        BtnClass={'btn-primary'}
+                        BtnClass={'btn-primary ' + navIconDropdownButtonClass}
+                        ContainerStyle={navIconDropdownStyle}
                         TooltipContent={<p>Waveform Views</p>}
                         TooltipLocation={'bottom'}
                     />
@@ -146,12 +148,12 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Show Points')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
                     onClick={() => props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{ShowPoints}</i>
+                    <ReactIcons.Pencil />
                 </button>
                 <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
                     <p>Show Points</p>
@@ -159,12 +161,12 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Clock')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                     onClick={() => props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px", margin: '3px' }}>{PhasorClock}</i>
+                    <ReactIcons.PieChart />
                 </button>
                 <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
@@ -173,12 +175,13 @@ const WidgetSection = (props: IWidgets) => {
 
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
-                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{statsIcon}</i>}
+                    <BtnDropdown Label={<ReactIcons.Info />}
                         Callback={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)}
                         Size={'sm'}
                         Options={statsOptionList}
                         ShowToolTip={true}
-                        BtnClass={'btn-primary'}
+                        BtnClass={'btn-primary ' + navIconDropdownButtonClass}
+                        ContainerStyle={navIconDropdownStyle}
                         TooltipContent={<p>Stats</p>}
                         TooltipLocation={'bottom'}
                     />
@@ -186,12 +189,12 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Sags')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
                     onClick={() => props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{CorrelatedSags}</i>
+                    <ReactIcons.LineChart />
                 </button>
                 <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
                     <p>Correlated Sags</p>
@@ -199,7 +202,7 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled")} style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className={"btn btn-" + (showFFT ? "primary" : "secondary disabled")} style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     aria-disabled={!showFFT}
                     onMouseEnter={() => setHover('FFTTable')}
                     onMouseLeave={() => setHover('None')}
@@ -211,7 +214,7 @@ const WidgetSection = (props: IWidgets) => {
                         }
                     }}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{FFT}</i>
+                    <ReactIcons.BarChart />
                 </button>
                 <ToolTip Show={hover == 'FFTTable'} Position={'bottom'} Target={'fftTable-btn'}>
                     <p>FFT Table</p>
@@ -219,12 +222,12 @@ const WidgetSection = (props: IWidgets) => {
             </li>
 
             <li className="nav-item" style={{ width: '54px', marginTop: "10px" }}>
-                <button type="button" className="btn btn-primary" style={{ borderRadius: "0.25rem", padding: "0.195rem" }}
+                <button type="button" className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "0.25rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Lightning')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'lightning-btn'}
                     onClick={() => props.ToggleDrawer('Lightning', !props.OpenDrawers.Lightning)}
                 >
-                    <i style={{ fontStyle: "normal", fontSize: "25px" }}>{lightningData}</i>
+                    <ReactIcons.LightningCloud />
                 </button>
                 <ToolTip Show={hover == 'Lightning'} Position={'bottom'} Target={'lightning-btn'}>
                     <p>Lightning Data</p>
@@ -233,12 +236,13 @@ const WidgetSection = (props: IWidgets) => {
 
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
-                    <BtnDropdown Label={<i style={{ fontStyle: "normal", fontSize: "24px" }}>{exportBtn}</i>}
+                    <BtnDropdown Label={<ReactIcons.Download />}
                         Callback={() => exportData('csv')}
                         Size={'sm'}
                         Options={optionList}
                         ShowToolTip={hover == "Export"}
-                        BtnClass={'btn-primary'}
+                        BtnClass={'btn-primary ' + navIconDropdownButtonClass}
+                        ContainerStyle={navIconDropdownStyle}
                         TooltipContent={<p>Export</p>}
                     />
                 </div>
