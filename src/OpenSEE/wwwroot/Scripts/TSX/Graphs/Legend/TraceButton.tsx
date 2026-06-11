@@ -28,6 +28,7 @@ import { useAppSelector } from '../../hooks';
 import { SelectColor } from '../../Store/settingSlice';
 import { ILegendGrid } from './Types';
 import { convertHex } from './Utilities';
+import { ReactIcons } from "@gpa-gemstone/gpa-symbols";
 
 const TraceButton = (props: { data: ILegendGrid, width: React.CSSProperties, onToggle: (traceKey: LegendTraceKey) => void }) => {
     const colors = useAppSelector(SelectColor);
@@ -43,8 +44,8 @@ const TraceButton = (props: { data: ILegendGrid, width: React.CSSProperties, onT
             onClick={() => props.onToggle(props.data.traceKey)}
         >
             {props.data.enabled ?
-                <i className="fa fa-minus" /> :
-                <i className="fa fa-plus" />
+                <ReactIcons.Minus /> :
+                <ReactIcons.Plus />
             }
         </div>
     );
