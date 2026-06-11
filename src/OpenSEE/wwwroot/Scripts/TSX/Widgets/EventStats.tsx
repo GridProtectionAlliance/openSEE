@@ -41,7 +41,7 @@ interface Iprops {
     ExportCallback: (arg: string) => void
 }
 
-const ScalarStatsWidget = (props: Iprops) => {
+const EventStatsWidget = (props: Iprops) => {
     const [stats, setStats] = React.useState<IEventData[]>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
 
@@ -81,7 +81,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                     <div className="row justify-content-center">
                         <div className="col-12">
                             <Alert Class='alert-danger'>
-                                Error retrieving scalar stats.
+                                Error retrieving event stats.
                             </Alert>
                         </div>
                     </div>
@@ -90,7 +90,7 @@ const ScalarStatsWidget = (props: Iprops) => {
                     <div className="row justify-content-center">
                         <div className="col-12">
                             <Alert Class='alert-info'>
-                                No data for Scalar Stats.
+                                No data for event stats.
                             </Alert>
                         </div>
                     </div>
@@ -146,4 +146,4 @@ const getStatLabel = (stat: string) => {
     }
 }
 
-export default ScalarStatsWidget;
+export default EventStatsWidget;

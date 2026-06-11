@@ -54,7 +54,7 @@ import FFTTable from './Widgets/FFTTable';
 import HarmonicStatsWidget from './Widgets/HarmonicStats';
 import LightningDataWidget from './Widgets/LightningData';
 import PhasorChartWidget from './Widgets/PhasorChart';
-import ScalarStatsWidget from './Widgets/ScalarStats';
+import EventStatsWidget from './Widgets/EventStats';
 import SettingsWidget from './Widgets/PlotSettings/SettingWindow';
 import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
 import ToolTipWidget from './Widgets/Tooltip';
@@ -72,7 +72,7 @@ const OpenSeeApplication = React.memo(() => {
         Settings: () => { /* noop */ },
         AccumulatedPoints: () => { /* noop */ },
         PolarChart: () => { /* noop */ },
-        ScalarStats: () => { /* noop */ },
+        EventStats: () => { /* noop */ },
         CorrelatedSags: () => { /* noop */ },
         Lightning: () => { /* noop */ },
         FFTTable: () => { /* noop */ },
@@ -112,7 +112,7 @@ const OpenSeeApplication = React.memo(() => {
         Settings: false,
         AccumulatedPoints: false,
         PolarChart: false,
-        ScalarStats: false,
+        EventStats: false,
         CorrelatedSags: false,
         Lightning: false,
         FFTTable: false,
@@ -309,8 +309,8 @@ const OpenSeeApplication = React.memo(() => {
             setAnalytic(analyticData);
 
         if (initial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
-            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Voltage" });
-            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Current" });
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Voltage" }, undefined, undefined, undefined, undefined, parsedSinglePlot);
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Current" }, undefined, undefined, undefined, undefined, parsedSinglePlot);
         } else if (parsedPlots?.length > 0) {
             parsedPlots.forEach(plot => {
                 const plotChange = parsedPlots.length !== enabledPlots.length;
@@ -338,7 +338,8 @@ const OpenSeeApplication = React.memo(() => {
                                 !isYLimitsEqual ? plot.yLimits : undefined,
                                 plot.isZoomed,
                                 fftLimits,
-                                cycleLimits
+                                cycleLimits,
+                                parsedSinglePlot
                             ));
                     } else {
                         curLifecycle.AddPlot(
@@ -383,8 +384,15 @@ const OpenSeeApplication = React.memo(() => {
         const startTime = new Date(evt.Context.EventInfo.EventDate + "Z").getTime();
         const endTime = new Date(evt.Context.EventInfo.EventEnd + "Z").getTime();
 
-        if (!isNaN(startTime) && !isNaN(endTime))
+        if (!isNaN(startTime) && !isNaN(endTime)) {
             stateActions.SetTimeLimit(startTime, endTime, plotData);
+            setAnalytic(a => {
+                const fftDuration = a.FFTCycles * 1 / 60.0 * 1000.0;
+                if (a.FFTStartTime >= startTime && a.FFTStartTime <= endTime - fftDuration)
+                    return a;
+                return { ...a, FFTStartTime: startTime };
+            });
+        }
     }, [evt.Context.EventID, evt.Context.Status]);
 
     // Query string effect
@@ -509,10 +517,10 @@ const OpenSeeApplication = React.memo(() => {
                     </OpenSeeErrorBoundary>
                 </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Scalar Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.ScalarStats = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("ScalarStats", item)}>
-                    <OpenSeeErrorBoundary message="Error loading scalar stats.">
-                        <ScalarStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                <SplitDrawer Open={false} Width={25} Title={"Event Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.EventStats = func; }} ShowClosed={false}
+                    OnChange={(item) => handleDrawerChange("EventStats", item)}>
+                    <OpenSeeErrorBoundary message="Error loading event stats.">
+                        <EventStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
                     </OpenSeeErrorBoundary>
                 </SplitDrawer>
 

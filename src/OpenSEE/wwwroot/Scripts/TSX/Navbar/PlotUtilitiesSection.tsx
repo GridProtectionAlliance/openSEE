@@ -119,13 +119,13 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'fftMove-btn'}
                     >
-                        <ReactIcons.BarChart />
+                        <ReactIcons.BarChartPanHand />
                     </button>
                     <ToolTip Show={hover == 'FFTMove'} Position={'bottom'} Target={'fftMove-btn'}>
                         <p>FFT Move</p>
                     </ToolTip>
 
-                    <button className="btn btn-primary" style={{ ...navIconButtonStyle, padding: '0.195rem' }}
+                    <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderTopRightRadius: "0.25rem", borderBottomRightRadius: "0.25rem", padding: '0.195rem' }}
                         onMouseEnter={() => setHover('Reset Zoom')}
                         onMouseLeave={() => setHover('None')}
                         data-tooltip={'reset-btn'}
@@ -160,7 +160,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
             <Navigation />
 
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
-                <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "4rem", padding: "0.495rem" }}
+                <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "4rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Help')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
                     onClick={() => props.setShowAbout(true)}

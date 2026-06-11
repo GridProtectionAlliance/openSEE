@@ -123,7 +123,7 @@ const WidgetSection = (props: IWidgets) => {
     });
 
     const statsOptionList = [
-        { Label: "Scalar Stats", Callback: () => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats) }
+        { Label: "Event Stats", Callback: () => props.ToggleDrawer('EventStats', !props.OpenDrawers.EventStats) }
     ];
 
     if (evt.Context.EventInfo?.EventName === "Snapshot")
@@ -134,7 +134,7 @@ const WidgetSection = (props: IWidgets) => {
             <li className="nav-item" style={{ width: 'calc(100% - 969px)', textAlign: 'center' }}></li>
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
-                    <BtnDropdown Label={<ReactIcons.Eye />}
+                    <BtnDropdown Label={<ReactIcons.LineChart />}
                         Callback={() => togglePlots('Voltage')}
                         Size={'sm'}
                         Options={waveformOptionList}
@@ -153,7 +153,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseLeave={() => setHover('None')} data-tooltip={'points-btn'}
                     onClick={() => props.ToggleDrawer('AccumulatedPoints', !props.OpenDrawers.AccumulatedPoints)}
                 >
-                    <ReactIcons.Pencil />
+                    <ReactIcons.ScatterPlot />
                 </button>
                 <ToolTip Show={hover == 'Show Points'} Position={'bottom'} Target={'points-btn'}>
                     <p>Show Points</p>
@@ -166,7 +166,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                     onClick={() => props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart)}
                 >
-                    <ReactIcons.PieChart />
+                    <ReactIcons.MoveArrows />
                 </button>
                 <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
@@ -176,7 +176,7 @@ const WidgetSection = (props: IWidgets) => {
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
                     <BtnDropdown Label={<ReactIcons.Info />}
-                        Callback={() => props.ToggleDrawer('ScalarStats', !props.OpenDrawers.ScalarStats)}
+                        Callback={() => props.ToggleDrawer('EventStats', !props.OpenDrawers.EventStats)}
                         Size={'sm'}
                         Options={statsOptionList}
                         ShowToolTip={true}
@@ -194,7 +194,7 @@ const WidgetSection = (props: IWidgets) => {
                     onMouseLeave={() => setHover('None')} data-tooltip={'sags-btn'}
                     onClick={() => props.ToggleDrawer('CorrelatedSags', !props.OpenDrawers.CorrelatedSags)}
                 >
-                    <ReactIcons.LineChart />
+                    <ReactIcons.List />
                 </button>
                 <ToolTip Show={hover == 'Sags'} Position={'bottom'} Target={'sags-btn'}>
                     <p>Correlated Sags</p>
