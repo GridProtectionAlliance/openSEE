@@ -21,16 +21,17 @@
 //
 //******************************************************************************************************
 import * as React from "react";
-import { cloneDeep } from "lodash";
 import { PlotDataStateContext } from "../../Context/PlotDataContext";
 import { PlotStateStateContext, PlotStateActionContext } from "../../Context/PlotStateContext";
-import { toPlotKey, SeriesKey, seriesToKey } from "../../Context/PlotKeys";
+import { LegendTraceKey, seriesToKey, seriesToLegendTraceKey, toPlotKey } from "../../Context/PlotKeys";
 import { ICategory, ILegendGrid, LegendGroupType } from './Types';
 import { sortHorizontal, uniq, groupBy, sortVertical } from './Utilities';
 import { OpenSee } from '../../global';
 
 // Key for a verticalHeader entry ([vLabel, category])
 export const rowKey = (v: [string, string]) => v[0] + v[1];
+
+type CategoryOption = { Label: string | JSX.Element };
 
 export const useLegendGrid = (dataKey: OpenSee.IGraphProps) => {
     const { plots } = React.useContext(PlotDataStateContext);
@@ -39,83 +40,90 @@ export const useLegendGrid = (dataKey: OpenSee.IGraphProps) => {
 
     const pk = toPlotKey(dataKey);
     const dataPoints = plots[pk] ?? [];
-    const enabled = plotState.meta[pk]?.enabled ?? {};
+    const selectedAssets = plotState.meta[pk]?.selectedAssets ?? [];
+    const selectedTraces = plotState.meta[pk]?.selectedTraces ?? [];
 
     const [categories, setCategories] = React.useState<ICategory[]>([]);
     const [verticalHeader, setVerticalHeader] = React.useState<[string, string][]>([]);
     const [horizontalHeader, setHorizontalHeader] = React.useState<string[]>([]);
     const [grid, setGrid] = React.useState<Map<string, ILegendGrid[]>>(new Map());
 
-    React.useEffect(() => { const id = setTimeout(buildGrid, 250); return () => clearTimeout(id); }, [dataPoints, enabled]);
+    React.useEffect(() => { const id = setTimeout(buildGrid, 250); return () => clearTimeout(id); }, [dataPoints, selectedAssets, selectedTraces]);
 
     const buildGrid = () => {
-        const nextGrid = buildLegendGrid(dataPoints, enabled);
+        const nextGrid = buildLegendGrid(dataPoints, selectedAssets, selectedTraces);
         setGrid(nextGrid.grid);
         setCategories(nextGrid.categories);
         setVerticalHeader(nextGrid.verticalHeader);
         setHorizontalHeader(nextGrid.horizontalHeader);
     };
 
-    const changeCategory = (index: number, item: ICategory) => {
-        setCategories(current => {
-            const tmp = cloneDeep(current);
-            tmp[index].Selected = !tmp[index].Selected;
-            let traces: SeriesKey[] = [];
-            grid.forEach(row => row.forEach(data => {
-                const trace = data.traces.get(item.Label);
-                if (trace != null && (tmp[index].Selected ? data.enabled : true)) traces = traces.concat(trace);
-            }));
-            stateActions.EnableTrace(dataKey, traces, tmp[index].Selected, dataPoints);
-            return tmp;
+    const changeCategory = (items: CategoryOption[]) => {
+        const nextAssets = [...selectedAssets];
+        items.forEach(item => {
+            if (typeof item.Label !== 'string') return;
+
+            const index = nextAssets.indexOf(item.Label);
+            if (index >= 0)
+                nextAssets.splice(index, 1);
+            else
+                nextAssets.push(item.Label);
         });
+        stateActions.SetLegendSelections(dataKey, dataPoints, nextAssets, selectedTraces);
+    };
+
+    const toggleTraceKeys = (traceKeys: LegendTraceKey[]) => {
+        const nextTraces = [...selectedTraces];
+        const isAny = traceKeys.some(traceKey => nextTraces.includes(traceKey));
+
+        traceKeys.forEach(traceKey => {
+            const index = nextTraces.indexOf(traceKey);
+            if (isAny && index >= 0)
+                nextTraces.splice(index, 1);
+            else if (!isAny && index < 0)
+                nextTraces.push(traceKey);
+        });
+
+        stateActions.SetLegendSelections(dataKey, dataPoints, selectedAssets, nextTraces);
     };
 
     // visibleKeys (optional) limits a horizontal-group click to the rows currently shown in the legend.
     const clickGroup = (group: string, type: LegendGroupType, visibleKeys?: Set<string>) => {
-        let isAny = false;
-        const updates: SeriesKey[] = [];
         const inScope = (key: string) => visibleKeys == null || visibleKeys.has(key);
+        const traceKeys: LegendTraceKey[] = [];
 
         if (type == 'vertical') {
             const gv = grid.get(group);
-            isAny = gv?.some(item => item.enabled) ?? false;
-            gv?.forEach(row => {
-                if (isAny && row.enabled) { row.enabled = false; categories.forEach(cat => { const t = row.traces.get(cat.Label); if (t) updates.push(...t); }); }
-                else if (!isAny) { row.enabled = true; categories.forEach(cat => { if (cat.Selected) { const t = row.traces.get(cat.Label); if (t) updates.push(...t); } }); }
-            });
+            gv?.forEach(row => { if (!traceKeys.includes(row.traceKey)) traceKeys.push(row.traceKey); });
         } else {
-            grid.forEach((row, key) => { if (inScope(key) && row.some(item => item.enabled && item.hLabel == group)) isAny = true; });
             grid.forEach((row, key) => { if (!inScope(key)) return; row.forEach(item => {
-                if (isAny && item.enabled && item.hLabel == group) { item.enabled = false; categories.forEach(cat => { const t = item.traces.get(cat.Label); if (t) updates.push(...t); }); }
-                else if (!isAny && item.hLabel == group) { item.enabled = true; categories.forEach(cat => { if (cat.Selected) { const t = item.traces.get(cat.Label); if (t) updates.push(...t); } }); }
+                if (item.hLabel == group && !traceKeys.includes(item.traceKey)) traceKeys.push(item.traceKey);
             }); });
         }
-        stateActions.EnableTrace(dataKey, updates, !isAny, dataPoints);
+        toggleTraceKeys(traceKeys);
     };
 
-    return { dataPoints, grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup };
+    return { dataPoints, grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup, toggleTrace: (traceKey: LegendTraceKey) => toggleTraceKeys([traceKey]) };
 };
 
-const buildLegendGrid = (dataPoints: OpenSee.iD3DataSeries[], enabled: { [key: string]: boolean }) => {
+const buildLegendGrid = (dataPoints: OpenSee.iD3DataSeries[], selectedAssets: string[], selectedTraces: LegendTraceKey[]) => {
     const cats: ICategory[] = [];
     const gridArr: ILegendGrid[] = [];
 
     dataPoints.forEach((item) => {
         const sk = seriesToKey(item);
+        const traceKey = seriesToLegendTraceKey(item);
         let ci = cats.findIndex(c => c.Label === item.LegendGroup);
         if (ci === -1) { cats.push({ Value: 0, Label: item.LegendGroup, Selected: false }); ci = cats.length - 1; }
-        if (enabled[sk]) cats[ci].Selected = true;
+        if (selectedAssets.includes(item.LegendGroup)) cats[ci].Selected = true;
 
         let gi = gridArr.findIndex(g => g.hLabel === item.LegendHorizontal && g.vLabel === item.LegendVertical && g.category == item.LegendVGroup);
-        if (gi === -1) { gridArr.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, color: item.Color, traces: new Map(), category: item.LegendVGroup }); gi = gridArr.length - 1; }
-        if (enabled[sk]) gridArr[gi].enabled = true;
+        if (gi === -1) { gridArr.push({ enabled: false, hLabel: item.LegendHorizontal, vLabel: item.LegendVertical, traceKey, color: item.Color, traces: new Map(), category: item.LegendVGroup }); gi = gridArr.length - 1; }
+        if (selectedTraces.includes(traceKey)) gridArr[gi].enabled = true;
 
         const t = gridArr[gi].traces.get(item.LegendGroup);
         if (t) t.push(sk); else gridArr[gi].traces.set(item.LegendGroup, [sk]);
     });
-
-    if (cats.length == 1) cats[0].Selected = true;
-    else if (cats.length > 1 && !cats.some(c => c.Selected)) cats[0].Selected = true;
 
     return {
         grid: groupBy(gridArr, item => rowKey([item.vLabel, item.category] as [string, string])),

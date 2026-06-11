@@ -21,7 +21,7 @@
 //
 //******************************************************************************************************
 import * as React from "react";
-import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
+import { Alert, OverlayDrawer } from "@gpa-gemstone/react-interactive";
 import { MultiCheckBoxSelect, SearchableSelect } from "@gpa-gemstone/react-forms";
 import { sortHorizontal } from './Utilities';
 import { useLegendGrid, rowKey } from './useLegendGrid';
@@ -37,9 +37,10 @@ interface IProps {
 }
 
 const DigitalLegend = (props: IProps) => {
-    const { dataPoints, grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup } = useLegendGrid(props.dataKey);
+    const { grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup, toggleTrace } = useLegendGrid(props.dataKey);
 
     const [addedKeys, setAddedKeys] = React.useState<string[]>([]);
+    const hasSelectedAssets = categories.some(c => c.Selected);
 
     const visibleHeader = React.useMemo(() => {
         if (verticalHeader.length <= maxInitialRows) return verticalHeader;
@@ -69,16 +70,11 @@ const DigitalLegend = (props: IProps) => {
                 <div className="form-group">
                     <MultiCheckBoxSelect
                         Options={categories}
-                        OnChange={(_, options) => {
-                            options.forEach(o => {
-                                const i = categories.findIndex(c => c.Label == o.Label);
-                                changeCategory(i, categories[i]);
-                            });
-                        }}
+                        OnChange={(_, options) => changeCategory(options)}
                         Label=""
                     />
                 </div>
-                {hasHidden ?
+                {hasSelectedAssets && hasHidden ?
                     <div className="form-group">
                         <SearchableSelect<{ search: string }>
                             Record={{search: ''}}
@@ -92,32 +88,34 @@ const DigitalLegend = (props: IProps) => {
                             BtnStyle={{ display: 'flex', paddingLeft: 0, alignItems: 'center' }}
                             Setter={(_, opt) => setAddedKeys(prev => prev.includes(opt.Value as string) ? prev : [...prev, opt.Value as string])}
                         />
-                    </div> : null}
-                <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
-                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", position: "sticky", top: 0, zIndex: 1 }}>
-                        <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
-                        {horizontalHeader.map((item, i) =>
-                            <Header
-                                key={i}
-                                label={item}
+                </div> : null}
+                {hasSelectedAssets ?
+                    <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
+                        <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", position: "sticky", top: 0, zIndex: 1 }}>
+                            <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
+                            {horizontalHeader.map((item, i) =>
+                                <Header
+                                    key={i}
+                                    label={item}
+                                    width={hwidth}
+                                    onClick={(g, t) => clickGroup(g, t, new Set(visibleHeader.map(rowKey)))}
+                                />
+                            )}
+                        </div>
+                        {visibleHeader.map((v, i) => (
+                            <Row key={i}
+                                category={v[1]}
+                                label={v[0]}
+                                data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
                                 width={hwidth}
-                                onClick={(g, t) => clickGroup(g, t, new Set(visibleHeader.map(rowKey)))}
+                                clickHeader={clickGroup}
+                                horizontalHeaders={horizontalHeader}
+                                toggleTrace={toggleTrace}
                             />
-                        )}
-                    </div>
-                    {visibleHeader.map((v, i) => (
-                        <Row key={i}
-                            dataKey={props.dataKey}
-                            category={v[1]}
-                            label={v[0]}
-                            data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
-                            width={hwidth}
-                            clickHeader={clickGroup}
-                            horizontalHeaders={horizontalHeader}
-                            plotData={dataPoints}
-                        />
-                    ))}
-                </div>
+                        ))}
+                    </div> :
+                    <Alert Class='alert-info' ShowX={false}>Please select an asset.</Alert>
+                }
             </div>
         </OverlayDrawer>
     );

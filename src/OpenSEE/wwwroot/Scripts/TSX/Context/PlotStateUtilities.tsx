@@ -6,7 +6,7 @@
 import _ from 'lodash';
 import { OpenSee } from '../global';
 import { defaultSettings } from '../defaults';
-import { PlotKey, SeriesKey, seriesToKey } from './PlotKeys';
+import { PlotKey, SeriesKey, LegendTraceKey, seriesToKey, seriesToLegendTraceKey } from './PlotKeys';
 
 // Lightweight per-plot metadata that lives in PlotStateContext.
 // The heavy iD3DataSeries arrays live separately in PlotDataContext.
@@ -14,6 +14,9 @@ export interface IPlotMeta {
     key: OpenSee.IGraphProps;
     loading: OpenSee.LoadingState;
     enabled: Record<SeriesKey, boolean>;
+    selectedAssets: string[];
+    selectedTraces: LegendTraceKey[];
+    legendSelectionsUserSet: boolean;
     selectedIndices: number[];
     selectedTimes: number[];
     isZoomed: boolean;
@@ -60,11 +63,48 @@ export function createEmptyMeta(key: OpenSee.IGraphProps): IPlotMeta {
         key,
         loading: 'Idle',
         enabled: {},
+        selectedAssets: [],
+        selectedTraces: [],
+        legendSelectionsUserSet: false,
         selectedIndices: [],
         selectedTimes: [],
         isZoomed: false,
         yLimits: createDefaultYLimits()
     };
+}
+
+export function getLegendSelectionsFromEnabled(
+    data: OpenSee.iD3DataSeries[],
+    enabled: Record<SeriesKey, boolean>
+): { selectedAssets: string[], selectedTraces: LegendTraceKey[] } {
+    const selectedAssets: string[] = [];
+    const selectedTraces: LegendTraceKey[] = [];
+
+    data.forEach(item => {
+        if (enabled[seriesToKey(item)] !== true) return;
+
+        const traceKey = seriesToLegendTraceKey(item);
+        if (!selectedAssets.includes(item.LegendGroup)) selectedAssets.push(item.LegendGroup);
+        if (!selectedTraces.includes(traceKey)) selectedTraces.push(traceKey);
+    });
+
+    return { selectedAssets, selectedTraces };
+}
+
+export function getEnabledFromLegendSelections(
+    data: OpenSee.iD3DataSeries[],
+    selectedAssets: string[],
+    selectedTraces: LegendTraceKey[]
+): Record<SeriesKey, boolean> {
+    const enabled: Record<SeriesKey, boolean> = {};
+
+    data.forEach(item => {
+        enabled[seriesToKey(item)] =
+            selectedAssets.includes(item.LegendGroup) &&
+            selectedTraces.includes(seriesToLegendTraceKey(item));
+    });
+
+    return enabled;
 }
 
 // Binary-ish search for the index closest to time t in a sorted array.

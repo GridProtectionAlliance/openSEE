@@ -22,7 +22,7 @@
 //******************************************************************************************************
 
 import * as React from "react";
-import { OpenSee } from '../../global';
+import { LegendTraceKey } from '../../Context/PlotKeys';
 import { ILegendGrid, LegendGroupType } from './Types';
 import TraceButton from './TraceButton';
 
@@ -32,9 +32,8 @@ interface IProps {
     data: ILegendGrid[],
     width: number,
     clickHeader: (g: string, t: LegendGroupType) => void,
-    dataKey: OpenSee.IGraphProps,
     horizontalHeaders: string[],
-    plotData: OpenSee.iD3DataSeries[]
+    toggleTrace: (traceKey: LegendTraceKey) => void
 }
 
 const Row = (props: IProps) => {
@@ -54,8 +53,7 @@ const Row = (props: IProps) => {
                     key={i}
                     width={!hasH && !hasCat ? { width: '50%' } : { width: props.width }}
                     data={item}
-                    dataKey={props.dataKey}
-                    plotData={props.plotData}
+                    onToggle={props.toggleTrace}
                 />
             )}
         </div>

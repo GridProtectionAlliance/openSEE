@@ -20,6 +20,7 @@ export function fromPlotKey(plotKey: PlotKey): OpenSee.IGraphProps {
 }
 
 export type SeriesKey = string;
+export type LegendTraceKey = string;
 
 // Builds a stable key from the four legend dimensions plus event ID.
 // Callers pull these fields from whatever source they have access to --
@@ -34,6 +35,14 @@ export function toSeriesKey(
     eventId: number
 ): SeriesKey {
     return `${legendGroup}|${legendHorizontal}|${legendVertical}|${legendVGroup}|${eventId}`;
+}
+
+export function toLegendTraceKey(
+    legendHorizontal: string,
+    legendVertical: string,
+    legendVGroup: string
+): LegendTraceKey {
+    return `${legendHorizontal}|${legendVertical}|${legendVGroup}`;
 }
 
 // Convenience overload for callers that already have a series-shaped object.
@@ -51,5 +60,17 @@ export function seriesToKey(series: {
         series.LegendVertical,
         series.LegendVGroup,
         series.EventID
+    );
+}
+
+export function seriesToLegendTraceKey(series: {
+    LegendHorizontal: string;
+    LegendVertical: string;
+    LegendVGroup: string;
+}): LegendTraceKey {
+    return toLegendTraceKey(
+        series.LegendHorizontal,
+        series.LegendVertical,
+        series.LegendVGroup
     );
 }

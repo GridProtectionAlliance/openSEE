@@ -21,9 +21,9 @@
 //
 //******************************************************************************************************
 import { OpenSee } from '../../global';
-import { SeriesKey } from '../../Context/PlotKeys';
+import { SeriesKey, LegendTraceKey } from '../../Context/PlotKeys';
 
-export interface ILegendGrid { enabled: boolean, hLabel: string, vLabel: string, color: OpenSee.Color, traces: Map<string, SeriesKey[]>, category?: string }
+export interface ILegendGrid { enabled: boolean, hLabel: string, vLabel: string, traceKey: LegendTraceKey, color: OpenSee.Color, traces: Map<string, SeriesKey[]>, category?: string }
 export type LegendGroupType = 'vertical' | 'horizontal';
 
 //This should really be exported via gpa-gemstone

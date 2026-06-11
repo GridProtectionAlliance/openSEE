@@ -10,7 +10,7 @@ import * as React from 'react';
 import _ from 'lodash';
 import { OpenSee } from '../global';
 import { defaultSettings } from '../defaults';
-import { PlotKey, SeriesKey, toPlotKey, seriesToKey } from './PlotKeys';
+import { PlotKey, SeriesKey, LegendTraceKey, toPlotKey, seriesToKey } from './PlotKeys';
 import {
     IPlotMeta,
     createEmptyMeta,
@@ -23,7 +23,9 @@ import {
     getPrimaryAxis,
     getLocalUnitSettings,
     saveUnitSettings,
-    getIndex
+    getIndex,
+    getLegendSelectionsFromEnabled,
+    getEnabledFromLegendSelections
 } from './PlotStateUtilities';
 
 export type PlotDataMap = Record<PlotKey, OpenSee.iD3DataSeries[]>;
@@ -45,6 +47,7 @@ export interface IPlotStateActions {
     SetZoomedLimits: (limits: [number, number], key: OpenSee.IGraphProps, plotData: PlotDataMap) => void;
     SetUnit: (unit: OpenSee.Unit, value: number, auto: boolean, key: OpenSee.IGraphProps, plotData: PlotDataMap) => void;
     EnableTrace: (key: OpenSee.IGraphProps, traces: SeriesKey[], enabled: boolean, data: OpenSee.iD3DataSeries[]) => void;
+    SetLegendSelections: (key: OpenSee.IGraphProps, data: OpenSee.iD3DataSeries[], selectedAssets: string[], selectedTraces: LegendTraceKey[]) => void;
     SetIsManual: (key: OpenSee.IGraphProps, unit: OpenSee.Unit, manual: boolean) => void;
     SetManualLimits: (limits: [number, number], key: OpenSee.IGraphProps, axis: OpenSee.Unit, auto: boolean, data: OpenSee.iD3DataSeries[], factor?: number) => void;
     SetSelectPoint: (time: number, plotData: PlotDataMap) => void;
@@ -73,6 +76,7 @@ const defaultActions: IPlotStateActions = {
     SetZoomedLimits: () => { /* noop */ },
     SetUnit: () => { /* noop */ },
     EnableTrace: () => { /* noop */ },
+    SetLegendSelections: () => { /* noop */ },
     SetIsManual: () => { /* noop */ },
     SetManualLimits: () => { /* noop */ },
     SetSelectPoint: () => { /* noop */ },
@@ -303,6 +307,7 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
 
                 const newEnabled = { ...meta.enabled };
                 traces.forEach(sk => { newEnabled[sk] = enabled; });
+                const selections = getLegendSelectionsFromEnabled(data, newEnabled);
 
                 // Figure out which axes were affected by looking up the toggled series
                 const affectedAxes = _.uniq(
@@ -335,7 +340,66 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                     ...prev,
                     meta: {
                         ...prev.meta,
-                        [pk]: { ...meta, enabled: newEnabled, yLimits: newLimits }
+                        [pk]: {
+                            ...meta,
+                            enabled: newEnabled,
+                            selectedAssets: selections.selectedAssets,
+                            selectedTraces: selections.selectedTraces,
+                            legendSelectionsUserSet: true,
+                            yLimits: newLimits
+                        }
+                    }
+                };
+            });
+        },
+
+        SetLegendSelections: (key, data, selectedAssets, selectedTraces) => {
+            const pk = toPlotKey(key);
+            setState(prev => {
+                const meta = prev.meta[pk];
+                if (!meta) return prev;
+
+                const newEnabled = getEnabledFromLegendSelections(data, selectedAssets, selectedTraces);
+                const affectedAxes = _.uniq(
+                    data.filter(s => meta.enabled[seriesToKey(s)] !== newEnabled[seriesToKey(s)])
+                        .map(s => s.Unit)
+                        .filter(unit => unit != null)
+                );
+                const newLimits = { ...meta.yLimits };
+                const primaryAxis = getPrimaryAxis(key);
+                const [start, end] = meta.key.DataType === 'FFT'
+                    ? prev.fftLimits
+                    : meta.key.DataType === 'OverlappingWave'
+                        ? prev.cycleLimits
+                        : [prev.startTime, prev.endTime];
+
+                affectedAxes.forEach(axis => {
+                    const relevantData = data.filter(item => newEnabled[seriesToKey(item)] && item.Unit === axis);
+                    const recomputed = recomputeDataLimits(start, end, relevantData, meta.yLimits[axis].current);
+                    newLimits[axis] = { ...newLimits[axis], dataLimits: recomputed };
+                    newLimits[axis] = {
+                        ...newLimits[axis],
+                        zoomedLimits: recomputeNonAutoLimits(
+                            meta.yLimits[primaryAxis].dataLimits,
+                            meta.yLimits[primaryAxis].zoomedLimits,
+                            recomputed
+                        )
+                    };
+                    updateActiveUnits(newLimits, axis, relevantData, prev.startTime, prev.endTime, null);
+                });
+
+                return {
+                    ...prev,
+                    meta: {
+                        ...prev.meta,
+                        [pk]: {
+                            ...meta,
+                            enabled: newEnabled,
+                            selectedAssets: [...selectedAssets],
+                            selectedTraces: [...selectedTraces],
+                            legendSelectionsUserSet: true,
+                            yLimits: newLimits
+                        }
                     }
                 };
             });
@@ -517,12 +581,16 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
             });
         },
 
-        OnDataAppended: (key, data, newEnabled) => {
+        OnDataAppended: (key, data, defaultEnabled) => {
             const pk = toPlotKey(key);
             setState(prev => {
                 const meta = prev.meta[pk];
                 if (!meta || data.length === 0) return prev;
 
+                const selections = meta.legendSelectionsUserSet ?
+                    { selectedAssets: meta.selectedAssets, selectedTraces: meta.selectedTraces } :
+                    getLegendSelectionsFromEnabled(data, defaultEnabled);
+                const newEnabled = getEnabledFromLegendSelections(data, selections.selectedAssets, selections.selectedTraces);
                 const isEnabled = (s: OpenSee.iD3DataSeries) => newEnabled[seriesToKey(s)] === true;
 
                 // Correct time range FIRST if data doesn't overlap
@@ -575,6 +643,8 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                 const updatedMeta: IPlotMeta = {
                     ...meta,
                     enabled: newEnabled,
+                    selectedAssets: selections.selectedAssets,
+                    selectedTraces: selections.selectedTraces,
                     yLimits: updateAutoLimits({ ...meta, enabled: newEnabled, yLimits: newLimits }, data, s, e)
                 };
 

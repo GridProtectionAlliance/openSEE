@@ -23,7 +23,7 @@
 //
 //******************************************************************************************************
 import * as React from "react";
-import { OverlayDrawer } from "@gpa-gemstone/react-interactive";
+import { Alert, OverlayDrawer } from "@gpa-gemstone/react-interactive";
 import { MultiCheckBoxSelect } from "@gpa-gemstone/react-forms";
 import { sortGroup, sortHorizontal, uniq } from './Utilities';
 import { useLegendGrid, rowKey } from './useLegendGrid';
@@ -48,9 +48,10 @@ const Legend = (props: IProps) => {
 };
 
 const StandardLegend = (props: IProps) => {
-    const { dataPoints, grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup } = useLegendGrid(props.dataKey);
+    const { grid, categories, verticalHeader, horizontalHeader, changeCategory, clickGroup, toggleTrace } = useLegendGrid(props.dataKey);
 
     const hwidth = (200 - 4) / (horizontalHeader.length + (verticalHeader.length > 1 ? 2 : 1));
+    const hasSelectedAssets = categories.some(c => c.Selected);
 
     return (
         <OverlayDrawer Location="right" Title="Traces" Open={false} Target={"graphWindow-" + props.dataKey.DataType + "-" + props.dataKey.EventId}>
@@ -58,62 +59,61 @@ const StandardLegend = (props: IProps) => {
                 <div className="form-group">
                     <MultiCheckBoxSelect
                         Options={categories}
-                        OnChange={(_, options) => {
-                            options.forEach(o => {
-                                const i = categories.findIndex(c => c.Label == o.Label);
-                                changeCategory(i, categories[i]);
-                            });
-                        }}
+                        OnChange={(_, options) => changeCategory(options)}
                         Label=""
                     />
                 </div>
-                <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
-                    <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", position: "sticky", top: 0, zIndex: 1 }}>
-                        <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
-                        {horizontalHeader.map((item, i) =>
-                            <Header
-                                key={i}
-                                label={item}
-                                width={hwidth}
-                                onClick={clickGroup}
-                            />
-                        )}
-                    </div>
-                    <div style={{ width: '100%' }}>
-                        {verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ?
-                            <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
-                                {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((v, i) =>
-                                    <VCategory
-                                        key={i}
-                                        label={v[1]}
-                                        height={hrow * verticalHeader.filter(item => item[1] == v[1]).length}
-                                        width={hwidth}
-                                    />
-                                )}
-                            </div> : null}
-                        <div style={{
-                            width: verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ? `calc(100% - ${hwidth}px)` : "100%",
-                            backgroundColor: "rgb(204,204,204)",
-                            overflow: "hidden",
-                            textAlign: "center",
-                            display: "inline-block",
-                            verticalAlign: "top"
-                        }}>
-                            {verticalHeader.map((v, i) => (
-                                <Row key={i}
-                                    dataKey={props.dataKey}
-                                    category={v[1]}
-                                    label={v[0]}
-                                    data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
+                {hasSelectedAssets ?
+                    <div className="legend" style={{ width: "100%", borderStyle: "solid", borderWidth: "2px", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
+                        <div style={{ width: "100%", backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "flex", borderBottom: "2px solid #b2b2b2", position: "sticky", top: 0, zIndex: 1 }}>
+                            <div style={{ width: (verticalHeader.length > 1 ? 2 : 1) * hwidth, backgroundColor: "#b2b2b2" }} />
+                            {horizontalHeader.map((item, i) =>
+                                <Header
+                                    key={i}
+                                    label={item}
                                     width={hwidth}
-                                    clickHeader={clickGroup}
-                                    horizontalHeaders={horizontalHeader}
-                                    plotData={dataPoints}
+                                    onClick={clickGroup}
                                 />
-                            ))}
+                            )}
                         </div>
-                    </div>
-                </div>
+                        <div style={{ width: '100%' }}>
+                            {verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ?
+                                <div style={{ width: 'auto', backgroundColor: "rgb(204,204,204)", overflow: "hidden", textAlign: "center", display: "inline-block", verticalAlign: "top" }}>
+                                    {uniq(verticalHeader, v => v[1]).sort(sortGroup).map((v, i) =>
+                                        <VCategory
+                                            key={i}
+                                            label={v[1]}
+                                            height={hrow * verticalHeader.filter(item => item[1] == v[1]).length}
+                                            width={hwidth}
+                                        />
+                                    )}
+                                </div> : null}
+                            <div style={{
+                                width: verticalHeader.length > 1 && verticalHeader.some(v => v[1]) ? `calc(100% - ${hwidth}px)` : "100%",
+                                backgroundColor: "rgb(204,204,204)",
+                                overflow: "hidden",
+                                textAlign: "center",
+                                display: "inline-block",
+                                verticalAlign: "top"
+                            }}>
+                                {verticalHeader.map((v, i) => (
+                                    <Row key={i}
+                                        category={v[1]}
+                                        label={v[0]}
+                                        data={grid?.get(rowKey(v))?.sort((a, b) => sortHorizontal(a.hLabel, b.hLabel)) ?? []}
+                                        width={hwidth}
+                                        clickHeader={clickGroup}
+                                        horizontalHeaders={horizontalHeader}
+                                        toggleTrace={toggleTrace}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div> :
+                    <Alert Class='alert-info' ShowX={false}>
+                        Please select an asset.
+                    </Alert>
+                }
             </div>
         </OverlayDrawer>
     );
