@@ -28,6 +28,7 @@
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.Extensions.Options
+@using System.Web
 @inject IOptionsMonitor<CookieAuthenticationOptions> CookieAuthenticationOptionsMonitor
 @inject IAntiforgery Antiforgery
 @{
@@ -85,6 +86,7 @@
     <div id="DockCharts"></div>
     <script>
         var homePath = '@Html.Raw(Url.Content("~/"))';
+        var logoutPath = '@HttpUtility.JavaScriptStringEncode(cookieAuthenticationOptions.LogoutPath)';
         var version = '@applicationVersion';
         var antiforgeryToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(antiforgeryToken));
         var defaultEventID = @Html.Raw(ViewBag.DefaultEventID);

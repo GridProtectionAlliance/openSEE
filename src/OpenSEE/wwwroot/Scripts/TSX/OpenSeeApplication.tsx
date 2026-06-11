@@ -466,8 +466,7 @@ const OpenSeeApplication = React.memo(() => {
             HideSideBar={true}
             Version={version}
             Logo={`${homePath}Images/openSEE.png`}
-           // OnSignOut={() => window.location.href = logoutPath}
-           //we need to add the above prop back but the navbar is going to need to be adjusted for this to work
+            OnSignOut={() => window.location.href = logoutPath}
             NavBarContent={
                 <OpenSeeNavBar
                     ToggleDrawer={ToggleDrawer}
