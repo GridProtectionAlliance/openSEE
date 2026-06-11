@@ -10,15 +10,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>openSEE - Login</title>
-    <link id="bootstrap" rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link id="bootstrap" rel="stylesheet" href="@Html.Raw(Url.Content("~/"))css/bootstrap.min.css" />
 </head>
 <body>
+    <script>
+            var homePath = '@Html.Raw(Url.Content("~/"))';
+    </script>
     <div style="width: 100%; height: 100%; position: absolute;">
-        <div class="container-fluid d-flex h-100 flex-column" style="background: url('/Images/SplashScreen.png') no-repeat center center fixed;
-                background-size: cover;">
+        <div class="container-fluid d-flex h-100 flex-column" style="background: url('@Html.Raw(Url.Content("~/"))Images/SplashScreen.png') no-repeat center center fixed;
+            background-size: cover;">
             <div class="row flex-grow-1 align-items-center justify-content-center">
                 <div class="col-4">
-                    <img src="/Images/openSEE.png" class="card-img-top" alt="openSEE" />
+                    <img src="@Html.Raw(Url.Content("~/"))Images/openSEE.png" class="card-img-top" alt="openSEE" />
                     @if (Model.HasErrorMessage)
                     {
                         <div class="alert alert-danger" role="alert">
@@ -41,55 +44,55 @@
         </div>
     </div>
 
-    <script src="/js/jquery-3.6.0.min.js" ></script>
+    <script src="@Html.Raw(Url.Content("~/"))js/jquery-3.6.0.min.js"></script>
     <script>
         $(function () {
-            var container = $("#auth-providers-container");
+        var container = $("#auth-providers-container");
 
-            var urlParams = new URLSearchParams(window.location.search);
-            var redir = urlParams.get("redir");
+        var urlParams = new URLSearchParams(window.location.search);
+        var redir = urlParams.get("redir");
 
-            $.ajax({
-                url: '/api/AuthenticationProvider/All',
-                type: 'GET',
-                beforeSend: function () {
-                    container.html(`
-                        <div class="d-flex justify-content-center align-items-center w-100" style="min-height: 100px;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
-                    `);
-                },
-                success: function (providers) {
-                    container.empty(); //remove loading icon
+        $.ajax({
+        url: `@Html.Raw(Url.Content("~/"))api/AuthenticationProvider/All`,
+        type: 'GET',
+        beforeSend: function () {
+        container.html(`
+        <div class="d-flex justify-content-center align-items-center w-100" style="min-height: 100px;">
+        <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+        </div>
+        </div>
+        `);
+        },
+        success: function (providers) {
+        container.empty(); //remove loading icon
 
-                    providers.forEach(function (provider) {
-                        var route = `/asi/auth/${provider.ProviderIdentity}`;
+        providers.forEach(function (provider) {
+        var route = `@Html.Raw(Url.Content("~/"))asi/auth/${provider.ProviderIdentity}`;
 
-                        if (redir != null)
-                            route += `?redir=${encodeURIComponent(redir)}`;
+        if (redir != null)
+        route += `?redir=${encodeURIComponent(redir)}`;
 
-                        var buttonHtml = `
-                            <div class="row mb-2">
-                                <div class="col-12">
-                                    <a href="${route}" class="btn btn-primary w-100" style="background-color: #92bc8b; border-color: #92bc8b">
-                                        ${provider.Name}
-                                    </a>
-                                </div>
-                            </div>`;
+        var buttonHtml = `
+        <div class="row mb-2">
+        <div class="col-12">
+        <a href="${route}" class="btn btn-primary w-100" style="background-color: #92bc8b; border-color: #92bc8b">
+        ${provider.Name}
+        </a>
+        </div>
+        </div>`;
 
-                        container.append(buttonHtml);
-                    });
-                },
-                error: function () {
-                    container.html(`
-                        <div class="alert alert-danger" role="alert">
-                            <strong>Error:</strong> Error loading login methods.
-                        </div>
-                    `);
-                }
-            });
+        container.append(buttonHtml);
+        });
+        },
+        error: function () {
+        container.html(`
+        <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> Error loading login methods.
+        </div>
+        `);
+        }
+        });
         });
     </script>
 </body>
