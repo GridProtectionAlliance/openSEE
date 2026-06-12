@@ -53,10 +53,11 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
     const showFFT = React.useMemo(() => selectFFTEnabled(meta), [meta]);
     const [hover, setHover] = React.useState<string>('None');
     const selectDisabled = !props.OpenDrawers.AccumulatedPoints && !props.OpenDrawers.ToolTipDelta;
+    const zoomDropdownStyle = { ...navIconDropdownStyle, flex: '0 0 74px' };
 
     return (
         <>
-            <li className="nav-item" style={{ width: '210px', position: "relative", marginTop: "10px" }}>
+            <li className="nav-item" style={{ width: '258px', position: "relative", marginTop: "10px" }}>
                 <div className="btn-group d-flex" role="group">
                     <BtnDropdown
                         Label={<ReactIcons.MagnifyingGlass />}
@@ -77,7 +78,7 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                             }
                         ]}
                         BtnClass={'btn-primary ' + navIconDropdownButtonClass + (mouseMode == "zoom" ? " active" : "")}
-                        ContainerStyle={navIconDropdownStyle}
+                        ContainerStyle={zoomDropdownStyle}
                         TooltipContent={<p>Zoom</p>}
                         TooltipLocation={'bottom'}
                         ShowToolTip={true}
