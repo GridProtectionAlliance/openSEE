@@ -251,15 +251,15 @@ const OpenSeeApplication = React.memo(() => {
         const curStateActions = stateActionsRef.current;
         const curAnalytic = analyticRef.current;
 
-        const parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
+        const parsedQuery = NormalizeQueryKeys(queryString.parse(argQuery.substring(1)));
 
         let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
-            parsedPlots = JSON.parse(atob(parsedQuery.plots));
+            parsedPlots = JSON.parse(atob(parsedQuery.plots as string));
         }
 
         if (parsedQuery?.overlappingInfo != null) {
-            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo))
+            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo as string))
                 .map(ToInt)
                 .filter((eventId: number | undefined) => eventId != null);
             overlappingActions.SetSelectedEvents(parsedOverlappingEventIds);
@@ -397,9 +397,9 @@ const OpenSeeApplication = React.memo(() => {
 
     // Query string effect
     React.useEffect(() => {
-        const query = queryString.parse(history.current['location'].search);
-        const parsedStartTime = query['startTime'] != undefined ? parseInt(query['startTime'] as string) : undefined;
-        const parsedEndTime = query['endTime'] != undefined ? parseInt(query['endTime'] as string) : undefined;
+        const query = NormalizeQueryKeys(queryString.parse(history.current['location'].search));
+        const parsedStartTime = query.startTime != undefined ? parseInt(query.startTime as string) : undefined;
+        const parsedEndTime = query.endTime != undefined ? parseInt(query.endTime as string) : undefined;
 
         if (parsedStartTime != undefined && parsedEndTime != undefined) {
             stateActionsRef.current.SetTimeLimit(parsedStartTime, parsedEndTime, plotDataRef.current);
@@ -476,7 +476,14 @@ const OpenSeeApplication = React.memo(() => {
                 />
             }
             NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
-            NavBarImgStyle={{ maxHeight: 55, margin: -5 }}
+            NavBarImgStyle={{
+                maxHeight: 55,
+                maxWidth: '100%',
+                height: 'auto',
+                display: 'block',
+                objectFit: 'contain',
+                margin: 0
+            }}
             UseLegacyNavigation={true}
             ref={applicationRef}
         >
@@ -630,6 +637,35 @@ const ToBool = (arg: any) => {
     if (arg == "True" || arg == "true" || arg == "1") return true;
     if (arg == "False" || arg == "false" || arg == "0") return false;
     return undefined;
+}
+
+type ParsedQueryValue = string | string[] | null;
+type ParsedOpenSeeQuery = Partial<Record<keyof OpenSee.Query, ParsedQueryValue>>;
+
+const NormalizeQueryKeys = (parsedQuery: Record<string, ParsedQueryValue>): ParsedOpenSeeQuery => {
+    const queryKeyMap: Record<string, keyof OpenSee.Query> = {
+        plots: "plots",
+        harmonic: "Harmonic",
+        lpforder: "LPFOrder",
+        hpforder: "HPFOrder",
+        trc: "Trc",
+        cyclelimits: "CycleLimits",
+        fftlimits: "FFTLimits",
+        fftcycles: "FFTCycles",
+        fftstarttime: "FFTStartTime",
+        starttime: "startTime",
+        endtime: "endTime",
+        eventid: "eventID",
+        overlappinginfo: "overlappingInfo",
+        singleplot: "singlePlot"
+    };
+    const normalizedQuery: ParsedOpenSeeQuery = {};
+
+    Object.keys(parsedQuery).forEach(key => {
+        normalizedQuery[queryKeyMap[key.toLowerCase()] ?? key] = parsedQuery[key];
+    });
+
+    return normalizedQuery;
 }
 
 const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
