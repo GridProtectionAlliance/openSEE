@@ -104,7 +104,7 @@ public class Startup
             .Configure(options =>
              {
                  double ticketTimeout = Settings.Default.WebHosting.AuthenticationTicketTimeout;
-                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                 options.ExpireTimeSpan = TimeSpan.FromHours(ticketTimeout);
              });
 
         services
@@ -112,7 +112,7 @@ public class Startup
             .Configure(options =>
             {
                 double sessionTimeout = Settings.Default.WebHosting.AuthenticationSessionTimeout;
-                options.SlidingExpiration = TimeSpan.FromMinutes(15);
+                options.SlidingExpiration = TimeSpan.FromMinutes(sessionTimeout);
             });
 
         services.AddAuthorization(options =>
