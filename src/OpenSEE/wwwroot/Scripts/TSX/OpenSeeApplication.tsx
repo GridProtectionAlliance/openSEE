@@ -662,7 +662,11 @@ const NormalizeQueryKeys = (parsedQuery: Record<string, ParsedQueryValue>): Pars
     const normalizedQuery: ParsedOpenSeeQuery = {};
 
     Object.keys(parsedQuery).forEach(key => {
-        normalizedQuery[queryKeyMap[key.toLowerCase()] ?? key] = parsedQuery[key];
+        const canonicalKey = queryKeyMap[key.toLowerCase()];
+        if (canonicalKey != null)
+            normalizedQuery[canonicalKey] = parsedQuery[key];
+        else
+            (normalizedQuery as Record<string, ParsedQueryValue>)[key] = parsedQuery[key];
     });
 
     return normalizedQuery;

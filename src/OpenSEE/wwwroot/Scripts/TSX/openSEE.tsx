@@ -39,6 +39,23 @@ import OpenSeeApplication from './OpenSeeApplication';
 import { LoadSettings } from './Store/settingSlice';
 import store from './Store/store';
 
+let isRedirecting = false;
+
+//Intercept requests at the XHR level to redirect 401 response to the login page
+const originalXHRSend = XMLHttpRequest.prototype.send;
+
+XMLHttpRequest.prototype.send = function(...args) {
+    this.addEventListener('load', function() {
+        if (this.status === 401 && !isRedirecting) {
+            isRedirecting = true;
+            const returnPath = encodeURIComponent(window.location.pathname);
+            window.location.assign(`${homePath}Login?redir=${returnPath}`);
+        }
+    });
+    
+    return originalXHRSend.apply(this, args);
+};
+
 const OpenSEE = () => (
     <EventProvider>
         <HoverProvider>
