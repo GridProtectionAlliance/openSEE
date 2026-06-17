@@ -290,6 +290,7 @@ const getValue = (
 
         case 'EventMilliseconds':
             return moment(Number(tableData.Value))
+                .utc()
                 .format('YYYY-MM-DD HH:mm:ss.SSS');
 
         case 'PQBrowser' as keyof OpenSee.IEventInfo:

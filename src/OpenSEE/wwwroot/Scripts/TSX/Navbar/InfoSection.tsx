@@ -93,10 +93,10 @@ const InfoSection = (props: InfoSectionProps) => {
                     >
                         <div style={{ textAlign: 'center', color: 'white' }}>Inception: </div>
                         <div style={{ textAlign: 'center', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                            {moment(evt.Context.EventInfo?.Inception).utc().format('YYYY-MM-DD HH:mm:ss.SSS')}
                         </div>
                         <ToolTip Show={hover == 'EInception'} Position={'bottom'} Target={'einception'} Zindex={9999}>
-                            <p>{moment(evt.Context.EventInfo?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
+                            <p>{moment(evt.Context.EventInfo?.Inception).utc().format('YYYY-MM-DD HH:mm:ss.SSS')}</p>
                         </ToolTip>
                     </li> : null}
             </ul>
