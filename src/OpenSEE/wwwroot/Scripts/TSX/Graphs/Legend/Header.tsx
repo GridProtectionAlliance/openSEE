@@ -31,7 +31,7 @@ interface IProps {
 }
 
 const Header = (props: IProps) => (
-    <div style={{ width: props.width, borderLeft: "2px solid #b2b2b2" }}>
+    <div style={{ width: props.width, borderLeft: "2px solid #b2b2b2", cursor: 'pointer' }}>
         <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }} onClick={() => props.onClick(props.label, 'horizontal')}>
             {props.label}
         </span>

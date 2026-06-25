@@ -37,13 +37,13 @@ interface IProps {
 }
 
 const Row = (props: IProps) => {
-    const hasH = props.horizontalHeaders.some(h => h);
-    const hasCat = props.category !== '' && props.category !== null;
-    const labelWidth = !hasH && !hasCat ? '50%' : hasH && !hasCat ? 2 * props.width : props.width;
+    const hasHorizontalHeaders = props.horizontalHeaders.some(h => h);
+    const hasCategory = props.category !== '' && props.category !== null;
+    const labelWidth = !hasHorizontalHeaders && !hasCategory ? '50%' : hasHorizontalHeaders && !hasCategory ? 2 * props.width : props.width;
 
     return (
         <div className="d-flex" style={{ width: "100%", backgroundColor: "rgb(204,204,204)", textAlign: "center", borderTop: "2px solid #b2b2b2", height: 'auto' }}>
-            <div style={{ width: labelWidth, textAlign: "center" }}>
+            <div style={{ width: labelWidth, textAlign: "center", cursor: 'pointer' }}>
                 <span style={{ fontSize: "smaller", fontWeight: "bold", wordWrap: 'break-word' }} onClick={() => props.clickHeader(props.label + props.category, 'vertical')}>
                     {props.label}
                 </span>
@@ -51,7 +51,7 @@ const Row = (props: IProps) => {
             {props.data.map((item, i) =>
                 <TraceButton
                     key={i}
-                    width={!hasH && !hasCat ? { width: '50%' } : { width: props.width }}
+                    width={!hasHorizontalHeaders && !hasCategory ? { width: '50%' } : { width: props.width }}
                     data={item}
                     onToggle={props.toggleTrace}
                 />
