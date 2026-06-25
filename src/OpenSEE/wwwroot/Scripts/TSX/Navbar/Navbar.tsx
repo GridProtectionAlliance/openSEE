@@ -34,7 +34,8 @@ interface IProps {
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
     OpenDrawers: OpenSee.Drawers,
     Width: number,
-    lifecycle: IPlotLifecycleActions
+    lifecycle: IPlotLifecycleActions,
+    navigateToEvent: (nextEventId: number) => void
 }
 
 const OpenSeeNavBar = (props: IProps) => {
@@ -59,17 +60,18 @@ const OpenSeeNavBar = (props: IProps) => {
                     <>
                         <ul className="navbar-nav navbar-expand justify-content-end">
                             <PlotUtilitiesSection
-                                showAbout={showAbout}
-                                setShowAbout={(item) => setShowAbout(item)}
+                                ShowAbout={showAbout}
+                                SetShowAbout={(item) => setShowAbout(item)}
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
+                                NavigateToEvent={props.navigateToEvent}
                             />
                         </ul>
                         <ul className="navbar-nav navbar-expand justify-content-end" style={{ marginRight: '105px', marginBottom: '10px' }}>
                             <WidgetSection
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
-                                lifecycle={props.lifecycle}
+                                Lifecycle={props.lifecycle}
                             />
                         </ul>
                     </> :
@@ -78,13 +80,14 @@ const OpenSeeNavBar = (props: IProps) => {
                             <WidgetSection
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
-                                lifecycle={props.lifecycle}
+                                Lifecycle={props.lifecycle}
                             />
                             <PlotUtilitiesSection
-                                showAbout={showAbout}
-                                setShowAbout={(item) => setShowAbout(item)}
+                                ShowAbout={showAbout}
+                                SetShowAbout={(item) => setShowAbout(item)}
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}
+                                NavigateToEvent={props.navigateToEvent}
                             />
                         </ul>
                     </>

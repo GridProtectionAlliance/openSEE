@@ -86,7 +86,7 @@
     <div id="DockCharts"></div>
     <script>
         var homePath = '@Html.Raw(Url.Content("~/"))';
-        var logoutPath = '@HttpUtility.JavaScriptStringEncode(cookieAuthenticationOptions.LogoutPath)';
+        var logoutPath = '@HttpUtility.JavaScriptStringEncode(Url.Content($"~{cookieAuthenticationOptions.LogoutPath}"))';
         var version = '@applicationVersion';
         var antiforgeryToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(antiforgeryToken));
         var defaultEventID = @Html.Raw(ViewBag.DefaultEventID);

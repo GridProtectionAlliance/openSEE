@@ -43,7 +43,7 @@ import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotSta
 import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
 import BarChart from './Graphs/BarChart';
 import LineChart from './Graphs/LineChart';
-import OpenSeeNavBar from './Navbar/OpenSEENavbar';
+import OpenSeeNavBar from './Navbar/Navbar';
 import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { usePlotLifecycle } from './Hooks/usePlotLifeCycle';
@@ -110,11 +110,13 @@ const OpenSeeApplication = React.memo(() => {
     const lifecycleRef = React.useRef(lifecycle);
     const stateActionsRef = React.useRef(stateActions);
     const analyticRef = React.useRef(analytic);
+    const eventIdRef = React.useRef(evt.Context.EventID);
     plotStateRef.current = plotState;
     plotDataRef.current = plotData;
     lifecycleRef.current = lifecycle;
     stateActionsRef.current = stateActions;
     analyticRef.current = analytic;
+    eventIdRef.current = evt.Context.EventID;
 
     const groupedKeys = React.useMemo(() => selectListGraphs(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
     const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
@@ -231,6 +233,21 @@ const OpenSeeApplication = React.memo(() => {
         return query;
     }, [evt.Context.EventID, plotState, plotData, analytic, singlePlot, overlapping.events]);
 
+    // updates the current event and lets the existing context/query effects fetch the new data
+    const navigateToEvent = (nextEventId: number) => {
+        if (nextEventId == null || isNaN(nextEventId) || nextEventId < 0 || nextEventId === eventIdRef.current)
+            return;
+
+        // Drop comparison selections so the previous event's overlap rows don't carry over.
+        overlappingActions.SetSelectedEvents([]);
+
+        // Swap displayed plots from the old base event to the new one.
+        lifecycle.ReplaceBaseEvent(eventIdRef.current, nextEventId);
+
+        // dispatch new eventID
+        evt.Dispatch.current.SettingsDispatch({ EventID: nextEventId });
+    };
+
     const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
         overlayHandles.current[drawer](open);
     };
@@ -284,7 +301,7 @@ const OpenSeeApplication = React.memo(() => {
 
         const parsedEventID = ToInt(parsedQuery?.eventID);
         let usedEventID: number = defaultEventID;
-        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID) {
+        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== eventIdRef.current) {
             evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
             usedEventID = parsedEventID;
         } else if (initial) {
@@ -484,6 +501,7 @@ const OpenSeeApplication = React.memo(() => {
                     OpenDrawers={openDrawers}
                     Width={navWidth}
                     lifecycle={lifecycle}
+                    navigateToEvent={navigateToEvent}
                 />
             }
             NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}

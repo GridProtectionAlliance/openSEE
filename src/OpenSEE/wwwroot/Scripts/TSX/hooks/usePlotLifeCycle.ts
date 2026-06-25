@@ -33,6 +33,7 @@ export interface IPlotLifecycleActions {
     RemovePlot: (key: OpenSee.IGraphProps) => void;
     UpdateAnalyticPlot: (key: OpenSee.IGraphProps) => void;
     EnableOverlappingEvent: (eventId: number) => void;
+    ReplaceBaseEvent: (oldEventId: number, newEventId: number) => void;
     RebuildSinglePlots: () => void;
     RemoveSinglePlots: () => void;
 }
@@ -231,6 +232,30 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
         overlappingActions.ToggleEventSelection(eventId);
     }, [overlapping.events, plotState.meta, AddPlot, RemovePlot, overlappingActions]);
 
+    // tears down the current base-event plots (and any
+    // overlapping-event plots) and recreates the same plot types for the new event.
+    // Falls back to Voltage + Current when nothing was displayed.
+    const ReplaceBaseEvent = React.useCallback((oldEventId: number, newEventId: number) => {
+        const basePlotTypes = _.uniq(
+            Object.values(plotState.meta)
+                .filter(m => m.key.EventId === oldEventId)
+                .map(m => m.key.DataType)
+        );
+
+        // Remove every plot and any overlapping-event plots
+        Object.values(plotState.meta)
+            .filter(m => m.key.EventId !== -1) // EventID of -1 indicates overlap plot
+            .forEach(m => RemovePlot(m.key));
+
+        const typesToAdd: OpenSee.graphType[] = basePlotTypes.length > 0 ? basePlotTypes : ['Voltage', 'Current'];
+
+        // Reset overlay ref.
+        if (singlePlotRef.current)
+            typesToAdd.forEach(dt => { overlayDataRef.current[toPlotKey({ DataType: dt, EventId: -1 })] = []; });
+
+        typesToAdd.forEach(dt => AddPlot({ DataType: dt, EventId: newEventId }));
+    }, [plotState.meta, AddPlot, RemovePlot]);
+
     const RebuildSinglePlots = React.useCallback(() => {
         const sourceMeta = Object.values(plotState.meta).filter(m => m.key.EventId !== -1);
         const dataTypes = _.uniq(sourceMeta.map(m => m.key.DataType));
@@ -283,7 +308,7 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
             });
     }, [plotState.meta, dataActions, stateActions]);
 
-    return { AddPlot, RemovePlot, UpdateAnalyticPlot, EnableOverlappingEvent, RebuildSinglePlots, RemoveSinglePlots };
+    return { AddPlot, RemovePlot, UpdateAnalyticPlot, EnableOverlappingEvent, ReplaceBaseEvent, RebuildSinglePlots, RemoveSinglePlots };
 }
 
 // Starts the high-resolution data fetch that replaces compressed series with full-resolution versions. Runs in the background after initial load.

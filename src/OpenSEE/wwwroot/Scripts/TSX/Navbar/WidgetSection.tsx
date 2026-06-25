@@ -36,13 +36,13 @@ import { IPlotLifecycleActions } from '../Hooks/usePlotLifeCycle';
 import { BasePlots } from '../defaults';
 import { navIconButtonStyle, navIconDropdownButtonClass, navIconDropdownStyle } from './NavStyles';
 
-interface IWidgets {
+interface IProps {
     OpenDrawers: OpenSee.Drawers,
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
-    lifecycle: IPlotLifecycleActions
+    Lifecycle: IPlotLifecycleActions
 }
 
-const WidgetSection = (props: IWidgets) => {
+const WidgetSection = (props: IProps) => {
     const dispatch = useAppDispatch();
     const evt = React.useContext(EventContext);
     const overlapping = React.useContext(OverlappingStateContext);
@@ -65,9 +65,9 @@ const WidgetSection = (props: IWidgets) => {
         const eventIds = selectEventIDs(evt.Context.EventID, overlapping.events);
 
         if (display)
-            eventIds.forEach(id => props.lifecycle.RemovePlot({ DataType: type, EventId: id }));
+            eventIds.forEach(id => props.Lifecycle.RemovePlot({ DataType: type, EventId: id }));
         else
-            eventIds.forEach(id => props.lifecycle.AddPlot({ DataType: type, EventId: id }));
+            eventIds.forEach(id => props.Lifecycle.AddPlot({ DataType: type, EventId: id }));
     }
 
     const exportData = (type: string) => {

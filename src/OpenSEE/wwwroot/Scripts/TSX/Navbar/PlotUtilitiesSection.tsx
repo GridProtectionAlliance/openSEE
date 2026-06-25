@@ -35,14 +35,15 @@ import EventContext from '../Context/EventContext';
 import { selectFFTEnabled } from '../PlotSelectors';
 import { navIconButtonStyle, navIconDropdownButtonClass, navIconDropdownStyle } from './NavStyles';
 
-interface IPlotUtilities {
+interface IProps {
     OpenDrawers: OpenSee.Drawers,
-    showAbout: boolean,
+    ShowAbout: boolean,
     ToggleDrawer: (drawer: OpenSee.OverlayDrawers, open: boolean) => void,
-    setShowAbout: (about: boolean) => void
+    SetShowAbout: (about: boolean) => void,
+    NavigateToEvent: (nextEventId: number) => void
 }
 
-const PlotUtilitiesSection = (props: IPlotUtilities) => {
+const PlotUtilitiesSection = (props: IProps) => {
     const dispatch = useAppDispatch();
     const { plots } = React.useContext(PlotDataStateContext);
     const { meta } = React.useContext(PlotStateStateContext);
@@ -158,20 +159,20 @@ const PlotUtilitiesSection = (props: IPlotUtilities) => {
                 </ToolTip>
             </li>
 
-            <Navigation />
+            <Navigation navigateToEvent={props.NavigateToEvent} />
 
             <li className="nav-item" style={{ width: '74px', marginTop: "10px" }}>
                 <button className="btn btn-primary" style={{ ...navIconButtonStyle, borderRadius: "4rem", padding: "0.195rem" }}
                     onMouseEnter={() => setHover('Help')}
                     onMouseLeave={() => setHover('None')} data-tooltip={'help-btn'}
-                    onClick={() => props.setShowAbout(true)}
+                    onClick={() => props.SetShowAbout(true)}
                 >
                     <ReactIcons.QuestionMark />
                 </button>
                 <ToolTip Show={hover == 'Help'} Position={'bottom'} Target={'help-btn'}>
                     <p>Help</p>
                 </ToolTip>
-                <About isOpen={props.showAbout} closeCallback={() => props.setShowAbout(false)} />
+                <About isOpen={props.ShowAbout} closeCallback={() => props.SetShowAbout(false)} />
             </li>
         </>
     );
