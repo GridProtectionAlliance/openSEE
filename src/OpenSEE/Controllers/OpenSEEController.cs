@@ -117,6 +117,12 @@ namespace OpenSEE
 
         #region [ Methods ]
 
+        [Route("HeartBeat"), HttpGet]
+        public IActionResult HeartBeat()
+        {
+            return Ok();
+        }
+
         #region [ Waveform Data ]
 
         [Route("GetData"), HttpGet]

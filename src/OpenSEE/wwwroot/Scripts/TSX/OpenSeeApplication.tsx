@@ -89,6 +89,17 @@ const OpenSeeApplication = React.memo(() => {
 
     const lifecycle = usePlotLifecycle();
 
+    React.useEffect(() => {
+        const interval = window.setInterval(() => {
+            $.ajax({
+                url: `${homePath}api/OpenSEE/HeartBeat`,
+                method: 'GET'
+            });
+        }, 10000);
+
+        return () => window.clearInterval(interval);
+    }, []);
+
     const mouseMode = useAppSelector(SelectMouseMode);
     const singlePlot = useAppSelector(SelectSinglePlot);
 
