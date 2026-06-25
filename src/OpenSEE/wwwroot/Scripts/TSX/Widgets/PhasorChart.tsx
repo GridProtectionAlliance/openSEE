@@ -77,6 +77,20 @@ const PhasorChartWidget = () => {
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
             <div style={{ flex: 1, minHeight: 0 }}>
                 <svg ref={svgRef} width="100%" height="100%">
+                    <defs>
+                        <marker
+                            id="phasor-arrow"
+                            viewBox="0 0 10 10"
+                            refX={10}
+                            refY={5}
+                            markerWidth={12}
+                            markerHeight={12}
+                            markerUnits="userSpaceOnUse"
+                            orient="auto"
+                        >
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
+                        </marker>
+                    </defs>
                     <circle
                         cx={clientWidth / 2}
                         cy={clientHeight / 2}
@@ -92,7 +106,9 @@ const PhasorChartWidget = () => {
                                     key={`v-${ai}-${vi}`}
                                     d={drawVectorSVG(v, scaleV, clientWidth, clientHeight)}
                                     stroke={colors[v.Color]}
-                                    strokeWidth={2} fill="none"
+                                    strokeWidth={2}
+                                    fill="none"
+                                    markerEnd="url(#phasor-arrow)"
                                 />
                             ))}
                             {IVector.filter(v => v.Asset === asset).map((v, vi) => (
@@ -103,6 +119,7 @@ const PhasorChartWidget = () => {
                                     strokeWidth={2}
                                     fill="none"
                                     strokeDasharray="5,5"
+                                    markerEnd="url(#phasor-arrow)"
                                 />
                             ))}
                         </React.Fragment>
@@ -157,7 +174,7 @@ const drawVectorSVG = (vec: OpenSee.IVector, scale: number, width: number, heigh
     const centerY = height / 2;
     const x = vec.Magnitude * scale * Math.cos(vec.Angle * Math.PI / 180);
     const y = vec.Magnitude * scale * Math.sin(vec.Angle * Math.PI / 180);
-    return `M ${centerX} ${centerY} L ${centerX + x} ${centerY - y} Z`;
+    return `M ${centerX} ${centerY} L ${centerX + x} ${centerY - y}`;
 }
 
 const createTable = (vec: OpenSee.IVector | undefined, index: number) => {
