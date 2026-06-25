@@ -81,7 +81,7 @@ export const updateMarkerGeometry = (
         .attr("cy", (d: IMarker) => {
             let factor = 1.0;
             if (activeUnit?.[d.unit] != undefined)
-                factor = activeUnit[d.unit].factor === undefined ? (1.0 / d.base) : factor;
+                factor = activeUnit[d.unit].factor === undefined ? (1.0 / d.base) : activeUnit[d.unit].factor;
             return isNaN(scales.y[d.unit](d.y)) ? null : scales.y[d.unit](d.y * factor);
         });
 }

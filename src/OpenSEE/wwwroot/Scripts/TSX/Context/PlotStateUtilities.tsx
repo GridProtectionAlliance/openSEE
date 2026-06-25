@@ -150,12 +150,9 @@ export function recomputeDataLimits(
 
         let factor = 1;
         const unit: OpenSee.IUnitSetting | undefined = defaultSettings.Units[item.Unit];
-        if (unit != null)
-            factor = unit?.options?.[activeUnit]?.factor ?? 1;
-
-        // per-unit case
-        if (factor === undefined)
-            factor = 1.0 / item.BaseValue;
+        const option = unit?.options?.[activeUnit];
+        if (option != null)
+            factor = option.factor === undefined ? 1.0 / item.BaseValue : option.factor;
 
         const startIndex = Math.max(0, Math.min(indexStart, dataPoints.length));
         const endIndex = Math.max(startIndex, Math.min(indexEnd, dataPoints.length));

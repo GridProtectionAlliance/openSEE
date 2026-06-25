@@ -38,9 +38,12 @@ export const createLineGen = (
 ) => {
     let factor = 1.0;
 
-    if (unit && base && activeUnit?.[unit]) {
-        const f = activeUnit[unit]?.factor;
-        factor = f === undefined ? 1.0 / base : f;
+    const unitOption = unit != null ? activeUnit?.[unit] : undefined;
+    if (unitOption != null) {
+        if (unitOption.factor != null)
+            factor = unitOption.factor;
+        else if (base != null && base !== 0)
+            factor = 1.0 / base;
     }
 
     const xScale = scales.x;
