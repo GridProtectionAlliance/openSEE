@@ -80,7 +80,7 @@ const PhasorChartWidget = () => {
 
     function createTable(vec: OpenSee.IVector | undefined, index: number) {
         if (vec == undefined)
-            return <React.Fragment key={index}><td>N/A</td><td>N/A</td></React.Fragment>;
+            return <React.Fragment key={index}><td style={{ textAlign: 'right' }}>N/A</td><td style={{ textAlign: 'right' }}>N/A</td></React.Fragment>;
 
         const factor = (vec.Unit.factor === undefined ? (1.0 / vec.BaseValue) : vec.Unit.factor);
         const phaseFactor = (vec.PhaseUnit.factor === undefined ? (1.0 / vec.BaseValue) : vec.PhaseUnit.factor);
@@ -120,36 +120,41 @@ const PhasorChartWidget = () => {
                     ))}
                 </svg>
             </div>
-            <div style={{ maxHeight: '40%', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '70%', overflowY: 'auto' }}>
                 {AssetList.map((asset, ai) => {
                     const vPhases = _.uniq(VVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const iPhases = _.uniq(IVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const allPhases = _.uniq([...vPhases, ...iPhases]);
 
                     return (
-                        <table key={ai} className="table table-sm" style={{ marginBottom: 5 }}>
-                            <thead>
-                                <tr>
-                                    <th>{asset}</th>
-                                    <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
-                                    <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
-                                </tr>
-                                <tr>
-                                    <th>Phase</th>
-                                    <th>Mag</th><th>Ang</th>
-                                    <th>Mag</th><th>Ang</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {allPhases.map((phase, pi) => (
-                                    <tr key={pi}>
-                                        <td>{phase}</td>
-                                        {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
-                                        {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
+                        <>
+                            <h4>{asset}</h4>
+                            <table key={ai} className="table table-sm" style={{ marginBottom: 5 }}>
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
+                                        <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                    <tr>
+                                        <th>Phase</th>
+                                        <th style={{ textAlign: 'right' }}>Mag</th>
+                                        <th style={{ textAlign: 'right' }}>Ang</th>
+                                        <th style={{ textAlign: 'right' }}>Mag</th>
+                                        <th style={{ textAlign: 'right' }}>Ang</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {allPhases.map((phase, pi) => (
+                                        <tr key={pi}>
+                                            <td>{phase}</td>
+                                            {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
+                                            {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </>
                     );
                 })}
             </div>
