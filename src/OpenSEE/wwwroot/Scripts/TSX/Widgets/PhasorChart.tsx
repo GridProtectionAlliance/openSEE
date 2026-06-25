@@ -62,8 +62,8 @@ const PhasorChartWidget = () => {
             if (!_.isEqual(newAssetList.sort(), AssetList.sort())) {
                 setAssetList(newAssetList);
             }
-            setScaleV(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...VVector.map(item => item.Magnitude)));
-            setScaleI(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...IVector.map(item => item.Magnitude)));
+            setScaleV(0.9 * Math.min(clientWidth / 2, clientHeight / 2) / Math.max(...VVector.map(item => item.Magnitude)));
+            setScaleI(0.9 * Math.min(clientWidth / 2, clientHeight / 2) / Math.max(...IVector.map(item => item.Magnitude)));
         }, 100);
 
         return () => clearTimeout(timeoutId);
@@ -108,6 +108,14 @@ const PhasorChartWidget = () => {
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
             <div style={{ flex: 1, minHeight: 0 }}>
                 <svg ref={svgRef} width="100%" height="100%">
+                    <circle
+                        cx={clientWidth / 2}
+                        cy={clientHeight / 2}
+                        r={0.9 * Math.min(clientWidth / 2, clientHeight / 2)}
+                        stroke="#ccc"
+                        strokeWidth={1}
+                        fill="none"
+                    />
                     {AssetList.map((asset, ai) => (
                         <React.Fragment key={ai}>
                             {VVector.filter(v => v.Asset === asset).map((v, vi) => (
