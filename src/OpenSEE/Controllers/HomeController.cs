@@ -21,38 +21,32 @@
 //
 //******************************************************************************************************
 
+using System;
+using System.Data;
 using Gemstone.Configuration;
 using Gemstone.Data;
-using Gemstone.Data.Model;
+using Gemstone.Data.DataExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using openXDA.Model;
 
-namespace OpenSEE.Controllers
+namespace OpenSEE.Controllers;
+
+/// <summary>
+/// Represents a MVC controller for the site's main pages.
+/// </summary>
+[Authorize(Startup.Policies.Authenticated)]
+public class HomeController : Controller
 {
-    /// <summary>
-    /// Represents a MVC controller for the site's main pages.
-    /// </summary>
-    [Authorize(Startup.Policies.Authenticated)]
-    public class HomeController : Controller
+    // Provide default values in the case that nothing is supplied in the query string
+    public IActionResult Index()
     {
-        // This provides some default values for if nothing is supplied in the query string
-        public IActionResult Index()
-        {
-            int eventID = -1;
-            Event evt;
+        using AdoDataConnection connection = new(Settings.Default);
+        DataRow evt = connection.RetrieveRow("SELECT TOP 1 * FROM Event");
 
-            using AdoDataConnection connection = new(Settings.Default);
-            TableOperations<Event> eventTable = new(connection);
+        ViewBag.DefaultEventID = evt.ConvertField<int>("ID");
+        ViewBag.DefaultEventStartTime = evt.ConvertField<DateTime>("StartTime").ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+        ViewBag.DefaultEventEndTime = evt.ConvertField<DateTime>("EndTime").ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
 
-            eventID = eventTable.QueryRecord("ID > 0").ID;
-            evt = eventTable.QueryRecordWhere("ID = {0}", eventID);
-
-            ViewBag.DefaultEventID = eventID;
-            ViewBag.DefaultEventStartTime = evt.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-            ViewBag.DefaultEventEndTime = evt.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-
-            return View("Index");
-        }
+        return View("Index");
     }
 }
