@@ -74,7 +74,7 @@ namespace OpenSEE
                 if (m_Fbase != null)
                     return (double)m_Fbase;
                 using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
-                    m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
+                    m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'DataAnalysis.SystemFrequency'") ?? 60.0;
                 return (double)m_Fbase;
             }
         }
