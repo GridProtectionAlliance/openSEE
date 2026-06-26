@@ -331,6 +331,21 @@ const PlotCard = (props: IProps) => {
                         </fieldset>
                     ))}
 
+                    {props.DataType === "FFT" ?
+                        <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Frequency</legend>
+                            <div className="form-row">
+                                <div className="col-12">
+                                    <AxisUnitSelector
+                                        setter={(index) => handleUnitChange('FFTFrequency', index, props)}
+                                        unitType={'FFTFrequency'}
+                                        axisSetting={axisSettings.FFTFrequency}
+                                    />
+                                </div>
+                            </div>
+                        </fieldset>
+                        : null}
+
                     {colorSettings.length > 0 ?
                         <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
                             <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>

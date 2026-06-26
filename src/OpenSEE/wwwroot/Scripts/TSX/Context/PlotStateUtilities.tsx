@@ -44,6 +44,7 @@ export function createDefaultYLimits(): OpenSee.IUnitCollection<OpenSee.IAxisSet
         Angle: createDefaultAxisSettings('Angle'),
         VoltageperSecond: createDefaultAxisSettings('VoltageperSecond'),
         CurrentperSecond: createDefaultAxisSettings('CurrentperSecond'),
+        FFTFrequency: createDefaultAxisSettings('FFTFrequency'),
         Freq: createDefaultAxisSettings('Freq'),
         Impedance: createDefaultAxisSettings('Impedance'),
         PowerP: createDefaultAxisSettings('PowerP'),

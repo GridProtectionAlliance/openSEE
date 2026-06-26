@@ -22,6 +22,15 @@
 //******************************************************************************************************
 
 import * as d3 from "d3";
+import { OpenSee } from "../../../global";
+
+export const getFrequencyAxisLabel = (unit: OpenSee.iUnitOptions): string => {
+    if (unit.label === unit.short)
+        return unit.label;
+    return `${unit.label} [${unit.short}]`;
+}
+
+const getFrequencyFactor = (unit: OpenSee.iUnitOptions): number => unit.factor ?? Number.parseFloat(systemFrequency);
 
 export const formatFrequencyTick = (d: number, xScaleLbl: d3.ScaleLinear<number, number>): string => {
     let h = 1;
@@ -68,13 +77,19 @@ export const syncFrequencyScaleRange = (
     };
 }
 
-export const setFrequencyDomainFromBands = (xScaleBand: d3.ScaleBand<number>, xScaleLbl: d3.ScaleLinear<number, number>) => {
+export const setFrequencyDomainFromBands = (
+    xScaleBand: d3.ScaleBand<number>,
+    xScaleLbl: d3.ScaleLinear<number, number>,
+    unit: OpenSee.iUnitOptions
+) => {
     const domain = xScaleBand.domain();
     if (domain.length === 0) {
         xScaleLbl.domain([0, 1]);
         return;
     }
-    xScaleLbl.domain([60.0 * domain[0], 60.0 * domain[domain.length - 1]]);
+
+    const factor = getFrequencyFactor(unit);
+    xScaleLbl.domain([domain[0] * factor, domain[domain.length - 1] * factor]);
 }
 
 export const createFrequencyXAxis = (
@@ -82,7 +97,8 @@ export const createFrequencyXAxis = (
     xScaleBand: d3.ScaleBand<number>,
     xScaleLbl: d3.ScaleLinear<number, number>,
     height: number,
-    width: number
+    width: number,
+    unit: OpenSee.iUnitOptions
 ) => {
     syncFrequencyScaleRange(xScaleBand, xScaleLbl, width);
 
@@ -94,18 +110,26 @@ export const createFrequencyXAxis = (
     svg.append("text").classed("xAxisLabel", true)
         .attr("transform", `translate(${(width - 210) / 2 + 60},${height - 10})`)
         .style("text-anchor", "middle")
-        .text("Harmonic (Hz)");
+        .text(getFrequencyAxisLabel(unit));
 
     updateFrequencyAxisExtents(svg, xScaleBand, xScaleLbl, height, width);
 }
 
-export const updateFrequencyXAxisTicks = (container: HTMLDivElement | null, xScaleLbl: d3.ScaleLinear<number, number>) => {
+export const updateFrequencyXAxisTicks = (
+    container: HTMLDivElement | null,
+    xScaleLbl: d3.ScaleLinear<number, number>,
+    unit: OpenSee.iUnitOptions
+) => {
     if (container == null) return;
 
     d3.select(container)
         .selectAll(".xAxis")
         .transition()
         .call(d3.axisBottom(xScaleLbl).tickFormat(d => formatFrequencyTick(d as number, xScaleLbl)).tickSizeOuter(0) as any);
+
+    d3.select(container)
+        .select(".xAxisLabel")
+        .text(getFrequencyAxisLabel(unit));
 }
 
 export const updateFrequencyXAxisOnResize = (
@@ -113,7 +137,8 @@ export const updateFrequencyXAxisOnResize = (
     xScaleBand: d3.ScaleBand<number>,
     xScaleLbl: d3.ScaleLinear<number, number>,
     height: number,
-    width: number
+    width: number,
+    unit: OpenSee.iUnitOptions
 ) => {
     if (container == null) return;
 
@@ -121,11 +146,13 @@ export const updateFrequencyXAxisOnResize = (
     syncFrequencyScaleRange(xScaleBand, xScaleLbl, width);
 
     sel.select(".xAxis").attr("transform", `translate(0,${height - 40})`);
-    sel.select(".xAxisLabel").attr("transform", `translate(${(width - 210) / 2 + 60},${height - 10})`);
+    sel.select(".xAxisLabel")
+        .attr("transform", `translate(${(width - 210) / 2 + 60},${height - 10})`)
+        .text(getFrequencyAxisLabel(unit));
     sel.select(".plotTitle").attr("transform", `translate(${(width - 210) / 2 + 60},20)`).style("font-weight", "bold");
 
     updateFrequencyAxisExtents(sel.select("g.root") as any, xScaleBand, xScaleLbl, height, width);
-    updateFrequencyXAxisTicks(container, xScaleLbl);
+    updateFrequencyXAxisTicks(container, xScaleLbl, unit);
 }
 
 const updateFrequencyAxisExtents = (

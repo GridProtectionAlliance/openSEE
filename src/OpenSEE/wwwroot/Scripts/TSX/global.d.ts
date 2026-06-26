@@ -30,6 +30,7 @@ declare global {
     const defaultEventID: number;
     const defaultEventStartTime: string;
     const defaultEventEndTime: string;
+    const systemFrequency: string;
     const logoutPath: string;
 }
 
@@ -353,6 +354,7 @@ export namespace OpenSee {
         Angle: T,
         VoltageperSecond: T,
         CurrentperSecond: T,
+        FFTFrequency: T,
         Freq: T,
         Impedance: T,
         PowerP: T,
@@ -429,6 +431,7 @@ export namespace OpenSee {
     interface IFFTSeries {
         Color: Color,
         Unit: iUnitOptions,
+        FrequencyUnit: iUnitOptions,
         Phase: string,
         Magnitude: number[],
         Angle: number[],

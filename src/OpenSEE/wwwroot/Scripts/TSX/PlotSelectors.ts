@@ -339,17 +339,20 @@ export function selectFFTData(
 
             const magUnit = defaultSettings.Units[magCh.Unit]?.options?.[m.yLimits[magCh.Unit]?.current] ?? defaultOption;
             const angUnit = defaultSettings.Units.Angle?.options?.[m.yLimits['Angle']?.current] ?? defaultOption;
+            const frequencyUnit = defaultSettings.Units.FFTFrequency?.options?.[m.yLimits['FFTFrequency']?.current] ?? defaultOption;
+            const frequencyFactor = frequencyUnit.factor ?? Number.parseFloat(systemFrequency);
 
             result.push({
                 Color: angCh.Color,
                 Unit: magUnit,
+                FrequencyUnit: frequencyUnit,
                 PhaseUnit: angUnit,
                 Phase: p,
                 Asset: a,
                 Magnitude: magCh.DataPoints.map(pt => pt[1]),
                 Angle: angCh.DataPoints.map(pt => pt[1]),
                 BaseValue: magCh.BaseValue,
-                Frequency: magCh.DataPoints.map(pt => pt[0] * 60.0)
+                Frequency: magCh.DataPoints.map(pt => pt[0] * frequencyFactor)
             });
         });
     });

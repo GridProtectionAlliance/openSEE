@@ -188,6 +188,15 @@ export const defaultSettings: DefaultSettings = {
                 { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 }
             ],
         },
+        FFTFrequency: {
+            current: 0,
+            autoUnit: false,
+            options: [
+                // FFT x-values from the backend are already harmonics; Hz restores the original frequency display.
+                { label: "Frequency", short: "Hz", factor: Number.parseFloat(systemFrequency) },
+                { label: "harmonic", short: "harmonic", factor: 1 }
+            ],
+        },
         Freq: {
             current: 0,
             autoUnit: true,
