@@ -140,16 +140,21 @@ export const usePlotLifecycle = (): IPlotLifecycleActions => {
 
             const remaining = (overlayDataRef.current[overlayPk] ?? plotData[overlayPk] ?? []).filter(d => d.EventID !== key.EventId);
             overlayDataRef.current[overlayPk] = remaining;
-            if (remaining.length === 0) {
+
+            // Keep the overlay if another source plot still needs it.
+            const remainingSourceMeta = Object.values(plotState.meta)
+                .filter(m => m.key.EventId !== -1 && m.key.EventId !== key.EventId && m.key.DataType === key.DataType);
+
+            if (remainingSourceMeta.length === 0) {
                 delete overlayDataRef.current[overlayPk];
                 dataActions.RemovePlotData(overlayKey);
                 stateActions.RemovePlotMeta(overlayKey);
-            } else {
+            } else if (remaining.length > 0) {
                 const remainingEnabled = getDefaultEnabled(key.DataType, defaultTrace, defaultVType, remaining);
                 stateActions.OnDataAppended(overlayKey, remaining, remainingEnabled);
             }
         }
-    }, [dataActions, stateActions, plotData, defaultTrace, defaultVType]);
+    }, [dataActions, stateActions, plotData, plotState.meta, defaultTrace, defaultVType]);
 
     const UpdateAnalyticPlot = React.useCallback((key: OpenSee.IGraphProps) => {
         const pk = toPlotKey(key);
