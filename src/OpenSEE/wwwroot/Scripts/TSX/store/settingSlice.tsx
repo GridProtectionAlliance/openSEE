@@ -67,6 +67,7 @@ export const SettingsReducer = createSlice({
         MouseMode: 'zoom' as OpenSee.MouseMode,
         ZoomMode: 'x' as OpenSee.ZoomMode,
         PlotMarkers: false, // field to indicate if user has inception and duration markers on
+        DataMarkers: true,
         OverlappingWaveTimeUnit: 0
     } as OpenSee.ISettingsState,
     reducers: {
@@ -82,6 +83,7 @@ export const SettingsReducer = createSlice({
                 state.SinglePlot = preserved.SinglePlot === undefined ? defaultSettings.SinglePlot : preserved.SinglePlot;
                 state.UseOverlappingTime = preserved.UseOverlappingTime === undefined ? defaultSettings.UseOverlappingTime : preserved.UseOverlappingTime;
                 state.PlotMarkers = preserved.PlotMarkers === undefined ? defaultSettings.PlotMarkers : preserved.PlotMarkers;
+                state.DataMarkers = preserved.DataMarkers === undefined ? defaultSettings.DataMarkers : preserved.DataMarkers;
                 state.OverlappingWaveTimeUnit = preserved.OverlappingWaveTimeUnit === undefined ? defaultSettings.OverlappingWaveTimeUnit.current : preserved.OverlappingWaveTimeUnit
                 state.MouseMode = preserved.MouseMode === undefined ? defaultSettings.MouseMode : preserved.MouseMode
                 state.ZoomMode = preserved.ZoomMode === undefined ? defaultSettings.ZoomMode : preserved.ZoomMode
@@ -95,6 +97,7 @@ export const SettingsReducer = createSlice({
                 state.Navigation = defaultSettings.Navigation;
                 state.UseOverlappingTime = defaultSettings.UseOverlappingTime
                 state.PlotMarkers = defaultSettings.PlotMarkers
+                state.DataMarkers = defaultSettings.DataMarkers
                 state.OverlappingWaveTimeUnit = defaultSettings.OverlappingWaveTimeUnit.current
                 state.MouseMode = defaultSettings.MouseMode
                 state.ZoomMode = defaultSettings.ZoomMode
@@ -142,6 +145,10 @@ export const SettingsReducer = createSlice({
             state.PlotMarkers = action.payload
             saveSettings(state);
         },
+        SetDataMarkers: (state, action: PayloadAction<boolean>) => {
+            state.DataMarkers = action.payload
+            saveSettings(state);
+        },
         SetUseOverlappingTime: (state, action: PayloadAction<boolean>) => {
             state.UseOverlappingTime = action.payload;
             saveSettings(state);
@@ -160,7 +167,7 @@ export const SettingsReducer = createSlice({
 
 });
 
-export const { LoadSettings, SetColor, SetTimeUnit, SetDefaultTrace, SetDefaultVType, SetSinglePlot, SetNavigation, SetPlotMarkers, SetUseOverlappingTime, SetOverlappingWaveTimeUnit, SetMouseMode, SetZoomMode } = SettingsReducer.actions;
+export const { LoadSettings, SetColor, SetTimeUnit, SetDefaultTrace, SetDefaultVType, SetSinglePlot, SetNavigation, SetPlotMarkers, SetDataMarkers, SetUseOverlappingTime, SetOverlappingWaveTimeUnit, SetMouseMode, SetZoomMode } = SettingsReducer.actions;
 export default SettingsReducer.reducer;
 
 // #endregion
@@ -173,6 +180,7 @@ export const SelectTimeUnit = (state: RootState) => state.Settings.TimeUnit;
 export const SelectSinglePlot = (state: RootState) => state.Settings.SinglePlot;
 export const SelectNavigation = (state: RootState) => state.Settings.Navigation;
 export const SelectPlotMarkers = (state: RootState) => state.Settings.PlotMarkers;
+export const SelectDataMarkers = (state: RootState) => state.Settings.DataMarkers;
 export const SelectUseOverlappingTime = (state: RootState) => state.Settings.UseOverlappingTime;
 export const SelectOverlappingWaveTimeUnit = (state: RootState) => state.Settings.OverlappingWaveTimeUnit;
 export const SelectMouseMode = (state: OpenSee.IRootState) => state.Settings.MouseMode
@@ -197,6 +205,7 @@ function saveSettings(state: OpenSee.ISettingsState) {
             SinglePlot: state.SinglePlot,
             UseOverlappingTime: state.UseOverlappingTime,
             PlotMarkers: state.PlotMarkers,
+            DataMarkers: state.DataMarkers,
             OverlappingWaveTimeUnit: state.OverlappingWaveTimeUnit,
             MouseMode: state.MouseMode,
             ZoomMode: state.ZoomMode
@@ -270,6 +279,9 @@ function getSettings(): OpenSee.ISettingsState | undefined {
 
         if (storageState.PlotMarkers === undefined)
             storageState.PlotMarkers === defaultSettings.PlotMarkers
+
+        if (storageState.DataMarkers === undefined)
+            storageState.DataMarkers = defaultSettings.DataMarkers
 
         if (storageState.OverlappingWaveTimeUnit === undefined)
             storageState.OverlappingWaveTimeUnit === defaultSettings.OverlappingWaveTimeUnit.current

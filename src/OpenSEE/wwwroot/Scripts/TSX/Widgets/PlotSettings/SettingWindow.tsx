@@ -28,7 +28,9 @@ import {
     SelectTimeUnit,
     SelectDefaultTraces,
     SelectPlotMarkers,
+    SelectDataMarkers,
     SetPlotMarkers,
+    SetDataMarkers,
     SetDefaultTrace,
     SelectVTypeDefault,
     SetDefaultVType,
@@ -56,6 +58,7 @@ const SettingsWidget = () => {
     const defaultTraces = useAppSelector(SelectDefaultTraces);
     const defaultVtype = useAppSelector(SelectVTypeDefault);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
+    const dataMarkers = useAppSelector(SelectDataMarkers);
     const timeUnit = useAppSelector(SelectTimeUnit);
     const singlePlot = useAppSelector(SelectSinglePlot);
 
@@ -280,6 +283,17 @@ const SettingsWidget = () => {
                                             Setter={(item) => dispatch(SetPlotMarkers(item.plotMarkers))}
                                             Label={"Inception and Duration"}
                                             Help={"For events without this information record start and end time will be used."}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-row">
+                                    <div className="col-auto">
+                                        <CheckBox
+                                            Record={{ dataMarkers }}
+                                            Field={'dataMarkers'}
+                                            Setter={(item) => dispatch(SetDataMarkers(item.dataMarkers))}
+                                            Label={"Analytic Data Markers"}
+                                            Help={"Displays markers for points determined most important or relevant for certain analytics."}
                                         />
                                     </div>
                                 </div>

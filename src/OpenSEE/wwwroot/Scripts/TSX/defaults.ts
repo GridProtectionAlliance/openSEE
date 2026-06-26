@@ -57,6 +57,7 @@ type DefaultSettings = {
     SinglePlot: boolean;
     UseOverlappingTime: boolean;
     PlotMarkers: boolean;
+    DataMarkers: boolean;
 
     MouseMode: OpenSee.MouseMode;
     ZoomMode: OpenSee.ZoomMode;
@@ -324,6 +325,7 @@ export const defaultSettings: DefaultSettings = {
     SinglePlot: false,
     UseOverlappingTime: false,
     PlotMarkers: false,
+    DataMarkers: true,
     MouseMode: 'zoom' as OpenSee.MouseMode,
     ZoomMode: 'x' as OpenSee.ZoomMode,
     ColorSelection: [

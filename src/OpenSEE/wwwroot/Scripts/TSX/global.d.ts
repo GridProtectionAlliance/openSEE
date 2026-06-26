@@ -270,6 +270,7 @@ export namespace OpenSee {
         DefaultVType: 'L-L' | 'L-N',
         Navigation: EventNavigation,
         PlotMarkers: boolean,
+        DataMarkers: boolean,
         UseOverlappingTime: boolean,
         OverlappingWaveTimeUnit: number,
         MouseMode: MouseMode,

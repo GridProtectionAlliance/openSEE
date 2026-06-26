@@ -94,11 +94,11 @@ export const updateMarkerColors = (container: HTMLDivElement | null, colors: Ope
         .attr("fill", d => colors[d.Color as string] ?? colors.random);
 }
 
-export const updateMarkerVisibility = (container: HTMLDivElement | null, lineData: OpenSee.iD3DataSeries[], enabledLine: Record<string, boolean>) => {
+export const updateMarkerVisibility = (container: HTMLDivElement | null, lineData: OpenSee.iD3DataSeries[], enabledLine: Record<string, boolean>, showDataMarkers: boolean) => {
     if (container == null) return;
 
     d3.select(container).selectAll(".Markers")
         .data(lineData)
-        .classed("active", d => enabledLine[seriesToKey(d)] === true)
-        .attr("opacity", d => enabledLine[seriesToKey(d)] === true ? 1.0 : 0);
+        .classed("active", d => enabledLine[seriesToKey(d)] === true && showDataMarkers)
+        .attr("opacity", d => enabledLine[seriesToKey(d)] === true && showDataMarkers ? 1.0 : 0);
 }
