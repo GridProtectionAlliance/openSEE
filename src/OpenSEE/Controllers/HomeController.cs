@@ -43,9 +43,13 @@ public class HomeController : Controller
         using AdoDataConnection connection = new(Settings.Default);
         DataRow evt = connection.RetrieveRow("SELECT TOP 1 * FROM Event");
 
+        DataRow systemFrequencyRow = connection.RetrieveRow("Select * FROM Setting Where Name = 'DataAnalysis.SystemFrequency'");
+
         ViewBag.DefaultEventID = evt.ConvertField<int>("ID");
         ViewBag.DefaultEventStartTime = evt.ConvertField<DateTime>("StartTime").ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
         ViewBag.DefaultEventEndTime = evt.ConvertField<DateTime>("EndTime").ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+
+        ViewBag.SystemFrequency = systemFrequencyRow.ConvertField<double>("Value");
 
         return View("Index");
     }
