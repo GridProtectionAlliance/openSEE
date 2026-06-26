@@ -601,12 +601,18 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
 
                 if (key.DataType === 'FFT') {
                     const enabledData = data.filter(isEnabled);
-                    if (enabledData.length > 0) {
-                        newFft = [
-                            Math.min(...enabledData.map(s => Math.min(...s.DataPoints.map(p => p[0])))),
-                            Math.max(...enabledData.map(s => Math.max(...s.DataPoints.map(p => p[0]))))
-                        ];
+                    let fftMin = Infinity, fftMax = -Infinity;
+                    for (const series of enabledData) {
+                        for (const p of series.DataPoints) {
+                            const x = p[0];
+                            if (Number.isFinite(x)) {
+                                if (x < fftMin) fftMin = x;
+                                if (x > fftMax) fftMax = x;
+                            }
+                        }
                     }
+                    if (fftMin <= fftMax) //guards against sentinel values
+                        newFft = [fftMin, fftMax];
                 } else if (key.DataType !== 'OverlappingWave') {
                     const enabledData = data.filter(s => isEnabled(s) && s.DataPoints.length > 0);
                     if (enabledData.length > 0) {
@@ -619,9 +625,18 @@ export const PlotStateProvider = (props: React.PropsWithChildren<{}>) => {
                     }
                 } else {
                     const enabledData = data.filter(s => isEnabled(s) && s.DataPoints.length > 0);
-                    const xValues = enabledData.flatMap(s => s.DataPoints.map(p => p[0]).filter(Number.isFinite));
-                    if (xValues.length > 0)
-                        newCycleLimits = [Math.min(...xValues), Math.max(...xValues)];
+                    let xMin = Infinity, xMax = -Infinity;
+                    for (const series of enabledData) {
+                        for (const p of series.DataPoints) {
+                            const x = p[0];
+                            if (Number.isFinite(x)) {
+                                if (x < xMin) xMin = x;
+                                if (x > xMax) xMax = x;
+                            }
+                        }
+                    }
+                    if (xMin <= xMax) //guards against sentinel values
+                        newCycleLimits = [xMin, xMax];
                 }
 
                 // NOW compute limits with the corrected time range
