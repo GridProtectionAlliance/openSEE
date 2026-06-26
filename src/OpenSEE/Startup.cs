@@ -80,7 +80,7 @@ public class Startup
         });
 
         AuthenticationBuilder authenticationBuilder = services.ConfigureGemstoneWebAuthentication<AuthenticationSetup>();
-
+        
         dynamic oauthSection = Settings.Instance[OAuthAuthenticationProvider.SettingsSection];
 
         if (oauthSection.Enabled)
@@ -98,7 +98,7 @@ public class Startup
         }
 
         services.AddTransient<IClaimsTransformation, OAuthClaimsTransformation>();
-
+        
         services
             .AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
             .Configure(options =>
@@ -117,10 +117,11 @@ public class Startup
 
         services.AddAuthorization(options =>
         {
-            AuthorizationPolicy controllerAccessPolicy = new AuthorizationPolicyBuilder()
-                .RequireControllerAccess()
-                .RequireAuthenticatedUser()
-                .Build();
+            AuthorizationPolicy controllerAccessPolicy =
+                new AuthorizationPolicyBuilder(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .RequireControllerAccess()
+                    .RequireAuthenticatedUser()
+                    .Build();
 
             options.AddPolicy(Policies.Authenticated, policy => policy.RequireAuthenticatedUser());
             options.AddPolicy(Policies.ControllerAccess, controllerAccessPolicy);
