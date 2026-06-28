@@ -193,9 +193,8 @@ export const defaultSettings: DefaultSettings = {
             current: 0,
             autoUnit: false,
             options: [
-                // FFT x-values from the backend are already harmonics; Hz restores the original frequency display.
                 { label: "Frequency", short: "Hz", factor: Number.parseFloat(systemFrequency) },
-                { label: "harmonic", short: "harmonic", factor: 1 }
+                { label: "Harmonic", short: "Harmonic", factor: 1 } // FFT x-values from the backend are already harmonics(FrequencyVal/Frequencybase);
             ],
         },
         Freq: {
