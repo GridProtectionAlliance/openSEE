@@ -108,20 +108,29 @@ export function getEnabledFromLegendSelections(
     return enabled;
 }
 
-// Binary-ish search for the index closest to time t in a sorted array.
-// Assumes uniform spacing between data points.
 export function getIndex(t: number, data: Array<[number, number]>): number {
-    if (data == null || data.length < 2)
+    if (data == null || data.length < 1)
         return NaN;
 
-    if (t < data[0][0])
+    if (t <= data[0][0])
         return 0;
-    if (t > data[data.length - 1][0])
+
+    if (t >= data[data.length - 1][0])
         return data.length - 1;
 
-    const dP = data[1][0] - data[0][0];
-    const deltaT = t - data[0][0];
-    return Math.floor(deltaT / dP);
+    let low = 0;
+    let high = data.length - 1;
+
+    while (high - low > 1) {
+        const mid = Math.floor((low + high) / 2);
+
+        if (data[mid][0] <= t)
+            low = mid;
+        else
+            high = mid;
+    }
+
+    return t - data[low][0] <= data[high][0] - t ? low : high;
 }
 
 // Compute y-axis [min, max] for a set of enabled series within a given x range.
