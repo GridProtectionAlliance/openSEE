@@ -83,33 +83,37 @@ export const formatValueTick = (d: number, unit: OpenSee.Unit, yScaleCollection:
         return d.toFixed(2)
 };
 
-export const formatTimeTick = (d: number, ctx: IFormatTimeContext): string => {
+export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecision = false): string => {
     const TS = moment(d);
     let h = ctx.xDomainWidth;
+    // moment/JS Date only resolve to whole milliseconds, so when extra precision is requested the
+    // sub-second portion is taken from the raw value (which keeps sub-ms detail) instead of moment.
+    const extra = extraPrecision ? 1 : 0;
+    const subSecondMs = d - Math.floor(d / 1000) * 1000;
 
     if (ctx.isOverlappingWaveform) {
         if (defaultSettings.OverlappingWaveTimeUnit.options?.[ctx.overlappingWaveTimeUnit]?.short === "ms") {
             if (h < 2)
-                return d.toFixed(3)
+                return d.toFixed(3 + extra)
             if (h < 5)
-                return d.toFixed(2)
+                return d.toFixed(2 + extra)
             else
-                return d.toFixed(1)
+                return d.toFixed(1 + extra)
         } else if (defaultSettings.OverlappingWaveTimeUnit.options?.[ctx.overlappingWaveTimeUnit]?.short === "cycles") {
             const cyc = d * 60.0 / 1000.0;
             h = h * 60.0 / 1000.0;
             if (h < 2)
-                return cyc.toFixed(3)
+                return cyc.toFixed(3 + extra)
             if (h < 5)
-                return cyc.toFixed(2)
+                return cyc.toFixed(2 + extra)
             else
-                return cyc.toFixed(1)
+                return cyc.toFixed(1 + extra)
         }
 
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'auto') {
         if (h < 100)
-            return TS.format("SSS.S")
+            return extraPrecision ? subSecondMs.toFixed(3) : TS.format("SSS.S")
         else if (h < 1000)
             return TS.format("ss.SS")
         else
@@ -117,14 +121,16 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext): string => {
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 's') {
         if (h < 100)
-            return TS.format("ss.SSS")
+            return extraPrecision ? ((d % 60000) / 1000).toFixed(5) : TS.format("ss.SSS")
         else if (h < 1000)
             return TS.format("ss.SS")
         else
             return TS.format("ss.S")
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'ms')
-        if (h < 100)
+        if (extraPrecision)
+            return subSecondMs.toFixed(3)
+        else if (h < 100)
             return TS.format("SSS.S")
         else
             return TS.format("SSS")
@@ -142,11 +148,11 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext): string => {
         }
 
         if (h < 2)
-            return ms.toFixed(3)
+            return ms.toFixed(3 + extra)
         if (h < 5)
-            return ms.toFixed(2)
+            return ms.toFixed(2 + extra)
         else
-            return ms.toFixed(1)
+            return ms.toFixed(1 + extra)
     }
 
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'ms since inception') {
@@ -159,11 +165,11 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext): string => {
         }
 
         if (h < 2)
-            return ms.toFixed(3)
+            return ms.toFixed(3 + extra)
         if (h < 5)
-            return ms.toFixed(2)
+            return ms.toFixed(2 + extra)
         else
-            return ms.toFixed(1)
+            return ms.toFixed(1 + extra)
     }
 
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since record') {
@@ -171,25 +177,68 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext): string => {
 
         h = h * 60.0 / 1000.0;
         if (h < 2)
-            return cyc.toFixed(3)
+            return cyc.toFixed(3 + extra)
         if (h < 5)
-            return cyc.toFixed(2)
+            return cyc.toFixed(2 + extra)
         else
-            return cyc.toFixed(1)
+            return cyc.toFixed(1 + extra)
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since inception') {
         const cyc = (d - ctx.startTime) * 60.0 / 1000.0;
 
         h = h * 60.0 / 1000.0;
         if (h < 2)
-            return cyc.toFixed(3)
+            return cyc.toFixed(3 + extra)
         if (h < 5)
-            return cyc.toFixed(2)
+            return cyc.toFixed(2 + extra)
         else
-            return cyc.toFixed(1)
+            return cyc.toFixed(1 + extra)
     }
 
     return d.toFixed(1);
+};
+
+// Convenience wrapper over formatTimeTick for an absolute time on the main (original,
+// non-overlapping) event. Fills in the context fields that are constant in that case so callers
+// only supply the values that vary; output matches the x-axis ticks.
+export const formatMainEventTimeTick = (
+    d: number,
+    opts: { timeUnit: OpenSee.IUnitSetting; domainWidth: number; startTime: number; originalStartTime: number; inceptionTime: number }
+): string =>
+    formatTimeTick(d, {
+        xDomainWidth: opts.domainWidth,
+        isOverlappingWaveform: false,
+        overlappingWaveTimeUnit: 0,
+        timeUnit: opts.timeUnit,
+        originalStartTime: opts.originalStartTime,
+        useRelevantTime: false,
+        isOriginalEvt: true,
+        overlappingEvents: [],
+        dataKeyEventId: 0,
+        inceptionTime: opts.inceptionTime,
+        startTime: opts.startTime
+    }, true);
+
+// Formats a time DELTA (a duration in ms) using the same unit convention as the x-axis ticks.
+// Unlike formatTimeTick (which formats absolute clock times), a delta is a duration, so every
+// unit collapses to a converted numeric value + label. The 'since record/inception' references
+// cancel out in a difference, so they reduce to plain ms/cycles.
+export const formatTimeDelta = (deltaMs: number, timeUnit: OpenSee.IUnitSetting, domainWidthMS: number): string => {
+    if (isNaN(deltaMs))
+        return '';
+
+    let short = timeUnit.options?.[timeUnit.current]?.short ?? 'auto';
+    if (short === 'auto')
+        short = domainWidthMS < 100 ? 'ms' : 's';
+
+    if (short === 's')
+        return (deltaMs / 1000).toFixed(7) + ' (s)';
+    if (short === 'min')
+        return (deltaMs / 60000).toFixed(5) + ' (min)';
+    if (short.startsWith('cycles'))
+        return (deltaMs * 60.0 / 1000.0).toFixed(6) + ' (cycles)';
+
+    return deltaMs.toFixed(3) + ' (ms)';
 };
 
 export const useChartScales = <TX extends d3.AxisScale<any>,>(initial: TX): IChartScales<TX> => {

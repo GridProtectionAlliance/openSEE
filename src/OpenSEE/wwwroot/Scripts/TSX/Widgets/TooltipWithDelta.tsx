@@ -24,8 +24,7 @@
 //
 //******************************************************************************************************
 import React from 'react';
-import moment from 'moment';
-import { SelectColor } from '../Store/settingSlice';
+import { SelectColor, SelectTimeUnit } from '../Store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
@@ -33,17 +32,25 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectDeltaHoverPoints } from '../PlotSelectors';
+import { formatTimeDelta, formatMainEventTimeTick } from '../Graphs/Utils/Utilities';
 import { Alert } from '@gpa-gemstone/react-interactive';
 
-const columnTextStyle = { minWidth: 0, overflowWrap: 'anywhere' } as React.CSSProperties;
+const columnTextStyle: React.CSSProperties = {
+    minWidth: 0,
+    overflowWrap: 'anywhere'
+};
 
 const ToolTipDeltaWidget = () => {
+    const colors = useAppSelector(SelectColor);
     const [hover] = React.useContext(HoverContext);
     const { plots } = React.useContext(PlotDataStateContext);
-    const { meta } = React.useContext(PlotStateStateContext);
+    const { meta, startTime, endTime } = React.useContext(PlotStateStateContext);
     const evt = React.useContext(EventContext);
     const [analytic] = React.useContext(AnalyticContext);
-    const colors = useAppSelector(SelectColor);
+    const timeUnit = useAppSelector(SelectTimeUnit);
+    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
+    const inceptionTime = new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime();
+    const timeFormatOpts = { timeUnit, domainWidth: endTime - startTime, startTime, originalStartTime, inceptionTime };
 
     const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta, undefined, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
 
@@ -65,15 +72,21 @@ const ToolTipDeltaWidget = () => {
         <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px', overflowX: 'hidden', overflowY: 'hidden', boxSizing: 'border-box' }}>
             <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
                 <div className={`${!isNaN(secondDate) ? 'col-4' : 'col-6'} px-1 pb-1 text-center`} style={columnTextStyle}>
-                    <b>{(!isNaN(firstDate) ? moment(firstDate).utc().format("HH:mm:ss.SSSSSS") : null)}</b>
+                    <b>
+                        {(!isNaN(firstDate) ? formatMainEventTimeTick(firstDate, timeFormatOpts) : null)}
+                    </b>
                 </div>
                 {!isNaN(secondDate) ?
                     <>
                         <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
-                            <b>{(moment(secondDate).utc().format("HH:mm:ss.SSSSSS"))}</b>
+                            <b>
+                                {(formatMainEventTimeTick(secondDate, timeFormatOpts))}
+                            </b>
                         </div>
                         <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
-                            <b>{(!isNaN(firstDate) ? ((secondDate - firstDate) / 1000).toFixed(9) + ' (s)' : '')}</b>
+                            <b>
+                                {(!isNaN(firstDate) ? formatTimeDelta(firstDate - secondDate, timeUnit, endTime - startTime) : '')}
+                            </b>
                         </div>
                     </> :
                     <div className="col-6 px-1 pb-1 text-center" style={columnTextStyle}>

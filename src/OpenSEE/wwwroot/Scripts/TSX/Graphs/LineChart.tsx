@@ -199,13 +199,26 @@ const LineChart = (props: IProps) => {
             xScaleRef,
             yScaleRef as { current: Record<string, d3.ScaleLinear<number, number>> },
             {
-                height: props.height, width: props.width, dataKey: props.dataKey,
-                yLimits, enabledUnits, yLabels, startTime, endTime,
-                showFFT, plotMarkers, fftWindow, currentFFTWindow, mouseMode,
-                timeCtx: buildTimeCtx(), displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
+                height: props.height,
+                width: props.width,
+                dataKey: props.dataKey,
+                yLimits, enabledUnits,
+                yLabels,
+                startTime,
+                endTime,
+                showFFT,
+                plotMarkers,
+                fftWindow,
+                currentFFTWindow,
+                mouseMode,
+                timeCtx: buildTimeCtx(),
+                displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
                 eventInfo: evt.Context.EventInfo,
             },
-            { ...handlers, wheelZoom }
+            {
+                ...handlers,
+                wheelZoom
+            }
         );
 
         drawLines(containerRef.current, lineData, enabledLine, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);

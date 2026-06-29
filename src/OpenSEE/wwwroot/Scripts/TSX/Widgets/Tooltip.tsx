@@ -24,24 +24,27 @@
 //******************************************************************************************************
 
 import * as React from 'react';
-import moment from 'moment';
 import { useSelector } from 'react-redux';
-import { SelectColor } from '../Store/settingSlice';
+import { SelectColor, SelectTimeUnit } from '../Store/settingSlice';
 import HoverContext from '../Context/HoverContext';
 import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectHoverPoints } from '../PlotSelectors';
+import { formatMainEventTimeTick } from '../Graphs/Utils/Utilities';
 import { Alert } from '@gpa-gemstone/react-interactive';
 
 const ToolTipWidget = () => {
     const [hover] = React.useContext(HoverContext);
     const { plots } = React.useContext(PlotDataStateContext);
-    const { meta } = React.useContext(PlotStateStateContext);
+    const { meta, startTime, endTime } = React.useContext(PlotStateStateContext);
     const evt = React.useContext(EventContext);
     const [analytic] = React.useContext(AnalyticContext);
     const colors = useSelector(SelectColor);
+    const timeUnit = useSelector(SelectTimeUnit);
+    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
+    const inceptionTime = new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime();
 
     const points = React.useMemo(() => selectHoverPoints(hover, evt.Context.EventID, plots, meta, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
 
@@ -61,7 +64,7 @@ const ToolTipWidget = () => {
             <div className="d-flex flex-column" style={{ height: '100%', marginBottom: 0, overflowY: 'hidden', padding: "3%", width: '100%', boxSizing: 'border-box' }}>
                 <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
                     <div className="col" style={{ textAlign: 'center' }}>
-                        <b>{moment(hover[0]).utc().format("MM-DD-YYYY HH:mm:ss.SSSSSS")}</b>
+                        <b>{formatMainEventTimeTick(hover[0], { timeUnit, domainWidth: endTime - startTime, startTime, originalStartTime, inceptionTime })}</b>
                     </div>
                 </div>
                 <div className="d-flex flex-column" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
