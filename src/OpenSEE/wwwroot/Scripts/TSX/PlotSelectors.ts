@@ -257,7 +257,7 @@ export function selectPhaseVectors(
     assets.forEach(a => {
         phases.forEach(p => {
             const phCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'Ph');
-            const magCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'Pk');
+            const magCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'RMS');
             if (!phCh || !magCh) return;
 
             result.push({
