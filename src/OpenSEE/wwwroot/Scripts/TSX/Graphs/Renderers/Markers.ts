@@ -60,8 +60,8 @@ export const drawMarkers = (
     points.enter()
         .append("circle")
         .classed("Circle", true)
-        .attr("cx", (d: IMarker) => isNaN(scales.x((d as any)[0])) ? null : scales.x(d.x))
-        .attr("cy", (d: IMarker) => isNaN(scales.y[d.unit]((d as any)[1])) ? null : scales.y[d.unit](d.y))
+        .attr("cx", (d: IMarker) => isNaN(scales.x(d.x)) ? null : scales.x(d.x))
+        .attr("cy", (d: IMarker) => isNaN(scales.y[d.unit](d.y)) ? null : scales.y[d.unit](d.y))
         .attr("r", 10);
 
     points.exit().remove();
