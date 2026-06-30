@@ -166,7 +166,7 @@ const WidgetSection = (props: IProps) => {
                     onMouseLeave={() => setHover('None')} data-tooltip={'phasorclock-btn'}
                     onClick={() => props.ToggleDrawer('PolarChart', !props.OpenDrawers.PolarChart)}
                 >
-                    <ReactIcons.MoveArrows />
+                    <ReactIcons.PhasorArrows />
                 </button>
                 <ToolTip Show={hover == 'Clock'} Position={'bottom'} Target={'phasorclock-btn'}>
                     <p>Phasor Chart</p>
