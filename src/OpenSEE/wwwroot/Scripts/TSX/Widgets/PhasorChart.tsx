@@ -32,6 +32,8 @@ import { SelectColor } from '../Store/settingSlice';
 import { selectPhaseVectors } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { Alert } from '@gpa-gemstone/react-interactive';
+    
+const widgetPadding = 10;
 
 const PhasorChartWidget = () => {
     const [hover] = React.useContext(HoverContext);
@@ -45,11 +47,12 @@ const PhasorChartWidget = () => {
 
     const [AssetList, setAssetList] = React.useState<string[]>([]);
 
-    const svgRef = React.useRef(null);
-    const { clientWidth, clientHeight } = useGetContainerPosition(svgRef);
+    const containerRef = React.useRef(null);
+    const { clientWidth, clientHeight } = useGetContainerPosition(containerRef);
+    const svgSize = Math.max(0, Math.min(clientWidth, clientHeight) - widgetPadding * 2);
 
-    const scaleV = React.useMemo(() => 0.9 * Math.min(clientWidth / 2, clientHeight / 2) / Math.max(...VVector.map(item => item.Magnitude)), [VVector, clientWidth, clientHeight]);
-    const scaleI = React.useMemo(() => 0.9 * Math.min(clientWidth / 2, clientHeight / 2) / Math.max(...IVector.map(item => item.Magnitude)), [IVector, clientWidth, clientHeight]);
+    const scaleV = React.useMemo(() => 0.9 * (svgSize / 2) / Math.max(...VVector.map(item => item.Magnitude)), [VVector, svgSize]);
+    const scaleI = React.useMemo(() => 0.9 * (svgSize / 2) / Math.max(...IVector.map(item => item.Magnitude)), [IVector, svgSize]);
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -74,9 +77,9 @@ const PhasorChartWidget = () => {
         );
 
     return (
-        <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
-            <div style={{ flex: 1, minHeight: 0 }}>
-                <svg ref={svgRef} width="100%" height="100%">
+        <div ref={containerRef} className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: widgetPadding, boxSizing: 'border-box', overflowY: 'auto', overflowX: 'hidden' }}>
+            <div style={{ flex: '0 0 auto', width: svgSize, height: svgSize, alignSelf: 'center' }}>
+                <svg width={svgSize} height={svgSize}>
                     <defs>
                         <marker
                             id="phasor-arrow"
@@ -92,9 +95,9 @@ const PhasorChartWidget = () => {
                         </marker>
                     </defs>
                     <circle
-                        cx={clientWidth / 2}
-                        cy={clientHeight / 2}
-                        r={0.9 * Math.min(clientWidth / 2, clientHeight / 2)}
+                        cx={svgSize / 2}
+                        cy={svgSize / 2}
+                        r={0.9 * (svgSize / 2)}
                         stroke="#ccc"
                         strokeWidth={1}
                         fill="none"
@@ -104,7 +107,7 @@ const PhasorChartWidget = () => {
                             {VVector.filter(v => v.Asset === asset).map((v, vi) => (
                                 <path
                                     key={`v-${ai}-${vi}`}
-                                    d={drawVectorSVG(v, scaleV, clientWidth, clientHeight)}
+                                    d={drawVectorSVG(v, scaleV, svgSize, svgSize)}
                                     stroke={colors[v.Color]}
                                     strokeWidth={2}
                                     fill="none"
@@ -114,7 +117,7 @@ const PhasorChartWidget = () => {
                             {IVector.filter(v => v.Asset === asset).map((v, vi) => (
                                 <path
                                     key={`i-${ai}-${vi}`}
-                                    d={drawVectorSVG(v, scaleI, clientWidth, clientHeight)}
+                                    d={drawVectorSVG(v, scaleI, svgSize, svgSize)}
                                     stroke={colors[v.Color]}
                                     strokeWidth={2}
                                     fill="none"
@@ -126,41 +129,43 @@ const PhasorChartWidget = () => {
                     ))}
                 </svg>
             </div>
-            <div style={{ maxHeight: '70%', overflowY: 'auto' }}>
+            <div>
                 {AssetList.map((asset, ai) => {
                     const vPhases = _.uniq(VVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const iPhases = _.uniq(IVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const allPhases = _.uniq([...vPhases, ...iPhases]);
 
                     return (
-                        <>
+                        <React.Fragment key={ai}>
                             <h4>{asset}</h4>
-                            <table key={ai} className="table table-sm" style={{ marginBottom: 5 }}>
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
-                                        <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Phase</th>
-                                        <th style={{ textAlign: 'right' }}>Mag</th>
-                                        <th style={{ textAlign: 'right' }}>Ang</th>
-                                        <th style={{ textAlign: 'right' }}>Mag</th>
-                                        <th style={{ textAlign: 'right' }}>Ang</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {allPhases.map((phase, pi) => (
-                                        <tr key={pi}>
-                                            <td>{phase}</td>
-                                            {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
-                                            {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
+                            <div style={{ width: '100%', overflowX: 'auto' }}>
+                                <table className="table table-sm" style={{ marginBottom: 5, whiteSpace: 'nowrap' }}>
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
+                                            <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </>
+                                        <tr>
+                                            <th>Phase</th>
+                                            <th style={{ textAlign: 'right' }}>Mag</th>
+                                            <th style={{ textAlign: 'right' }}>Ang</th>
+                                            <th style={{ textAlign: 'right' }}>Mag</th>
+                                            <th style={{ textAlign: 'right' }}>Ang</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {allPhases.map((phase, pi) => (
+                                            <tr key={pi}>
+                                                <td>{phase}</td>
+                                                {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
+                                                {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </React.Fragment>
                     );
                 })}
             </div>
