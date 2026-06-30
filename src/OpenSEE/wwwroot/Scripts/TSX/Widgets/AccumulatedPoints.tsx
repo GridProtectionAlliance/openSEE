@@ -133,7 +133,7 @@ const PointWidget = () => {
                                         <hr style={{ width: '100%' }} />
                                         <span>
                                             {i === 0 ? 'N/A' :
-                                                ((point.Value[i - 1][1] - p[1]) * (point.Unit?.factor === undefined ? 1.0 / point.BaseValue : point.Unit?.factor)).toFixed(4)} {point?.Unit?.short}
+                                                ((p[1] - point.Value[i - 1][1]) * (point.Unit?.factor === undefined ? 1.0 / point.BaseValue : point.Unit?.factor)).toFixed(4)} {point?.Unit?.short}
                                         </span>
                                     </td>
                                 ))}
