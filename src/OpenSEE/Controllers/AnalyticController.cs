@@ -21,6 +21,19 @@
 //
 //******************************************************************************************************
 
+using FaultData.DataAnalysis;
+using Gemstone.Collections.CollectionExtensions;
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Data.DataExtensions;
+using Gemstone.Data.Model;
+using Gemstone.Numeric.Analysis;
+using Gemstone.Web;
+using MathNet.Numerics.IntegralTransforms;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using OpenSEE.Model;
+using openXDA.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -29,18 +42,6 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using Gemstone.Data;
-using Gemstone.Web;
-using MathNet.Numerics.IntegralTransforms;
-using OpenSEE.Model;
-using Microsoft.AspNetCore.Mvc;
-using Gemstone.Data.Model;
-using Gemstone.Configuration;
-using openXDA.Model;
-using FaultData.DataAnalysis;
-using Microsoft.Extensions.Primitives;
-using Gemstone.Data.DataExtensions;
-using Gemstone.Numeric.Analysis;
 
 namespace OpenSEE
 {
@@ -50,7 +51,7 @@ namespace OpenSEE
         #region [ Members ]
 
         // Fields
-       
+
         // Fields
 
         #endregion
@@ -168,10 +169,10 @@ namespace OpenSEE
                 this.DiscreteGain = 0;
             }
 
-            private void ContinousToDiscrete(double fs, double fp=0 )
+            private void ContinousToDiscrete(double fs, double fp = 0)
             {
                 // prewarp
-                double ws = 2* fs;
+                double ws = 2 * fs;
                 if (fp > 0.0D)
                 {
                     fp = 2.0D * Math.PI * fp;
@@ -184,7 +185,7 @@ namespace OpenSEE
 
                 foreach (Complex p in this.ContinousPoles)
                 {
-                    this.DiscretePoles.Add((1.0D + p / ws)/ (1.0D - p / ws));
+                    this.DiscretePoles.Add((1.0D + p / ws) / (1.0D - p / ws));
                     poleProd = poleProd * (ws - p);
                 }
                 foreach (Complex p in this.ContinousZeros)
@@ -318,7 +319,7 @@ namespace OpenSEE
                 double[] output = new double[n];
 
                 signal.Reverse();
-                
+
 
                 double[] a = this.PolesToPolynomial(this.DiscretePoles.ToArray());
                 double[] b = this.PolesToPolynomial(this.DiscreteZeros.ToArray());
@@ -371,7 +372,7 @@ namespace OpenSEE
                 List<Complex> poles = new List<Complex>();
 
                 //Generate poles
-                for (int i = 1; i < (order+1); i++)
+                for (int i = 1; i < (order + 1); i++)
                 {
                     double theta = Math.PI * (2 * i - 1.0D) / (2.0D * (double)order) + Math.PI / 2.0D;
                     double re = Math.Cos(theta);
@@ -380,7 +381,7 @@ namespace OpenSEE
                     poles.Add(new Complex(re, im));
                 }
 
-              
+
                 Complex Gain = -poles[0];
                 for (int i = 1; i < order; i++)
                 {
@@ -394,7 +395,7 @@ namespace OpenSEE
 
             public static Filter HPButterworth(double fc, int order)
             {
-                Filter result = NormalButter( order);
+                Filter result = NormalButter(order);
                 result.LP2HP();
                 result.Scale(fc);
                 return result;
@@ -421,7 +422,7 @@ namespace OpenSEE
 
         #region [ Fault Location Data ]
 
-        [Route("GetFaultDistanceData"),HttpGet]
+        [Route("GetFaultDistanceData"), HttpGet]
         public JsonReturn GetFaultDistanceData()
         {
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
@@ -458,7 +459,7 @@ namespace OpenSEE
                 dataGroup.FromData(meter, new List<byte[]>(1) { faultCurve.Data });
                 string units = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'");
                 List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", evtID, faultCurve.Algorithm).ToList();
-               
+
                 D3Series series = new D3Series()
                 {
                     ChartLabel = faultCurve.Algorithm,
@@ -472,7 +473,13 @@ namespace OpenSEE
 
                 if (faultSummaries.Count >= 0)
                 {
-                    series.DataMarker.AddRange(from faultSummary in faultSummaries select new double[] { faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds, faultSummary.Distance });
+                    series.DataMarker.AddRange(
+                        faultSummaries.Select(faultSummary => new double[]
+                        {
+                            dataGroup.DataSeries[0].DataPoints[faultSummary.CalculationCycle].Time.Subtract(m_epoch).TotalMilliseconds,
+                            faultSummary.Distance
+                        })
+                    );
                 }
 
                 if (units == "kilometer")
@@ -565,13 +572,14 @@ namespace OpenSEE
                 Unit = (dataSeries.SeriesInfo.Channel.MeasurementType.Name) + "perSecond",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel, type),
-                ChartLabel = dataSeries.SeriesInfo.Channel.Phase.Name + type +  " First Derivative",
+                ChartLabel = dataSeries.SeriesInfo.Channel.Phase.Name + type + " First Derivative",
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
                 LegendVGroup = legenclass,
                 DataMarker = new List<double[]>(),
-                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)* 1000.0),
-                DataPoints = dataSeries.DataPoints.Select((point, index) => {
+                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV) * 1000.0),
+                DataPoints = dataSeries.DataPoints.Select((point, index) =>
+                {
                     double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
                     double y = point.Value;
 
@@ -636,7 +644,7 @@ namespace OpenSEE
                     Color = "Xa",
                     LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataMarker = new List<double[]>(),           
+                    DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
                 });
 
@@ -805,14 +813,15 @@ namespace OpenSEE
         public List<D3Series> GetRemoveCurrentLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
-           
+
 
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
 
-            iAN.ForEach(item => {
+            iAN.ForEach(item =>
+            {
 
                 int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, Fbase);
 
@@ -933,7 +942,7 @@ namespace OpenSEE
         }
 
         #endregion
-        
+
         #region [ I2t ]
 
         [Route("GetI2tData"), HttpGet]
@@ -955,16 +964,16 @@ namespace OpenSEE
         public List<D3Series> GetI2tLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
-           
+
 
             List<DataSeries> current = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" &&
-             x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && 
+             x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" &&
              (x.SeriesInfo.Channel.Phase.Name == "AN" || x.SeriesInfo.Channel.Phase.Name == "BN" || x.SeriesInfo.Channel.Phase.Name == "CN")).ToList();
-       
-            
+
+
             current.ForEach(item =>
             {
-                  dataLookup.Add(new D3Series()
+                dataLookup.Add(new D3Series()
                 {
 
                     LegendVGroup = "",
@@ -976,22 +985,22 @@ namespace OpenSEE
                     LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataPoints = ComputeI2T(item.DataPoints,1.0/(double)item.SampleRate).ToList()
+                    DataPoints = ComputeI2T(item.DataPoints, 1.0 / (double)item.SampleRate).ToList()
                 });
             });
 
-            
+
             return dataLookup;
         }
 
         private IEnumerable<double[]> ComputeI2T(IEnumerable<DataPoint> current, double timeStep)
         {
             double sum = 0;
-            foreach(DataPoint point in current)
+            foreach (DataPoint point in current)
             {
                 sum += point.Value * point.Value * timeStep;
-                yield return new double[] {point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
-            }        
+                yield return new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
+            }
         }
 
 
@@ -1030,7 +1039,7 @@ namespace OpenSEE
 
                 List<DataPoint> currentPointsMag = vICycleDataGroup.IA.RMS.DataPoints;
                 List<DataPoint> currentPointsAng = vICycleDataGroup.IA.Phase.DataPoints;
-                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value/1000.0D, currentPointsAng[index].Value))).ToList();
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value / 1000.0D, currentPointsAng[index].Value))).ToList();
 
                 powerPointsAN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
 
@@ -1236,7 +1245,7 @@ namespace OpenSEE
                     Color = "Qt",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
-                    BaseValue = 3*Sbase,
+                    BaseValue = 3 * Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Reactive Power",
                     DataPoints = powerPoints.Select((iPoint, index) => new double[] {  vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
@@ -1341,7 +1350,7 @@ namespace OpenSEE
                         DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
 
 
-                    }) ;
+                    });
                     dataLookup.Add(new D3Series()
                     {
                         Unit = "Voltage",
@@ -1385,7 +1394,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
@@ -1394,13 +1403,13 @@ namespace OpenSEE
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
 
-            dataLookup = dataLookup.Concat(vAN.Select(x => GenerateFixedWaveform( x, "VAN"))).ToList();
-            dataLookup = dataLookup.Concat(vBN.Select(x => GenerateFixedWaveform( x, "VBN"))).ToList();
-            dataLookup = dataLookup.Concat(vCN.Select(x => GenerateFixedWaveform( x, "VCN"))).ToList();
+            dataLookup = dataLookup.Concat(vAN.Select(x => GenerateFixedWaveform(x, "VAN"))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(x => GenerateFixedWaveform(x, "VBN"))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(x => GenerateFixedWaveform(x, "VCN"))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.Select(x => GenerateFixedWaveform( x, "IAN"))).ToList();
-            dataLookup = dataLookup.Concat(iBN.Select(x => GenerateFixedWaveform( x, "IBN"))).ToList();
-            dataLookup = dataLookup.Concat(iCN.Select(x => GenerateFixedWaveform( x, "ICN"))).ToList();
+            dataLookup = dataLookup.Concat(iAN.Select(x => GenerateFixedWaveform(x, "IAN"))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(x => GenerateFixedWaveform(x, "IBN"))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(x => GenerateFixedWaveform(x, "ICN"))).ToList();
 
             return dataLookup;
         }
@@ -1530,7 +1539,7 @@ namespace OpenSEE
             List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            
+
 
             Filter LPF = Filter.LPButterworth(120.0, order);
 
@@ -1564,7 +1573,7 @@ namespace OpenSEE
                 LegendVGroup = "",
                 DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
             };
-        
+
         }
 
         #endregion
@@ -1635,7 +1644,7 @@ namespace OpenSEE
 
         public List<D3Series> GetOverlappingWaveformLookup(DataGroup dataGroup)
         {
-            
+
 
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1678,7 +1687,7 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
-           
+
             foreach (var cycle in cycles)
             {
                 IEnumerable<double[]> cycleData = cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex * factor, dataPoint.Point.Value });
@@ -1695,8 +1704,8 @@ namespace OpenSEE
 
                         cycleData = Enumerable.Range(0, (int)Math.Floor(NCycle * MaxSampleRate)).Select(j => cycleDatalist[(j * step)]);
                     }
-                    
-                }    
+
+                }
 
                 series.DataPoints = series.DataPoints.Concat(cycleData).ToList();
                 series.DataPoints = series.DataPoints.Concat(new List<double[]> { new double[] { double.NaN, double.NaN } }).ToList();
@@ -1742,42 +1751,43 @@ namespace OpenSEE
 
         private D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries)
         {
-            
-                double nominalVoltage = dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0D;
 
-                double lastY = 0;
-                double lastX = 0;
+            double nominalVoltage = dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0D;
 
-                D3Series series = new D3Series()
+            double lastY = 0;
+            double lastX = 0;
+
+            D3Series series = new D3Series()
+            {
+                Unit = "Voltage",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                BaseValue = dataSeries.SeriesInfo.Channel.Asset.VoltageKV,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel, "RMS"),
+                DataMarker = new List<double[]>(),
+                LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
+                LegendHorizontal = "",
+                LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
+                DataPoints = dataSeries.DataPoints.Select((point, index) =>
                 {
-                    Unit = "Voltage",
-                    Color = GetColor(dataSeries.SeriesInfo.Channel),
-                    BaseValue = dataSeries.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel, "RMS"),
-                    DataMarker = new List<double[]>(),
-                    LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                    LegendHorizontal = "",
-                    LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
-                    DataPoints = dataSeries.DataPoints.Select((point, index) => {
-                        double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
-                        double y = point.Value;
+                    double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
+                    double y = point.Value;
 
-                        if (index == 0)
-                        {
-                            lastY = y;
-                        }
-
-                        double[] arr = new double[] { x, (y - lastY) * 100 / nominalVoltage };
-
+                    if (index == 0)
+                    {
                         lastY = y;
-                        lastX = x;
-                        return arr;
-                    }).ToList()
-                };
+                    }
 
-                
-                return series;
-            
+                    double[] arr = new double[] { x, (y - lastY) * 100 / nominalVoltage };
+
+                    lastY = y;
+                    lastX = x;
+                    return arr;
+                }).ToList()
+            };
+
+
+            return series;
+
         }
 
         #endregion
@@ -1814,7 +1824,8 @@ namespace OpenSEE
                 var vc = vICycleDataGroup.VC.RMS.DataPoints;
                 var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) =>
+                {
                     DataPoint vaPoint = point;
                     DataPoint vaPhasePoint = vaPhase[index];
                     Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
@@ -1883,7 +1894,8 @@ namespace OpenSEE
                 var ic = vICycleDataGroup.IC.RMS.DataPoints;
                 var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) =>
+                {
                     DataPoint iaPoint = point;
                     DataPoint iaPhasePoint = iaPhase[index];
                     Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
@@ -1905,7 +1917,7 @@ namespace OpenSEE
                 {
                     Unit = "Current",
                     Color = "IZero",
-                    BaseValue = GetIbase(Sbase,vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
+                    BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "Zero",
@@ -1993,7 +2005,8 @@ namespace OpenSEE
                 var vc = vICycleDataGroup.VC.RMS.DataPoints;
                 var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) =>
+                {
                     DataPoint vaPoint = point;
                     DataPoint vaPhasePoint = vaPhase[index];
                     Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
@@ -2052,7 +2065,8 @@ namespace OpenSEE
                 var ic = vICycleDataGroup.IC.RMS.DataPoints;
                 var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) =>
+                {
                     DataPoint iaPoint = point;
                     DataPoint iaPhasePoint = iaPhase[index];
                     Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
@@ -2127,7 +2141,7 @@ namespace OpenSEE
 
         public List<D3Series> GetRectifierLookup(VIDataGroup dataGroup, double RC)
         {
-           
+
             List<D3Series> dataLookup = new List<D3Series>();
             if (dataGroup.VA == null)
                 return dataLookup;
@@ -2220,15 +2234,15 @@ namespace OpenSEE
         {
             IEnumerable<D3Series> dataLookup = new List<D3Series>();
 
-            
+
 
             List<DataSeries> vAN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> vCN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
             dataLookup = dataLookup.Concat(vAN.Select(item => GenerateFrequency(item, "Va")));
-            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateFrequency( item, "Vb")));
-            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateFrequency( item, "Vc")));
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateFrequency(item, "Vb")));
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateFrequency(item, "Vc")));
 
             D3Series fVa = null;
             D3Series fVb = null;
@@ -2238,15 +2252,15 @@ namespace OpenSEE
 
             if (dataGroup.VA != null)
             {
-                fVa = GenerateFrequency( dataGroup.VA, "Va");
+                fVa = GenerateFrequency(dataGroup.VA, "Va");
             }
             if (dataGroup.VB != null)
             {
-                fVb = GenerateFrequency( dataGroup.VB, "Vb");
+                fVb = GenerateFrequency(dataGroup.VB, "Vb");
             }
             if (dataGroup.VC != null)
             {
-                fVc = GenerateFrequency( dataGroup.VC, "Vc");
+                fVc = GenerateFrequency(dataGroup.VC, "Vc");
             }
 
 
@@ -2272,20 +2286,22 @@ namespace OpenSEE
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "",
-                LegendVGroup = "",               
+                LegendVGroup = "",
                 DataPoints = new List<double[]>()
             };
 
             double thresholdValue = 0;
 
-            var crosses = dataSeries.DataPoints.Zip(dataSeries.DataPoints.Skip(1), (Point1, Point2) => new { Point1, Point2 }).Where(obj => obj.Point1.Value * obj.Point2.Value < 0 || obj.Point1.Value == 0).Select(obj => {
+            var crosses = dataSeries.DataPoints.Zip(dataSeries.DataPoints.Skip(1), (Point1, Point2) => new { Point1, Point2 }).Where(obj => obj.Point1.Value * obj.Point2.Value < 0 || obj.Point1.Value == 0).Select(obj =>
+            {
                 double slope = (obj.Point2.Value - obj.Point1.Value) / (obj.Point2.Time - obj.Point1.Time).Ticks;
                 DateTime interpolatedCrossingTime = m_epoch.AddTicks((long)Math.Round((thresholdValue - obj.Point1.Value) / slope + obj.Point1.Time.Subtract(m_epoch).Ticks));
                 return new DataPoint { Time = interpolatedCrossingTime, Value = thresholdValue };
 
             }).ToList();
 
-            fitWave.DataPoints = crosses.Zip(crosses.Skip(2), (Point1, Point2) => {
+            fitWave.DataPoints = crosses.Zip(crosses.Skip(2), (Point1, Point2) =>
+            {
                 double frequency = 1 / (Point2.Time - Point1.Time).TotalSeconds;
                 return new double[] { Point1.Time.Subtract(m_epoch).TotalMilliseconds, frequency };
 
@@ -2306,7 +2322,7 @@ namespace OpenSEE
                 LegendVertical = "Avg",
                 LegendHorizontal = "",
                 LegendVGroup = "",
-                
+
                 DataPoints = new List<double[]>()
             };
 
@@ -2375,7 +2391,7 @@ namespace OpenSEE
                     forceFullRes = int.Parse(fullRes.ToString());
 
                 DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
-                List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes==1);
+                List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes == 1);
 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
@@ -2388,7 +2404,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
 
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
@@ -2397,19 +2413,19 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD(item, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD(item, fullRes))).ToList();
 
 
             return dataLookup;
         }
 
-        private D3Series GenerateTHD( DataSeries dataSeries, bool fullRes)
+        private D3Series GenerateTHD(DataSeries dataSeries, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2421,7 +2437,7 @@ namespace OpenSEE
                 LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
+                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
                 LegendVGroup = "",
                 DataPoints = new List<double[]>()
             };
@@ -2442,7 +2458,7 @@ namespace OpenSEE
 
                 IEnumerable<double> points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle);
 
-                points = points.Where((t,index) => index%(samplesPerCycle/downSampled) == 0);
+                points = points.Where((t, index) => index % (samplesPerCycle / downSampled) == 0);
 
                 FFT fft = new FFT(Fbase * downSampled, points.ToArray());
 
@@ -2476,7 +2492,7 @@ namespace OpenSEE
                 int specifiedHarmonic = int.Parse(Request.Query["specifiedHarmonic"].ToString());
 
                 DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
-                List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes==1);
+                List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes == 1);
 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
@@ -2489,7 +2505,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
@@ -2497,18 +2513,18 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
 
             return dataLookup;
         }
 
-        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic( DataSeries dataSeries, int specifiedHarmonic, bool fullRes)
+        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic(DataSeries dataSeries, int specifiedHarmonic, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2516,7 +2532,7 @@ namespace OpenSEE
             {
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
-                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
+                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
                 LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
@@ -2534,7 +2550,7 @@ namespace OpenSEE
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Ph",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "Volt." : "Curr."),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
@@ -2543,20 +2559,20 @@ namespace OpenSEE
             if (step == 0 || fullRes)
                 step = 1;
 
-            int size = (dataSeries.DataPoints.Count - samplesPerCycle -1)/ step;
-            double[][] dataArrHarm = new double[size+1][];
-            double[][] dataArrAngle = new double[size+1][];
+            int size = (dataSeries.DataPoints.Count - samplesPerCycle - 1) / step;
+            double[][] dataArrHarm = new double[size + 1][];
+            double[][] dataArrAngle = new double[size + 1][];
 
             double specifiedFrequency = Fbase * specifiedHarmonic;
             double freq = Fbase;
 
-           
+
 
             int j = 0;
-            for (int i=0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
+            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
             {
                 double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
-               
+
 
                 FFT fft = new FFT(freq * samplesPerCycle, points);
 
@@ -2576,12 +2592,12 @@ namespace OpenSEE
 
 
         #region [ Relay Voltages ]
-            // Just needs to pull Voltages from all connected Relays
+        // Just needs to pull Voltages from all connected Relays
         #endregion
 
 
         #region [ TCE Analysis]
-            // Needs to pull TCE and add points of interest per Tonys email
+        // Needs to pull TCE and add points of interest per Tonys email
         #endregion
 
         #region [Breaker Restrike Data]
@@ -2711,7 +2727,7 @@ namespace OpenSEE
 
         public List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
         {
-            
+
             int maxHarmonic;
             using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxFFTHarmonic'") ?? "50");
@@ -2725,13 +2741,13 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
             return dataLookup;
         }
 
@@ -2739,7 +2755,7 @@ namespace OpenSEE
         {
 
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
-            
+
             List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take((samplesPerCycle * cycles)).ToList();
             D3Series fftMag = new D3Series()
             {
@@ -2777,25 +2793,25 @@ namespace OpenSEE
             // Because Down sampling is only for performance reasons that is not an issue
             int downSampled = samplesPerCycle;
 
-           
+
 
             while (downSampled > (maxHarmonic) && downSampled % 2 == 0 && maxHarmonic > 0)
                 downSampled = downSampled / 2;
 
 
-            points = cycleData.Select(point => point.Value / (downSampled * cycles)).Where((pt, i) => i%(samplesPerCycle/downSampled)==0).ToArray();
+            points = cycleData.Select(point => point.Value / (downSampled * cycles)).Where((pt, i) => i % (samplesPerCycle / downSampled) == 0).ToArray();
 
 
             FFT fft = new FFT(Fbase * (downSampled), points);
 
-            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value / Math.Sqrt(2)) }).ToList();
-            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value * 180.0D / Math.PI) }).ToList();
+            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index] / Fbase, (value / Math.Sqrt(2)) }).ToList();
+            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index] / Fbase, (value * 180.0D / Math.PI) }).ToList();
 
             return new List<D3Series>() { fftMag, fftAng };
 
         }
 
-        
+
         #endregion
 
         #endregion
