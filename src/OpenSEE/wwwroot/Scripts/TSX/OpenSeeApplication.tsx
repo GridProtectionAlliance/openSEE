@@ -601,35 +601,37 @@ const OpenSeeApplication = React.memo(() => {
                                 </>
                             ) : null}
 
-                            {Object.keys(groupedKeys).filter(item => parseInt(item) !== evt.Context.EventID).map(key =>
-                                <div className="card" key={key}>
-                                    {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
-                                        <div className="card-header">
-                                            <div className="row">
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                    {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                    {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                    {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
-                                                </div>
-                                                <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                    <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                    {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                            {Object.keys(groupedKeys)
+                                .filter(item => parseInt(item) !== evt.Context.EventID)
+                                .map(key =>
+                                    <div className="card" key={key}>
+                                        {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
+                                            <div className="card-header">
+                                                <div className="row">
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Meter:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Asset:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Type:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Inception:</span><br />
+                                                        {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                    </div>
                                                 </div>
                                             </div>
+                                        ) : null}
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            {groupedKeys[key].map(renderPlot)}
                                         </div>
-                                    ) : null}
-                                    <div className="card-body" style={{ padding: 0 }}>
-                                        {groupedKeys[key].map(renderPlot)}
                                     </div>
-                                </div>
-                            )}
+                                )}
                         </div>
                     </SplitSection>
                 </VerticalSplit>

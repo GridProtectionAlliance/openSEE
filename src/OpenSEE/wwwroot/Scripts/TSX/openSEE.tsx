@@ -48,7 +48,7 @@ XMLHttpRequest.prototype.send = function(...args) {
     this.addEventListener('load', function() {
         if (this.status === 401 && !isRedirecting) {
             isRedirecting = true;
-            const returnPath = encodeURIComponent(window.location.pathname);
+            const returnPath = encodeURIComponent(window.location.pathname + window.location.search);
             window.location.assign(`${homePath}Login?redir=${returnPath}`);
         }
     });
