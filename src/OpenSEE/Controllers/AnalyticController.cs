@@ -458,12 +458,32 @@ namespace OpenSEE
                 DataGroup dataGroup = new DataGroup();
                 dataGroup.FromData(meter, new List<byte[]>(1) { faultCurve.Data });
                 string units = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'");
-                List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", evtID, faultCurve.Algorithm).ToList();
+                List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1} AND PathNumber = {2}", evtID, faultCurve.Algorithm, faultCurve.PathNumber).ToList();
+                string legendGroup = asset.AssetName;
+
+                if (faultSummaries.Count > 0)
+                {
+                    string destination = connection.ExecuteScalar<string>(@"
+                        SELECT COALESCE(Location.LocationKey,
+                            CASE
+                                WHEN (SELECT COUNT(*) FROM LineSegmentAttributes WHERE LineSegmentAttributes.FromBus = LineSegment.ToBus OR LineSegmentAttributes.ToBus = LineSegment.ToBus) < 2 THEN LineSegment.ToBus
+                                ELSE LineSegment.FromBus
+                            END)
+                        FROM
+                            FaultSummary JOIN
+                            LineSegment ON FaultSummary.PathEndSegmentID = LineSegment.ID LEFT JOIN
+                            AssetLocation ON FaultSummary.PathEndSegmentID = AssetLocation.AssetID LEFT JOIN
+                            Location ON AssetLocation.LocationID = Location.ID
+                        WHERE FaultSummary.ID = {0}", faultSummaries[0].ID);
+
+                    if (!string.IsNullOrEmpty(destination))
+                        legendGroup = destination;
+                }
 
                 D3Series series = new D3Series()
                 {
                     ChartLabel = faultCurve.Algorithm,
-                    LegendGroup = asset.AssetName,
+                    LegendGroup = legendGroup,
                     LegendVertical = faultCurve.Algorithm,
                     Unit = "Distance",
                     Color = GetFaultDistanceColor(faultCurve.Algorithm),
