@@ -80,7 +80,7 @@ public class Startup
         });
 
         AuthenticationBuilder authenticationBuilder = services.ConfigureGemstoneWebAuthentication<AuthenticationSetup>();
-        
+
         dynamic oauthSection = Settings.Instance[OAuthAuthenticationProvider.SettingsSection];
 
         if (oauthSection.Enabled)
@@ -98,12 +98,13 @@ public class Startup
         }
 
         services.AddTransient<IClaimsTransformation, OAuthClaimsTransformation>();
-        
+
         services
             .AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
             .Configure(options =>
              {
                  double ticketTimeout = Settings.Default.WebHosting.AuthenticationTicketTimeout;
+                 options.Cookie.Name = "x-openSEE-auth";
                  options.ExpireTimeSpan = TimeSpan.FromHours(ticketTimeout);
              });
 
