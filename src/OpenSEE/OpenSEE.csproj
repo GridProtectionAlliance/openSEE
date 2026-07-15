@@ -5,6 +5,7 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <LangVersion>latest</LangVersion>
     <TargetFramework>net9.0</TargetFramework>
+    <Configurations>Debug;Development;Release</Configurations>
     <OutputPath>bin\</OutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
@@ -15,13 +16,26 @@
     <None Include="wwwroot\Images\openSEE - Waveform Viewer Header.png" />
     <None Include="wwwroot\Images\openSEE.png" />
     <None Include="wwwroot\Images\openSEELogo.svg" />
-    <PackageReference Include="Gemstone.Security" Version="1.0.178" />
-    <PackageReference Include="Gemstone.Web" Version="1.0.178" />
+    <!-- Development: build against local Gemstone source; otherwise: NuGet packages -->
+    <ProjectReference Include="..\..\..\..\Gemstone\security\src\Gemstone.Security\Gemstone.Security.csproj" Condition="'$(Configuration)'=='Development'">
+      <Private>True</Private>
+      <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
+    <PackageReference Include="Gemstone.Security" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
+    <ProjectReference Include="..\..\..\..\Gemstone\web\src\Gemstone.Web\Gemstone.Web.csproj" Condition="'$(Configuration)'=='Development'">
+      <Private>True</Private>
+      <CopyLocalSatelliteAssemblies>True</CopyLocalSatelliteAssemblies>
+    </ProjectReference>
+    <PackageReference Include="Gemstone.Web" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
+    <ProjectReference Include="..\..\..\..\Gemstone\data\src\Gemstone.Data\Gemstone.Data.csproj" Condition="'$(Configuration)'=='Development'" />
+    <PackageReference Include="Gemstone.Data" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
+    <ProjectReference Include="..\..\..\..\Gemstone\io\src\Gemstone.IO\Gemstone.IO.csproj" Condition="'$(Configuration)'=='Development'" />
+    <PackageReference Include="Gemstone.IO" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
+    <ProjectReference Include="..\..\..\..\Gemstone\numeric\src\Gemstone.Numeric\Gemstone.Numeric.csproj" Condition="'$(Configuration)'=='Development'" />
+    <PackageReference Include="Gemstone.Numeric" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
+    <ProjectReference Include="..\..\..\..\Gemstone\pqdif\src\Gemstone.PQDIF\Gemstone.PQDIF.csproj" Condition="'$(Configuration)'=='Development'" />
+    <PackageReference Include="Gemstone.PQDIF" Version="$(GemstoneVersion)" Condition="'$(Configuration)'!='Development'" />
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
-    <PackageReference Include="Gemstone.Data" Version="1.0.178" />
-    <PackageReference Include="Gemstone.IO" Version="1.0.178" />
-    <PackageReference Include="Gemstone.Numeric" Version="1.0.178" />
-    <PackageReference Include="Gemstone.PQDIF" Version="1.0.178" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.12" />
     <PackageReference Include="Microsoft.Graph" Version="4.52.0" />
