@@ -28,11 +28,20 @@ import { useAppDispatch, useAppSelector } from "../hooks";
 import { SelectNavigation, SetNavigation } from "../Store/settingSlice";
 import { EventContext } from '../Context/EventContext';
 
-const Navigation = () => {
+interface IProps {
+    navigateToEvent: (nextEventId: number) => void
+}
+
+const Navigation = (props: IProps) => {
     const dispatch = useAppDispatch();
     const navigation = useAppSelector(SelectNavigation);
     const evt = React.useContext(EventContext);
     const [hover, setHover] = React.useState<string>('None');
+
+    const go = (eventId?: number) => {
+        if (eventId != null)
+            props.navigateToEvent(eventId);
+    };
 
     return (
         <>
@@ -55,50 +64,57 @@ const Navigation = () => {
                             </ToolTip>
 
                             {(navigation == "system" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.System?.Item1 != null ?
-                                        "?eventID=" + evt.Context.LookupInfo.System.Item1.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.System?.Item1?.ID)}
+                                    disabled={evt.Context.LookupInfo?.System?.Item1 == null}
                                     id="system-back"
                                     key="system-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.Item1 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
-                                </a> : null)}
+                                </button> : null)}
 
                             {(navigation == "station" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Station?.Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Station.Item1.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Station?.Item1?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Station?.Item1 == null}
                                     id="station-back"
                                     key="station-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.Item1 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
-                                </a>
+                                </button>
                                 : null)}
 
                             {(navigation == "meter" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Meter?.Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.Item1.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Meter?.Item1?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Meter?.Item1 == null}
                                     id="meter-back"
                                     key="meter-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.Item1 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
-                                </a> : null)}
+                                </button> : null)}
 
                             {(navigation == "asset" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Asset?.Item1 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.Item1.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Asset?.Item1?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Asset?.Item1 == null}
                                     id="line-back"
                                     key="line-back"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.Item1 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &lt;
-                                </a> : null)}
+                                </button> : null)}
 
                         </div>
                         <select id="next-back-selection" value={navigation} onChange={e => dispatch(SetNavigation(e.target.value as OpenSee.EventNavigation))}>
@@ -121,45 +137,53 @@ const Navigation = () => {
                                 {navigation === "asset" && (<p style={{ textAlign: "center" }}>({(evt.Context.LookupInfo?.Asset?.Item2 != null ? evt.Context.LookupInfo.Asset.Item2.StartTime : '')})</p>)}
                             </ToolTip>
                             {(navigation == "system" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.System?.Item2 != null ? "?eventID=" + evt.Context.LookupInfo.System.Item2.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.System?.Item2?.ID)}
+                                    disabled={evt.Context.LookupInfo?.System?.Item2 == null}
                                     id="system-next"
                                     key="system-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.System?.Item2 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
-                                </a> : null)}
+                                </button> : null)}
                             {(navigation == "station" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Station?.Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Station.Item2.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Station?.Item2?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Station?.Item2 == null}
                                     id="station-next"
                                     key="station-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Station?.Item2 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
-                                </a> : null)}
+                                </button> : null)}
                             {(navigation == "meter" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Meter?.Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Meter.Item2.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Meter?.Item2?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Meter?.Item2 == null}
                                     id="meter-next"
                                     key="meter-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Meter?.Item2 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
-                                </a> : null)}
+                                </button> : null)}
                             {(navigation == "asset" ?
-                                <a
-                                    href={(evt.Context.LookupInfo?.Asset?.Item2 != null ? "?eventID=" + evt.Context.LookupInfo.Asset.Item2.ID : '#')}
+                                <button
+                                    type="button"
+                                    onClick={() => go(evt.Context.LookupInfo?.Asset?.Item2?.ID)}
+                                    disabled={evt.Context.LookupInfo?.Asset?.Item2 == null}
                                     id="line-next"
                                     key="line-next"
                                     className={'btn btn-primary' + (evt.Context.LookupInfo?.Asset?.Item2 == null ? ' disabled' : '')}
                                     style={{ padding: "0.07rem, 0.25rem, 0.25rem, 0.07rem", fontSize: "21px" }}
                                 >
                                     &gt;
-                                </a> : null)}
+                                </button> : null)}
                         </div>
                     </div>
                 </li> : null}

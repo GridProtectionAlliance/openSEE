@@ -28,7 +28,7 @@
 //
 
 import { Application, SplitDrawer, SplitSection, VerticalSplit, IApplicationRefs } from '@gpa-gemstone/react-interactive';
-import { ErrorBoundary } from '@gpa-gemstone/common-pages';
+import { ErrorBoundary, HeartBeatCheck } from '@gpa-gemstone/common-pages';
 import createHistory from "history/createBrowserHistory";
 import * as _ from "lodash";
 import moment from 'moment';
@@ -43,7 +43,7 @@ import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotSta
 import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
 import BarChart from './Graphs/BarChart';
 import LineChart from './Graphs/LineChart';
-import OpenSeeNavBar from './Navbar/OpenSEENavbar';
+import OpenSeeNavBar from './Navbar/Navbar';
 import { OpenSee } from './global';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { usePlotLifecycle } from './Hooks/usePlotLifeCycle';
@@ -88,7 +88,6 @@ const OpenSeeApplication = React.memo(() => {
     const [analytic, setAnalytic] = React.useContext(AnalyticContext);
 
     const lifecycle = usePlotLifecycle();
-
     const mouseMode = useAppSelector(SelectMouseMode);
     const singlePlot = useAppSelector(SelectSinglePlot);
 
@@ -99,11 +98,13 @@ const OpenSeeApplication = React.memo(() => {
     const lifecycleRef = React.useRef(lifecycle);
     const stateActionsRef = React.useRef(stateActions);
     const analyticRef = React.useRef(analytic);
+    const eventIdRef = React.useRef(evt.Context.EventID);
     plotStateRef.current = plotState;
     plotDataRef.current = plotData;
     lifecycleRef.current = lifecycle;
     stateActionsRef.current = stateActions;
     analyticRef.current = analytic;
+    eventIdRef.current = evt.Context.EventID;
 
     const groupedKeys = React.useMemo(() => selectListGraphs(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
     const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
@@ -220,6 +221,21 @@ const OpenSeeApplication = React.memo(() => {
         return query;
     }, [evt.Context.EventID, plotState, plotData, analytic, singlePlot, overlapping.events]);
 
+    // updates the current event and lets the existing context/query effects fetch the new data
+    const navigateToEvent = (nextEventId: number) => {
+        if (nextEventId == null || isNaN(nextEventId) || nextEventId < 0 || nextEventId === eventIdRef.current)
+            return;
+
+        // Drop comparison selections so the previous event's overlap rows don't carry over.
+        overlappingActions.SetSelectedEvents([]);
+
+        // Swap displayed plots from the old base event to the new one.
+        lifecycle.ReplaceBaseEvent(eventIdRef.current, nextEventId);
+
+        // dispatch new eventID
+        evt.Dispatch.current.SettingsDispatch({ EventID: nextEventId });
+    };
+
     const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
         overlayHandles.current[drawer](open);
     };
@@ -251,15 +267,15 @@ const OpenSeeApplication = React.memo(() => {
         const curStateActions = stateActionsRef.current;
         const curAnalytic = analyticRef.current;
 
-        const parsedQuery: OpenSee.Query = queryString.parse(argQuery.substring(1)) as unknown as OpenSee.Query;
+        const parsedQuery = NormalizeQueryKeys(queryString.parse(argQuery.substring(1)));
 
         let parsedPlots: OpenSee.PlotQuery[] = [];
         if (parsedQuery?.plots != null) {
-            parsedPlots = JSON.parse(atob(parsedQuery.plots));
+            parsedPlots = JSON.parse(atob(parsedQuery.plots as string));
         }
 
         if (parsedQuery?.overlappingInfo != null) {
-            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo))
+            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo as string))
                 .map(ToInt)
                 .filter((eventId: number | undefined) => eventId != null);
             overlappingActions.SetSelectedEvents(parsedOverlappingEventIds);
@@ -273,7 +289,7 @@ const OpenSeeApplication = React.memo(() => {
 
         const parsedEventID = ToInt(parsedQuery?.eventID);
         let usedEventID: number = defaultEventID;
-        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== evt.Context.EventID) {
+        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== eventIdRef.current) {
             evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
             usedEventID = parsedEventID;
         } else if (initial) {
@@ -397,9 +413,9 @@ const OpenSeeApplication = React.memo(() => {
 
     // Query string effect
     React.useEffect(() => {
-        const query = queryString.parse(history.current['location'].search);
-        const parsedStartTime = query['startTime'] != undefined ? parseInt(query['startTime'] as string) : undefined;
-        const parsedEndTime = query['endTime'] != undefined ? parseInt(query['endTime'] as string) : undefined;
+        const query = NormalizeQueryKeys(queryString.parse(history.current['location'].search));
+        const parsedStartTime = query.startTime != undefined ? parseInt(query.startTime as string) : undefined;
+        const parsedEndTime = query.endTime != undefined ? parseInt(query.endTime as string) : undefined;
 
         if (parsedStartTime != undefined && parsedEndTime != undefined) {
             stateActionsRef.current.SetTimeLimit(parsedStartTime, parsedEndTime, plotDataRef.current);
@@ -460,146 +476,167 @@ const OpenSeeApplication = React.memo(() => {
     };
 
     return (
-        <Application
-            HomePath={homePath}
-            DefaultPath={""}
-            HideSideBar={true}
-            Version={version}
-            Logo={`${homePath}Images/openSEE.png`}
-            NavBarContent={<OpenSeeNavBar ToggleDrawer={ToggleDrawer} OpenDrawers={openDrawers} Width={navWidth} lifecycle={lifecycle} />}
-            NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
-            NavBarImgStyle={{ maxHeight: 55, margin: -5 }}
-            UseLegacyNavigation={true}
-            ref={applicationRef}
-        >
-            <VerticalSplit style={{ height: '100%', width: '100%' }}>
-                <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
-                    <OpenSeeErrorBoundary message="Error loading info.">
-                        <EventInfo />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+        <>
+            <HeartBeatCheck IntervalMS={30000} HeartBeat={heartBeatCheck} />
+            <Application
+                HomePath={homePath}
+                DefaultPath={""}
+                HideSideBar={true}
+                Version={version}
+                Logo={`${homePath}Images/openSEE.png`}
+                OnSignOut={() => window.location.href = logoutPath}
+                NavBarContent={
+                    <OpenSeeNavBar
+                        ToggleDrawer={ToggleDrawer}
+                        OpenDrawers={openDrawers}
+                        Width={navWidth}
+                        lifecycle={lifecycle}
+                        navigateToEvent={navigateToEvent}
+                    />
+                }
+                NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
+                NavBarImgStyle={{
+                    maxHeight: 55,
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain',
+                    margin: 0
+                }}
+                UseLegacyNavigation={true}
+                ref={applicationRef}
+            >
+                <VerticalSplit style={{ height: '100%', width: '100%' }}>
+                    <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
+                        <OpenSeeErrorBoundary message="Error loading info.">
+                            <EventInfo />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
-                    <OpenSeeErrorBoundary message="Error loading compare.">
-                        <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
+                        <OpenSeeErrorBoundary message="Error loading compare.">
+                            <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
-                    <OpenSeeErrorBoundary message="Error loading analytics.">
-                        <AnalyticOptions lifecycle={lifecycle} />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
+                        <OpenSeeErrorBoundary message="Error loading analytics.">
+                            <AnalyticOptions lifecycle={lifecycle} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
-                    <OpenSeeErrorBoundary message="Error loading tooltip.">
-                        <ToolTipWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
+                        <OpenSeeErrorBoundary message="Error loading tooltip.">
+                            <ToolTipWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}>
-                    <OpenSeeErrorBoundary message="Error loading tooltip.">
-                        <ToolTipDeltaWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}>
+                        <OpenSeeErrorBoundary message="Error loading tooltip.">
+                            <ToolTipDeltaWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("Settings", item)}>
-                    <OpenSeeErrorBoundary message="Error loading settings.">
-                        <SettingsWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("Settings", item)}>
+                        <OpenSeeErrorBoundary message="Error loading settings.">
+                            <SettingsWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
-                    <OpenSeeErrorBoundary message="Error loading accumulated points.">
-                        <PointWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
+                        <OpenSeeErrorBoundary message="Error loading accumulated points.">
+                            <PointWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Event Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.EventStats = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("EventStats", item)}>
-                    <OpenSeeErrorBoundary message="Error loading event stats.">
-                        <EventStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Event Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.EventStats = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("EventStats", item)}>
+                        <OpenSeeErrorBoundary message="Error loading event stats.">
+                            <EventStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
-                    <OpenSeeErrorBoundary message="Error loading correlated sags.">
-                        <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
+                        <OpenSeeErrorBoundary message="Error loading correlated sags.">
+                            <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("Lightning", item)}>
-                    <OpenSeeErrorBoundary message="Error loading lightning.">
-                        <LightningDataWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("Lightning", item)}>
+                        <OpenSeeErrorBoundary message="Error loading lightning.">
+                            <LightningDataWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("FFTTable", item)}>
-                    <OpenSeeErrorBoundary message="Error loading FFT table.">
-                        <FFTTable />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("FFTTable", item)}>
+                        <OpenSeeErrorBoundary message="Error loading FFT table.">
+                            <FFTTable />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("PolarChart", item)}>
-                    <OpenSeeErrorBoundary message="Error loading phasor chart.">
-                        <PhasorChartWidget />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("PolarChart", item)}>
+                        <OpenSeeErrorBoundary message="Error loading phasor chart.">
+                            <PhasorChartWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
-                    OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
-                    <OpenSeeErrorBoundary message="Error loading harmonic stats.">
-                        <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
-                    </OpenSeeErrorBoundary>
-                </SplitDrawer>
+                    <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
+                        <OpenSeeErrorBoundary message="Error loading harmonic stats.">
+                            <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
 
-                <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
-                    <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
-                        {groupedKeys[evt.Context.EventID] != undefined ? (
-                            <>
-                                {groupedKeys[evt.Context.EventID].map(renderPlot)}
-                            </>
-                        ) : null}
+                    <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
+                        <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+                            {groupedKeys[evt.Context.EventID] != undefined ? (
+                                <>
+                                    {groupedKeys[evt.Context.EventID].map(renderPlot)}
+                                </>
+                            ) : null}
 
-                        {Object.keys(groupedKeys).filter(item => parseInt(item) !== evt.Context.EventID).map(key =>
-                            <div className="card" key={key}>
-                                {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
-                                    <div className="card-header">
-                                        <div className="row">
-                                            <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                <span style={{ textAlign: 'center' }}>Meter:</span><br />
-                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
+                            {Object.keys(groupedKeys)
+                                .filter(item => parseInt(item) !== evt.Context.EventID)
+                                .map(key =>
+                                    <div className="card" key={key}>
+                                        {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
+                                            <div className="card-header">
+                                                <div className="row">
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Meter:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Asset:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Type:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Inception:</span><br />
+                                                        {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                <span style={{ textAlign: 'center' }}>Asset:</span><br />
-                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
-                                            </div>
-                                            <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                <span style={{ textAlign: 'center' }}>Type:</span><br />
-                                                {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
-                                            </div>
-                                            <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
-                                                <span style={{ textAlign: 'center' }}>Inception:</span><br />
-                                                {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
-                                            </div>
+                                        ) : null}
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            {groupedKeys[key].map(renderPlot)}
                                         </div>
                                     </div>
-                                ) : null}
-                                <div className="card-body" style={{ padding: 0 }}>
-                                    {groupedKeys[key].map(renderPlot)}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </SplitSection>
-            </VerticalSplit>
-        </Application>
+                                )}
+                        </div>
+                    </SplitSection>
+                </VerticalSplit>
+            </Application>
+        </>
     );
 });
 
@@ -624,6 +661,39 @@ const ToBool = (arg: any) => {
     return undefined;
 }
 
+type ParsedQueryValue = string | string[] | null;
+type ParsedOpenSeeQuery = Partial<Record<keyof OpenSee.Query, ParsedQueryValue>>;
+
+const NormalizeQueryKeys = (parsedQuery: Record<string, ParsedQueryValue>): ParsedOpenSeeQuery => {
+    const queryKeyMap: Record<string, keyof OpenSee.Query> = {
+        plots: "plots",
+        harmonic: "Harmonic",
+        lpforder: "LPFOrder",
+        hpforder: "HPFOrder",
+        trc: "Trc",
+        cyclelimits: "CycleLimits",
+        fftlimits: "FFTLimits",
+        fftcycles: "FFTCycles",
+        fftstarttime: "FFTStartTime",
+        starttime: "startTime",
+        endtime: "endTime",
+        eventid: "eventID",
+        overlappinginfo: "overlappingInfo",
+        singleplot: "singlePlot"
+    };
+    const normalizedQuery: ParsedOpenSeeQuery = {};
+
+    Object.keys(parsedQuery).forEach(key => {
+        const canonicalKey = queryKeyMap[key.toLowerCase()];
+        if (canonicalKey != null)
+            normalizedQuery[canonicalKey] = parsedQuery[key];
+        else
+            (normalizedQuery as Record<string, ParsedQueryValue>)[key] = parsedQuery[key];
+    });
+
+    return normalizedQuery;
+}
+
 const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
     if (arg == undefined) return undefined;
     const query = {};
@@ -636,6 +706,15 @@ const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
 
 interface IOpenSeeErrorBoundaryProps {
     message: string;
+}
+
+const heartBeatCheck = () => {
+    return $.ajax({
+        url: `${homePath}api/OpenSEE/HeartBeat`,
+        method: 'GET',
+        cache: false,
+        async: true
+    });
 }
 
 const OpenSeeErrorBoundary = (props: React.PropsWithChildren<IOpenSeeErrorBoundaryProps>) => (

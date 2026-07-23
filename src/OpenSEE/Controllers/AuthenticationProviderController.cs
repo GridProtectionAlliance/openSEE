@@ -1,5 +1,5 @@
 //******************************************************************************************************
-//  Header.tsx - Gbtc
+//  AuthenticationProviderController.cs - Gbtc
 //
 //  Copyright © 2026, Grid Protection Alliance.  All Rights Reserved.
 //
@@ -16,26 +16,34 @@
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/08/2026 - Preston Crawford
-//       Generated original version of source code
+//  06/02/2026 - Preston Crawford
+//       Generated original version of source code.
 //
 //******************************************************************************************************
 
-import * as React from "react";
-import { LegendGroupType } from './Types';
+using Gemstone.Security.AuthenticationProviders;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OpenSEE.Security;
+using System.Collections.Generic;
 
-interface IProps {
-    label: string,
-    width: number,
-    onClick: (s: string, t: LegendGroupType) => void
+namespace OpenSEE.Controllers;
+
+/// <summary>
+/// Supplies the login page with the list of available authentication providers.
+/// </summary>
+[ApiController]
+public class AuthenticationProviderController() : ControllerBase
+{
+    [HttpGet, Route("api/AuthenticationProvider/All")]
+    [AllowAnonymous]
+    public IActionResult GetAll()
+    {
+        List<object> providers = [new { ProviderIdentity = WindowsAuthenticationProviderExtensions.DefaultIdentity, Name = "Windows Authentication" }];
+
+        if (AuthenticationSetup.OAuthEnabled)
+            providers.Add(new { ProviderIdentity = OAuthAuthenticationProviderExtensions.DefaultIdentity, Name = "Azure Active Directory" });
+
+        return Ok(providers);
+    }
 }
-
-const Header = (props: IProps) => (
-    <div style={{ width: props.width, borderLeft: "2px solid #b2b2b2", cursor: 'pointer' }}>
-        <span style={{ fontSize: "smaller", fontWeight: "bold", whiteSpace: "nowrap" }} onClick={() => props.onClick(props.label, 'horizontal')}>
-            {props.label}
-        </span>
-    </div>
-);
-
-export default Header;

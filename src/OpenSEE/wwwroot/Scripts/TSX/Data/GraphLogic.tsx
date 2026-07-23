@@ -47,6 +47,7 @@ export const emptygraph: OpenSee.IGraphstate = {
         Angle: defaultLimits,
         VoltageperSecond: defaultLimits,
         CurrentperSecond: defaultLimits,
+        FFTFrequency: defaultLimits,
         Freq: defaultLimits,
         Impedance: defaultLimits,
         PowerP: defaultLimits,

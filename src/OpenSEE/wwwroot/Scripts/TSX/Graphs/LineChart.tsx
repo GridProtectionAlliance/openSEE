@@ -33,7 +33,7 @@ import EventContext from '../Context/EventContext';
 import HoverContext from '../Context/HoverContext';
 import { OpenSee } from '../global';
 import { useAppSelector } from '../hooks';
-import { SelectColor, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../Store/settingSlice';
+import { SelectColor, SelectDataMarkers, SelectMouseMode, SelectOverlappingWaveTimeUnit, SelectPlotMarkers, SelectSinglePlot, SelectTimeUnit, SelectUseOverlappingTime, SelectZoomMode } from '../Store/settingSlice';
 import Legend from './Legend/Legend';
 import ChartContainer from './ChartContainer';
 import { GetDisplayLabel, useChartScales, useTooltipLocations, useYLabelFontSize } from './Utils/Utilities';
@@ -90,6 +90,7 @@ const LineChart = (props: IProps) => {
 
     const singlePlot = useAppSelector(SelectSinglePlot);
     const plotMarkers = useAppSelector(SelectPlotMarkers);
+    const dataMarkers = useAppSelector(SelectDataMarkers);
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
     const overlappingWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
@@ -198,13 +199,26 @@ const LineChart = (props: IProps) => {
             xScaleRef,
             yScaleRef as { current: Record<string, d3.ScaleLinear<number, number>> },
             {
-                height: props.height, width: props.width, dataKey: props.dataKey,
-                yLimits, enabledUnits, yLabels, startTime, endTime,
-                showFFT, plotMarkers, fftWindow, currentFFTWindow, mouseMode,
-                timeCtx: buildTimeCtx(), displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
+                height: props.height,
+                width: props.width,
+                dataKey: props.dataKey,
+                yLimits, enabledUnits,
+                yLabels,
+                startTime,
+                endTime,
+                showFFT,
+                plotMarkers,
+                fftWindow,
+                currentFFTWindow,
+                mouseMode,
+                timeCtx: buildTimeCtx(),
+                displayLabel: GetDisplayLabel(props.dataKey.DataType, firstAnalyticOption),
                 eventInfo: evt.Context.EventInfo,
             },
-            { ...handlers, wheelZoom }
+            {
+                ...handlers,
+                wheelZoom
+            }
         );
 
         drawLines(containerRef.current, lineData, enabledLine, getScales(), activeUnit, colors, singlePlot, evt.Context.EventInfo?.EventId ?? null);
@@ -212,7 +226,7 @@ const LineChart = (props: IProps) => {
         updateLimits();
         updateDurationWindowRect(containerRef.current, xScaleRef.current, evt.Context.EventInfo?.Inception ?? 0, evt.Context.EventInfo?.DurationEndTime ?? 0, plotMarkers);
         updateLineVisibility(containerRef.current, lineData, enabledLine);
-        updateMarkerVisibility(containerRef.current, lineData, enabledLine);
+        updateMarkerVisibility(containerRef.current, lineData, enabledLine, dataMarkers);
         updateYAxisVisibility(containerRef.current, relevantUnits, enabledUnits);
         setCreated(true);
     }, [lineData, loading, firstAnalyticOption]);
@@ -238,9 +252,9 @@ const LineChart = (props: IProps) => {
     React.useEffect(() => {
         if (lineData == null || lineData.length === 0) return;
         updateLineVisibility(containerRef.current, lineData, enabledLine);
-        updateMarkerVisibility(containerRef.current, lineData, enabledLine);
+        updateMarkerVisibility(containerRef.current, lineData, enabledLine, dataMarkers);
         updateYAxisVisibility(containerRef.current, relevantUnits, enabledUnits);
-    }, [enabledLine]);
+    }, [enabledLine, dataMarkers]);
 
     // Scale/limits update: y domain, x range, then re-render geometry
     React.useEffect(() => {
@@ -312,7 +326,7 @@ const LineChart = (props: IProps) => {
         drawMarkers(containerRef.current, lineData, getScales(), colors);
         updateLimits();
         updateLineVisibility(containerRef.current, lineData, enabledLine);
-        updateMarkerVisibility(containerRef.current, lineData, enabledLine);
+        updateMarkerVisibility(containerRef.current, lineData, enabledLine, dataMarkers);
         updateYAxisVisibility(containerRef.current, relevantUnits, enabledUnits);
     }, [props.dataKey, firstAnalyticOption]);
 

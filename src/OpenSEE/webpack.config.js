@@ -41,7 +41,12 @@ function buildConfig(env, argv) {
                 //    enforce: "pre",
                 //    loader: "source-map-loader"
                 //},
-                { test: /\.(woff|woff2|ttf|eot|svg|png|gif)(\?v=[0-9]\.[0-9]\.[0-9])?$/,loader:'url-loader', options: { limit:100000 } }
+                {
+                    //loader is the default asset loader in webpack 5
+                    test: /\.(woff|woff2|ttf|eot|svg|png|gif)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+                    type: 'asset',
+                    parser: { dataUrlCondition: { maxSize: 100000 } }
+                }
             ]
         },
         externals: {
@@ -64,7 +69,7 @@ function buildConfig(env, argv) {
         config.mode = argv.mode;
         config.devtool = "eval";
     }
-   
+
     return config;
 }
 

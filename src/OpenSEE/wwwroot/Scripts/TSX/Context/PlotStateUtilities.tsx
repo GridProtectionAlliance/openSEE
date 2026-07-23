@@ -44,6 +44,7 @@ export function createDefaultYLimits(): OpenSee.IUnitCollection<OpenSee.IAxisSet
         Angle: createDefaultAxisSettings('Angle'),
         VoltageperSecond: createDefaultAxisSettings('VoltageperSecond'),
         CurrentperSecond: createDefaultAxisSettings('CurrentperSecond'),
+        FFTFrequency: createDefaultAxisSettings('FFTFrequency'),
         Freq: createDefaultAxisSettings('Freq'),
         Impedance: createDefaultAxisSettings('Impedance'),
         PowerP: createDefaultAxisSettings('PowerP'),
@@ -107,20 +108,29 @@ export function getEnabledFromLegendSelections(
     return enabled;
 }
 
-// Binary-ish search for the index closest to time t in a sorted array.
-// Assumes uniform spacing between data points.
 export function getIndex(t: number, data: Array<[number, number]>): number {
-    if (data == null || data.length < 2)
+    if (data == null || data.length < 1)
         return NaN;
 
-    if (t < data[0][0])
+    if (t <= data[0][0])
         return 0;
-    if (t > data[data.length - 1][0])
+
+    if (t >= data[data.length - 1][0])
         return data.length - 1;
 
-    const dP = data[1][0] - data[0][0];
-    const deltaT = t - data[0][0];
-    return Math.floor(deltaT / dP);
+    let low = 0;
+    let high = data.length - 1;
+
+    while (high - low > 1) {
+        const mid = Math.floor((low + high) / 2);
+
+        if (data[mid][0] <= t)
+            low = mid;
+        else
+            high = mid;
+    }
+
+    return t - data[low][0] <= data[high][0] - t ? low : high;
 }
 
 // Compute y-axis [min, max] for a set of enabled series within a given x range.
@@ -150,12 +160,9 @@ export function recomputeDataLimits(
 
         let factor = 1;
         const unit: OpenSee.IUnitSetting | undefined = defaultSettings.Units[item.Unit];
-        if (unit != null)
-            factor = unit?.options?.[activeUnit]?.factor ?? 1;
-
-        // per-unit case
-        if (factor === undefined)
-            factor = 1.0 / item.BaseValue;
+        const option = unit?.options?.[activeUnit];
+        if (option != null)
+            factor = option.factor === undefined ? 1.0 / item.BaseValue : option.factor;
 
         const startIndex = Math.max(0, Math.min(indexStart, dataPoints.length));
         const endIndex = Math.max(startIndex, Math.min(indexEnd, dataPoints.length));

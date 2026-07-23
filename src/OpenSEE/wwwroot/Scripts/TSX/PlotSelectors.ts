@@ -204,22 +204,20 @@ export function selectDeltaHoverPoints(
         const firstIndex = getIndex(hover[0], d[0].DataPoints);
         if (isNaN(firstIndex)) return;
 
-        const selIdx = m.selectedIndices;
-
         d.forEach((series) => {
             if (!m.enabled[seriesToKey(series)]) return;
             const idx = getIndex(hover[0], series.DataPoints);
             const unitOpt = defaultSettings.Units[series.Unit]?.options?.[m.yLimits[series.Unit]?.current] ?? defaultOption;
-            const lastSel = selIdx.length > 0 ? selIdx[selIdx.length - 1] : -1;
             const selectedTime = m.selectedTimes?.length > 0 ? m.selectedTimes[m.selectedTimes.length - 1] : null;
+            const prevIdx = selectedTime != null ? getIndex(selectedTime, series.DataPoints) : NaN;
             result.push({
                 Color: series.Color,
                 Unit: unitOpt,
                 Value: idx > series.DataPoints.length - 1 ? NaN : series.DataPoints[idx][1],
                 Name: getDisplayName(series, m.key.DataType, harmonic),
-                PrevValue: lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][1] : NaN,
+                PrevValue: isNaN(prevIdx) ? NaN : series.DataPoints[prevIdx][1],
                 BaseValue: series.BaseValue,
-                Time: selectedTime ?? (lastSel >= 0 && lastSel < series.DataPoints.length ? series.DataPoints[lastSel][0] : NaN)
+                Time: selectedTime ?? NaN
             });
         });
     });
@@ -259,7 +257,7 @@ export function selectPhaseVectors(
     assets.forEach(a => {
         phases.forEach(p => {
             const phCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'Ph');
-            const magCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'Pk');
+            const magCh = d.find(s => s.LegendGroup === a && s.LegendVertical === p && s.LegendHorizontal === 'RMS');
             if (!phCh || !magCh) return;
 
             result.push({
@@ -302,7 +300,7 @@ export function selectSelectedPoints(
                 Group: series.LegendGroup,
                 Name: (m.key.DataType === 'Voltage' ? 'V ' : 'I ') + series.LegendVertical + ' ' + series.LegendHorizontal,
                 Unit: unitOpt,
-                Value: m.selectedIndices.map(j => series.DataPoints[j]),
+                Value: m.selectedTimes.map(t => series.DataPoints[getIndex(t, series.DataPoints)]),
                 BaseValue: series.BaseValue,
                 Color: series.Color
             });
@@ -339,17 +337,20 @@ export function selectFFTData(
 
             const magUnit = defaultSettings.Units[magCh.Unit]?.options?.[m.yLimits[magCh.Unit]?.current] ?? defaultOption;
             const angUnit = defaultSettings.Units.Angle?.options?.[m.yLimits['Angle']?.current] ?? defaultOption;
+            const frequencyUnit = defaultSettings.Units.FFTFrequency?.options?.[m.yLimits['FFTFrequency']?.current] ?? defaultOption;
+            const frequencyFactor = frequencyUnit.factor ?? Number.parseFloat(systemFrequency);
 
             result.push({
                 Color: angCh.Color,
                 Unit: magUnit,
+                FrequencyUnit: frequencyUnit,
                 PhaseUnit: angUnit,
                 Phase: p,
                 Asset: a,
                 Magnitude: magCh.DataPoints.map(pt => pt[1]),
                 Angle: angCh.DataPoints.map(pt => pt[1]),
                 BaseValue: magCh.BaseValue,
-                Frequency: magCh.DataPoints.map(pt => pt[0] * 60.0)
+                Frequency: magCh.DataPoints.map(pt => pt[0] * frequencyFactor)
             });
         });
     });

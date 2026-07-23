@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Configurations>Debug;Development;Release</Configurations>
     <OutputType>Library</OutputType>
     <AssemblyTitle>PQDS</AssemblyTitle>
     <Product>PQDS</Product>

@@ -21,11 +21,10 @@
 //
 //******************************************************************************************************
 
-using System;
-using System.IO;
 using Gemstone.Configuration;
 using Gemstone.Data;
 using Gemstone.Diagnostics;
+using Gemstone.Security.AuthenticationProviders;
 using Gemstone.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,17 +33,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
+#if RELEASE
+using Microsoft.Extensions.Logging.EventLog;
+#endif
 using OpenSEE.Models;
 
 namespace OpenSEE
 {
     public class Program
     {
-        public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-        .Build();
+        public const string DefaultWebHostingCategory = "WebHosting";
 
         public static void Main(string[] args)
         {
@@ -74,11 +72,11 @@ namespace OpenSEE
 
                 CreateHostBuilder(args).Build().Run();
 
-                #if DEBUG
+#if DEBUG
                 Settings.Save(forceSave: true);
-                #else
+#else
                 Settings.Save();
-                #endif
+#endif
             }
             finally
             {
@@ -95,6 +93,10 @@ namespace OpenSEE
             {
                 DiagnosticsLogger.DefineSettings(settings);
                 AdoDataConnection.DefineSettings(settings);
+                OAuthAuthenticationProvider.DefineSettings(settings);
+                WindowsAuthenticationProvider.DefineSettings(settings);
+                DefineWebHotSettings(settings);
+                DefineAdditionalSystemSettings(settings);
             }
         }
 
@@ -125,13 +127,31 @@ namespace OpenSEE
                     // Add Gemstone diagnostics logging
                     builder.AddGemstoneDiagnostics();
 
-                    #if RELEASE
-                    if (OperatingSystem.IsWindows())
+#if RELEASE
+                    if (System.OperatingSystem.IsWindows())
                     {
                         builder.AddFilter<EventLogLoggerProvider>("Application", LogLevel.Warning);
                         builder.AddEventLog();
                     }
-                    #endif
+#endif
                 });
+
+        private static void DefineWebHotSettings(Settings settings)
+        {
+            dynamic section = settings[DefaultWebHostingCategory];
+
+            section.AuthenticationTicketTimeout = (24.0D, "Expiration of the authentication ticket relative to its creation time, in hours");
+            section.AuthenticationSessionTimeout = (15.0D, "Expiration of the user's session relative to the last time it was accessed, in minutes");
+        }
+
+        private static void DefineAdditionalSystemSettings(Settings settings, string settingsCatergory = Settings.SystemSettingsCategory)
+        {
+            dynamic section = settings[settingsCatergory];
+
+            section.NodeID = ("00000000-0000-0000-0000-000000000000", "The applications instance identifier");
+
+            dynamic oauthSection = settings[OAuthAuthenticationProvider.SettingsSection];
+            oauthSection.UserIdClaim = ("http://schemas.microsoft.com/identity/claims/objectidentifier", "Defines the claim used to identify the user.");
+        }
     }
 }

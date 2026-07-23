@@ -37,6 +37,7 @@ export interface IBarPlotChromeParams {
     yLabels: Partial<OpenSee.IUnitCollection<string>>;
     barData: OpenSee.iD3DataSeries[];
     fftLimits: [number, number];
+    xUnit: OpenSee.iUnitOptions;
 }
 
 export const CreateBarPlotFrame = (
@@ -47,7 +48,7 @@ export const CreateBarPlotFrame = (
     params: IBarPlotChromeParams,
     handlers: IChromeHandlers
 ) => {
-    const { height, width, dataKey, yLimits, enabledUnits, yLabels, barData, fftLimits } = params;
+    const { height, width, dataKey, yLimits, enabledUnits, yLabels, barData, fftLimits, xUnit } = params;
     const svg = CreatePlotSVG(
         containerEl,
         yScaleRef,
@@ -61,8 +62,8 @@ export const CreateBarPlotFrame = (
         .map(pt => pt[0]);
 
     xScaleRef.current = d3.scaleBand<number>(domain, [60, width - 110]);
-    setFrequencyDomainFromBands(xScaleRef.current, xScaleLblRef.current);
+    setFrequencyDomainFromBands(xScaleRef.current, xScaleLblRef.current, xUnit);
 
-    createFrequencyXAxis(svg, xScaleRef.current, xScaleLblRef.current, height, width);
+    createFrequencyXAxis(svg, xScaleRef.current, xScaleLblRef.current, height, width, xUnit);
     createYAxes(svg, enabledUnits, yScaleRef.current, yLabels, height, width);
 }

@@ -60,8 +60,8 @@ export const drawMarkers = (
     points.enter()
         .append("circle")
         .classed("Circle", true)
-        .attr("cx", (d: IMarker) => isNaN(scales.x((d as any)[0])) ? null : scales.x(d.x))
-        .attr("cy", (d: IMarker) => isNaN(scales.y[d.unit]((d as any)[1])) ? null : scales.y[d.unit](d.y))
+        .attr("cx", (d: IMarker) => isNaN(scales.x(d.x)) ? null : scales.x(d.x))
+        .attr("cy", (d: IMarker) => isNaN(scales.y[d.unit](d.y)) ? null : scales.y[d.unit](d.y))
         .attr("r", 10);
 
     points.exit().remove();
@@ -81,7 +81,7 @@ export const updateMarkerGeometry = (
         .attr("cy", (d: IMarker) => {
             let factor = 1.0;
             if (activeUnit?.[d.unit] != undefined)
-                factor = activeUnit[d.unit].factor === undefined ? (1.0 / d.base) : factor;
+                factor = activeUnit[d.unit].factor === undefined ? (1.0 / d.base) : activeUnit[d.unit].factor;
             return isNaN(scales.y[d.unit](d.y)) ? null : scales.y[d.unit](d.y * factor);
         });
 }
@@ -94,11 +94,11 @@ export const updateMarkerColors = (container: HTMLDivElement | null, colors: Ope
         .attr("fill", d => colors[d.Color as string] ?? colors.random);
 }
 
-export const updateMarkerVisibility = (container: HTMLDivElement | null, lineData: OpenSee.iD3DataSeries[], enabledLine: Record<string, boolean>) => {
+export const updateMarkerVisibility = (container: HTMLDivElement | null, lineData: OpenSee.iD3DataSeries[], enabledLine: Record<string, boolean>, showDataMarkers: boolean) => {
     if (container == null) return;
 
     d3.select(container).selectAll(".Markers")
         .data(lineData)
-        .classed("active", d => enabledLine[seriesToKey(d)] === true)
-        .attr("opacity", d => enabledLine[seriesToKey(d)] === true ? 1.0 : 0);
+        .classed("active", d => enabledLine[seriesToKey(d)] === true && showDataMarkers)
+        .attr("opacity", d => enabledLine[seriesToKey(d)] === true && showDataMarkers ? 1.0 : 0);
 }

@@ -57,6 +57,7 @@ type DefaultSettings = {
     SinglePlot: boolean;
     UseOverlappingTime: boolean;
     PlotMarkers: boolean;
+    DataMarkers: boolean;
 
     MouseMode: OpenSee.MouseMode;
     ZoomMode: OpenSee.ZoomMode;
@@ -188,6 +189,14 @@ export const defaultSettings: DefaultSettings = {
                 { label: "MegaAmps per sec", short: "MA/s", factor: 0.000001 }
             ],
         },
+        FFTFrequency: {
+            current: 0,
+            autoUnit: false,
+            options: [
+                { label: "Frequency", short: "Hz", factor: Number.parseFloat(systemFrequency) },
+                { label: "Harmonic", short: "Harmonic", factor: 1 } // FFT x-values from the backend are already harmonics(FrequencyVal/Frequencybase);
+            ],
+        },
         Freq: {
             current: 0,
             autoUnit: true,
@@ -315,6 +324,7 @@ export const defaultSettings: DefaultSettings = {
     SinglePlot: false,
     UseOverlappingTime: false,
     PlotMarkers: false,
+    DataMarkers: true,
     MouseMode: 'zoom' as OpenSee.MouseMode,
     ZoomMode: 'x' as OpenSee.ZoomMode,
     ColorSelection: [

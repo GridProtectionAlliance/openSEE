@@ -1,9 +1,9 @@
 {
   "iisSettings": {
-    "windowsAuthentication": false,
+    "windowsAuthentication": true,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "https://localhost:50951",
+      "applicationUrl": "http://localhost:50951/openSEE",
       "sslPort": 0
     }
   },

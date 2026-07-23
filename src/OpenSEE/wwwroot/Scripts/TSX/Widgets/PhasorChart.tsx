@@ -32,6 +32,8 @@ import { SelectColor } from '../Store/settingSlice';
 import { selectPhaseVectors } from '../PlotSelectors';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { Alert } from '@gpa-gemstone/react-interactive';
+    
+const widgetPadding = 10;
 
 const PhasorChartWidget = () => {
     const [hover] = React.useContext(HoverContext);
@@ -40,21 +42,17 @@ const PhasorChartWidget = () => {
     const evt = React.useContext(EventContext);
     const colors = useSelector(SelectColor);
 
-    const VVector = React.useMemo(
-        () => selectPhaseVectors(hover, evt.Context.EventID, 'Voltage', plots, meta),
-        [hover, evt.Context.EventID, plots, meta]
-    );
-    const IVector = React.useMemo(
-        () => selectPhaseVectors(hover, evt.Context.EventID, 'Current', plots, meta),
-        [hover, evt.Context.EventID, plots, meta]
-    );
+    const VVector = React.useMemo(() => selectPhaseVectors(hover, evt.Context.EventID, 'Voltage', plots, meta),[hover, evt.Context.EventID, plots, meta] );
+    const IVector = React.useMemo(() => selectPhaseVectors(hover, evt.Context.EventID, 'Current', plots, meta),[hover, evt.Context.EventID, plots, meta]);
 
     const [AssetList, setAssetList] = React.useState<string[]>([]);
-    const [scaleV, setScaleV] = React.useState<number>(0);
-    const [scaleI, setScaleI] = React.useState<number>(0);
 
-    const svgRef = React.useRef(null);
-    const { clientWidth, clientHeight } = useGetContainerPosition(svgRef);
+    const containerRef = React.useRef(null);
+    const { clientWidth, clientHeight } = useGetContainerPosition(containerRef);
+    const svgSize = Math.max(0, Math.min(clientWidth, clientHeight) - widgetPadding * 2);
+
+    const scaleV = React.useMemo(() => 0.9 * (svgSize / 2) / Math.max(...VVector.map(item => item.Magnitude)), [VVector, svgSize]);
+    const scaleI = React.useMemo(() => 0.9 * (svgSize / 2) / Math.max(...IVector.map(item => item.Magnitude)), [IVector, svgSize]);
 
     React.useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -62,36 +60,10 @@ const PhasorChartWidget = () => {
             if (!_.isEqual(newAssetList.sort(), AssetList.sort())) {
                 setAssetList(newAssetList);
             }
-            setScaleV(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...VVector.map(item => item.Magnitude)));
-            setScaleI(0.9 * Math.max(clientWidth / 2, clientHeight / 2) / Math.max(...IVector.map(item => item.Magnitude)));
         }, 100);
 
         return () => clearTimeout(timeoutId);
     }, [VVector, IVector]);
-
-    function drawVectorSVG(vec: OpenSee.IVector, scale: number) {
-        if (vec.Magnitude === undefined || scale === undefined) return '';
-        const centerX = clientWidth / 2;
-        const centerY = clientHeight / 2;
-        const x = vec.Magnitude * scale * Math.cos(vec.Angle * Math.PI / 180);
-        const y = vec.Magnitude * scale * Math.sin(vec.Angle * Math.PI / 180);
-        return `M ${centerX} ${centerY} L ${centerX + x} ${centerY - y} Z`;
-    }
-
-    function createTable(vec: OpenSee.IVector | undefined, index: number) {
-        if (vec == undefined)
-            return <React.Fragment key={index}><td>N/A</td><td>N/A</td></React.Fragment>;
-
-        const factor = (vec.Unit.factor === undefined ? (1.0 / vec.BaseValue) : vec.Unit.factor);
-        const phaseFactor = (vec.PhaseUnit.factor === undefined ? (1.0 / vec.BaseValue) : vec.PhaseUnit.factor);
-
-        return (
-            <React.Fragment key={index}>
-                <td style={{ textAlign: 'right' }}>{(vec.Magnitude * factor).toFixed(2)} {vec.Unit.short}</td>
-                <td style={{ textAlign: 'right' }}>{(vec.Angle * phaseFactor).toFixed(2)} {vec.PhaseUnit.short}</td>
-            </React.Fragment>
-        );
-    }
 
     if (VVector.length === 0 && IVector.length === 0)
         return (
@@ -105,56 +77,130 @@ const PhasorChartWidget = () => {
         );
 
     return (
-        <div className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: '10px' }}>
-            <div style={{ flex: 1, minHeight: 0 }}>
-                <svg ref={svgRef} width="100%" height="100%">
+        <div ref={containerRef} className="d-flex flex-column" style={{ height: '100%', width: '100%', padding: widgetPadding, boxSizing: 'border-box', overflowY: 'auto', overflowX: 'hidden' }}>
+            <div style={{ flex: '0 0 auto', width: svgSize, height: svgSize, alignSelf: 'center' }}>
+                <svg width={svgSize} height={svgSize}>
+                    <defs>
+                        <marker
+                            id="phasor-arrow"
+                            viewBox="0 0 10 10"
+                            refX={10}
+                            refY={5}
+                            markerWidth={12}
+                            markerHeight={12}
+                            markerUnits="userSpaceOnUse"
+                            orient="auto"
+                        >
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
+                        </marker>
+                    </defs>
+                    <circle
+                        cx={svgSize / 2}
+                        cy={svgSize / 2}
+                        r={0.9 * (svgSize / 2)}
+                        stroke="#ccc"
+                        strokeWidth={1}
+                        fill="none"
+                    />
                     {AssetList.map((asset, ai) => (
                         <React.Fragment key={ai}>
                             {VVector.filter(v => v.Asset === asset).map((v, vi) => (
-                                <path key={`v-${ai}-${vi}`} d={drawVectorSVG(v, scaleV)} stroke={colors[v.Color]} strokeWidth={2} fill="none" />
+                                <path
+                                    key={`v-${ai}-${vi}`}
+                                    d={drawVectorSVG(v, scaleV, svgSize, svgSize)}
+                                    stroke={colors[v.Color]}
+                                    strokeWidth={2}
+                                    fill="none"
+                                    markerEnd="url(#phasor-arrow)"
+                                />
                             ))}
                             {IVector.filter(v => v.Asset === asset).map((v, vi) => (
-                                <path key={`i-${ai}-${vi}`} d={drawVectorSVG(v, scaleI)} stroke={colors[v.Color]} strokeWidth={2} fill="none" strokeDasharray="5,5" />
+                                <path
+                                    key={`i-${ai}-${vi}`}
+                                    d={drawVectorSVG(v, scaleI, svgSize, svgSize)}
+                                    stroke={colors[v.Color]}
+                                    strokeWidth={2}
+                                    fill="none"
+                                    strokeDasharray="5,5"
+                                    markerEnd="url(#phasor-arrow)"
+                                />
                             ))}
                         </React.Fragment>
                     ))}
                 </svg>
             </div>
-            <div style={{ maxHeight: '40%', overflowY: 'auto' }}>
+            <div>
                 {AssetList.map((asset, ai) => {
                     const vPhases = _.uniq(VVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const iPhases = _.uniq(IVector.filter(v => v.Asset === asset).map(v => v.Phase));
                     const allPhases = _.uniq([...vPhases, ...iPhases]);
 
                     return (
-                        <table key={ai} className="table table-sm" style={{ marginBottom: 5 }}>
-                            <thead>
-                                <tr>
-                                    <th>{asset}</th>
-                                    <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
-                                    <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
-                                </tr>
-                                <tr>
-                                    <th>Phase</th>
-                                    <th>Mag</th><th>Ang</th>
-                                    <th>Mag</th><th>Ang</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {allPhases.map((phase, pi) => (
-                                    <tr key={pi}>
-                                        <td>{phase}</td>
-                                        {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
-                                        {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <React.Fragment key={ai}>
+                            <h4>{asset}</h4>
+                            <div style={{ width: '100%', overflowX: 'auto' }}>
+                                <table className="table table-sm" style={{ marginBottom: 5, whiteSpace: 'nowrap' }}>
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th colSpan={2} style={{ textAlign: 'center' }}>V</th>
+                                            <th colSpan={2} style={{ textAlign: 'center' }}>I</th>
+                                        </tr>
+                                        <tr>
+                                            <th>Phase</th>
+                                            <th style={{ textAlign: 'right' }}>Mag</th>
+                                            <th style={{ textAlign: 'right' }}>Ang</th>
+                                            <th style={{ textAlign: 'right' }}>Mag</th>
+                                            <th style={{ textAlign: 'right' }}>Ang</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {allPhases.map((phase, pi) => (
+                                            <tr key={pi}>
+                                                <td>{phase}</td>
+                                                {createTable(VVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2)}
+                                                {createTable(IVector.find(v => v.Asset === asset && v.Phase === phase), pi * 2 + 1)}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </React.Fragment>
                     );
                 })}
             </div>
         </div>
     );
 };
+
+const drawVectorSVG = (vec: OpenSee.IVector, scale: number, width: number, height: number) => {
+    if (vec.Magnitude === undefined || scale === undefined) return '';
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const x = vec.Magnitude * scale * Math.cos(vec.Angle * Math.PI / 180);
+    const y = vec.Magnitude * scale * Math.sin(vec.Angle * Math.PI / 180);
+    return `M ${centerX} ${centerY} L ${centerX + x} ${centerY - y}`;
+}
+
+const createTable = (vec: OpenSee.IVector | undefined, index: number) => {
+    if (vec == undefined)
+        return (
+            <React.Fragment key={index}>
+                <td style={{ textAlign: 'right' }}>N/A</td>
+                <td style={{ textAlign: 'right' }}>N/A</td>
+            </React.Fragment>
+        );
+
+    const factor = (vec.Unit.factor === undefined ? (1.0 / vec.BaseValue) : vec.Unit.factor);
+    const phaseFactor = (vec.PhaseUnit.factor === undefined ? (1.0 / vec.BaseValue) : vec.PhaseUnit.factor);
+
+    return (
+        <React.Fragment key={index}>
+            <td style={{ textAlign: 'right' }}>{(vec.Magnitude * factor).toFixed(2)} {vec.Unit.short}</td>
+            <td style={{ textAlign: 'right' }}>{(vec.Angle * phaseFactor).toFixed(2)} {vec.PhaseUnit.short}</td>
+        </React.Fragment>
+    );
+}
+
 
 export default PhasorChartWidget;

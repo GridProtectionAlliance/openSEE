@@ -30,6 +30,5 @@ export function useTimeFormatContext(
         dataKeyEventId,
         inceptionTime,
         startTime,
-    }), [isOverlappingWaveform, overlappingWaveTimeUnit, timeUnit, originalStartTime,
-        useRelevantTime, isOriginalEvt, overlappingEvents, dataKeyEventId, inceptionTime, startTime]);
+    }), [isOverlappingWaveform, overlappingWaveTimeUnit, timeUnit, originalStartTime, useRelevantTime, isOriginalEvt, overlappingEvents, dataKeyEventId, inceptionTime, startTime]);
 }

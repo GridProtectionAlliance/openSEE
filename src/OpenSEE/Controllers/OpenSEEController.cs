@@ -108,14 +108,15 @@ namespace OpenSEE
         {
             s_memoryCache = new MemoryCache("openSEE");
 
-            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
-            {
-                m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
-            }
+            using AdoDataConnection connection = new(Settings.Default);
+            m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
         }
         #endregion
 
         #region [ Methods ]
+
+        [Route("HeartBeat"), HttpGet]
+        public IActionResult HeartBeat() => Ok();
 
         #region [ Waveform Data ]
 
@@ -140,7 +141,7 @@ namespace OpenSEE
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
 
-                List<D3Series> returnList = new List<D3Series>();
+                List<D3Series> returnList = [];
 
                 if (dataType == "Time")
                 {
@@ -153,10 +154,12 @@ namespace OpenSEE
                     returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !forceFullRes);
                 }
 
-                JsonReturn returnDict = new JsonReturn();
-                returnDict.Data = returnList;
-                returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
+                JsonReturn returnDict = new()
+                {
+                    Data = returnList,
+                    EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds,
+                    EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds
+                };
 
                 UpSample(returnDict);
 

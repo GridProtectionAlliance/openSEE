@@ -22,13 +22,16 @@
 //       Generated original version of source code.
 //
 //******************************************************************************************************
+
 // global variables declared in openSEE.cshtml scripts section
 declare global {
-    var homePath: string;
-    var version: string;
-    var defaultEventID: number;
-    var defaultEventStartTime: string;
-    var defaultEventEndTime: string;
+    const homePath: string;
+    const version: string;
+    const defaultEventID: number;
+    const defaultEventStartTime: string;
+    const defaultEventEndTime: string;
+    const systemFrequency: string;
+    const logoutPath: string;
 }
 
 export namespace OpenSee {
@@ -267,6 +270,7 @@ export namespace OpenSee {
         DefaultVType: 'L-L' | 'L-N',
         Navigation: EventNavigation,
         PlotMarkers: boolean,
+        DataMarkers: boolean,
         UseOverlappingTime: boolean,
         OverlappingWaveTimeUnit: number,
         MouseMode: MouseMode,
@@ -351,6 +355,7 @@ export namespace OpenSee {
         Angle: T,
         VoltageperSecond: T,
         CurrentperSecond: T,
+        FFTFrequency: T,
         Freq: T,
         Impedance: T,
         PowerP: T,
@@ -427,6 +432,7 @@ export namespace OpenSee {
     interface IFFTSeries {
         Color: Color,
         Unit: iUnitOptions,
+        FrequencyUnit: iUnitOptions,
         Phase: string,
         Magnitude: number[],
         Angle: number[],

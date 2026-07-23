@@ -37,6 +37,7 @@ import { CreateBarPlotFrame } from './BarChart/Renderers/CreateBarPlotFrame';
 import { setFrequencyDomainFromBands, syncFrequencyScaleRange, updateFrequencyXAxisOnResize, updateFrequencyXAxisTicks } from './BarChart/Renderers/XAxisFreq';
 import { useChartScales, useYLabelFontSize } from "./Utils/Utilities";
 import { IBarScales, useBarMouseInteractions } from "./BarChart/Utils";
+import { defaultSettings } from '../defaults';
 
 interface IProps {
     height: number,
@@ -58,6 +59,10 @@ const BarChart = (props: IProps) => {
 
     const primaryAxis = getPrimaryAxis(dataKey);
     const activeUnit = React.useMemo(() => plotMeta ? selectActiveUnit(plotMeta) : null, [plotMeta]);
+    const xUnit = React.useMemo(
+        () => activeUnit?.FFTFrequency ?? defaultSettings.Units.FFTFrequency.options![defaultSettings.Units.FFTFrequency.current],
+        [activeUnit]
+    );
     const relevantUnits = React.useMemo(() => selectRelevantUnits(dataKey, barData), [barData]);
     const enabledUnits = React.useMemo(() => selectEnabledUnits(dataKey, barData, plotMeta?.enabled ?? {}), [barData, plotMeta?.enabled]);
     const yLimits = React.useMemo(() => plotMeta ? selectYLimits(plotMeta) : {}, [plotMeta]); //type properly
@@ -108,7 +113,7 @@ const BarChart = (props: IProps) => {
             .map(pt => pt[0]);
 
         xScaleRef.current.domain(domain).range([60, props.width - 110]);
-        setFrequencyDomainFromBands(xScaleRef.current, xScaleLblRef.current);
+        setFrequencyDomainFromBands(xScaleRef.current, xScaleLblRef.current, xUnit);
         syncFrequencyScaleRange(xScaleRef.current, xScaleLblRef.current, props.width);
     }
 
@@ -126,7 +131,8 @@ const BarChart = (props: IProps) => {
                 enabledUnits,
                 yLabels,
                 barData,
-                fftLimits: plotState.fftLimits
+                fftLimits: plotState.fftLimits,
+                xUnit
             },
             handlers
         );
@@ -141,7 +147,7 @@ const BarChart = (props: IProps) => {
         updateBarGeometry(containerRef.current, scales, activeUnit, props.height - 40);
         updateAnglePointGeometry(containerRef.current, scales, activeUnit);
         updateYAxes(containerRef.current, enabledUnits, scales.y, props.width, dataKey.DataType, dataKey.EventId);
-        updateFrequencyXAxisTicks(containerRef.current, xScaleLblRef.current);
+        updateFrequencyXAxisTicks(containerRef.current, xScaleLblRef.current, xUnit);
     }
 
     const updateVisibility = () => {
@@ -160,7 +166,7 @@ const BarChart = (props: IProps) => {
         if (!isCreated || xScaleRef.current == null || yScaleRef.current == null) return;
 
         xScaleRef.current.range([60, props.width - 110]);
-        updateFrequencyXAxisOnResize(containerRef.current, xScaleRef.current, xScaleLblRef.current, props.height, props.width);
+        updateFrequencyXAxisOnResize(containerRef.current, xScaleRef.current, xScaleLblRef.current, props.height, props.width, xUnit);
         updateYAxisPositionsOnResize(containerRef.current, relevantUnits, getScales().y, props.height, props.width);
 
         relevantUnits.forEach(unit => {
@@ -171,7 +177,7 @@ const BarChart = (props: IProps) => {
         d3.select(containerRef.current).select(".clip").attr("height", props.height - 60).attr("width", props.width - 170);
         d3.select(containerRef.current).select(".Overlay").attr("width", props.width - 110);
         updateLimits();
-    }, [props.height, props.width]);
+    }, [props.height, props.width, xUnit, relevantUnits]);
 
     React.useEffect(() => {
         if (barData == null || barData.length === 0) return;

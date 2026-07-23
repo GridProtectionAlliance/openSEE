@@ -38,6 +38,10 @@ const FFTTable = () => {
 
     const topRowRef = React.useRef<HTMLTableRowElement>(null);
     const {offsetHeight: topRowHeight} = useGetContainerPosition(topRowRef);
+    const frequencyLabel = React.useMemo(
+        () => fftPoints.length > 0 ? getFrequencyLabel(fftPoints[0].FrequencyUnit) : '',
+        [fftPoints]
+    );
 
     if (fftPoints.length === 0)
         return (
@@ -62,7 +66,7 @@ const FFTTable = () => {
                         ))}
                     </tr>
                     <tr>
-                        <th style={getStickyHeaderStyle(topRowHeight)}>Harmonic [Hz]</th>
+                        <th style={getStickyHeaderStyle(topRowHeight)}>{frequencyLabel}</th>
                         {fftPoints.map((item, index) => (
                             <React.Fragment key={`headerFrag-${index}`}>
                                 <th key={`mag-${index}`} style={getStickyHeaderStyle(topRowHeight)}><span>Mag ({item?.Unit?.short})</span></th>
@@ -97,6 +101,8 @@ const getStickyHeaderStyle = (top: number): React.CSSProperties => ({
     backgroundColor: '#fff',
     boxShadow: 'inset 0 -1px 0 #dee2e6'
 });
+
+const getFrequencyLabel = (unit: OpenSee.iUnitOptions) => unit.label === unit.short ? unit.label : `${unit.label} [${unit.short}]`;
 
 const showAng = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
     const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
