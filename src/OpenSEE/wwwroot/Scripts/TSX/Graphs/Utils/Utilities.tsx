@@ -184,7 +184,7 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecisio
             return cyc.toFixed(1 + extra)
     }
     else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since inception') {
-        const cyc = (d - ctx.startTime) * 60.0 / 1000.0;
+        const cyc = (d - ctx.inceptionTime) * 60.0 / 1000.0;
 
         h = h * 60.0 / 1000.0;
         if (h < 2)
