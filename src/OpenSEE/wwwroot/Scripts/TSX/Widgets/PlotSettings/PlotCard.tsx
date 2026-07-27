@@ -1,0 +1,414 @@
+//******************************************************************************************************
+//  SettingWindow.tsx - Gbtc
+//
+//  Copyright � 2020, Grid Protection Alliance.  All Rights Reserved.
+//
+//  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
+//  the NOTICE file distributed with this work for additional information regarding copyright ownership.
+//  The GPA licenses this file to you under the MIT License (MIT), the "License"; you may not use this
+//  file except in compliance with the License. You may obtain a copy of the License at:
+//
+//      http://opensource.org/licenses/MIT
+//
+//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
+//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
+//  License for the specific language governing permissions and limitations.
+//
+//  Code Modification History:
+//  ----------------------------------------------------------------------------------------------------
+//  06/08/2020 - C. Lackner
+//       Generated original version of source code.
+//
+//  01/26/2024 - Preston Crawford
+//       Cleaned up layout and introduced manual time&y limits
+//******************************************************************************************************
+import * as React from 'react';
+import * as _ from 'lodash';
+import { OpenSee } from '../../global';
+import { SelectColor, SetColor, SelectSinglePlot, SelectOverlappingWaveTimeUnit, SetOverlappingWaveTimeUnit, } from '../../Store/settingSlice';
+import { GetDisplayLabel } from '../../Graphs/Utils/Utilities';
+import { defaultSettings } from '../../defaults';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { Input, ColorPicker, RadioButtons } from '@gpa-gemstone/react-forms';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
+import { PlotDataStateContext } from '../../Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from '../../Context/PlotStateContext';
+import EventContext from '../../Context/EventContext';
+import { toPlotKey } from '../../Context/PlotKeys';
+import { selectYLimits, selectOverlappingPlotKeys } from '../../PlotSelectors';
+import AxisUnitSelector from './AxisUnitSelector';
+import TimeUnitSelector from './TimeUnitSelector';
+
+interface ILimits {
+    min: number,
+    max: number
+}
+
+interface IProps extends OpenSee.IGraphProps {
+    scrollOffset: number
+}
+
+type LimitMode = 'Auto' | 'Manual';
+
+interface ILimitModeRecord {
+    mode: LimitMode
+}
+
+const colorLabelStyle: React.CSSProperties = {
+    minHeight: '2.5rem',
+    marginBottom: '0.25rem',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word'
+};
+
+const colorPickerStyle: React.CSSProperties = {
+    marginBottom: 0
+};
+
+const manualLimitOptions: Array<{ Label: string, Value: LimitMode }> = [{ Label: "Auto Limits", Value: 'Auto' }, { Label: "Manual Limits", Value: 'Manual' }];
+
+const PlotCard = (props: IProps) => {
+    const dispatch = useAppDispatch();
+    const singlePlot = useAppSelector(SelectSinglePlot);
+    const colors = useAppSelector(SelectColor);
+    const overlapWaveTimeUnit = useAppSelector(SelectOverlappingWaveTimeUnit);
+    const colorContainerRef = React.useRef<HTMLDivElement | null>(null);
+    const { width: colorContainerWidth } = useGetContainerPosition(colorContainerRef);
+
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const evt = React.useContext(EventContext);
+
+    const pk = toPlotKey(props);
+    const meta = plotState.meta[pk];
+    const data = plotData[pk] ?? [];
+
+    // Derived values from meta
+    const axisSettings = meta?.yLimits;
+    const yLimits = React.useMemo(() => meta ? selectYLimits(meta) : {} as OpenSee.IUnitCollection<[number, number]>, [meta]);
+
+    const overlappingKeys = React.useMemo(
+        () => selectOverlappingPlotKeys(plotState.meta, evt.Context.EventID, props.DataType),
+        [plotState.meta, evt.Context.EventID, props.DataType]
+    );
+
+    const [curLimits, setCurLimits] = React.useState<OpenSee.IUnitCollection<ILimits> | null>(null);
+    const [overlappingLimits, setOverlappingLimits] = React.useState<Record<string, Record<string, ILimits>> | null>(null);
+    const limitsPayloadRef = React.useRef<{ axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean, factor: number } | null>(null);
+    const [valid, setValid] = React.useState<boolean>(true);
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+
+    const colorSettings: OpenSee.Color[] = _.uniq(data.map(item => item.Color as OpenSee.Color));
+    const unitSettings: OpenSee.Unit[] = _.uniq(data.map(item => item.Unit));
+
+    const colorColumnClass = React.useMemo(() => {
+        if (colorContainerWidth < 275) return 'col-12';
+        if (colorContainerWidth < 500) return 'col-6';
+        if (colorContainerWidth < 700) return 'col-4';
+        return 'col-3';
+    }, [colorContainerWidth]);
+
+    React.useEffect(() => {
+        if (limitsPayloadRef.current == null) return;
+        const timeOutId = setTimeout(() => {
+            const payload = limitsPayloadRef.current;
+            if (payload == null) return;
+            limitsPayloadRef.current = null;
+            if (payload.limits[0] < payload.limits[1]) {
+                setValid(true);
+                const d = plotData[toPlotKey(payload.key)] ?? [];
+                stateActions.SetManualLimits(payload.limits, payload.key, payload.axis, payload.auto, d, payload.factor);
+            } else {
+                setValid(false);
+            }
+        }, 1500);
+        return () => clearTimeout(timeOutId);
+    }, [curLimits, overlappingLimits]);
+
+    const handleLimitChange = (axis: OpenSee.Unit, limits: [number, number], key: OpenSee.IGraphProps, auto: boolean) => {
+        let factor = 1;
+        const keyString = toPlotKey(key);
+        const targetAxisSettings = plotState.meta[keyString]?.yLimits ?? axisSettings;
+        if (targetAxisSettings && defaultSettings.Units[axis].options[targetAxisSettings[axis].current].factor !== 1)
+            factor = defaultSettings.Units[axis].options[targetAxisSettings[axis].current].factor;
+
+        limitsPayloadRef.current = { axis, limits, key, auto, factor };
+        if (keyString === pk)
+            setCurLimits(prevLimits => ({ ...(prevLimits ?? {} as OpenSee.IUnitCollection<ILimits>), [axis]: { min: limits[0], max: limits[1] } }));
+        else
+            setOverlappingLimits(prevLimits => ({
+                ...(prevLimits ?? {}),
+                [keyString]: {
+                    ...(prevLimits?.[keyString] ?? {}),
+                    [axis]: { min: limits[0], max: limits[1] }
+                }
+            }));
+    };
+
+    const handleSetOverlapTimeUnit = React.useCallback((index: number) => dispatch(SetOverlappingWaveTimeUnit(index)), [dispatch]);
+
+    const handleUnitChange = React.useCallback((unit: OpenSee.Unit, index: number, key: OpenSee.IGraphProps) => {
+        const auto = defaultSettings.Units[unit].options[index].factor === 0;
+        stateActions.SetUnit(unit, index, auto, key, plotData);
+    }, [stateActions, plotData]);
+
+    const getLabel = (unit: OpenSee.Unit, key?: OpenSee.IGraphProps) => {
+        if (!axisSettings) return '';
+
+        if (key) {
+            const overMeta = plotState.meta[toPlotKey(key)];
+            if (overMeta?.yLimits[unit]?.isAuto && overMeta?.yLimits[unit]?.isManual) {
+                const opts = defaultSettings.Units[unit].options;
+                const idx = opts.findIndex(item => item.factor === 1);
+                return opts[idx].short;
+            }
+            return defaultSettings.Units[unit].options[overMeta?.yLimits[unit]?.current ?? axisSettings[unit].current].short;
+        }
+
+        if (axisSettings[unit]?.isManual && axisSettings[unit]?.isAuto) {
+            const opts = defaultSettings.Units[unit].options;
+            const idx = opts.findIndex(item => item.factor === 1);
+            return opts[idx].short;
+        }
+        return defaultSettings.Units[unit].options[axisSettings[unit].current].short;
+    };
+
+    // Sync local limits state when context limits change
+    React.useEffect(() => {
+        if (!axisSettings) return;
+        if (limitsPayloadRef.current != null) return;
+        const limits = {};
+        Object.keys(yLimits).forEach(unit => {
+            if (axisSettings[unit]?.isManual || false) {
+                let factor = 1;
+                if (defaultSettings.Units[unit].options[axisSettings[unit].current].factor !== 1)
+                    factor = defaultSettings.Units[unit].options[axisSettings[unit].current].factor;
+                limits[unit] = {
+                    min: yLimits[unit]?.[0],
+                    max: yLimits[unit]?.[1]
+                };
+                if (axisSettings[unit]?.isAuto) {
+                    limits[unit].min = limits[unit].min / factor;
+                    limits[unit].max = limits[unit].max / factor;
+                }
+            }
+        });
+        setCurLimits(limits as OpenSee.IUnitCollection<ILimits>);
+
+        // Overlapping limits
+        if (overlappingKeys.length > 0) {
+            const overLimits: Record<string, Record<string, ILimits>> = {};
+            overlappingKeys.forEach(oKey => {
+                const oPk = toPlotKey(oKey);
+                const oMeta = plotState.meta[oPk];
+                if (!oMeta) return;
+                const oYLimits = selectYLimits(oMeta);
+                const l: Record<string, ILimits> = {};
+                Object.keys(oYLimits).forEach(unit => {
+                    if (oMeta.yLimits[unit]?.isManual) {
+                        l[unit] = { min: oYLimits[unit]?.[0], max: oYLimits[unit]?.[1] };
+                    }
+                });
+                overLimits[oPk] = l;
+            });
+            setOverlappingLimits(overLimits);
+        }
+    }, [yLimits, overlappingKeys, axisSettings]);
+
+    if (meta == null || axisSettings == null)
+        return null;
+
+    return (
+        <div className="card">
+            <div className="card-header" id={"header-" + props.DataType} onClick={() => setIsOpen(prev => !prev)}>
+                <h2 className="mb-0">
+                    <button className="btn btn-link btn-block text-left" type="button">
+                        {GetDisplayLabel(props.DataType)} Settings
+                    </button>
+                </h2>
+            </div>
+            <div className={`collapse ${isOpen ? 'show' : ''}`}>
+                <div className="card-body">
+                    {unitSettings.map(item => (
+                        <fieldset key={item} className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>{item}</legend>
+                            <div className="form-row">
+                                <div className="col-4">
+                                    <AxisUnitSelector
+                                        setter={(index) => handleUnitChange(item, index, props)} unitType={item}
+                                        axisSetting={axisSettings[item]}
+                                    />
+                                </div>
+                                <div className="col-8 mt-2">
+                                    <RadioButtons<ILimitModeRecord>
+                                        Record={{ mode: axisSettings[item]?.isManual ? 'Manual' : 'Auto' }}
+                                        Field="mode"
+                                        Setter={(record) => stateActions.SetIsManual(props, item, record.mode === 'Manual')}
+                                        Label=""
+                                        Position="horizontal"
+                                        Style={{ marginBottom: 0 }}
+                                        Options={manualLimitOptions}
+                                    />
+                                </div>
+                            </div>
+
+                            {axisSettings[item]?.isManual && (
+                                <div className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
+                                    <div className="col-6">
+                                        <Input<ILimits>
+                                            Record={curLimits?.[item] ?? { min: 0, max: 1 }}
+                                            Field={'min'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, axisSettings[item]?.isAuto ?? false)}
+                                            Valid={() => valid}
+                                            Label={`${item} Min [${getLabel(item)}]`} Type={'number'}
+                                            Help={axisSettings[item]?.isAuto ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                        />
+                                    </div>
+                                    <div className="col-6">
+                                        <Input<ILimits>
+                                            Record={curLimits?.[item] ?? { min: 0, max: 1 }}
+                                            Field={'max'}
+                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], props, axisSettings[item]?.isAuto ?? false)}
+                                            Valid={() => valid} Label={`${item} Max [${getLabel(item)}]`}
+                                            Type={'number'}
+                                            Help={axisSettings[item]?.isAuto ? 'When Auto Unit is selected manual limits are in the base unit (e.g., volts)' : undefined}
+                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {overlappingKeys.length > 0 && !singlePlot ?
+                                overlappingKeys.map((key, idx) => {
+                                    const oMeta = plotState.meta[toPlotKey(key)];
+                                    return (
+                                        <div key={idx} className="form-row" style={{ marginTop: '10px', marginLeft: 0 }}>
+                                            <div className="col-6">
+                                                <p style={{ marginTop: '10px' }}>Overlapping Event {idx + 1}</p>
+                                            </div>
+                                            <div className="col-6">
+                                                <RadioButtons<ILimitModeRecord>
+                                                    Record={{ mode: oMeta?.yLimits[item]?.isManual ? 'Manual' : 'Auto' }}
+                                                    Field="mode"
+                                                    Setter={(record) => stateActions.SetIsManual(key, item, record.mode === 'Manual')}
+                                                    Label=""
+                                                    Position="horizontal"
+                                                    Style={{ marginBottom: 0 }}
+                                                    Options={manualLimitOptions}
+                                                />
+                                            </div>
+                                            {oMeta?.yLimits[item]?.isManual && (
+                                                <div className="form-row" style={{ marginLeft: '5px' }}>
+                                                    <div className="col-6">
+                                                        <Input<ILimits>
+                                                            Record={overlappingLimits?.[toPlotKey(key)]?.[item] ?? { min: 0, max: 1 }}
+                                                            Field={'min'}
+                                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
+                                                            Valid={() => valid}
+                                                            Label={`${item} Min [${getLabel(item, key)}]`}
+                                                            Type={'number'}
+                                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                                        />
+                                                    </div>
+                                                    <div className="col-6">
+                                                        <Input<ILimits>
+                                                            Record={overlappingLimits?.[toPlotKey(key)]?.[item] ?? { min: 0, max: 1 }}
+                                                            Field={'max'}
+                                                            Setter={(limits) => handleLimitChange(item, [limits.min, limits.max], key, oMeta?.yLimits[item]?.isAuto ?? false)}
+                                                            Valid={() => valid}
+                                                            Label={`${item} Max [${getLabel(item, key)}]`}
+                                                            Type={'number'}
+                                                            Feedback={"Minimum limit can not be greater than Maximum limit"}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }) : null}
+                        </fieldset>
+                    ))}
+
+                    {props.DataType === "FFT" ?
+                        <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Frequency</legend>
+                            <div className="form-row">
+                                <div className="col-12">
+                                    <AxisUnitSelector
+                                        setter={(index) => handleUnitChange('FFTFrequency', index, props)}
+                                        unitType={'FFTFrequency'}
+                                        axisSetting={axisSettings.FFTFrequency}
+                                    />
+                                </div>
+                            </div>
+                        </fieldset>
+                        : null}
+
+                    {colorSettings.length > 0 ?
+                        <fieldset className="border p-2" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Colors:</legend>
+                            <div ref={colorContainerRef} className="row">
+                                {colorSettings.map((c, i) => {
+                                    const label = getColorLabel(c, props.DataType);
+                                    return (
+                                        <div className={`${colorColumnClass} mb-3`} style={{ minWidth: 0 }} key={i}>
+                                            <div className="text-break" style={colorLabelStyle}>
+                                                {label}
+                                            </div>
+                                            <ColorPicker<OpenSee.IColorCollection>
+                                                Record={colors}
+                                                Field={c}
+                                                Label=""
+                                                Setter={(col) => dispatch(SetColor({ color: c, value: col[c] }))}
+                                                Style={colorPickerStyle}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </fieldset> : null}
+
+                    {props.DataType === "OverlappingWave" ?
+                        <fieldset className="border" style={{ padding: '10px', height: '100%', width: '100%' }}>
+                            <legend className="w-auto" style={{ fontSize: 'large' }}>Time:</legend>
+                            <div className="row">
+                                <div className="col-12">
+                                    <TimeUnitSelector
+                                        timeUnitIndex={overlapWaveTimeUnit}
+                                        setter={handleSetOverlapTimeUnit}
+                                        overlappingWave={true}
+                                    />
+                                </div>
+                            </div>
+                        </fieldset>
+                        : null}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default PlotCard;
+
+const getColorLabel = (color: OpenSee.Color, dataType: OpenSee.graphType): string => {
+    if (dataType === 'Unbalance') {
+        switch (color) {
+            case 'VZero': return 'V Zero/Pos';
+            case 'VNeg': return 'V Neg/Pos';
+            case 'IZero': return 'I Zero/Pos';
+            case 'INeg': return 'I Neg/Pos';
+        }
+    }
+
+    switch (color) {
+        case 'VZero': return 'V Zero';
+        case 'VPos': return 'V Pos';
+        case 'VNeg': return 'V Neg';
+        case 'IZero': return 'I Zero';
+        case 'IPos': return 'I Pos';
+        case 'INeg': return 'I Neg';
+        default: return color as string;
+    }
+}

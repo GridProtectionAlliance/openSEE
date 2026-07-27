@@ -21,18 +21,7 @@
 //
 //******************************************************************************************************
 
-
-using GSF;
-using GSF.Data.Model;
-using GSF.Web;
-using GSF.Web.Model;
-using System;
-using System.Web;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-
 
 namespace OpenSEE.Model
 {

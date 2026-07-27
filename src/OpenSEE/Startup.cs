@@ -21,97 +21,162 @@
 //
 //******************************************************************************************************
 
+using Gemstone.Configuration;
+using Gemstone.Diagnostics;
+using Gemstone.IO;
+using Gemstone.Security.AuthenticationProviders;
+using Gemstone.Web;
+using Gemstone.Web.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Serialization;
+using OpenSEE.Security;
 using System;
 using System.IO;
-using System.Reflection;
-using System.Web.Http;
-using GSF.Diagnostics;
-using GSF.IO;
-using GSF.Web.Security;
-using GSF.Web.Shared;
-using Microsoft.Owin;
-using Owin;
-using static OpenSEE.Common;
-
-[assembly: OwinStartup(typeof(OpenSEE.Startup))]
 namespace OpenSEE;
 
 public class Startup
 {
-    public void Configuration(IAppBuilder app)
-    {
-        // Enable GSF role-based security authentication
-        app.UseAuthentication(s_authenticationOptions);
-
-        OwinLoaded = true;
-
-        // Configure Web API for self-host
-        HttpConfiguration config = new HttpConfiguration();
-
-        // Enable GSF session management
-        config.EnableSessions(s_authenticationOptions);
-
-        // Set configuration to use reflection to setup routes
-        config.MapHttpAttributeRoutes();
-
-        app.UseWebApi(config);
-    }
-
-    private static readonly AuthenticationOptions s_authenticationOptions;
-
-    static Startup()
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
         SetupTempPath();
-
-        s_authenticationOptions = new AuthenticationOptions
-        {
-            LoginPage = "~/Login",
-            LogoutPage = "~/Security/logout",
-            LoginHeader = $"<h3><img src=\"{Resources.Root}/Shared/Images/gpa-smalllock.png\"/> {ApplicationName}</h3>",
-            AuthTestPage = "~/AuthTest",
-            AnonymousResourceExpression = AnonymousResourceExpression,
-            AuthFailureRedirectResourceExpression = @"^/$|^/.+$"
-        };
-
-        AuthenticationOptions = CreateInstance<ReadonlyAuthenticationOptions>(s_authenticationOptions);
-
-        if (!LogEnabled)
-            return;
-
-        // Retrieve application log path as defined in the config file
-        string logPath = LogPath;
-
-        // Make sure log directory exists
-        try
-        {
-            if (!Directory.Exists(logPath))
-                Directory.CreateDirectory(logPath);
-        }
-        catch
-        {
-            logPath = FilePath.GetAbsolutePath("");
-        }
-
-        try
-        {
-            Logger.FileWriter.SetPath(logPath);
-            Logger.FileWriter.SetLoggingFileCount(MaxLogFiles);
-        }
-        catch
-        {
-            // ignored
-        }
+        Configuration = configuration;
+        Env = env;
     }
 
-    public static bool OwinLoaded { get; private set; }
-
-    public static ReadonlyAuthenticationOptions AuthenticationOptions { get; }
-
-    private static T CreateInstance<T>(params object[] args)
+    public static class Policies
     {
-        Type type = typeof(T);
-        object instance = type.Assembly.CreateInstance(type.FullName!, false, BindingFlags.Instance | BindingFlags.NonPublic, null, args, null, null);
-        return (T)instance;
+        public const string Authenticated = nameof(Authenticated);
+        public const string ControllerAccess = nameof(ControllerAccess);
+    }
+
+    public IWebHostEnvironment Env { get; set; }
+    public IConfiguration Configuration { get; }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        IMvcBuilder builder = services
+            .AddControllersWithViews()
+            .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+            });
+
+        //probably should wire this up in openSEE in OHEE via global ajax handler
+        services.AddAntiforgery(options => options.HeaderName = "X-GEMSTONE-VERIFY");
+
+        services.AddTransient<WindowsAuthenticationProviderOptions>(_ => new()
+        {
+            LDAPPath = Settings.Default[WindowsAuthenticationProvider.SettingsSection].LDAPPath,
+            AllowLocalAccounts = (bool?)(Settings.Default[WindowsAuthenticationProvider.SettingsSection].AllowLocalAccounts) ?? false
+        });
+
+        AuthenticationBuilder authenticationBuilder = services.ConfigureGemstoneWebAuthentication<AuthenticationSetup>();
+
+        dynamic oauthSection = Settings.Instance[OAuthAuthenticationProvider.SettingsSection];
+
+        if (oauthSection.Enabled)
+        {
+            OAuthAuthenticationProviderOptions oauthOptions = new()
+            {
+                UserIdClaim = oauthSection.UserIdClaim,
+                Authority = oauthSection.Authority,
+                ClientId = oauthSection.ClientId,
+                ClientSecret = oauthSection.ClientSecret,
+                Scopes = oauthSection.Scopes
+            };
+
+            authenticationBuilder.ConfigureOAuthProvider(oauthOptions);
+        }
+
+        services.AddTransient<IClaimsTransformation, OAuthClaimsTransformation>();
+
+        services
+            .AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            .Configure(options =>
+             {
+                 double ticketTimeout = Settings.Default.WebHosting.AuthenticationTicketTimeout;
+                 options.Cookie.Name = "x-openSEE-auth";
+                 options.ExpireTimeSpan = TimeSpan.FromHours(ticketTimeout);
+             });
+
+        services
+            .AddOptions<SessionCacheOptions>()
+            .Configure(options =>
+            {
+                double sessionTimeout = Settings.Default.WebHosting.AuthenticationSessionTimeout;
+                options.SlidingExpiration = TimeSpan.FromMinutes(sessionTimeout);
+            });
+
+        services.AddAuthorization(options =>
+        {
+            AuthorizationPolicy controllerAccessPolicy =
+                new AuthorizationPolicyBuilder(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .RequireControllerAccess()
+                    .RequireAuthenticatedUser()
+                    .Build();
+
+            options.AddPolicy(Policies.Authenticated, policy => policy.RequireAuthenticatedUser());
+            options.AddPolicy(Policies.ControllerAccess, controllerAccessPolicy);
+            options.DefaultPolicy = controllerAccessPolicy;
+            options.FallbackPolicy = controllerAccessPolicy;
+        });
+
+        services.AddSingleton<IAuthorizationHandler, ControllerAccessHandler>();
+
+        services.AddMvc();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Error");
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            app.UseHsts();
+        }
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions()
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+        });
+
+        app.UseGemstoneAuthentication();
+
+        app.UseStaticFiles(WebExtensions.StaticFileEmbeddedResources());
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapRazorPages();
+
+            endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller}/{newaction?}/{id?}",
+            defaults: new
+            {
+                controller = "Home",
+                action = "Index"
+            });
+
+            endpoints.MapControllers();
+        });
     }
 
     private static void SetupTempPath()

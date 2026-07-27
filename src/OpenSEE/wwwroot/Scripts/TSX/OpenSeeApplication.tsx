@@ -1,0 +1,724 @@
+﻿//******************************************************************************************************
+//  openSEE.tsx - Gbtc
+//
+//  Copyright � 2018, Grid Protection Alliance.  All Rights Reserved.
+//
+//  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
+//  the NOTICE file distributed with this work for additional information regarding copyright ownership.
+//  The GPA licenses this file to you under the MIT License (MIT), the "License"; you may not use this
+//  file except in compliance with the License. You may obtain a copy of the License at:
+//
+//      http://opensource.org/licenses/MIT
+//
+//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
+//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
+//  License for the specific language governing permissions and limitations.
+//
+//  Code Modification History:
+//  ----------------------------------------------------------------------------------------------------
+//  04/17/2018 - Billy Ernest
+//       Generated original version of source code.
+//  08/22/2019 - Christoph Lackner
+//       Added TCE Plot.
+//
+//******************************************************************************************************
+
+// To-DO:
+// # Fix Dowload.ash to include Analytics
+//
+
+import { Application, SplitDrawer, SplitSection, VerticalSplit, IApplicationRefs } from '@gpa-gemstone/react-interactive';
+import { ErrorBoundary, HeartBeatCheck } from '@gpa-gemstone/common-pages';
+import createHistory from "history/createBrowserHistory";
+import * as _ from "lodash";
+import moment from 'moment';
+import * as React from 'react';
+import AnalyticOptions from './Components/AnalyticOptions';
+import OverlappingEventWindow from './Components/OverlappingEvents';
+import AnalyticContext from './Context/AnalyticContext';
+import queryString from 'query-string';
+import { EventContext } from './Context/EventContext';
+import { PlotDataStateContext } from './Context/PlotDataContext';
+import { PlotStateStateContext, PlotStateActionContext } from './Context/PlotStateContext';
+import { OverlappingStateContext, OverlappingActionContext } from './Context/OverlappingContext';
+import BarChart from './Graphs/BarChart';
+import LineChart from './Graphs/LineChart';
+import OpenSeeNavBar from './Navbar/Navbar';
+import { OpenSee } from './global';
+import { useAppDispatch, useAppSelector } from './hooks';
+import { usePlotLifecycle } from './Hooks/usePlotLifeCycle';
+import { selectListGraphs, selectPlotKeys, selectDisplayed, selectEnabledPlots, selectFFTEnabled } from './PlotSelectors';
+import PointWidget from './Widgets/AccumulatedPoints';
+import EventInfo from './Widgets/EventInfo/EventInfo';
+import FFTTable from './Widgets/FFTTable';
+import HarmonicStatsWidget from './Widgets/HarmonicStats';
+import LightningDataWidget from './Widgets/LightningData';
+import PhasorChartWidget from './Widgets/PhasorChart';
+import EventStatsWidget from './Widgets/EventStats';
+import SettingsWidget from './Widgets/PlotSettings/SettingWindow';
+import TimeCorrelatedSagsWidget from './Widgets/TimeCorrelatedSags';
+import ToolTipWidget from './Widgets/Tooltip';
+import ToolTipDeltaWidget from './Widgets/TooltipWithDelta';
+import { SelectMouseMode, SetMouseMode, SetSinglePlot, SelectSinglePlot } from './Store/settingSlice';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
+
+const OpenSeeApplication = React.memo(() => {
+    const dispatch = useAppDispatch();
+
+    const history = React.useRef<object>(createHistory());
+    const plotRef = React.useRef<HTMLDivElement>(null);
+    const applicationRef = React.useRef<IApplicationRefs>(null);
+    const overlayHandles = React.useRef<OpenSee.IOverlayHandlers>({
+        Settings: () => { /* noop */ },
+        AccumulatedPoints: () => { /* noop */ },
+        PolarChart: () => { /* noop */ },
+        EventStats: () => { /* noop */ },
+        CorrelatedSags: () => { /* noop */ },
+        Lightning: () => { /* noop */ },
+        FFTTable: () => { /* noop */ },
+        HarmonicStats: () => { /* noop */ },
+    });
+
+    const evt = React.useContext(EventContext);
+    const { plots: plotData } = React.useContext(PlotDataStateContext);
+    const plotState = React.useContext(PlotStateStateContext);
+    const stateActions = React.useContext(PlotStateActionContext);
+    const overlapping = React.useContext(OverlappingStateContext);
+    const overlappingActions = React.useContext(OverlappingActionContext);
+    const [analytic, setAnalytic] = React.useContext(AnalyticContext);
+
+    const lifecycle = usePlotLifecycle();
+    const mouseMode = useAppSelector(SelectMouseMode);
+    const singlePlot = useAppSelector(SelectSinglePlot);
+
+    // Refs for values read inside the history listener callback.
+    // The listener is set up once on mount, so it would otherwise capture stale closures.
+    const plotStateRef = React.useRef(plotState);
+    const plotDataRef = React.useRef(plotData);
+    const lifecycleRef = React.useRef(lifecycle);
+    const stateActionsRef = React.useRef(stateActions);
+    const analyticRef = React.useRef(analytic);
+    const eventIdRef = React.useRef(evt.Context.EventID);
+    plotStateRef.current = plotState;
+    plotDataRef.current = plotData;
+    lifecycleRef.current = lifecycle;
+    stateActionsRef.current = stateActions;
+    analyticRef.current = analytic;
+    eventIdRef.current = evt.Context.EventID;
+
+    const groupedKeys = React.useMemo(() => selectListGraphs(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
+    const plotKeys = React.useMemo(() => selectPlotKeys(plotState.meta, singlePlot), [plotState.meta, singlePlot]);
+
+    const [openDrawers, setOpenDrawers] = React.useState<OpenSee.Drawers>({
+        Settings: false,
+        AccumulatedPoints: false,
+        PolarChart: false,
+        EventStats: false,
+        CorrelatedSags: false,
+        Lightning: false,
+        FFTTable: false,
+        Info: false,
+        Compare: false,
+        Analytics: false,
+        ToolTip: false,
+        ToolTipDelta: false,
+        HarmonicStats: false
+    });
+
+    const { width: plotWidth, height: plotAreaHeight } = useGetContainerPosition(plotRef);
+    const plotCount = Math.min(plotKeys.length, 3);
+    const plotHeight = plotCount > 0 ? plotAreaHeight / plotCount : plotAreaHeight;
+    const [navWidth, setNavWidth] = React.useState<number>(100);
+
+    // Analytic change tracking ref
+    const oldAnalyticRef = React.useRef<{ [key: string]: number }>({});
+
+    // Load overlapping events when eventID changes
+    React.useEffect(() => {
+        if (evt.Context.EventID > 0)
+            overlappingActions.LoadOverlappingEvents(evt.Context.EventID);
+    }, [evt.Context.EventID]);
+
+    // Refresh analytic plots when analytic settings change
+    React.useEffect(() => {
+        if (evt.Context.EventID < 0) return;
+
+        Object.keys(analytic).forEach(key => {
+            if (oldAnalyticRef.current[key] != null && oldAnalyticRef.current[key] !== analytic[key]) {
+                let graphType: OpenSee.graphType | undefined;
+                switch (key) {
+                    case 'FFTCycles':
+                    case 'FFTStartTime': graphType = 'FFT'; break;
+                    case 'LPFOrder': graphType = 'LowPassFilter'; break;
+                    case 'HPFOrder': graphType = 'HighPassFilter'; break;
+                    case 'Trc': graphType = 'Rectifier'; break;
+                    case 'Harmonic': graphType = 'Harmonic'; break;
+                    default:
+                        console.warn(`Unrecognized analytic key: ${key}`);
+                        break;
+                }
+                if (graphType != null) {
+                    const eventIds = [evt.Context.EventID];
+                    overlapping.events.forEach(e => { if (e.Selected) eventIds.push(e.EventID); });
+                    eventIds.forEach(id => lifecycle.UpdateAnalyticPlot({ DataType: graphType!, EventId: id }));
+                }
+            }
+            oldAnalyticRef.current[key] = analytic[key];
+        });
+    }, [analytic, evt.Context.EventID]);
+
+    // Handle singlePlot toggle
+    React.useEffect(() => {
+        if (singlePlot)
+            lifecycle.RebuildSinglePlots();
+        else
+            lifecycle.RemoveSinglePlots();
+    }, [singlePlot]);
+
+    const queryStr = React.useMemo(() => {
+        const overlappingEvts: number[] = [];
+        const enabledPlots = selectEnabledPlots(plotState.meta, plotData);
+
+        overlapping.events.forEach(e => {
+            if (e.Selected)
+                overlappingEvts.push(e.EventID);
+        });
+
+        enabledPlots.forEach(plot => {
+            const plotEventId = plot.key.EventId;
+            if (plotEventId !== evt.Context.EventID && plotEventId !== -1)
+                overlappingEvts.push(plotEventId);
+        });
+
+        const plotBase64 = btoa(JSON.stringify(enabledPlots));
+        const overlappingBase64 = btoa(JSON.stringify(overlappingEvts));
+
+        const queryObj = {
+            eventID: evt.Context.EventID,
+            startTime: plotState.startTime,
+            endTime: plotState.endTime,
+            Trc: analytic.Trc,
+            HPFOrder: analytic.HPFOrder,
+            LPFOrder: analytic.LPFOrder,
+            CycleLimits: plotState.cycleLimits,
+            FFTLimits: plotState.fftLimits,
+            FFTCycles: analytic.FFTCycles,
+            FFTStartTime: analytic.FFTStartTime,
+            Harmonic: analytic.Harmonic,
+            singlePlot: singlePlot,
+            plots: plotBase64,
+            overlappingInfo: overlappingBase64
+        };
+
+        let query = queryString.stringify(queryObj);
+        // Trim query string if too long
+        const plotQuery = [...enabledPlots];
+        while (query?.length > 3000 && plotQuery?.length > 0) {
+            plotQuery.pop();
+            queryObj.plots = btoa(JSON.stringify(plotQuery));
+            query = queryString.stringify(queryObj);
+        }
+        return query;
+    }, [evt.Context.EventID, plotState, plotData, analytic, singlePlot, overlapping.events]);
+
+    // updates the current event and lets the existing context/query effects fetch the new data
+    const navigateToEvent = (nextEventId: number) => {
+        if (nextEventId == null || isNaN(nextEventId) || nextEventId < 0 || nextEventId === eventIdRef.current)
+            return;
+
+        // Drop comparison selections so the previous event's overlap rows don't carry over.
+        overlappingActions.SetSelectedEvents([]);
+
+        // Swap displayed plots from the old base event to the new one.
+        lifecycle.ReplaceBaseEvent(eventIdRef.current, nextEventId);
+
+        // dispatch new eventID
+        evt.Dispatch.current.SettingsDispatch({ EventID: nextEventId });
+    };
+
+    const ToggleDrawer = (drawer: OpenSee.OverlayDrawers, open: boolean) => {
+        overlayHandles.current[drawer](open);
+    };
+
+    const handleDrawerChange = (drawerName: keyof OpenSee.Drawers, isOpen: boolean) => {
+        setOpenDrawers(prevStates => ({ ...prevStates, [drawerName]: isOpen }));
+    };
+
+    const exportData = (type: string) => {
+        const showPlots = selectDisplayed(plotState.meta);
+        const uri = homePath + `api/CSV/Download?type=${type}&eventID=${evt.Context.EventID}` +
+            `${showPlots.Voltage != undefined ? `&displayVolt=${showPlots.Voltage}` : ``}` +
+            `${showPlots.Current != undefined ? `&displayCur=${showPlots.Current}` : ``}` +
+            `${showPlots.TripCoil != undefined ? `&displayTCE=${showPlots.TripCoil}` : ``}` +
+            `${showPlots.Digitals != undefined ? `&breakerdigitals=${showPlots.Digitals}` : ``}` +
+            `${showPlots.Analogs != undefined ? `&displayAnalogs=${showPlots.Analogs}` : ``}` +
+            `${type == 'fft' ? `&startDate=${plotState.fftLimits[0]}` : ``}` +
+            `${type == 'fft' ? `&cycles=${analytic.FFTCycles}` : ``}` +
+            `&Meter=${evt.Context.EventInfo?.MeterName}` +
+            `&EventType=${evt.Context.EventInfo?.MeterName}`;
+        window.open(uri, "_blank");
+    }
+
+    const DispatchQuery = (argQuery: string, initial: boolean) => {
+        // Read current values from refs to avoid stale closures in the history listener
+        const curPlotState = plotStateRef.current;
+        const curPlotData = plotDataRef.current;
+        const curLifecycle = lifecycleRef.current;
+        const curStateActions = stateActionsRef.current;
+        const curAnalytic = analyticRef.current;
+
+        const parsedQuery = NormalizeQueryKeys(queryString.parse(argQuery.substring(1)));
+
+        let parsedPlots: OpenSee.PlotQuery[] = [];
+        if (parsedQuery?.plots != null) {
+            parsedPlots = JSON.parse(atob(parsedQuery.plots as string));
+        }
+
+        if (parsedQuery?.overlappingInfo != null) {
+            const parsedOverlappingEventIds = JSON.parse(atob(parsedQuery.overlappingInfo as string))
+                .map(ToInt)
+                .filter((eventId: number | undefined) => eventId != null);
+            overlappingActions.SetSelectedEvents(parsedOverlappingEventIds);
+        }
+
+        const enabledPlots = selectEnabledPlots(curPlotState.meta, curPlotData);
+
+        const parsedSinglePlot = ToBool(parsedQuery?.singlePlot);
+        if (parsedSinglePlot != null)
+            dispatch(SetSinglePlot(parsedSinglePlot));
+
+        const parsedEventID = ToInt(parsedQuery?.eventID);
+        let usedEventID: number = defaultEventID;
+        if (parsedEventID != null && !isNaN(parsedEventID) && parsedEventID >= 0 && parsedEventID !== eventIdRef.current) {
+            evt.Dispatch.current.SettingsDispatch({ EventID: parsedEventID });
+            usedEventID = parsedEventID;
+        } else if (initial) {
+            evt.Dispatch.current.SettingsDispatch({ EventID: defaultEventID });
+            usedEventID = defaultEventID;
+        }
+
+        const parsedStart = ToFloat(parsedQuery?.startTime);
+        const parsedEnd = ToFloat(parsedQuery?.endTime);
+        if (parsedStart != undefined && parsedEnd != undefined && (curPlotState.startTime != parsedStart || curPlotState.endTime != parsedEnd))
+            curStateActions.SetTimeLimit(parsedStart, parsedEnd, curPlotData);
+
+        const parsedFFTCycles = ToInt(parsedQuery?.FFTCycles) ?? curAnalytic.FFTCycles;
+        let parsedFFTStartTime = ToFloat(parsedQuery.FFTStartTime) ?? curAnalytic.FFTStartTime;
+        if (parsedStart != undefined && parsedEnd != undefined) {
+            const fftDuration = parsedFFTCycles * 1 / 60.0 * 1000.0;
+            const maxFFTStartTime = parsedEnd - fftDuration;
+            if (parsedFFTStartTime < parsedStart || parsedFFTStartTime > maxFFTStartTime)
+                parsedFFTStartTime = parsedStart;
+        }
+
+        const analyticQuery: OpenSee.IAnalyticContext = {
+            Harmonic: ToInt(parsedQuery?.Harmonic) ?? curAnalytic.Harmonic,
+            Trc: ToInt(parsedQuery?.Trc) ?? curAnalytic.Trc,
+            LPFOrder: ToInt(parsedQuery?.LPFOrder) ?? curAnalytic.LPFOrder,
+            HPFOrder: ToInt(parsedQuery?.HPFOrder) ?? curAnalytic.HPFOrder,
+            FFTCycles: parsedFFTCycles,
+            FFTStartTime: parsedFFTStartTime
+        };
+
+        const analyticData = queryStringToNums(analyticQuery);
+        if (!_.isEqual(curAnalytic, analyticQuery) && analyticData != null)
+            setAnalytic(analyticData);
+
+        if (initial && (parsedPlots == null || (parsedPlots?.length === 0 && enabledPlots?.length === 0))) {
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Voltage" }, undefined, undefined, undefined, undefined, parsedSinglePlot);
+            curLifecycle.AddPlot({ EventId: usedEventID, DataType: "Current" }, undefined, undefined, undefined, undefined, parsedSinglePlot);
+        } else if (parsedPlots?.length > 0) {
+            parsedPlots.forEach(plot => {
+                const plotChange = parsedPlots.length !== enabledPlots.length;
+                const oldPlot = enabledPlots.find(p => p.key.DataType === plot.key.DataType && p.key.EventId === plot.key.EventId);
+                const isYLimitsEqual = _.isEqual(plot?.yLimits, oldPlot?.yLimits);
+                const isFFTLimitsEqual = _.isEqual([ToInt(parsedQuery?.FFTLimits?.[0]), ToInt(parsedQuery?.FFTLimits?.[1])], curPlotState.fftLimits);
+                const isCycleLimitsEqual = _.isEqual([ToInt(parsedQuery?.CycleLimits?.[0]), ToInt(parsedQuery?.CycleLimits?.[1])], curPlotState.cycleLimits);
+
+                const fftStart = ToInt(parsedQuery?.FFTLimits?.[0]);
+                const fftEnd = ToInt(parsedQuery?.FFTLimits?.[1]);
+                const fftLimits: [number, number] | undefined =
+                    fftStart != null && fftEnd != null && !isFFTLimitsEqual ? [fftStart, fftEnd] : undefined;
+
+                const cycleStart = ToInt(parsedQuery?.CycleLimits?.[0]);
+                const cycleEnd = ToInt(parsedQuery?.CycleLimits?.[1]);
+                const cycleLimits: [number, number] | undefined =
+                    cycleStart != null && cycleEnd != null && !isCycleLimitsEqual ? [cycleStart, cycleEnd] : undefined;
+
+                if (plotChange && oldPlot == null && plot.key.EventId !== -1) {
+                    if (parsedSinglePlot ?? false) {
+                        parsedPlots.filter(p => p.key.EventId !== -1 && p.key.DataType === plot.key.DataType)
+                            .filter(p => enabledPlots.find(ep => ep.key.DataType === p.key.DataType && ep.key.EventId === p.key.EventId) == null)
+                            .forEach(p => curLifecycle.AddPlot(
+                                p.key,
+                                !isYLimitsEqual ? plot.yLimits : undefined,
+                                plot.isZoomed,
+                                fftLimits,
+                                cycleLimits,
+                                parsedSinglePlot
+                            ));
+                    } else {
+                        curLifecycle.AddPlot(
+                            plot.key,
+                            !isYLimitsEqual ? plot.yLimits : undefined,
+                            plot.isZoomed,
+                            fftLimits,
+                            cycleLimits
+                        );
+                    }
+                }
+            });
+        }
+    }
+
+    // Resize effects
+    React.useLayoutEffect(() => {
+        const navBar = applicationRef.current?.navBarDiv;
+        if (navBar == null) return;
+
+        const updateNavWidth = () => {
+            const newNavBarWidth = navBar.getBoundingClientRect().width;
+
+            if (!isNaN(newNavBarWidth) && isFinite(newNavBarWidth))
+                setNavWidth(newNavBarWidth);
+        };
+
+        const resizeObserver = new ResizeObserver(updateNavWidth);
+
+        updateNavWidth();
+        resizeObserver.observe(navBar);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, []);
+
+    // Reset time limits when a new event finishes loading
+    React.useEffect(() => {
+        if (evt.Context.Status !== 'idle' || evt.Context.EventInfo == null) return;
+
+        const startTime = new Date(evt.Context.EventInfo.EventDate + "Z").getTime();
+        const endTime = new Date(evt.Context.EventInfo.EventEnd + "Z").getTime();
+
+        if (!isNaN(startTime) && !isNaN(endTime)) {
+            stateActions.SetTimeLimit(startTime, endTime, plotData);
+            setAnalytic(a => {
+                const fftDuration = a.FFTCycles * 1 / 60.0 * 1000.0;
+                if (a.FFTStartTime >= startTime && a.FFTStartTime <= endTime - fftDuration)
+                    return a;
+                return { ...a, FFTStartTime: startTime };
+            });
+        }
+    }, [evt.Context.EventID, evt.Context.Status]);
+
+    // Query string effect
+    React.useEffect(() => {
+        const query = NormalizeQueryKeys(queryString.parse(history.current['location'].search));
+        const parsedStartTime = query.startTime != undefined ? parseInt(query.startTime as string) : undefined;
+        const parsedEndTime = query.endTime != undefined ? parseInt(query.endTime as string) : undefined;
+
+        if (parsedStartTime != undefined && parsedEndTime != undefined) {
+            stateActionsRef.current.SetTimeLimit(parsedStartTime, parsedEndTime, plotDataRef.current);
+            setAnalytic(a => ({ ...a, FFTStartTime: parsedStartTime }));
+        } else {
+            //fallback
+            const evStart = new Date(defaultEventStartTime + "Z").getTime();
+            const evEnd = new Date(defaultEventEndTime + "Z").getTime();
+            stateActionsRef.current.SetTimeLimit(evStart, evEnd, plotDataRef.current);
+            setAnalytic(a => ({ ...a, FFTStartTime: evStart }));
+        }
+
+        DispatchQuery(history.current['location'].search, true);
+
+        history.current['listen'](location => {
+            DispatchQuery(location.search, false);
+        });
+    }, []);
+
+    React.useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            history.current['push'](`?${queryStr}`);
+        }, 1000);
+        return () => clearTimeout(timeoutId);
+    }, [queryStr]);
+
+    // Tooltip select mode effect
+    React.useEffect(() => {
+        if (openDrawers.ToolTipDelta) {
+            const oldMode = _.clone(mouseMode);
+            dispatch(SetMouseMode('select'));
+            return () => { dispatch(SetMouseMode(oldMode)); };
+        }
+    }, [openDrawers.ToolTipDelta]);
+
+    const renderPlot = (item: OpenSee.IGraphProps) => {
+        if (item.DataType === 'FFT')
+            return (
+                <OpenSeeErrorBoundary key={item.DataType + item.EventId} message="Error loading plot.">
+                    <BarChart
+                        width={plotWidth}
+                        height={plotHeight}
+                        dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                    />
+                </OpenSeeErrorBoundary>
+            );
+
+        return (
+            <OpenSeeErrorBoundary key={item.DataType + item.EventId} message="Error loading plot.">
+                <LineChart
+                    width={plotWidth}
+                    height={plotHeight}
+                    showToolTip={openDrawers.ToolTipDelta}
+                    dataKey={{ DataType: item.DataType, EventId: item.EventId }}
+                />
+            </OpenSeeErrorBoundary>
+        );
+    };
+
+    return (
+        <>
+            <HeartBeatCheck IntervalMS={30000} HeartBeat={heartBeatCheck} />
+            <Application
+                HomePath={homePath}
+                DefaultPath={""}
+                HideSideBar={true}
+                Version={version}
+                Logo={`${homePath}Images/openSEE.png`}
+                OnSignOut={() => window.location.href = logoutPath}
+                NavBarContent={
+                    <OpenSeeNavBar
+                        ToggleDrawer={ToggleDrawer}
+                        OpenDrawers={openDrawers}
+                        Width={navWidth}
+                        lifecycle={lifecycle}
+                        navigateToEvent={navigateToEvent}
+                    />
+                }
+                NavBarStyle={{ zIndex: 1051 /* The OverlayDrawer has a zIndex of 1050 and will bleed onto nav when */ }}
+                NavBarImgStyle={{
+                    maxHeight: 55,
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain',
+                    margin: 0
+                }}
+                UseLegacyNavigation={true}
+                ref={applicationRef}
+            >
+                <VerticalSplit style={{ height: '100%', width: '100%' }}>
+                    <SplitDrawer Open={false} Width={25} Title={"Info"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Info", item)}>
+                        <OpenSeeErrorBoundary message="Error loading info.">
+                            <EventInfo />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Compare"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Compare", item)}>
+                        <OpenSeeErrorBoundary message="Error loading compare.">
+                            <OverlappingEventWindow EnableOverlappingEvent={lifecycle.EnableOverlappingEvent} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Analytics"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("Analytics", item)}>
+                        <OpenSeeErrorBoundary message="Error loading analytics.">
+                            <AnalyticOptions lifecycle={lifecycle} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Tooltip"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTip", item)}>
+                        <OpenSeeErrorBoundary message="Error loading tooltip.">
+                            <ToolTipWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Tooltip w/ Delta"} MinWidth={15} MaxWidth={30} OnChange={(item) => handleDrawerChange("ToolTipDelta", item)}>
+                        <OpenSeeErrorBoundary message="Error loading tooltip.">
+                            <ToolTipDeltaWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Settings"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Settings = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("Settings", item)}>
+                        <OpenSeeErrorBoundary message="Error loading settings.">
+                            <SettingsWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Accumulated Points"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.AccumulatedPoints = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("AccumulatedPoints", item)}>
+                        <OpenSeeErrorBoundary message="Error loading accumulated points.">
+                            <PointWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Event Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.EventStats = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("EventStats", item)}>
+                        <OpenSeeErrorBoundary message="Error loading event stats.">
+                            <EventStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Correlated Sags"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.CorrelatedSags = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("CorrelatedSags", item)}>
+                        <OpenSeeErrorBoundary message="Error loading correlated sags.">
+                            <TimeCorrelatedSagsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Lightning"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.Lightning = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("Lightning", item)}>
+                        <OpenSeeErrorBoundary message="Error loading lightning.">
+                            <LightningDataWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"FFT Table"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.FFTTable = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("FFTTable", item)}>
+                        <OpenSeeErrorBoundary message="Error loading FFT table.">
+                            <FFTTable />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Phasor Chart"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.PolarChart = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("PolarChart", item)}>
+                        <OpenSeeErrorBoundary message="Error loading phasor chart.">
+                            <PhasorChartWidget />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitDrawer Open={false} Width={25} Title={"Harmonic Stats"} MinWidth={15} MaxWidth={30} GetOverride={(func) => { overlayHandles.current.HarmonicStats = func; }} ShowClosed={false}
+                        OnChange={(item) => handleDrawerChange("HarmonicStats", item)}>
+                        <OpenSeeErrorBoundary message="Error loading harmonic stats.">
+                            <HarmonicStatsWidget EventID={evt.Context.EventID} ExportCallback={exportData} />
+                        </OpenSeeErrorBoundary>
+                    </SplitDrawer>
+
+                    <SplitSection MinWidth={70} MaxWidth={100} Width={100}>
+                        <div ref={plotRef} style={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+                            {groupedKeys[evt.Context.EventID] != undefined ? (
+                                <>
+                                    {groupedKeys[evt.Context.EventID].map(renderPlot)}
+                                </>
+                            ) : null}
+
+                            {Object.keys(groupedKeys)
+                                .filter(item => parseInt(item) !== evt.Context.EventID)
+                                .map(key =>
+                                    <div className="card" key={key}>
+                                        {overlapping.events.find(item => item.EventID === parseInt(key)) ? (
+                                            <div className="card-header">
+                                                <div className="row">
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Meter:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.MeterName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Asset:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.AssetName ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Type:</span><br />
+                                                        {overlapping.events.find(item => item.EventID === parseInt(key))?.EventType ?? 'n/a'}
+                                                    </div>
+                                                    <div className="col-3" style={{ borderLeft: '1px solid #ddd', borderRight: '1px solid #ddd', paddingLeft: '30px', paddingRight: '30px', textAlign: 'center' }}>
+                                                        <span style={{ textAlign: 'center' }}>Inception:</span><br />
+                                                        {moment(overlapping.events.find(item => item.EventID === parseInt(key))?.Inception).format('YYYY-MM-DD HH:mm:ss.SSS')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        <div className="card-body" style={{ padding: 0 }}>
+                                            {groupedKeys[key].map(renderPlot)}
+                                        </div>
+                                    </div>
+                                )}
+                        </div>
+                    </SplitSection>
+                </VerticalSplit>
+            </Application>
+        </>
+    );
+});
+
+export default OpenSeeApplication;
+
+const ToInt = (arg: any) => {
+    if (arg == undefined) return undefined;
+    const val = parseInt(arg);
+    return isNaN(val) ? undefined : val;
+}
+
+const ToFloat = (arg: any) => {
+    if (arg == undefined) return undefined;
+    const val = parseFloat(arg);
+    return isNaN(val) ? undefined : val;
+}
+
+const ToBool = (arg: any) => {
+    if (arg == undefined) return undefined;
+    if (arg == "True" || arg == "true" || arg == "1") return true;
+    if (arg == "False" || arg == "false" || arg == "0") return false;
+    return undefined;
+}
+
+type ParsedQueryValue = string | string[] | null;
+type ParsedOpenSeeQuery = Partial<Record<keyof OpenSee.Query, ParsedQueryValue>>;
+
+const NormalizeQueryKeys = (parsedQuery: Record<string, ParsedQueryValue>): ParsedOpenSeeQuery => {
+    const queryKeyMap: Record<string, keyof OpenSee.Query> = {
+        plots: "plots",
+        harmonic: "Harmonic",
+        lpforder: "LPFOrder",
+        hpforder: "HPFOrder",
+        trc: "Trc",
+        cyclelimits: "CycleLimits",
+        fftlimits: "FFTLimits",
+        fftcycles: "FFTCycles",
+        fftstarttime: "FFTStartTime",
+        starttime: "startTime",
+        endtime: "endTime",
+        eventid: "eventID",
+        overlappinginfo: "overlappingInfo",
+        singleplot: "singlePlot"
+    };
+    const normalizedQuery: ParsedOpenSeeQuery = {};
+
+    Object.keys(parsedQuery).forEach(key => {
+        const canonicalKey = queryKeyMap[key.toLowerCase()];
+        if (canonicalKey != null)
+            normalizedQuery[canonicalKey] = parsedQuery[key];
+        else
+            (normalizedQuery as Record<string, ParsedQueryValue>)[key] = parsedQuery[key];
+    });
+
+    return normalizedQuery;
+}
+
+const queryStringToNums = (arg: OpenSee.IAnalyticContext) => {
+    if (arg == undefined) return undefined;
+    const query = {};
+    Object.keys(arg).forEach(key => {
+        const num = parseFloat(arg[key]);
+        query[key] = isNaN(num) ? arg[key] : num;
+    });
+    return query as OpenSee.IAnalyticContext;
+}
+
+interface IOpenSeeErrorBoundaryProps {
+    message: string;
+}
+
+const heartBeatCheck = () => {
+    return $.ajax({
+        url: `${homePath}api/OpenSEE/HeartBeat`,
+        method: 'GET',
+        cache: false,
+        async: true
+    });
+}
+
+const OpenSeeErrorBoundary = (props: React.PropsWithChildren<IOpenSeeErrorBoundaryProps>) => (
+    <ErrorBoundary ErrorMessage={props.message} Style={{ height: '100%', width: '100%' }}>
+        {props.children}
+    </ErrorBoundary>
+);

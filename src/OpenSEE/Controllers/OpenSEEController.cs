@@ -28,26 +28,28 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
 using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.Web;
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Data.DataExtensions;
+using Gemstone.Data.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Primitives;
 using OpenSEE.Model;
 using openXDA.Model;
 
 namespace OpenSEE
 {
-    [RoutePrefix("api/OpenSEE")]
+    [Route("api/OpenSEE")]
     public class OpenSEEController : OpenSEEBaseController
     {
         #region [ Members ]       
-        
+
         // Constants
         public const string TimeCorrelatedSagsSQL =
             "SELECT Disturbance.* " +
@@ -100,65 +102,64 @@ namespace OpenSEE
         #endregion
 
         #region [ Static ]
-        
+
 
         static OpenSEEController()
         {
             s_memoryCache = new MemoryCache("openSEE");
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-            {
-                m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
-            }
+            using AdoDataConnection connection = new(Settings.Default);
+            m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
         }
         #endregion
 
         #region [ Methods ]
 
+        [Route("HeartBeat"), HttpGet]
+        public IActionResult HeartBeat() => Ok();
+
         #region [ Waveform Data ]
 
-        [Route("GetData"),HttpGet]
+        [Route("GetData"), HttpGet]
         public async Task<JsonReturn> GetData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-
-                int eventId = int.Parse(query["eventId"]);
-                string type = query["type"];
-                string dataType = query["dataType"];
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                string type = Request.Query["type"].ToString();
+                string dataType = Request.Query["dataType"].ToString();
 
                 bool forceFullRes =
-                    query.TryGetValue("fullRes", out string fullResSetting) &&
-                    int.TryParse(fullResSetting, out int fullResNum) &&
+                    Request.Query.TryGetValue("fullRes", out StringValues fullResSetting) &&
+                    int.TryParse(fullResSetting.ToString(), out int fullResNum) &&
                     fullResNum != 0;
 
                 bool dbgNocompress =
-                    query.TryGetValue("dbgNocompress", out string dbgNocompressSetting) &&
-                    int.TryParse(dbgNocompressSetting, out int dbgNocompressNum) &&
+                    Request.Query.TryGetValue("dbgNocompress", out StringValues dbgNocompressSetting) &&
+                    int.TryParse(dbgNocompressSetting.ToString(), out int dbgNocompressNum) &&
                     dbgNocompressNum != 0;
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
 
-                List<D3Series> returnList = new List<D3Series>();
+                List<D3Series> returnList = [];
 
                 if (dataType == "Time")
                 {
-                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
+                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                     returnList = GetD3DataLookup(dataGroup, type, evt.ID);
                 }
                 else
                 {
-                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, meter, !dbgNocompress);
+                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection, !dbgNocompress);
                     returnList = GetD3FrequencyDataLookup(viCycleDataGroup, type, !forceFullRes);
                 }
 
-                JsonReturn returnDict = new JsonReturn();
-                returnDict.Data = returnList;
-                returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                returnDict.EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds;
+                JsonReturn returnDict = new()
+                {
+                    Data = returnList,
+                    EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds,
+                    EventEndTime = evt.EndTime.Subtract(m_epoch).TotalMilliseconds
+                };
 
                 UpSample(returnDict);
 
@@ -166,24 +167,26 @@ namespace OpenSEE
                     DownSample(returnDict);
 
                 return returnDict;
-            }           
+            }
         }
 
         private List<D3Series> GetD3DataLookup(DataGroup dataGroup, string type, int evtID)
         {
             List<D3Series> dataLookup;
 
-            
+
             dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == type).Select(
-                ds => {
+                ds =>
+                {
                     if (type == "TripCoilCurrent")
                     {
-                        using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                        using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                         {
                             RelayPerformance relayPerformance = new TableOperations<RelayPerformance>(connection).QueryRecordWhere("EventID = {0} AND ChannelID = {1}", evtID, ds.SeriesInfo.ChannelID);
                             List<double[]> dataMarkers = new List<double[]>();
-                            
-                            if (relayPerformance != null) {
+
+                            if (relayPerformance != null)
+                            {
 
                                 try
                                 {
@@ -238,7 +241,8 @@ namespace OpenSEE
                             };
                         }
                     }
-                    else {
+                    else
+                    {
                         return new D3Series()
                         {
                             LegendVGroup = GetVoltageType(ds.SeriesInfo.Channel),
@@ -252,7 +256,7 @@ namespace OpenSEE
                             DataMarker = new List<double[]>(),
                             BaseValue = (type == "Voltage" ? GetBaseV(ds.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, ds.SeriesInfo.Channel.Asset.VoltageKV))
                         };
-                  }
+                    }
                 }).ToList();
 
             if (type == "TripCoilCurrent")
@@ -282,7 +286,7 @@ namespace OpenSEE
         {
             //Determine Sbase
             double Sbase = 0;
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 Sbase = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'");
 
             IEnumerable<string> names = vICycleDataGroup.CycleDataGroups.Where(ds => ds.RMS.SeriesInfo.Channel.MeasurementType.Name == type).Select(ds => ds.RMS.SeriesInfo.Channel.Phase.Name);
@@ -290,7 +294,7 @@ namespace OpenSEE
 
             foreach (CycleDataGroup cdg in vICycleDataGroup.CycleDataGroups.Where(ds => ds.RMS.SeriesInfo.Channel.MeasurementType.Name == type))
             {
-                
+
                 D3Series flotSeriesRMS = new D3Series
                 {
                     LegendHorizontal = "RMS",
@@ -332,9 +336,9 @@ namespace OpenSEE
                     Color = GetColor(cdg.Phase.SeriesInfo.Channel),
                     LegendVGroup = GetVoltageType(cdg.Phase.SeriesInfo.Channel),
                     LegendGroup = cdg.Asset.AssetName,
-                    BaseValue = 1.0, 
+                    BaseValue = 1.0,
                 };
-            
+
                 dataLookup.Add(flotSeriesPolarAngle);
 
             }
@@ -345,21 +349,18 @@ namespace OpenSEE
         #endregion
 
         #region [ Digitals Data ]
-        [Route("GetBreakerData"),HttpGet]
+        [Route("GetBreakerData"), HttpGet]
         public async Task<JsonReturn> GetBreakerData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                ;
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
-           
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, connection);
                 List<D3Series> resultList = GetBreakerLookup(dataGroup);
-                
+
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = resultList;
                 returnDict.EventStartTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
@@ -372,16 +373,16 @@ namespace OpenSEE
         private List<D3Series> GetBreakerLookup(DataGroup dataGroup)
         {
 
-            List<D3Series>  dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital").Select((ds, i) =>
+            List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds => ds.SeriesInfo.Channel.MeasurementType.Name == "Digital").Select((ds, i) =>
                 new D3Series()
-                   {
-                       ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
-                       Unit = "",
-                       Color = $"Generic{i % 8 + 1}",
-                       LegendHorizontal = "Digital",
-                       LegendVertical = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
-                       LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
-                       DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
+                {
+                    ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
+                    Unit = "",
+                    Color = $"Generic{i % 8 + 1}",
+                    LegendHorizontal = "Digital",
+                    LegendVertical = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
+                    LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                    DataPoints = ds.DataPoints.Select(dataPoint => new double[] { dataPoint.Time.Subtract(m_epoch).TotalMilliseconds, dataPoint.Value }).ToList(),
                 }).ToList();
 
             AdjustLegendNumbering(dataLookup);
@@ -407,18 +408,12 @@ namespace OpenSEE
         [Route("GetAnalogsData"), HttpGet]
         public async Task<JsonReturn> GetAnalogsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetAnalogsLookup(dataGroup);
-              
+
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
                 DownSample(returnDict);
@@ -429,14 +424,14 @@ namespace OpenSEE
         private List<D3Series> GetAnalogsLookup(DataGroup dataGroup)
         {
 
-            List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds => 
-                ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" && 
-                ds.SeriesInfo.Channel.MeasurementType.Name != "Voltage" && 
-                ds.SeriesInfo.Channel.MeasurementType.Name != "Current" && 
-                ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds => 
+            List<D3Series> dataLookup = dataGroup.DataSeries.Where(ds =>
+                ds.SeriesInfo.Channel.MeasurementType.Name != "Digital" &&
+                ds.SeriesInfo.Channel.MeasurementType.Name != "Voltage" &&
+                ds.SeriesInfo.Channel.MeasurementType.Name != "Current" &&
+                ds.SeriesInfo.Channel.MeasurementType.Name != "TripCoilCurrent").Select(ds =>
                    new D3Series()
                    {
-                       ChartLabel = (ds.SeriesInfo.Channel.Description == null)? GetChartLabel(ds.SeriesInfo.Channel): ds.SeriesInfo.Channel.Description,
+                       ChartLabel = (ds.SeriesInfo.Channel.Description == null) ? GetChartLabel(ds.SeriesInfo.Channel) : ds.SeriesInfo.Channel.Description,
                        Unit = "",
                        Color = GetColor(ds.SeriesInfo.Channel),
                        LegendHorizontal = ds.SeriesInfo.Channel.Asset.AssetKey,
@@ -449,19 +444,17 @@ namespace OpenSEE
         }
 
         #endregion
-       
+
         #region [ Info ]
 
-        [Route("GetHeaderData"),HttpGet]
+        [Route("GetHeaderData"), HttpGet]
         public Dictionary<string, dynamic> GetHeaderData()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
-            string breakerOperationID = (query.ContainsKey("breakeroperation") ? query["breakeroperation"] : "-1");
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
             Dictionary<string, dynamic> returnDict = new Dictionary<string, dynamic>();
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
 
@@ -473,6 +466,7 @@ namespace OpenSEE
                 returnDict.Add("AssetName", theEvent.AssetName);
                 returnDict.Add("EventName", theEvent.EventTypeName);
                 returnDict.Add("EventDate", theEvent.StartTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
+                returnDict.Add("EventEnd", theEvent.EndTime.ToString("yyyy-MM-dd HH:mm:ss.fffffff"));
                 returnDict.Add("Date", theEvent.StartTime.ToShortDateString());
                 returnDict.Add("EventMilliseconds", theEvent.StartTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);
                 returnDict.Add("xdaInstance", connection.ExecuteScalar<string>("SELECT Value FROM DashSettings WHERE Name = 'System.XDAInstance'"));
@@ -518,13 +512,13 @@ namespace OpenSEE
                 }
                 else if (new List<string>() { "Sag", "Swell" }.Contains(returnDict["EventName"]))
                 {
-                    
+
                     List<openXDA.Model.Disturbance> disturbances = new TableOperations<openXDA.Model.Disturbance>(connection)
                         .QueryRecordsWhere("EventID = {0}", theEvent.ID)
                         .Where(row => row.EventTypeID == theEvent.EventTypeID)
                         .OrderBy(row => row.StartTime)
-                        .ToList(); 
-                    
+                        .ToList();
+
                     openXDA.Model.Disturbance firstDisturbance = disturbances.FirstOrDefault();
                     openXDA.Model.Disturbance lastDisturbance = disturbances.LastOrDefault();
 
@@ -544,22 +538,17 @@ namespace OpenSEE
                     }
                 }
 
-                if (breakerOperationID != "")
+                if (Request.Query.ContainsKey("breakeroperation") && int.TryParse(Request.Query["breakeroperation"].ToString(), out int breakerOperationID))
                 {
-                    int id;
+                    BreakerOperation breakerRow = new TableOperations<BreakerOperation>(connection).QueryRecordWhere("ID = {0}", breakerOperationID);
 
-                    if (int.TryParse(breakerOperationID, out id))
+                    if (breakerRow != null)
                     {
-                        BreakerOperation breakerRow = new TableOperations<BreakerOperation>(connection).QueryRecordWhere("ID = {0}", id);
-
-                        if (breakerRow != null)
-                        {
-                            returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
-                            returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
-                            returnDict.Add("BreakerTiming", breakerRow.BreakerTiming.ToString());
-                            returnDict.Add("BreakerSpeed", breakerRow.BreakerSpeed.ToString());
-                            returnDict.Add("BreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
-                        }
+                        returnDict.Add("BreakerNumber", breakerRow.BreakerNumber);
+                        returnDict.Add("BreakerPhase", new TableOperations<Phase>(connection).QueryRecordWhere("ID = {0}", breakerRow.PhaseID).Name);
+                        returnDict.Add("BreakerTiming", breakerRow.BreakerTiming.ToString());
+                        returnDict.Add("BreakerSpeed", breakerRow.BreakerSpeed.ToString());
+                        returnDict.Add("BreakerOperation", connection.ExecuteScalar("SELECT Name FROM BreakerOperationType WHERE ID = {0}", breakerRow.BreakerOperationTypeID).ToString());
                     }
                 }
 
@@ -567,13 +556,12 @@ namespace OpenSEE
             }
         }
 
-    [Route("GetNavData"), HttpGet]
-    public Dictionary<string, Tuple<EventView, EventView>> GetNavData()
-    {
-        Dictionary<string, string> query = Request.QueryParameters();
-        int eventId = int.Parse(query["eventId"]);
+        [Route("GetNavData"), HttpGet]
+        public Dictionary<string, Tuple<EventView, EventView>> GetNavData()
+        {
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
-        Dictionary<string, Tuple<EventView, EventView>> nextBackLookup = new Dictionary<string, Tuple<EventView, EventView>>()
+            Dictionary<string, Tuple<EventView, EventView>> nextBackLookup = new Dictionary<string, Tuple<EventView, EventView>>()
             {
                 { "System", Tuple.Create((EventView)null, (EventView)null) },
                 { "Station", Tuple.Create((EventView)null, (EventView)null) },
@@ -581,79 +569,81 @@ namespace OpenSEE
                 { "Asset", Tuple.Create((EventView)null, (EventView)null) }
             };
 
-        Func<string, string> func = inputString => {
-            switch (inputString)
+            Func<string, string> func = inputString =>
             {
-                case "System":
-                    return "GetPreviousAndNextEventIdsForSystem";
-                case "Station":
-                    return "GetPreviousAndNextEventIdsForMeterLocation";
-                case "Meter":
-                    return "GetPreviousAndNextEventIdsForMeter";
-                default:
-                    return "GetPreviousAndNextEventIdsForLine";
-            }
-
-        };
-
-        using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-        {
-            EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
-            using (IDbCommand cmd = connection.Connection.CreateCommand())
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.Add(new SqlParameter("@EventID", eventId));
-                cmd.CommandTimeout = 300;
-
-                foreach (string procedure in nextBackLookup.Keys.ToList())
+                switch (inputString)
                 {
-                    EventView back = null;
-                    EventView next = null;
-                    int backID = -1;
-                    int nextID = -1;
-
-                    cmd.CommandText = func(procedure);
-
-                    using (IDataReader rdr = cmd.ExecuteReader())
-                    {
-                        rdr.Read();
-
-                        if (!rdr.IsDBNull(0))
-                        {
-                            backID = rdr.GetInt32(0);
-                        }
-
-                        if (!rdr.IsDBNull(1))
-                        {
-                            nextID = rdr.GetInt32(1);
-                        }
-                    }
-
-                    back = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", backID);
-                    next = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", nextID);
-                    nextBackLookup[procedure] = Tuple.Create(back, next);
+                    case "System":
+                        return "GetPreviousAndNextEventIdsForSystem";
+                    case "Station":
+                        return "GetPreviousAndNextEventIdsForMeterLocation";
+                    case "Meter":
+                        return "GetPreviousAndNextEventIdsForMeter";
+                    default:
+                        return "GetPreviousAndNextEventIdsForLine";
                 }
-            }
-            return nextBackLookup;
-        }
-    }
 
-           
-    #endregion
+            };
+
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
+            {
+                EventView theEvent = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", eventId);
+                using (IDbCommand cmd = connection.Connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@EventID", eventId));
+                    cmd.CommandTimeout = 300;
+
+                    foreach (string procedure in nextBackLookup.Keys.ToList())
+                    {
+                        EventView back = null;
+                        EventView next = null;
+                        int backID = -1;
+                        int nextID = -1;
+
+                        cmd.CommandText = func(procedure);
+
+                        using (IDataReader rdr = cmd.ExecuteReader())
+                        {
+                            rdr.Read();
+
+                            if (!rdr.IsDBNull(0))
+                            {
+                                backID = rdr.GetInt32(0);
+                            }
+
+                            if (!rdr.IsDBNull(1))
+                            {
+                                nextID = rdr.GetInt32(1);
+                            }
+                        }
+
+                        back = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", backID);
+                        next = new TableOperations<EventView>(connection).QueryRecordWhere("ID = {0}", nextID);
+                        nextBackLookup[procedure] = Tuple.Create(back, next);
+                    }
+                }
+                return nextBackLookup;
+            }
+        }
+
+
+        #endregion
 
         #region [ Compare ]
 
-        [Route("GetOverlappingEvents"),HttpGet]
+        [Route("GetOverlappingEvents"), HttpGet]
         public DataTable GetOverlappingEvents()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                DateTime startTime = ((query.ContainsKey("startDate") && query["startDate"]  != "null") ? DateTime.Parse(query["startDate"]) : evt.StartTime);
-                DateTime endTime = ((query.ContainsKey("endDate") && query["endDate"] != "null") ? DateTime.Parse(query["endDate"]) : evt.EndTime);
+                DateTime startTime = (Request.Query.ContainsKey("startDate") && Request.Query["startDate"].ToString() != "null") ?
+                    DateTime.Parse(Request.Query["startDate"].ToString()) : evt.StartTime;
+                DateTime endTime = (Request.Query.ContainsKey("endDate") && Request.Query["endDate"].ToString() != "null") ?
+                    DateTime.Parse(Request.Query["endDate"].ToString()) : evt.EndTime;
 
 
                 DataTable dataTable = connection.RetrieveData(@"
@@ -707,13 +697,12 @@ namespace OpenSEE
         #endregion
 
         #region [ UI Widgets ]
-        [Route("GetScalarStats"),HttpGet]
+        [Route("GetScalarStats"), HttpGet]
         public Dictionary<string, string> GetScalarStats()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 DataTable dataTable = connection.RetrieveData("SELECT * FROM OpenSEEScalarStatView WHERE EventID = {0}", eventId);
                 if (dataTable.Rows.Count == 0) return new Dictionary<string, string>();
@@ -724,13 +713,12 @@ namespace OpenSEE
             }
         }
 
-        [Route("GetHarmonics"),HttpGet]
+        [Route("GetHarmonics"), HttpGet]
         public DataTable GetHarmonics()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventId = int.Parse(query["eventId"]);
+            int eventId = int.Parse(Request.Query["eventId"].ToString());
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 DataTable dataTable = connection.RetrieveData(@"
                     SELECT 
@@ -751,11 +739,10 @@ namespace OpenSEE
         [Route("GetTimeCorrelatedSags"), HttpGet]
         public DataTable GetTimeCorrelatedSags()
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventId"]);
+            int eventID = int.Parse(Request.Query["eventId"].ToString());
 
             if (eventID <= 0) return new DataTable();
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 double timeTolerance = connection.ExecuteScalar<double>("SELECT Value FROM Setting WHERE Name = 'TimeTolerance'");
                 DateTime startTime = connection.ExecuteScalar<DateTime>("SELECT StartTime FROM Event WHERE ID = {0}", eventID);
@@ -768,61 +755,76 @@ namespace OpenSEE
         }
 
         [Route("GetLightningData"), HttpGet]
-        public IEnumerable<object> GetLightningData()
+        public IEnumerable<object> GetLightningData(int eventID)
         {
-            Dictionary<string, string> query = Request.QueryParameters();
-            int eventID = int.Parse(query["eventID"]);
+            using AdoDataConnection connection = new(Settings.Default);
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            const string QueryFormat =
+                "SELECT " +
+                "    LightningStrike.Service, " +
+                "    LightningStrike.UTCTime, " +
+                "    LightningStrike.DisplayTime, " +
+                "    LightningStrike.Amplitude, " +
+                "    LightningStrike.Latitude, " +
+                "    LightningStrike.Longitude, " +
+                "    VaisalaExtendedLightningData.PeakCurrent, " +
+                "    VaisalaExtendedLightningData.FlashMultiplicity, " +
+                "    VaisalaExtendedLightningData.ParticipatingSensors, " +
+                "    VaisalaExtendedLightningData.DegreesOfFreedom, " +
+                "    VaisalaExtendedLightningData.EllipseAngle, " +
+                "    VaisalaExtendedLightningData.SemiMajorAxisLength, " +
+                "    VaisalaExtendedLightningData.SemiMinorAxisLength, " +
+                "    VaisalaExtendedLightningData.ChiSquared, " +
+                "    VaisalaExtendedLightningData.Risetime, " +
+                "    VaisalaExtendedLightningData.PeakToZeroTime, " +
+                "    VaisalaExtendedLightningData.MaximumRateOfRise, " +
+                "    VaisalaExtendedLightningData.CloudIndicator, " +
+                "    VaisalaExtendedLightningData.AngleIndicator, " +
+                "    VaisalaExtendedLightningData.SignalIndicator, " +
+                "    VaisalaExtendedLightningData.TimingIndicator " +
+                "FROM " +
+                "    LightningStrike LEFT OUTER JOIN " +
+                "    VaisalaExtendedLightningData ON VaisalaExtendedLightningData.LightningStrikeID = LightningStrike.ID " +
+                "WHERE EventID = {0}";
+
+            object ToLightningStrike(DataRow row) => new
             {
-                const string QueryFormat =
-                    "SELECT * " +
-                    "FROM " +
-                    "    LightningStrike LEFT OUTER JOIN " +
-                    "    VaisalaExtendedLightningData ON VaisalaExtendedLightningData.LightningStrikeID = LightningStrike.ID " +
-                    "WHERE EventID = {0}";
+                Service = row.ConvertField<string>("Service"),
+                UTCTime = row.ConvertField<DateTime>("UTCTime"),
+                DisplayTime = row.ConvertField<string>("DisplayTime"),
+                Amplitude = row.ConvertField<double>("Amplitude"),
+                Latitude = row.ConvertField<double>("Latitude"),
+                Longitude = row.ConvertField<double>("Longitude"),
+                PeakCurrent = row.ConvertField<int>("PeakCurrent"),
+                FlashMultiplicity = row.ConvertField<int>("FlashMultiplicity"),
+                ParticipatingSensors = row.ConvertField<int>("ParticipatingSensors"),
+                DegreesOfFreedom = row.ConvertField<int>("DegreesOfFreedom"),
+                EllipseAngle = row.ConvertField<double>("EllipseAngle"),
+                SemiMajorAxisLength = row.ConvertField<double>("SemiMajorAxisLength"),
+                SemiMinorAxisLength = row.ConvertField<double>("SemiMinorAxisLength"),
+                ChiSquared = row.ConvertField<double>("ChiSquared"),
+                Risetime = row.ConvertField<double>("Risetime"),
+                PeakToZeroTime = row.ConvertField<double>("PeakToZeroTime"),
+                MaximumRateOfRise = row.ConvertField<double>("MaximumRateOfRise"),
+                CloudIndicator = row.ConvertField<bool>("CloudIndicator"),
+                AngleIndicator = row.ConvertField<bool>("AngleIndicator"),
+                SignalIndicator = row.ConvertField<bool>("SignalIndicator"),
+                TimingIndicator = row.ConvertField<bool>("TimingIndicator")
+            };
 
-                object ToLightningStrike(DataRow row) => new
-                {
-                    Service = row.ConvertField<string>("Service"),
-                    UTCTime = row.ConvertField<DateTime>("UTCTime"),
-                    DisplayTime = row.ConvertField<string>("DisplayTime"),
-                    Amplitude = row.ConvertField<double>("Amplitude"),
-                    Latitude = row.ConvertField<double>("Latitude"),
-                    Longitude = row.ConvertField<double>("Longitude"),
-                    PeakCurrent = row.ConvertField<int>("PeakCurrent"),
-                    FlashMultiplicity = row.ConvertField<int>("FlashMultiplicity"),
-                    ParticipatingSensors = row.ConvertField<int>("ParticipatingSensors"),
-                    DegreesOfFreedom = row.ConvertField<int>("DegreesOfFreedom"),
-                    EllipseAngle = row.ConvertField<double>("EllipseAngle"),
-                    SemiMajorAxisLength = row.ConvertField<double>("SemiMajorAxisLength"),
-                    SemiMinorAxisLength = row.ConvertField<double>("SemiMinorAxisLength"),
-                    ChiSquared = row.ConvertField<double>("ChiSquared"),
-                    Risetime = row.ConvertField<double>("Risetime"),
-                    PeakToZeroTime = row.ConvertField<double>("PeakToZeroTime"),
-                    MaximumRateOfRise = row.ConvertField<double>("MaximumRateOfRise"),
-                    CloudIndicator = row.ConvertField<bool>("CloudIndicator"),
-                    AngleIndicator = row.ConvertField<bool>("AngleIndicator"),
-                    SignalIndicator = row.ConvertField<bool>("SignalIndicator"),
-                    TimingIndicator = row.ConvertField<bool>("TimingIndicator")
-                };
-
-                return connection
-                    .RetrieveData(QueryFormat, eventID)
-                    .AsEnumerable()
-                    .Select(ToLightningStrike);
-            }
+            return connection
+                .RetrieveData(QueryFormat, eventID)
+                .AsEnumerable()
+                .Select(ToLightningStrike);
         }
 
         [Route("GetOutputChannelCount/{eventID}"), HttpGet]
-        public IHttpActionResult GetOutputChannelCount(int eventID)
+        public ActionResult GetOutputChannelCount(int eventID)
         {
-            try
+            if (eventID <= 0) return BadRequest("Invalid EventID");
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                if (eventID <= 0) return BadRequest("Invalid EventID");
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                {
-                    int count = connection.ExecuteScalar<int>(@"
+                int count = connection.ExecuteScalar<int>(@"
                 SELECT 
 	                COUNT(*) 
                 FROM 
@@ -833,12 +835,7 @@ namespace OpenSEE
                 WHERE
                     Event.ID = {0}
                 ", eventID);
-                    return Ok(count);
-                }
-            }
-            catch(Exception ex)
-            {
-                return InternalServerError(ex);
+                return Ok(count);
             }
 
         }
@@ -848,9 +845,9 @@ namespace OpenSEE
 
         #region [ Note Management ]
         [Route("GetPQBrowser"), HttpGet]
-        public IHttpActionResult GetPQBrowser()
+        public ActionResult GetPQBrowser()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 string pqBrowserURl = connection.ExecuteScalar<string>(@"
                 SELECT 
