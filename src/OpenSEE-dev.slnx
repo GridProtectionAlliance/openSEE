@@ -1,0 +1,24 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Development" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="OpenSEE/OpenSEE.csproj" />
+  <Folder Name="/Libraries/">
+    <Project Path="Libraries/PQDS/PQDS.csproj" />
+  </Folder>
+  <Folder Name="/References/">
+    <Project Path="../../../Gemstone/common/src/Gemstone/Gemstone.Common.csproj" />
+    <Project Path="../../../Gemstone/configuration/src/Gemstone.Configuration/Gemstone.Configuration.csproj" />
+    <Project Path="../../../Gemstone/data/src/Gemstone.Data/Gemstone.Data.csproj" />
+    <Project Path="../../../Gemstone/diagnostics/src/Gemstone.Diagnostics/Gemstone.Diagnostics.csproj" />
+    <Project Path="../../../Gemstone/expressions/src/Gemstone.Expressions/Gemstone.Expressions.csproj" />
+    <Project Path="../../../Gemstone/io/src/Gemstone.IO/Gemstone.IO.csproj" />
+    <Project Path="../../../Gemstone/numeric/src/Gemstone.Numeric/Gemstone.Numeric.csproj" />
+    <Project Path="../../../Gemstone/pqdif/src/Gemstone.PQDIF/Gemstone.PQDIF.csproj" />
+    <Project Path="../../../Gemstone/security/src/Gemstone.Security/Gemstone.Security.csproj" />
+    <Project Path="../../../Gemstone/threading/src/Gemstone.Threading/Gemstone.Threading.csproj" />
+    <Project Path="../../../Gemstone/web/src/Gemstone.Web/Gemstone.Web.csproj" />
+  </Folder>
+</Solution>

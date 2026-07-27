@@ -1,0 +1,119 @@
+﻿//******************************************************************************************************
+//  FFTTable.tsx - Gbtc
+//
+//  Copyright © 2018, Grid Protection Alliance.  All Rights Reserved.
+//
+//  Licensed to the Grid Protection Alliance (GPA) under one or more contributor license agreements. See
+//  the NOTICE file distributed with this work for additional information regarding copyright ownership.
+//  The GPA licenses this file to you under the MIT License (MIT), the "License"; you may not use this
+//  file except in compliance with the License. You may obtain a copy of the License at:
+//
+//      http://opensource.org/licenses/MIT
+//
+//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
+//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. Refer to the
+//  License for the specific language governing permissions and limitations.
+//
+//  Code Modification History:
+//  ----------------------------------------------------------------------------------------------------
+//  05/14/2018 - Billy Ernest
+//       Generated original version of source code.
+//
+//******************************************************************************************************
+import * as React from 'react';
+import { PlotDataStateContext } from '../Context/PlotDataContext';
+import { PlotStateStateContext } from '../Context/PlotStateContext';
+import EventContext from '../Context/EventContext';
+import { selectFFTData } from '../PlotSelectors';
+import { OpenSee } from '../global';
+import { Alert } from '@gpa-gemstone/react-interactive';
+import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
+
+const FFTTable = () => {
+    const { plots } = React.useContext(PlotDataStateContext);
+    const { meta } = React.useContext(PlotStateStateContext);
+    const evt = React.useContext(EventContext);
+
+    const fftPoints = React.useMemo(() => selectFFTData(evt.Context.EventID, plots, meta), [evt.Context.EventID, plots, meta]);
+
+    const topRowRef = React.useRef<HTMLTableRowElement>(null);
+    const {offsetHeight: topRowHeight} = useGetContainerPosition(topRowRef);
+    const frequencyLabel = React.useMemo(
+        () => fftPoints.length > 0 ? getFrequencyLabel(fftPoints[0].FrequencyUnit) : '',
+        [fftPoints]
+    );
+
+    if (fftPoints.length === 0)
+        return (
+            <div className="row justify-content-center" style={{ padding: '10px' }}>
+                <div className="col-12">
+                    <Alert Class='alert-info'>
+                        No data for FFT Table.
+                    </Alert>
+                </div>
+            </div>
+        );
+
+    return (
+        <div className="d-flex flex-column" style={{ height: '95%', width: '100%', padding: '10px' }}>
+            <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+            <table className="table table-bordered table-hover" style={{ height: '100%', marginBottom: 0, width: '100%' }}>
+                <thead>
+                    <tr ref={topRowRef}>
+                        <th style={getStickyHeaderStyle(0)}></th>
+                        {fftPoints.map((item, index) => (
+                            <th colSpan={2} key={`header-${index}`} style={getStickyHeaderStyle(0)}><span>{item.Asset} {item.Phase}</span></th>
+                        ))}
+                    </tr>
+                    <tr>
+                        <th style={getStickyHeaderStyle(topRowHeight)}>{frequencyLabel}</th>
+                        {fftPoints.map((item, index) => (
+                            <React.Fragment key={`headerFrag-${index}`}>
+                                <th key={`mag-${index}`} style={getStickyHeaderStyle(topRowHeight)}><span>Mag ({item?.Unit?.short})</span></th>
+                                <th key={`ang-${index}`} style={getStickyHeaderStyle(topRowHeight)}><span>Ang ({item?.PhaseUnit?.short})</span></th>
+                            </React.Fragment>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {fftPoints[0].Angle.map((a, row) => (
+                        <tr key={a + row}>
+                            <td key={a + row}>{(row > 0 ? fftPoints[0].Frequency[row].toFixed(2) : 'DC')}</td>
+                            {fftPoints.map((_, index) => (
+                                <React.Fragment key={`row-${index}-${row}`}>
+                                    {showMag(index, row, fftPoints)}
+                                    {showAng(index, row, fftPoints)}
+                                </React.Fragment>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    );
+};
+
+const getStickyHeaderStyle = (top: number): React.CSSProperties => ({
+    position: 'sticky',
+    top,
+    zIndex: 1,
+    backgroundColor: '#fff',
+    boxShadow: 'inset 0 -1px 0 #dee2e6'
+});
+
+const getFrequencyLabel = (unit: OpenSee.iUnitOptions) => unit.label === unit.short ? unit.label : `${unit.label} [${unit.short}]`;
+
+const showAng = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
+    const f = fftPoints[index].PhaseUnit != undefined ? fftPoints[index].PhaseUnit.factor : 1.0;
+    const val = fftPoints[index].Angle[row] * (f ?? 1);
+    return isNaN(val) ? <td key={`ang-${index}-${row}`}>N/A</td> : <td key={`ang-${index}-${row}`}>{val.toFixed(2)}</td>;
+};
+
+const showMag = (index: number, row: number, fftPoints: OpenSee.IFFTSeries[]) => {
+    const f = (fftPoints?.[index]?.Unit?.factor === undefined ? 1.0 / fftPoints?.[index]?.BaseValue : fftPoints[index]?.Unit?.factor);
+    const val = fftPoints?.[index]?.Magnitude[row] * f;
+    return isNaN(val) ? <td key={`mag-${index}-${row}`}>N/A</td> : <td key={`mag-${index}-${row}`}>{val.toFixed(2)}</td>;
+};
+
+export default FFTTable;

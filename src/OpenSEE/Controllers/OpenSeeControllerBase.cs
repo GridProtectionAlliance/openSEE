@@ -26,16 +26,18 @@ using System.Data;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
 using FaultData.DataAnalysis;
-using GSF.Data;
-using GSF.NumericalAnalysis;
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Data.Model;
+using Gemstone.Numeric.Interpolation;
+using Microsoft.AspNetCore.Mvc;
 using OpenSEE.Model;
 using openXDA.Model;
 
 namespace OpenSEE
 {
-    public class OpenSEEBaseController : ApiController
+    public class OpenSEEBaseController : Controller
     {
         #region [ Members ]
 
@@ -59,7 +61,7 @@ namespace OpenSEE
             {
                 if (m_Sbase != null)
                     return (double)m_Sbase;
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_Sbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemMVABase'") ?? 100.0;
                 return (double)m_Sbase;
             }
@@ -71,8 +73,8 @@ namespace OpenSEE
             {
                 if (m_Fbase != null)
                     return (double)m_Fbase;
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
-                    m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'")?? 60.0;
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
+                    m_Fbase = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'DataAnalysis.SystemFrequency'") ?? 60.0;
                 return (double)m_Fbase;
             }
         }
@@ -84,7 +86,7 @@ namespace OpenSEE
                 if (m_MaxSampleRate != null)
                     return (int)m_MaxSampleRate;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_MaxSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxSampleRate'") ?? "-1");
                 return (int)m_MaxSampleRate;
             }
@@ -97,7 +99,7 @@ namespace OpenSEE
                 if (m_MinSampleRate != null)
                     return (int)m_MinSampleRate;
 
-                using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+                using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                     m_MinSampleRate = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OPenSee.Setting] WHERE Name = 'minSampleRate'") ?? "-1");
                 return (int)m_MinSampleRate;
             }
@@ -130,7 +132,7 @@ namespace OpenSEE
                 return "random";
             }
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
 
                 if (channel.MeasurementType.Name == "Voltage")
@@ -203,21 +205,20 @@ namespace OpenSEE
         /// <returns>A color designation</returns>
         protected string GetFaultDistanceColor(string algorithm)
         {
-            string random = string.Format("#{0:X6}", m_random.Next(0x1000001));
             switch (algorithm)
             {
                 case ("Simple"):
-                    return "faultDistSimple";
+                    return "Simple";
                 case ("Reactance"):
-                    return "faultDistReact";
+                    return "Reactance";
                 case ("Takagi"):
-                    return "faultDistTakagi";
+                    return "Takagi";
                 case ("ModifiedTakagi"):
-                    return "faultDistModTakagi";
+                    return "ModifiedTakagi";
                 case ("Novosel"):
-                    return "faultDistNovosel";
+                    return "Novosel";
                 case ("DoubleEnded"):
-                    return "faultDistDoubleEnd";
+                    return "DoubleEnded";
                 default:
                     return "random";
             }
@@ -234,13 +235,13 @@ namespace OpenSEE
             switch (phase)
             {
                 case ("Avg"):
-                    return "freqAll";
+                    return "All";
                 case ("AN"):
-                    return "freqVa";
+                    return "Va";
                 case ("BN"):
-                    return "freqVb";
+                    return "Vb";
                 case ("CN"):
-                    return "freqVc";
+                    return "Vc";
                                 
                 default:
                     return "random";
@@ -408,7 +409,7 @@ namespace OpenSEE
 
         #region [ Shared Functions ]
 
-        public static async Task<DataGroup> QueryDataGroupAsync(int eventID, Meter meter)
+        public static async Task<DataGroup> QueryDataGroupAsync(int eventID, AdoDataConnection connection)
         {
             string target = $"DataGroup-{eventID}";
 
@@ -423,8 +424,14 @@ namespace OpenSEE
 
             try
             {
-                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection("systemSettings"));
-                DataGroup dataGroup = ToDataGroup(meter, data);
+                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventID);
+                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
+                Asset asset = new TableOperations<Asset>(connection).QueryRecordWhere("ID = {0}", evt.AssetID);
+                asset.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
+
+                List<byte[]> data = ChannelData.DataFromEvent(eventID, () => new AdoDataConnection(Settings.Default));
+                DataGroup dataGroup = ToDataGroup(meter, asset, data);
                 taskCompletionSource.SetResult(dataGroup);
                 return dataGroup;
             }
@@ -436,7 +443,7 @@ namespace OpenSEE
             }
         }
 
-        public static async Task<VIDataGroup> QueryVIDataGroupAsync(int eventID, Meter meter)
+        public static async Task<VIDataGroup> QueryVIDataGroupAsync(int eventID, AdoDataConnection connection)
         {
             string target = $"VIDataGroup-{eventID}";
 
@@ -451,7 +458,7 @@ namespace OpenSEE
 
             try
             {
-                DataGroup dataGroup = await QueryDataGroupAsync(eventID, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventID, connection);
                 VIDataGroup viDataGroup = new VIDataGroup(dataGroup);
                 taskCompletionSource.SetResult(viDataGroup);
                 return viDataGroup;
@@ -464,7 +471,7 @@ namespace OpenSEE
             }
         }
 
-        public static async Task<VICycleDataGroup> QueryVICycleDataGroupAsync(int eventID, Meter meter, bool compress = true)
+        public static async Task<VICycleDataGroup> QueryVICycleDataGroupAsync(int eventID, AdoDataConnection connection, bool compress = true)
         {
             string compression = compress ? "compressed" : "uncompressed";
             string target = $"VICycleDataGroup-{eventID}-{compression}";
@@ -480,7 +487,7 @@ namespace OpenSEE
 
             try
             {
-                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(eventID, meter);
+                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(eventID, connection);
                 VICycleDataGroup viCycleDataGroup = Transform.ToVICycleDataGroup(viDataGroup, Fbase, compress);
                 taskCompletionSource.SetResult(viCycleDataGroup);
                 return viCycleDataGroup;
@@ -493,9 +500,9 @@ namespace OpenSEE
             }
         }
 
-        public static DataGroup ToDataGroup(Meter meter, List<byte[]> data)
+        public static DataGroup ToDataGroup(Meter meter, Asset asset, List<byte[]> data)
         {
-            DataGroup dataGroup = new DataGroup();
+            DataGroup dataGroup = new DataGroup(asset);
             dataGroup.FromData(meter, data);
             VIDataGroup vIDataGroup = new VIDataGroup(dataGroup);
             return vIDataGroup.ToDataGroup();

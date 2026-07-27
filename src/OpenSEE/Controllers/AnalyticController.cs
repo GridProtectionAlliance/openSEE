@@ -21,6 +21,19 @@
 //
 //******************************************************************************************************
 
+using FaultData.DataAnalysis;
+using Gemstone.Collections.CollectionExtensions;
+using Gemstone.Configuration;
+using Gemstone.Data;
+using Gemstone.Data.DataExtensions;
+using Gemstone.Data.Model;
+using Gemstone.Numeric.Analysis;
+using Gemstone.Web;
+using MathNet.Numerics.IntegralTransforms;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using OpenSEE.Model;
+using openXDA.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -29,27 +42,16 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
-using System.Web.Http;
-using FaultData.DataAnalysis;
-using GSF;
-using GSF.Console;
-using GSF.Data;
-using GSF.Data.Model;
-using GSF.NumericalAnalysis;
-using GSF.Web;
-using MathNet.Numerics.IntegralTransforms;
-using OpenSEE.Model;
-using openXDA.Model;
 
 namespace OpenSEE
 {
-    [RoutePrefix("api/Analytic")]
+    [Route("api/Analytic")]
     public class AnalyticController : OpenSEEBaseController
     {
         #region [ Members ]
 
         // Fields
-       
+
         // Fields
 
         #endregion
@@ -59,13 +61,21 @@ namespace OpenSEE
 
         #endregion
 
+        private static string GetSourceTraceLabel(Channel channel, string trace = null)
+        {
+            string vi = channel.MeasurementType.Name == "Voltage" ? "V" : "I";
+            string signal = trace;
+            string label = $"{channel.Asset.AssetName} {vi} {DisplayPhaseName(channel.Phase)}";
+            return string.IsNullOrEmpty(signal) ? label : $"{label} {signal}";
+        }
+
         #region [ Static ]
 
         static AnalyticController()
         {
             s_memoryCache = new MemoryCache("Analytics");
 
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 m_cacheSlidingExpiration = connection.ExecuteScalar<double?>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'SlidingCacheExpiration'") ?? 2.0;
             }
@@ -159,10 +169,10 @@ namespace OpenSEE
                 this.DiscreteGain = 0;
             }
 
-            private void ContinousToDiscrete(double fs, double fp=0 )
+            private void ContinousToDiscrete(double fs, double fp = 0)
             {
                 // prewarp
-                double ws = 2* fs;
+                double ws = 2 * fs;
                 if (fp > 0.0D)
                 {
                     fp = 2.0D * Math.PI * fp;
@@ -175,7 +185,7 @@ namespace OpenSEE
 
                 foreach (Complex p in this.ContinousPoles)
                 {
-                    this.DiscretePoles.Add((1.0D + p / ws)/ (1.0D - p / ws));
+                    this.DiscretePoles.Add((1.0D + p / ws) / (1.0D - p / ws));
                     poleProd = poleProd * (ws - p);
                 }
                 foreach (Complex p in this.ContinousZeros)
@@ -309,7 +319,7 @@ namespace OpenSEE
                 double[] output = new double[n];
 
                 signal.Reverse();
-                
+
 
                 double[] a = this.PolesToPolynomial(this.DiscretePoles.ToArray());
                 double[] b = this.PolesToPolynomial(this.DiscreteZeros.ToArray());
@@ -362,7 +372,7 @@ namespace OpenSEE
                 List<Complex> poles = new List<Complex>();
 
                 //Generate poles
-                for (int i = 1; i < (order+1); i++)
+                for (int i = 1; i < (order + 1); i++)
                 {
                     double theta = Math.PI * (2 * i - 1.0D) / (2.0D * (double)order) + Math.PI / 2.0D;
                     double re = Math.Cos(theta);
@@ -371,7 +381,7 @@ namespace OpenSEE
                     poles.Add(new Complex(re, im));
                 }
 
-              
+
                 Complex Gain = -poles[0];
                 for (int i = 1; i < order; i++)
                 {
@@ -385,7 +395,7 @@ namespace OpenSEE
 
             public static Filter HPButterworth(double fc, int order)
             {
-                Filter result = NormalButter( order);
+                Filter result = NormalButter(order);
                 result.LP2HP();
                 result.Scale(fc);
                 return result;
@@ -412,18 +422,16 @@ namespace OpenSEE
 
         #region [ Fault Location Data ]
 
-        [Route("GetFaultDistanceData"),HttpGet]
+        [Route("GetFaultDistanceData"), HttpGet]
         public JsonReturn GetFaultDistanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
                 Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
                 Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
                 Asset asset = new TableOperations<Asset>(connection).QueryRecordWhere("ID = {0}", evt.AssetID);
-                meter.ConnectionFactory = () => new AdoDataConnection(connection.Connection, typeof(SqlDataAdapter), false);
+                meter.ConnectionFactory = () => new AdoDataConnection(Settings.Default);
 
                 List<D3Series> returnList = new List<D3Series>();
 
@@ -444,18 +452,38 @@ namespace OpenSEE
 
         private D3Series QueryFaultDistanceData(int faultCurveID, Meter meter, Asset asset, int evtID)
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 FaultCurve faultCurve = new TableOperations<FaultCurve>(connection).QueryRecordWhere("ID = {0}", faultCurveID);
                 DataGroup dataGroup = new DataGroup();
                 dataGroup.FromData(meter, new List<byte[]>(1) { faultCurve.Data });
                 string units = connection.ExecuteScalar<string>("SELECT Value FROM Setting WHERE Name = 'LengthUnits'");
-                List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1}", evtID, faultCurve.Algorithm).ToList();
-               
+                List<FaultSummary> faultSummaries = new TableOperations<FaultSummary>(connection).QueryRecordsWhere("EventID = {0} AND Algorithm = {1} AND PathNumber = {2}", evtID, faultCurve.Algorithm, faultCurve.PathNumber).ToList();
+                string legendGroup = asset.AssetName;
+
+                if (faultSummaries.Count > 0)
+                {
+                    string destination = connection.ExecuteScalar<string>(@"
+                        SELECT COALESCE(Location.LocationKey,
+                            CASE
+                                WHEN (SELECT COUNT(*) FROM LineSegmentAttributes WHERE LineSegmentAttributes.FromBus = LineSegment.ToBus OR LineSegmentAttributes.ToBus = LineSegment.ToBus) < 2 THEN LineSegment.ToBus
+                                ELSE LineSegment.FromBus
+                            END)
+                        FROM
+                            FaultSummary JOIN
+                            LineSegment ON FaultSummary.PathEndSegmentID = LineSegment.ID LEFT JOIN
+                            AssetLocation ON FaultSummary.PathEndSegmentID = AssetLocation.AssetID LEFT JOIN
+                            Location ON AssetLocation.LocationID = Location.ID
+                        WHERE FaultSummary.ID = {0}", faultSummaries[0].ID);
+
+                    if (!string.IsNullOrEmpty(destination))
+                        legendGroup = destination;
+                }
+
                 D3Series series = new D3Series()
                 {
                     ChartLabel = faultCurve.Algorithm,
-                    LegendGroup = asset.AssetName,
+                    LegendGroup = legendGroup,
                     LegendVertical = faultCurve.Algorithm,
                     Unit = "Distance",
                     Color = GetFaultDistanceColor(faultCurve.Algorithm),
@@ -465,7 +493,13 @@ namespace OpenSEE
 
                 if (faultSummaries.Count >= 0)
                 {
-                    series.DataMarker.AddRange(from faultSummary in faultSummaries select new double[] { faultSummary.Inception.Subtract(m_epoch).TotalMilliseconds, faultSummary.Distance });
+                    series.DataMarker.AddRange(
+                        faultSummaries.Select(faultSummary => new double[]
+                        {
+                            dataGroup.DataSeries[0].DataPoints[faultSummary.CalculationCycle].Time.Subtract(m_epoch).TotalMilliseconds,
+                            faultSummary.Distance
+                        })
+                    );
                 }
 
                 if (units == "kilometer")
@@ -484,21 +518,18 @@ namespace OpenSEE
         [Route("GetFirstDerivativeData"), HttpGet]
         public async Task<JsonReturn> GetFirstDerivativeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
                 List<D3Series> returnList = new List<D3Series>();
-                DataTable table = connection.RetrieveData("SELECT ID, StartTime FROM Event WHERE ID = {0}", evt.ID);
+                DataTable table = connection.RetrieveData("SELECT ID, StartTime FROM Event WHERE ID = {0}", eventId);
                 foreach (DataRow row in table.Rows)
                 {
                     int eventID = row.ConvertField<int>("ID");
-                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
-                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventID, meter);
+                    // ToDo: this logic seems wrong, we look this up every time but it should be the same result, same eventId, unlike the line after...
+                    DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
+                    VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventID, connection);
                     returnList = returnList.Concat(GetFirstDerivativeLookup(dataGroup, viCycleDataGroup)).ToList();
                 }
 
@@ -560,14 +591,15 @@ namespace OpenSEE
             {
                 Unit = (dataSeries.SeriesInfo.Channel.MeasurementType.Name) + "perSecond",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetKey,
-                ChartLabel = dataSeries.SeriesInfo.Channel.Phase.Name + type +  " First Derivative",
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel, type),
+                ChartLabel = dataSeries.SeriesInfo.Channel.Phase.Name + type + " First Derivative",
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
                 LegendVGroup = legenclass,
                 DataMarker = new List<double[]>(),
-                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)* 1000.0),
-                DataPoints = dataSeries.DataPoints.Select((point, index) => {
+                BaseValue = (type == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV) * 1000.0),
+                DataPoints = dataSeries.DataPoints.Select((point, index) =>
+                {
                     double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
                     double y = point.Value;
 
@@ -600,16 +632,11 @@ namespace OpenSEE
         [Route("GetImpedanceData"), HttpGet]
         public async Task<JsonReturn> GetImpedanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
+                VICycleDataGroup viCycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetImpedanceLookup(viCycleDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -637,7 +664,7 @@ namespace OpenSEE
                     Color = "Xa",
                     LegendVGroup = "",
                     BaseValue = GetZbase(Sbase, vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataMarker = new List<double[]>(),           
+                    DataMarker = new List<double[]>(),
                     DataPoints = impedancePoints.Select((iPoint, index) => new double[] { Timing[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary }).ToList()
                 });
 
@@ -790,15 +817,10 @@ namespace OpenSEE
         [Route("GetRemoveCurrentData"), HttpGet]
         public async Task<JsonReturn> GetRemoveCurrentData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetRemoveCurrentLookup(dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -811,14 +833,15 @@ namespace OpenSEE
         public List<D3Series> GetRemoveCurrentLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
-           
+
 
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
 
-            iAN.ForEach(item => {
+            iAN.ForEach(item =>
+            {
 
                 int samplesPerCycle = Transform.CalculateSamplesPerCycle(item.SampleRate, Fbase);
 
@@ -837,7 +860,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Pre-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -850,7 +873,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Post-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -877,7 +900,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Pre-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -890,7 +913,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Post-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -915,7 +938,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Pre-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -928,7 +951,7 @@ namespace OpenSEE
                     ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " Post-Fault",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
                     DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -939,21 +962,16 @@ namespace OpenSEE
         }
 
         #endregion
-        
+
         #region [ I2t ]
 
         [Route("GetI2tData"), HttpGet]
         public async Task<JsonReturn> GetI2tData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetI2tLookup(dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -966,43 +984,43 @@ namespace OpenSEE
         public List<D3Series> GetI2tLookup(DataGroup dataGroup)
         {
             List<D3Series> dataLookup = new List<D3Series>();
-           
+
 
             List<DataSeries> current = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" &&
-             x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && 
+             x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" &&
              (x.SeriesInfo.Channel.Phase.Name == "AN" || x.SeriesInfo.Channel.Phase.Name == "BN" || x.SeriesInfo.Channel.Phase.Name == "CN")).ToList();
-       
-            
+
+
             current.ForEach(item =>
             {
-                  dataLookup.Add(new D3Series()
+                dataLookup.Add(new D3Series()
                 {
 
                     LegendVGroup = "",
                     LegendHorizontal = "",
                     LegendVertical = DisplayPhaseName(item.SeriesInfo.Channel.Phase),
-                    ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " I2t",
+                    ChartLabel = GetChartLabel(item.SeriesInfo.Channel) + " I2T",
                     Unit = "Current",
                     Color = GetColor(item.SeriesInfo.Channel),
-                    LegendGroup = item.SeriesInfo.Channel.Asset.AssetName,
+                    LegendGroup = GetSourceTraceLabel(item.SeriesInfo.Channel),
                     DataMarker = new List<double[]>(),
                     BaseValue = GetIbase(Sbase, item.SeriesInfo.Channel.Asset.VoltageKV),
-                    DataPoints = ComputeI2T(item.DataPoints,1.0/(double)item.SampleRate).ToList()
+                    DataPoints = ComputeI2T(item.DataPoints, 1.0 / (double)item.SampleRate).ToList()
                 });
             });
 
-            
+
             return dataLookup;
         }
 
         private IEnumerable<double[]> ComputeI2T(IEnumerable<DataPoint> current, double timeStep)
         {
             double sum = 0;
-            foreach(DataPoint point in current)
+            foreach (DataPoint point in current)
             {
                 sum += point.Value * point.Value * timeStep;
-                yield return new double[] {point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
-            }        
+                yield return new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, sum };
+            }
         }
 
 
@@ -1012,16 +1030,10 @@ namespace OpenSEE
         [Route("GetPowerData"), HttpGet]
         public async Task<JsonReturn> GetPowerData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetPowerLookup(vICycleDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1047,7 +1059,7 @@ namespace OpenSEE
 
                 List<DataPoint> currentPointsMag = vICycleDataGroup.IA.RMS.DataPoints;
                 List<DataPoint> currentPointsAng = vICycleDataGroup.IA.Phase.DataPoints;
-                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value/1000.0D, currentPointsAng[index].Value))).ToList();
+                List<Complex> currentPoints = currentPointsMag.Select((iMagPoint, index) => Complex.Conjugate(Complex.FromPolarCoordinates(iMagPoint.Value / 1000.0D, currentPointsAng[index].Value))).ToList();
 
                 powerPointsAN = voltagePoints.Select((vPoint, index) => currentPoints[index] * vPoint).ToList();
 
@@ -1093,10 +1105,10 @@ namespace OpenSEE
                 });
                 dataLookup.Add(new D3Series()
                 {
-                    LegendHorizontal = "Pf",
+                    LegendHorizontal = "PF",
                     LegendVertical = "AN",
                     Unit = "PowerPf",
-                    Color = "Pfa",
+                    Color = "PFa",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     BaseValue = 1.0,
@@ -1160,10 +1172,10 @@ namespace OpenSEE
                 });
                 dataLookup.Add(new D3Series()
                 {
-                    LegendHorizontal = "Pf",
+                    LegendHorizontal = "PF",
                     LegendVertical = "BN",
                     Unit = "PowerPf",
-                    Color = "Pfb",
+                    Color = "PFb",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     BaseValue = 1.0,
@@ -1226,10 +1238,10 @@ namespace OpenSEE
                 });
                 dataLookup.Add(new D3Series()
                 {
-                    LegendHorizontal = "Pf",
+                    LegendHorizontal = "PF",
                     LegendVertical = "CN",
                     Unit = "PowerPf",
-                    Color = "Pfc",
+                    Color = "PFc",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     BaseValue = 1.0,
@@ -1253,7 +1265,7 @@ namespace OpenSEE
                     Color = "Qt",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
-                    BaseValue = 3*Sbase,
+                    BaseValue = 3 * Sbase,
                     DataMarker = new List<double[]>(),
                     ChartLabel = "Total Reactive Power",
                     DataPoints = powerPoints.Select((iPoint, index) => new double[] {  vICycleDataGroup.VC.RMS.DataPoints[index].Time.Subtract(m_epoch).TotalMilliseconds, iPoint.Imaginary
@@ -1287,10 +1299,10 @@ namespace OpenSEE
                 });
                 dataLookup.Add(new D3Series()
                 {
-                    LegendHorizontal = "Pf",
+                    LegendHorizontal = "PF",
                     LegendVertical = "Total",
                     Unit = "PowerPf",
-                    Color = "Pft",
+                    Color = "PFt",
                     LegendVGroup = "",
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     BaseValue = 1.0,
@@ -1309,15 +1321,10 @@ namespace OpenSEE
         [Route("GetMissingVoltageData"), HttpGet]
         public async Task<JsonReturn> GetMissingVoltageData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetMissingVoltageLookup(dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1357,13 +1364,13 @@ namespace OpenSEE
                         LegendVGroup = "",
                         LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase),
                         LegendHorizontal = "Pre",
-                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        LegendGroup = GetSourceTraceLabel(ds.SeriesInfo.Channel),
                         BaseValue = ds.SeriesInfo.Channel.Asset.VoltageKV,
                         DataMarker = new List<double[]>(),
                         DataPoints = fullWaveFormPre.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
 
 
-                    }) ;
+                    });
                     dataLookup.Add(new D3Series()
                     {
                         Unit = "Voltage",
@@ -1371,7 +1378,7 @@ namespace OpenSEE
                         LegendVGroup = "",
                         LegendVertical = DisplayPhaseName(ds.SeriesInfo.Channel.Phase),
                         LegendHorizontal = "Post",
-                        LegendGroup = ds.SeriesInfo.Channel.Asset.AssetName,
+                        LegendGroup = GetSourceTraceLabel(ds.SeriesInfo.Channel),
                         BaseValue = ds.SeriesInfo.Channel.Asset.VoltageKV,
                         DataMarker = new List<double[]>(),
                         DataPoints = fullWaveFormPost.Select((point, index) => new double[] { point.Time.Subtract(m_epoch).TotalMilliseconds, point.Value }).ToList()
@@ -1390,15 +1397,10 @@ namespace OpenSEE
         [Route("GetClippedWaveformsData"), HttpGet]
         public async Task<JsonReturn> GetClippedWaveformsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetClippedWaveformsLookup(dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1412,7 +1414,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
@@ -1421,13 +1423,13 @@ namespace OpenSEE
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
 
-            dataLookup = dataLookup.Concat(vAN.Select(x => GenerateFixedWaveform( x, "VAN"))).ToList();
-            dataLookup = dataLookup.Concat(vBN.Select(x => GenerateFixedWaveform( x, "VBN"))).ToList();
-            dataLookup = dataLookup.Concat(vCN.Select(x => GenerateFixedWaveform( x, "VCN"))).ToList();
+            dataLookup = dataLookup.Concat(vAN.Select(x => GenerateFixedWaveform(x, "VAN"))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(x => GenerateFixedWaveform(x, "VBN"))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(x => GenerateFixedWaveform(x, "VCN"))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.Select(x => GenerateFixedWaveform( x, "IAN"))).ToList();
-            dataLookup = dataLookup.Concat(iBN.Select(x => GenerateFixedWaveform( x, "IBN"))).ToList();
-            dataLookup = dataLookup.Concat(iCN.Select(x => GenerateFixedWaveform( x, "ICN"))).ToList();
+            dataLookup = dataLookup.Concat(iAN.Select(x => GenerateFixedWaveform(x, "IAN"))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(x => GenerateFixedWaveform(x, "IBN"))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(x => GenerateFixedWaveform(x, "ICN"))).ToList();
 
             return dataLookup;
         }
@@ -1445,7 +1447,7 @@ namespace OpenSEE
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = (type == "V" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = type,
@@ -1532,17 +1534,11 @@ namespace OpenSEE
         [Route("GetLowPassFilterData"), HttpGet]
         public async Task<JsonReturn> GetLowPassFilterData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int filterOrder = int.Parse(query["filter"]);
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int filterOrder = int.Parse(Request.Query["filter"].ToString());
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetLowPassFilterLookup(dataGroup, filterOrder);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1563,7 +1559,7 @@ namespace OpenSEE
             List<DataSeries> iBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            
+
 
             Filter LPF = Filter.LPButterworth(120.0, order);
 
@@ -1590,14 +1586,14 @@ namespace OpenSEE
                 Unit = Data.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(Data.SeriesInfo.Channel),
                 BaseValue = (Data.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? Data.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, Data.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = Data.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(Data.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(Data.SeriesInfo.Channel.Phase),
                 LegendHorizontal = (Data.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
                 LegendVGroup = "",
                 DataPoints = results.Select((point, index) => new double[] { points[index].Time.Subtract(m_epoch).TotalMilliseconds, point }).ToList()
             };
-        
+
         }
 
         #endregion
@@ -1607,17 +1603,11 @@ namespace OpenSEE
         [Route("GetHighPassFilterData"), HttpGet]
         public async Task<JsonReturn> GetHighPassFilterData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int filterOrder = int.Parse(query["filter"]);
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int filterOrder = int.Parse(Request.Query["filter"].ToString());
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetHighPassFilterLookup(dataGroup, filterOrder);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1660,15 +1650,10 @@ namespace OpenSEE
         [Route("GetOverlappingWaveformData"), HttpGet]
         public async Task<JsonReturn> GetOverlappingWaveformData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetOverlappingWaveformLookup(dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1679,7 +1664,7 @@ namespace OpenSEE
 
         public List<D3Series> GetOverlappingWaveformLookup(DataGroup dataGroup)
         {
-            
+
 
             List<D3Series> dataLookup = new List<D3Series>();
 
@@ -1714,7 +1699,7 @@ namespace OpenSEE
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
@@ -1722,7 +1707,7 @@ namespace OpenSEE
                 DataPoints = new List<double[]>()
             };
 
-           
+
             foreach (var cycle in cycles)
             {
                 IEnumerable<double[]> cycleData = cycle.Select(dataPoint => new double[] { dataPoint.SampleIndex * factor, dataPoint.Point.Value });
@@ -1739,8 +1724,8 @@ namespace OpenSEE
 
                         cycleData = Enumerable.Range(0, (int)Math.Floor(NCycle * MaxSampleRate)).Select(j => cycleDatalist[(j * step)]);
                     }
-                    
-                }    
+
+                }
 
                 series.DataPoints = series.DataPoints.Concat(cycleData).ToList();
                 series.DataPoints = series.DataPoints.Concat(new List<double[]> { new double[] { double.NaN, double.NaN } }).ToList();
@@ -1756,16 +1741,10 @@ namespace OpenSEE
         [Route("GetRapidVoltageChangeData"), HttpGet]
         public async Task<JsonReturn> GetRapidVoltageChangeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetRapidVoltageChangeLookup(vICycleDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1792,42 +1771,43 @@ namespace OpenSEE
 
         private D3Series GetRapidVoltageChangeFlotSeries(DataSeries dataSeries)
         {
-            
-                double nominalVoltage = dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0D;
 
-                double lastY = 0;
-                double lastX = 0;
+            double nominalVoltage = dataSeries.SeriesInfo.Channel.Asset.VoltageKV * 1000.0D;
 
-                D3Series series = new D3Series()
+            double lastY = 0;
+            double lastX = 0;
+
+            D3Series series = new D3Series()
+            {
+                Unit = "Voltage",
+                Color = GetColor(dataSeries.SeriesInfo.Channel),
+                BaseValue = dataSeries.SeriesInfo.Channel.Asset.VoltageKV,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel, "RMS"),
+                DataMarker = new List<double[]>(),
+                LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
+                LegendHorizontal = "",
+                LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
+                DataPoints = dataSeries.DataPoints.Select((point, index) =>
                 {
-                    Unit = "Voltage",
-                    Color = GetColor(dataSeries.SeriesInfo.Channel),
-                    BaseValue = dataSeries.SeriesInfo.Channel.Asset.VoltageKV,
-                    LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
-                    DataMarker = new List<double[]>(),
-                    LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                    LegendHorizontal = "",
-                    LegendVGroup = GetVoltageType(dataSeries.SeriesInfo.Channel),
-                    DataPoints = dataSeries.DataPoints.Select((point, index) => {
-                        double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
-                        double y = point.Value;
+                    double x = point.Time.Subtract(m_epoch).TotalMilliseconds;
+                    double y = point.Value;
 
-                        if (index == 0)
-                        {
-                            lastY = y;
-                        }
-
-                        double[] arr = new double[] { x, (y - lastY) * 100 / nominalVoltage };
-
+                    if (index == 0)
+                    {
                         lastY = y;
-                        lastX = x;
-                        return arr;
-                    }).ToList()
-                };
+                    }
 
-                
-                return series;
-            
+                    double[] arr = new double[] { x, (y - lastY) * 100 / nominalVoltage };
+
+                    lastY = y;
+                    lastX = x;
+                    return arr;
+                }).ToList()
+            };
+
+
+            return series;
+
         }
 
         #endregion
@@ -1838,16 +1818,10 @@ namespace OpenSEE
         [Route("GetSymmetricalComponentsData"), HttpGet]
         public async Task<JsonReturn> GetSymmetricalComponentsData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetSymmetricalComponentsLookup(vICycleDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -1870,7 +1844,8 @@ namespace OpenSEE
                 var vc = vICycleDataGroup.VC.RMS.DataPoints;
                 var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) =>
+                {
                     DataPoint vaPoint = point;
                     DataPoint vaPhasePoint = vaPhase[index];
                     Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
@@ -1891,7 +1866,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Voltage",
-                    Color = "VS0",
+                    Color = "VZero",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
                     LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
@@ -1904,7 +1879,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Voltage",
-                    Color = "VS1",
+                    Color = "VPos",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
                     LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
@@ -1916,7 +1891,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Voltage",
-                    Color = "VS2",
+                    Color = "VNeg",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
                     LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
@@ -1939,7 +1914,8 @@ namespace OpenSEE
                 var ic = vICycleDataGroup.IC.RMS.DataPoints;
                 var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) =>
+                {
                     DataPoint iaPoint = point;
                     DataPoint iaPhasePoint = iaPhase[index];
                     Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
@@ -1960,8 +1936,8 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Current",
-                    Color = "IS0",
-                    BaseValue = GetIbase(Sbase,vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
+                    Color = "IZero",
+                    BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
                     LegendVertical = "Zero",
@@ -1973,7 +1949,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Current",
-                    Color = "IS1",
+                    Color = "IPos",
                     BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
@@ -1985,7 +1961,7 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Current",
-                    Color = "IS2",
+                    Color = "INeg",
                     BaseValue = GetIbase(Sbase, vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.VoltageKV),
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
@@ -2023,16 +1999,10 @@ namespace OpenSEE
         [Route("GetUnbalanceData"), HttpGet]
         public async Task<JsonReturn> GetUnbalanceData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                VICycleDataGroup vICycleDataGroup = await QueryVICycleDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetUnbalanceLookup(vICycleDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -2055,7 +2025,8 @@ namespace OpenSEE
                 var vc = vICycleDataGroup.VC.RMS.DataPoints;
                 var vcPhase = vICycleDataGroup.VC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = va.Select((point, index) =>
+                {
                     DataPoint vaPoint = point;
                     DataPoint vaPhasePoint = vaPhase[index];
                     Complex vaComplex = Complex.FromPolarCoordinates(vaPoint.Value, vaPhasePoint.Value);
@@ -2076,11 +2047,11 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Unbalance",
-                    Color = "VS0",
+                    Color = "VZero",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
                     LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "S0/S1",
+                    LegendVertical = "Zero/Pos",
                     LegendHorizontal = "V",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude / point.S1.Magnitude }).ToList()
@@ -2090,11 +2061,11 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Unbalance",
-                    Color = "VS2",
+                    Color = "VNeg",
                     BaseValue = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.VoltageKV,
                     LegendGroup = vICycleDataGroup.VA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "S2/S1",
+                    LegendVertical = "Neg/Pos",
                     LegendHorizontal = "V",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { va[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude / point.S1.Magnitude }).ToList()
@@ -2114,7 +2085,8 @@ namespace OpenSEE
                 var ic = vICycleDataGroup.IC.RMS.DataPoints;
                 var icPhase = vICycleDataGroup.IC.Phase.DataPoints;
 
-                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) => {
+                IEnumerable<SequenceComponents> sequencComponents = ia.Select((point, index) =>
+                {
                     DataPoint iaPoint = point;
                     DataPoint iaPhasePoint = iaPhase[index];
                     Complex iaComplex = Complex.FromPolarCoordinates(iaPoint.Value, iaPhasePoint.Value);
@@ -2136,11 +2108,11 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Unbalance",
-                    Color = "IS0",
+                    Color = "IZero",
                     BaseValue = 1.0,
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "S0/S1",
+                    LegendVertical = "Zero/Pos",
                     LegendHorizontal = "I",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S0.Magnitude / point.S1.Magnitude }).ToList()
@@ -2150,11 +2122,11 @@ namespace OpenSEE
                 dataLookup.Add(new D3Series()
                 {
                     Unit = "Unbalance",
-                    Color = "IS2",
+                    Color = "INeg",
                     BaseValue = 1.0,
                     LegendGroup = vICycleDataGroup.IA.RMS.SeriesInfo.Channel.Asset.AssetName,
                     DataMarker = new List<double[]>(),
-                    LegendVertical = "S2/S1",
+                    LegendVertical = "Neg/Pos",
                     LegendHorizontal = "I",
                     LegendVGroup = "",
                     DataPoints = sequencComponents.Select((point, index) => new double[] { ia[index].Time.Subtract(m_epoch).TotalMilliseconds, point.S2.Magnitude / point.S1.Magnitude }).ToList()
@@ -2174,17 +2146,11 @@ namespace OpenSEE
         [Route("GetRectifierData"), HttpGet]
         public async Task<JsonReturn> GetRectifierData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                double TRC = double.Parse(query["Trc"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                double systemFrequency = connection.ExecuteScalar<double?>("SELECT Value FROM Setting WHERE Name = 'SystemFrequency'") ?? 60.0;
-                VIDataGroup dataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                double TRC = double.Parse(Request.Query["Trc"].ToString());
+                VIDataGroup dataGroup = await QueryVIDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetRectifierLookup(dataGroup, TRC);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -2195,7 +2161,7 @@ namespace OpenSEE
 
         public List<D3Series> GetRectifierLookup(VIDataGroup dataGroup, double RC)
         {
-           
+
             List<D3Series> dataLookup = new List<D3Series>();
             if (dataGroup.VA == null)
                 return dataLookup;
@@ -2271,15 +2237,10 @@ namespace OpenSEE
         [Route("GetFrequencyData"), HttpGet]
         public async Task<JsonReturn> GetFrequencyData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(evt.ID, meter);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                VIDataGroup viDataGroup = await QueryVIDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetFrequencyLookup(viDataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -2293,15 +2254,15 @@ namespace OpenSEE
         {
             IEnumerable<D3Series> dataLookup = new List<D3Series>();
 
-            
+
 
             List<DataSeries> vAN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
             List<DataSeries> vCN = dataGroup.Data.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
             dataLookup = dataLookup.Concat(vAN.Select(item => GenerateFrequency(item, "Va")));
-            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateFrequency( item, "Vb")));
-            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateFrequency( item, "Vc")));
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateFrequency(item, "Vb")));
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateFrequency(item, "Vc")));
 
             D3Series fVa = null;
             D3Series fVb = null;
@@ -2311,15 +2272,15 @@ namespace OpenSEE
 
             if (dataGroup.VA != null)
             {
-                fVa = GenerateFrequency( dataGroup.VA, "Va");
+                fVa = GenerateFrequency(dataGroup.VA, "Va");
             }
             if (dataGroup.VB != null)
             {
-                fVb = GenerateFrequency( dataGroup.VB, "Vb");
+                fVb = GenerateFrequency(dataGroup.VB, "Vb");
             }
             if (dataGroup.VC != null)
             {
-                fVc = GenerateFrequency( dataGroup.VC, "Vc");
+                fVc = GenerateFrequency(dataGroup.VC, "Vc");
             }
 
 
@@ -2341,24 +2302,26 @@ namespace OpenSEE
                 Unit = "Freq",
                 Color = GetFrequencyColor(dataSeries.SeriesInfo.Channel.Phase.Name),
                 BaseValue = Fbase,
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "",
-                LegendVGroup = "",               
+                LegendVGroup = "",
                 DataPoints = new List<double[]>()
             };
 
             double thresholdValue = 0;
 
-            var crosses = dataSeries.DataPoints.Zip(dataSeries.DataPoints.Skip(1), (Point1, Point2) => new { Point1, Point2 }).Where(obj => obj.Point1.Value * obj.Point2.Value < 0 || obj.Point1.Value == 0).Select(obj => {
+            var crosses = dataSeries.DataPoints.Zip(dataSeries.DataPoints.Skip(1), (Point1, Point2) => new { Point1, Point2 }).Where(obj => obj.Point1.Value * obj.Point2.Value < 0 || obj.Point1.Value == 0).Select(obj =>
+            {
                 double slope = (obj.Point2.Value - obj.Point1.Value) / (obj.Point2.Time - obj.Point1.Time).Ticks;
                 DateTime interpolatedCrossingTime = m_epoch.AddTicks((long)Math.Round((thresholdValue - obj.Point1.Value) / slope + obj.Point1.Time.Subtract(m_epoch).Ticks));
                 return new DataPoint { Time = interpolatedCrossingTime, Value = thresholdValue };
 
             }).ToList();
 
-            fitWave.DataPoints = crosses.Zip(crosses.Skip(2), (Point1, Point2) => {
+            fitWave.DataPoints = crosses.Zip(crosses.Skip(2), (Point1, Point2) =>
+            {
                 double frequency = 1 / (Point2.Time - Point1.Time).TotalSeconds;
                 return new double[] { Point1.Time.Subtract(m_epoch).TotalMilliseconds, frequency };
 
@@ -2379,7 +2342,7 @@ namespace OpenSEE
                 LegendVertical = "Avg",
                 LegendHorizontal = "",
                 LegendVGroup = "",
-                
+
                 DataPoints = new List<double[]>()
             };
 
@@ -2440,17 +2403,15 @@ namespace OpenSEE
         [Route("GetTHDData"), HttpGet]
         public async Task<JsonReturn> GetTHDData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int forceFullRes = 0;
+                if (Request.Query.TryGetValue("fullRes", out StringValues fullRes))
+                    forceFullRes = int.Parse(fullRes.ToString());
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
-                List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes==1);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
+                List<D3Series> returnList = GetTHDLookup(dataGroup, forceFullRes == 1);
 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
@@ -2463,7 +2424,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
 
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
@@ -2472,19 +2433,19 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vAN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.Select(item => GenerateTHD(item, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD( item, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD( item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iAN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.Select(item => GenerateTHD(item, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.Select(item => GenerateTHD(item, fullRes))).ToList();
 
 
             return dataLookup;
         }
 
-        private D3Series GenerateTHD( DataSeries dataSeries, bool fullRes)
+        private D3Series GenerateTHD(DataSeries dataSeries, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2493,10 +2454,10 @@ namespace OpenSEE
                 Unit = "THD",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = 1,
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
-                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "V" : "I"),
+                LegendHorizontal = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "V" : "I"),
                 LegendVGroup = "",
                 DataPoints = new List<double[]>()
             };
@@ -2517,7 +2478,7 @@ namespace OpenSEE
 
                 IEnumerable<double> points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle);
 
-                points = points.Where((t,index) => index%(samplesPerCycle/downSampled) == 0);
+                points = points.Where((t, index) => index % (samplesPerCycle / downSampled) == 0);
 
                 FFT fft = new FFT(Fbase * downSampled, points.ToArray());
 
@@ -2542,19 +2503,16 @@ namespace OpenSEE
         [Route("GetSpecifiedHarmonicData"), HttpGet]
         public async Task<JsonReturn> GetSpecifiedHarmonicData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int forceFullRes = int.Parse(query.ContainsKey("fullRes") ? query["fullRes"] : "0");
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int forceFullRes = 0;
+                if (Request.Query.TryGetValue("fullRes", out StringValues fullRes))
+                    forceFullRes = int.Parse(fullRes.ToString());
+                int specifiedHarmonic = int.Parse(Request.Query["specifiedHarmonic"].ToString());
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                int specifiedHarmonic = int.Parse(query["specifiedHarmonic"]);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(evt.ID, meter);
-                List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes==1);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
+                List<D3Series> returnList = GetSpecifiedHarmonicLookup(dataGroup, specifiedHarmonic, forceFullRes == 1);
 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
@@ -2567,7 +2525,7 @@ namespace OpenSEE
         {
             List<D3Series> dataLookup = new List<D3Series>();
 
-           
+
             List<DataSeries> vAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> iAN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "AN").ToList();
             List<DataSeries> vBN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "BN").ToList();
@@ -2575,18 +2533,18 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic( item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateSpecifiedHarmonic(item, specifiedHarmonic, fullRes))).ToList();
 
             return dataLookup;
         }
 
-        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic( DataSeries dataSeries, int specifiedHarmonic, bool fullRes)
+        private static IEnumerable<D3Series> GenerateSpecifiedHarmonic(DataSeries dataSeries, int specifiedHarmonic, bool fullRes)
         {
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
 
@@ -2594,8 +2552,8 @@ namespace OpenSEE
             {
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
-                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Mag",
@@ -2608,11 +2566,11 @@ namespace OpenSEE
                 Unit = "Angle",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? dataSeries.SeriesInfo.Channel.Asset.VoltageKV : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Ph",
-                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage"? "Volt." : "Curr."),
+                LegendVGroup = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? "Volt." : "Curr."),
                 DataPoints = new List<double[]>()
             };
 
@@ -2621,20 +2579,20 @@ namespace OpenSEE
             if (step == 0 || fullRes)
                 step = 1;
 
-            int size = (dataSeries.DataPoints.Count - samplesPerCycle -1)/ step;
-            double[][] dataArrHarm = new double[size+1][];
-            double[][] dataArrAngle = new double[size+1][];
+            int size = (dataSeries.DataPoints.Count - samplesPerCycle - 1) / step;
+            double[][] dataArrHarm = new double[size + 1][];
+            double[][] dataArrAngle = new double[size + 1][];
 
             double specifiedFrequency = Fbase * specifiedHarmonic;
             double freq = Fbase;
 
-           
+
 
             int j = 0;
-            for (int i=0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
+            for (int i = 0; i < dataSeries.DataPoints.Count - samplesPerCycle; i += step)
             {
                 double[] points = dataSeries.DataPoints.Skip(i).Take(samplesPerCycle).Select(point => point.Value / samplesPerCycle).ToArray();
-               
+
 
                 FFT fft = new FFT(freq * samplesPerCycle, points);
 
@@ -2654,12 +2612,12 @@ namespace OpenSEE
 
 
         #region [ Relay Voltages ]
-            // Just needs to pull Voltages from all connected Relays
+        // Just needs to pull Voltages from all connected Relays
         #endregion
 
 
         #region [ TCE Analysis]
-            // Needs to pull TCE and add points of interest per Tonys email
+        // Needs to pull TCE and add points of interest per Tonys email
         #endregion
 
         #region [Breaker Restrike Data]
@@ -2667,17 +2625,11 @@ namespace OpenSEE
         [Route("GetBreakerRestrikeData"), HttpGet]
         public async Task<JsonReturn> GetBreakerRestrikeData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
-
-                DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
-                List<D3Series> returnList = GetBreakerRestrikeData(evt.ID, dataGroup);
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
+                List<D3Series> returnList = GetBreakerRestrikeData(eventId, dataGroup);
 
                 JsonReturn returnDict = new JsonReturn();
                 returnDict.Data = returnList;
@@ -2687,7 +2639,7 @@ namespace OpenSEE
 
         private List<D3Series> GetBreakerRestrikeData(int eventID, DataGroup dataGroup)
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
                 List<D3Series> currents;
                 List<D3Series> voltages;
@@ -2768,18 +2720,23 @@ namespace OpenSEE
         [Route("GetFFTData"), HttpGet]
         public async Task<JsonReturn> GetFFTData()
         {
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
             {
-                Dictionary<string, string> query = Request.QueryParameters();
-                int eventId = int.Parse(query["eventId"]);
-                int cycles = query.ContainsKey("cycles") ? int.Parse(query["cycles"]) : 1;
+                int eventId = int.Parse(Request.Query["eventId"].ToString());
+                int cycles = 1;
+                if (Request.Query.TryGetValue("cycles", out StringValues cycleString))
+                    cycles = int.Parse(cycleString.ToString());
 
-                Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
-                Meter meter = new TableOperations<Meter>(connection).QueryRecordWhere("ID = {0}", evt.MeterID);
-                meter.ConnectionFactory = () => new AdoDataConnection("systemSettings");
+                double startTime;
+                if (Request.Query.TryGetValue("startDate", out StringValues start))
+                    startTime = double.Parse(start.ToString());
+                else
+                {
+                    Event evt = new TableOperations<Event>(connection).QueryRecordWhere("ID = {0}", eventId);
+                    startTime = evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
+                }
 
-                double startTime = query.ContainsKey("startDate") ? double.Parse(query["startDate"]) : evt.StartTime.Subtract(m_epoch).TotalMilliseconds;
-                DataGroup dataGroup = await QueryDataGroupAsync(eventId, meter);
+                DataGroup dataGroup = await QueryDataGroupAsync(eventId, connection);
                 List<D3Series> returnList = GetFFTLookup(dataGroup, startTime, cycles);
 
                 JsonReturn returnDict = new JsonReturn();
@@ -2790,9 +2747,9 @@ namespace OpenSEE
 
         public List<D3Series> GetFFTLookup(DataGroup dataGroup, double startTime, int cycles)
         {
-            
+
             int maxHarmonic;
-            using (AdoDataConnection connection = new AdoDataConnection("systemSettings"))
+            using (AdoDataConnection connection = new AdoDataConnection(Settings.Default))
                 maxHarmonic = int.Parse(connection.ExecuteScalar<string>("SELECT Value FROM [OpenSee.Setting] WHERE Name = 'maxFFTHarmonic'") ?? "50");
 
             List<D3Series> dataLookup = new List<D3Series>();
@@ -2804,13 +2761,13 @@ namespace OpenSEE
             List<DataSeries> vCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Voltage" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
             List<DataSeries> iCN = dataGroup.DataSeries.ToList().Where(x => x.SeriesInfo.Channel.MeasurementType.Name == "Current" && x.SeriesInfo.Channel.MeasurementCharacteristic.Name == "Instantaneous" && x.SeriesInfo.Channel.Phase.Name == "CN").ToList();
 
-            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vAN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vBN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(vCN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
 
-            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
-            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT( item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iAN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iBN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
+            dataLookup = dataLookup.Concat(iCN.SelectMany(item => GenerateFFT(item, startTime, cycles, maxHarmonic))).ToList();
             return dataLookup;
         }
 
@@ -2818,14 +2775,14 @@ namespace OpenSEE
         {
 
             int samplesPerCycle = Transform.CalculateSamplesPerCycle(dataSeries.SampleRate, Fbase);
-            
+
             List<DataPoint> cycleData = dataSeries.DataPoints.SkipWhile(point => point.Time.Subtract(m_epoch).TotalMilliseconds < startTime).Take((samplesPerCycle * cycles)).ToList();
             D3Series fftMag = new D3Series()
             {
                 Unit = dataSeries.SeriesInfo.Channel.MeasurementType.Name,
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = (dataSeries.SeriesInfo.Channel.MeasurementType.Name == "Voltage" ? GetBaseV(dataSeries.SeriesInfo.Channel, false) * 1000.0 : GetIbase(Sbase, dataSeries.SeriesInfo.Channel.Asset.VoltageKV)),
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Mag",
@@ -2838,7 +2795,7 @@ namespace OpenSEE
                 Unit = "Angle",
                 Color = GetColor(dataSeries.SeriesInfo.Channel),
                 BaseValue = 1.0,
-                LegendGroup = dataSeries.SeriesInfo.Channel.Asset.AssetName,
+                LegendGroup = GetSourceTraceLabel(dataSeries.SeriesInfo.Channel),
                 DataMarker = new List<double[]>(),
                 LegendVertical = DisplayPhaseName(dataSeries.SeriesInfo.Channel.Phase),
                 LegendHorizontal = "Ang",
@@ -2856,25 +2813,25 @@ namespace OpenSEE
             // Because Down sampling is only for performance reasons that is not an issue
             int downSampled = samplesPerCycle;
 
-           
+
 
             while (downSampled > (maxHarmonic) && downSampled % 2 == 0 && maxHarmonic > 0)
                 downSampled = downSampled / 2;
 
 
-            points = cycleData.Select(point => point.Value / (downSampled * cycles)).Where((pt, i) => i%(samplesPerCycle/downSampled)==0).ToArray();
+            points = cycleData.Select(point => point.Value / (downSampled * cycles)).Where((pt, i) => i % (samplesPerCycle / downSampled) == 0).ToArray();
 
 
             FFT fft = new FFT(Fbase * (downSampled), points);
 
-            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value / Math.Sqrt(2)) }).ToList();
-            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index]/Fbase, (value * 180.0D / Math.PI) }).ToList();
+            fftMag.DataPoints = fft.Magnitude.Select((value, index) => new double[] { fft.Frequency[index] / Fbase, (value / Math.Sqrt(2)) }).ToList();
+            fftAng.DataPoints = fft.Angle.Select((value, index) => new double[] { fft.Frequency[index] / Fbase, (value * 180.0D / Math.PI) }).ToList();
 
             return new List<D3Series>() { fftMag, fftAng };
 
         }
 
-        
+
         #endregion
 
         #endregion
