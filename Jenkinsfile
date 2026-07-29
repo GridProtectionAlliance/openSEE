@@ -15,6 +15,7 @@ pipeline {
         github_pat = credentials('github-pat')
         devBranch = "development"
         mainBranch = "master"
+        NUGET_PACKAGES = "D:\\NuGetCache"
         publishDirectory = "${WORKSPACE}\\build\\Jenkins\\publish"
         artifactDirectory = "${WORKSPACE}\\build\\Jenkins\\artifacts"
         deliveryDirectory = "\\\\webhostfiles\\Delivery\\openSEE"
@@ -114,7 +115,7 @@ pipeline {
                 script {
                     env.GIT_COMMIT = bat(script: '@git rev-parse HEAD', returnStdout: true).trim()
                 }
-                powershell "powershell.exe -File .\\scripts\\Versioning.ps1 -VersionFile './scripts/OpenSEE.version' -MainBranch '${env.mainBranch}'"
+                powershell "powershell.exe -File .\\scripts\\Versioning.ps1 -VersionFile './scripts/OpenSEE.version' -Commit false"
                 bat(script: "@git add scripts/OpenSEE.version")
                 bat(script: "git diff --cached --quiet || git commit -m \"Updated Version Number\"")
             }
@@ -165,6 +166,28 @@ pipeline {
                         }
                     """
                 }
+            }
+        }
+
+        stage('Build Docker Images') {
+            when {
+                anyOf {
+                    expression {
+                        return env.CHANGE_BRANCH == "${env.devBranch}"
+                    }
+                    expression {
+                        return env.BRANCH_NAME == "${env.mainBranch}"
+                    }
+                }
+            }
+            steps {
+                script {
+                    env.openSEEDockerTag = env.CHANGE_BRANCH == "${env.devBranch}" ? "${env.openSEEVersion}a" : env.openSEEVersion
+                    println("Building openSEE Docker image tag: opensee:${env.openSEEDockerTag}")
+                }
+
+                powershell "msbuild /t:Publish /p:DeployOnBuild=true';'Configuration=Release';'PublishProfile='Docker Release Profile openSEE' './src/OpenSEE/OpenSEE.csproj' /nodeReuse:false -restore"
+                powershell "docker build --build-arg CONFIGURATION=Release -f .\\openSEE.dockerfile -t opensee:${env.openSEEDockerTag} ."
             }
         }
 
