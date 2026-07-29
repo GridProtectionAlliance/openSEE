@@ -142,6 +142,7 @@ namespace OpenSEE
 
             section.AuthenticationTicketTimeout = (24.0D, "Expiration of the authentication ticket relative to its creation time, in hours");
             section.AuthenticationSessionTimeout = (15.0D, "Expiration of the user's session relative to the last time it was accessed, in minutes");
+            section.DisableAuthentication = (false, "Disables authentication for the web server");
         }
 
         private static void DefineAdditionalSystemSettings(Settings settings, string settingsCatergory = Settings.SystemSettingsCategory)
