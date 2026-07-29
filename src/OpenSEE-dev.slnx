@@ -6,6 +6,7 @@
   </Configurations>
   <Folder Name="/Solution Items/">
     <File Path="../Jenkinsfile" />
+    <File Path="../openSEE.dockerfile" />
     <File Path="Directory.Build.props" />
     <File Path="nuget.config" />
   </Folder>
@@ -16,7 +17,6 @@
     <File Path="../scripts/OpenSEE.version" />
     <File Path="../scripts/Versioning.ps1" />
   </Folder>
-  <Project Path="OpenSEE/OpenSEE.csproj" />
   <Folder Name="/Libraries/">
     <Project Path="Libraries/PQDS/PQDS.csproj" />
   </Folder>
@@ -33,4 +33,5 @@
     <Project Path="../../../Gemstone/threading/src/Gemstone.Threading/Gemstone.Threading.csproj" />
     <Project Path="../../../Gemstone/web/src/Gemstone.Web/Gemstone.Web.csproj" />
   </Folder>
+  <Project Path="OpenSEE/OpenSEE.csproj" />
 </Solution>
