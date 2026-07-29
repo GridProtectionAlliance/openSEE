@@ -6,7 +6,7 @@ ARG CONFIGURATION="Development"
 WORKDIR /openSEE
 
 # Copy openSEE from the local published folder to the container
-COPY ./build/${CONFIGURATION}/Applications/openSEE/net9.0/publish/linux-x64/ /openSEE/
+COPY ./[Bb]uild/${CONFIGURATION}/Applications/openSEE/net9.0/publish/linux-x64/ /openSEE/
 
 ENV ASPNETCORE_HTTP_PORTS=50951
 
