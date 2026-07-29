@@ -5,9 +5,14 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <LangVersion>latest</LangVersion>
     <TargetFramework>net9.0</TargetFramework>
+    <AssemblyTitle>OpenSee</AssemblyTitle>
+    <Product>OpenSee</Product>
+    <Copyright>Copyright © 2020-2023</Copyright>
     <Configurations>Debug;Development;Release</Configurations>
     <OutputPath>bin\</OutputPath>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\..\scripts\OpenSEE.version').Trim())</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
   </PropertyGroup>
   <ItemGroup>

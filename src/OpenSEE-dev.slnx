@@ -5,8 +5,16 @@
     <BuildType Name="Release" />
   </Configurations>
   <Folder Name="/Solution Items/">
+    <File Path="../Jenkinsfile" />
     <File Path="Directory.Build.props" />
     <File Path="nuget.config" />
+  </Folder>
+  <Folder Name="/Scripts/">
+    <File Path="../scripts/CreateDependencyPR.ps1" />
+    <File Path="../scripts/GemstoneUpdates.ps1" />
+    <File Path="../scripts/GithubComment.ps1" />
+    <File Path="../scripts/OpenSEE.version" />
+    <File Path="../scripts/Versioning.ps1" />
   </Folder>
   <Project Path="OpenSEE/OpenSEE.csproj" />
   <Folder Name="/Libraries/">
