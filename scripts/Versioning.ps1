@@ -1,69 +1,81 @@
 param(
-    [Parameter(Mandatory)]
     [string]$VersionFile,
-    [string]$MainBranch = "master",
-    [string]$Remote = "origin"
+    [string]$Commit
 )
 
-function ConvertTo-FourPartVersion {
-    param([string]$Tag)
-
-    if ($Tag -notmatch '^v(?<Version>\d+\.\d+\.\d+\.\d+)$') {
-        return $null
-    }
-
-    return [version]$Matches.Version
-}
-
-function Get-NextVersion {
+#Compare Versions
+function CompareVersions {
     param(
-        [version]$CurrentVersion,
-        [version[]]$ReleaseVersions
+        [string]$Version1,
+        [string]$Version2
     )
 
-    if ($ReleaseVersions.Count -eq 0) {
-        return $CurrentVersion
+    $array1 = $Version1.Split(".")
+    $array2 = $Version2.Split(".")
+
+    $i = 0
+    while ($i -lt [Math]::Max($array1.Count, $array2.Count)) {
+        if ($i -ge $array1.Count) {
+            $v1 = 0
+        } else {
+            $v1 =  [int]$array1[$i]
+        }
+         if ($i -ge $array2.Count) {
+            $v2 = 0
+        } else {
+            $v2 =  [int]$array2[$i]
+        }
+        if ($v1 -gt $v2) {
+            return 1
+        }
+        if ($v2 -gt $v1) {
+            return -1
+        }
+        $i++
     }
+    return 0
+}
 
-    $latestRelease = $ReleaseVersions | Sort-Object -Descending | Select-Object -First 1
-
-    if ($CurrentVersion -gt $latestRelease) {
-        return $CurrentVersion
-    }
-
-    return [version]::new(
-        $latestRelease.Major,
-        $latestRelease.Minor,
-        $latestRelease.Build,
-        $latestRelease.Revision + 1
+#Increment Version
+function IncrementVersion {
+   param(
+        [string]$prevVersion
     )
+    $array = $prevVersion.Split(".")
+    $array[$array.Count - 1] =  [int]$array[$array.Count - 1] + 1
+    return $array -join '.'
 }
 
-git fetch $Remote "${MainBranch}:refs/remotes/$Remote/$MainBranch"
-if ($LASTEXITCODE -ne 0) {
-    throw "Unable to fetch $Remote/$MainBranch."
+$Commit = [System.Convert]::ToBoolean($Commit)
+
+#Get Latest Version on Github
+git fetch origin master:refs/remotes/origin/master
+$commit = git rev-parse origin/master
+$tag = git describe --tags --abbrev=0 $commit
+
+if ([String]::IsNullOrEmpty($tag)) {
+    echo "No previous tag found"
+    $tag = "v3.0.0"
 }
 
-$mainCommit = git rev-parse "refs/remotes/$Remote/$MainBranch"
-if ($LASTEXITCODE -ne 0) {
-    throw "Unable to resolve $Remote/$MainBranch."
+$tag = $tag.TrimStart("v")
+
+echo "Last Published Version Found: $tag"
+
+
+# Get Current Version
+$currentVersion = $([System.IO.File]::ReadAllText($VersionFile).Trim())
+echo "Current Version in Repository: $currentVersion"
+
+# Check if Update is needed
+if ((CompareVersions -Version1 $currentVersion -Version2 $tag) -gt 0) {
+    echo "No Version update neccesarry"
+    return;
 }
 
-$releaseVersions = @(
-    git tag --merged $mainCommit |
-        ForEach-Object { ConvertTo-FourPartVersion -Tag $_ } |
-        Where-Object { $null -ne $_ }
-)
+# Update Version
+$updatedVersion = IncrementVersion -prevVersion $tag
 
-$currentVersion = [version]([System.IO.File]::ReadAllText($VersionFile).Trim())
-$nextVersion = Get-NextVersion -CurrentVersion $currentVersion -ReleaseVersions $releaseVersions
+echo "Updating to $updatedVersion"
 
-Write-Host "Current repository version: $currentVersion"
-
-if ($nextVersion -eq $currentVersion) {
-    Write-Host "Version is already ahead of the latest four-part release tag."
-    return
-}
-
-Write-Host "Advancing version to $nextVersion"
-[System.IO.File]::WriteAllText($VersionFile, $nextVersion.ToString())
+[System.IO.File]::WriteAllText($VersionFile, $updatedVersion)

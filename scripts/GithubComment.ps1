@@ -1,37 +1,36 @@
 param(
-    [Parameter(Mandatory)]
     [string]$Comment,
-    [Parameter(Mandatory)]
     [string]$BranchName,
-    [Parameter(Mandatory)]
     [string]$GithubToken,
-    [Parameter(Mandatory)]
     [string]$RepoOwner,
-    [Parameter(Mandatory)]
     [string]$RepoName
 )
 
+# Configuration
+# Find PR by branch name
 $headers = @{
-    Authorization = "token $GithubToken"
-    Accept = "application/vnd.github.v3+json"
+    "Authorization" = "token $GithubToken"
+    "Accept" = "application/vnd.github.v3+json"
 }
 
-$pullsUrl = "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?state=open&head=${RepoOwner}:${BranchName}"
-$pulls = Invoke-RestMethod -Uri $pullsUrl -Headers $headers -Method Get
+# Search for open PRs with the specified head branch
+$prsUrl = "https://api.github.com/repos/$RepoOwner/$RepoName/pulls?state=open&head=${RepoOwner}:${BranchName}"
+$prs = Invoke-RestMethod -Uri $prsUrl -Headers $headers -Method Get
 
-if ($pulls.Count -eq 0) {
-    throw "No open pull request found for branch '$BranchName'."
+if ($prs.Count -eq 0) {
+    Write-Host "No open PR found for branch: $BranchName"
+    exit 1
 }
 
-$pullRequestNumber = $pulls[0].number
-$commentUrl = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$pullRequestNumber/comments"
-$body = @{ body = $Comment } | ConvertTo-Json
+# Get the first PR (assuming one PR per branch)
+$prNumber = $prs[0].number
+Write-Host "Found PR #$prNumber for branch: $BranchName"
 
-Invoke-RestMethod `
-    -Uri $commentUrl `
-    -Headers $headers `
-    -Method Post `
-    -Body $body `
-    -ContentType "application/json" | Out-Null
+# Add comment to the PR
+$commentUrl = "https://api.github.com/repos/$RepoOwner/$RepoName/issues/$prNumber/comments"
+$body = @{
+    body = $Comment
+} | ConvertTo-Json
 
-Write-Host "Comment added to pull request #$pullRequestNumber."
+$response = Invoke-RestMethod -Uri $commentUrl -Headers $headers -Method Post -Body $body -ContentType "application/json"
+Write-Host "Comment added successfully to PR #$prNumber"
