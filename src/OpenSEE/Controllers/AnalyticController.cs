@@ -464,7 +464,7 @@ namespace OpenSEE
                 if (faultSummaries.Count > 0)
                 {
                     string destination = connection.ExecuteScalar<string>(@"
-                        SELECT COALESCE(Location.LocationKey,
+                        SELECT COALESCE(NULLIF(Location.ShortName, ''), NULLIF(Location.Name, ''),
                             CASE
                                 WHEN (SELECT COUNT(*) FROM LineSegmentAttributes WHERE LineSegmentAttributes.FromBus = LineSegment.ToBus OR LineSegmentAttributes.ToBus = LineSegment.ToBus) < 2 THEN LineSegment.ToBus
                                 ELSE LineSegment.FromBus
