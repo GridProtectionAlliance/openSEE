@@ -26,6 +26,7 @@ import { Application } from '@gpa-gemstone/application-typings';
 import { Alert } from '@gpa-gemstone/react-interactive';
 import { ReactIcons } from '@gpa-gemstone/gpa-symbols';
 import { ConfigurableTable, ConfigurableColumn, Column } from '@gpa-gemstone/react-table';
+import _ from 'lodash';
 
 interface Iprops {
     EventID: number,
@@ -46,6 +47,13 @@ interface ICorrelatedSags {
 const TimeCorrelatedSagsWidget = (props: Iprops) => {
     const [sagsData, setSagsData] = React.useState<ICorrelatedSags[]>([]);
     const [status, setStatus] = React.useState<Application.Types.Status>('uninitiated');
+    const [sortKey, setSortKey] = React.useState('EventID');
+    const [ascending, setAscending] = React.useState(false);
+
+    const sortedSagsData = React.useMemo(() =>
+        _.orderBy(sagsData, [sortKey], [ascending ? 'asc' : 'desc']),
+        [sagsData, sortKey, ascending]
+    );
 
     React.useEffect(() => {
         setStatus('loading');
@@ -89,14 +97,17 @@ const TimeCorrelatedSagsWidget = (props: Iprops) => {
                     <ConfigurableTable<ICorrelatedSags>
                         LocalStorageKey={"OpenSee.Correlated.TableCols"}
                         TableClass={"table table-hover"}
-                        Data={sagsData}
+                        Data={sortedSagsData}
                         KeySelector={(item) => item.EventID.toString()}
-                        OnSort={() => true}
-                        SortKey={"EventID"}
+                        OnSort={(data) => {
+                            setAscending(data.colKey === sortKey ? !ascending : true);
+                            setSortKey(data.colKey);
+                        }}
+                        SortKey={sortKey}
                         TbodyStyle={{ overflowY: 'scroll', maxHeight: '100vh', height: '100%' }}
                         RowStyle={{ width: '100%' }}
                         TableStyle={{ height: '100%', width: '100%', margin: '3%' }}
-                        Ascending={false}
+                        Ascending={ascending}
                     >
                         <ConfigurableColumn Key={'EventID'} Label={'Event ID'} Default={true}>
                             <Column<ICorrelatedSags>

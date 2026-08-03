@@ -4,6 +4,10 @@
     <BuildType Name="Development" />
     <BuildType Name="Release" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+  </Folder>
   <Project Path="OpenSEE/OpenSEE.csproj" />
   <Folder Name="/Libraries/">
     <Project Path="Libraries/PQDS/PQDS.csproj" />
