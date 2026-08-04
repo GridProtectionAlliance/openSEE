@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "3.1.0",
   "name": "opensee",
   "private": true,
   "devDependencies": {
@@ -46,7 +46,8 @@
     "react-redux": "8.0.2"
   },
   "scripts": {
-    "build": "npm prune && npm ci && webpack --mode=production",
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > ./wwwroot/Scripts/TSX/version.ts",
+    "build": "npm run prebuild && npm prune && npm ci && webpack --mode=production",
     "buildrelease": "npm run build",
     "builddev": "npm install && webpack --mode=development",
     "watch": "webpack --watch --color --mode=development",

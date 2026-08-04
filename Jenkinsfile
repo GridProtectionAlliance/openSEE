@@ -33,6 +33,14 @@ pipeline {
                     println("openSEE version: ${env.openSEEVersion}")
                 }
                 script {
+                    // Set current UI Version
+                    def fileContent = powershell(returnStdout: true, script:  '''
+                        (Get-Content -Path "./src/OpenSEE/package.json" -Raw | ConvertFrom-Json).version
+                    ''').trim()
+                    env.uiVersion = fileContent
+                    println("openSEE UI version: ${env.uiVersion}")
+                }
+                script {
                     //Set current Commit
                     env.GIT_COMMIT = bat(script: '@git rev-parse HEAD', returnStdout: true).trim()
                     println("Current Git Commit: ${env.GIT_COMMIT}")
@@ -159,7 +167,7 @@ pipeline {
                 dir('src/OpenSEE') {
                     bat(script: 'npm run build')
                     powershell """
-                        \$uiFile = '.\\wwwroot\\Scripts\\OpenSee.js'
+                        \$uiFile = '.\\wwwroot\\Scripts\\OpenSee.${env.uiVersion}.js'
                         if (-not (Test-Path -LiteralPath \$uiFile -PathType Leaf) -or
                             (Get-Item -LiteralPath \$uiFile).Length -eq 0) {
                             throw 'Production UI was not generated.'
@@ -210,7 +218,8 @@ pipeline {
                     \$requiredFiles = @(
                         '${env.publishDirectory}\\OpenSEE.exe',
                         '${env.publishDirectory}\\OpenSEE.dll',
-                        '${env.publishDirectory}\\wwwroot\\Scripts\\OpenSee.js'
+                        '${env.publishDirectory}\\package.json',
+                        '${env.publishDirectory}\\wwwroot\\Scripts\\OpenSee.${env.uiVersion}.js'
                     )
                     foreach (\$requiredFile in \$requiredFiles) {
                         if (-not (Test-Path -LiteralPath \$requiredFile -PathType Leaf) -or

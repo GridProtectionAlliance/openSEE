@@ -62,9 +62,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="package.json" />
+    <None Include="package.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
     <None Include="tsconfig.json" />
-    <None Include="wwwroot\Scripts\OpenSee.js" />
+    <Content Update="wwwroot\Scripts\OpenSee.*.js">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <None Include="wwwroot\Scripts\TSX\Components\About.tsx" />
     <None Include="wwwroot\Scripts\TSX\Components\AnalyticOptions.tsx" />
     <None Include="wwwroot\Scripts\TSX\Navbar\WidgetSection.tsx" />
@@ -106,6 +111,7 @@
     <None Include="wwwroot\Scripts\TSX\jQueryUI Widgets\TooltipWithDelta.tsx" />
     <None Include="wwwroot\Scripts\TSX\OpenSeeApplication.tsx" />
     <None Include="wwwroot\Scripts\TSX\OpenSee.tsx" />
+    <None Include="wwwroot\Scripts\TSX\version.ts" />
     <None Include="wwwroot\Scripts\TSX\Data\GraphLogic.tsx" />
     <None Include="wwwroot\Scripts\TSX\Data\RequestHandler.tsx" />
     <None Include="wwwroot\Scripts\TSX\store\settingSlice.tsx" />
