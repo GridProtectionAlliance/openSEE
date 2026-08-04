@@ -2,39 +2,6 @@ param(
     [string]$VersionFile
 )
 
-#Compare Versions
-function CompareVersions {
-    param(
-        [string]$Version1,
-        [string]$Version2
-    )
-
-    $array1 = $Version1.Split(".")
-    $array2 = $Version2.Split(".")
-
-    $i = 0
-    while ($i -lt [Math]::Max($array1.Count, $array2.Count)) {
-        if ($i -ge $array1.Count) {
-            $v1 = 0
-        } else {
-            $v1 =  [int]$array1[$i]
-        }
-         if ($i -ge $array2.Count) {
-            $v2 = 0
-        } else {
-            $v2 =  [int]$array2[$i]
-        }
-        if ($v1 -gt $v2) {
-            return 1
-        }
-        if ($v2 -gt $v1) {
-            return -1
-        }
-        $i++
-    }
-    return 0
-}
-
 #Write Version
 function UpdateVersion {
    param(
