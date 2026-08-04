@@ -48,7 +48,6 @@
   "scripts": {
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > ./wwwroot/Scripts/TSX/version.ts",
     "build": "npm run prebuild && npm prune && npm ci && webpack --mode=production",
-    "buildrelease": "npm run build",
     "builddev": "npm install && webpack --mode=development",
     "watch": "webpack --watch --color --mode=development",
     "update": "npx npm-check-updates",
