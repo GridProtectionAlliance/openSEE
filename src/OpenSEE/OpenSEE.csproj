@@ -7,7 +7,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <AssemblyTitle>OpenSee</AssemblyTitle>
     <Product>OpenSee</Product>
-    <Copyright>Copyright © 2020-2023</Copyright>
+    <Copyright>Copyright © 2020-2026</Copyright>
     <Configurations>Debug;Development;Release</Configurations>
     <OutputPath>bin\</OutputPath>
     <VersionFile>$(MSBuildProjectDirectory)\..\..\scripts\OpenSEE.version</VersionFile>
