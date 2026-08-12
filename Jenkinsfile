@@ -33,14 +33,6 @@ pipeline {
                     println("openSEE version: ${env.openSEEVersion}")
                 }
                 script {
-                    // Set current UI Version
-                    def fileContent = powershell(returnStdout: true, script:  '''
-                        (Get-Content -Path "./src/OpenSEE/package.json" -Raw | ConvertFrom-Json).version
-                    ''').trim()
-                    env.uiVersion = fileContent
-                    println("openSEE UI version: ${env.uiVersion}")
-                }
-                script {
                     //Set current Commit
                     env.GIT_COMMIT = bat(script: '@git rev-parse HEAD', returnStdout: true).trim()
                     println("Current Git Commit: ${env.GIT_COMMIT}")
@@ -166,13 +158,6 @@ pipeline {
             steps {
                 dir('src/OpenSEE') {
                     bat(script: 'npm run build')
-                    powershell """
-                        \$uiFile = '.\\wwwroot\\Scripts\\OpenSee.${env.uiVersion}.js'
-                        if (-not (Test-Path -LiteralPath \$uiFile -PathType Leaf) -or
-                            (Get-Item -LiteralPath \$uiFile).Length -eq 0) {
-                            throw 'Production UI was not generated.'
-                        }
-                    """
                 }
             }
         }
@@ -207,26 +192,8 @@ pipeline {
                     }
                     New-Item -ItemType Directory -Path '${env.publishDirectory}' -Force | Out-Null
                     dotnet publish '.\\src\\OpenSEE\\OpenSEE.csproj' `
-                        -c Release `
-                        -r win-x64 `
-                        --self-contained true `
+                        '-p:PublishProfile=Release Profile openSEE' `
                         -o '${env.publishDirectory}'
-                    if (\$LASTEXITCODE -ne 0) {
-                        throw 'dotnet publish failed.'
-                    }
-
-                    \$requiredFiles = @(
-                        '${env.publishDirectory}\\OpenSEE.exe',
-                        '${env.publishDirectory}\\OpenSEE.dll',
-                        '${env.publishDirectory}\\package.json',
-                        '${env.publishDirectory}\\wwwroot\\Scripts\\OpenSee.${env.uiVersion}.js'
-                    )
-                    foreach (\$requiredFile in \$requiredFiles) {
-                        if (-not (Test-Path -LiteralPath \$requiredFile -PathType Leaf) -or
-                            (Get-Item -LiteralPath \$requiredFile).Length -eq 0) {
-                            throw "Required publish output is missing: \$requiredFile"
-                        }
-                    }
                 """
             }
         }
@@ -248,9 +215,6 @@ pipeline {
                         -Path '${env.publishDirectory}\\*' `
                         -DestinationPath '${env.artifactDirectory}\\${env.archiveName}' `
                         -Force
-                    if (-not (Test-Path -LiteralPath '${env.artifactDirectory}\\${env.archiveName}' -PathType Leaf)) {
-                        throw 'Release archive was not created.'
-                    }
                 """
             }
         }

@@ -3,7 +3,6 @@ const path = require("path");
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 var webpack = require('webpack');
-const { version } = require('./package.json');
 
 function buildConfig(env, argv) {
     if (env.NODE_ENV == undefined) env.NODE_ENV = 'development';
@@ -17,7 +16,7 @@ function buildConfig(env, argv) {
         },
         output: {
             path: path.resolve(__dirname, './wwwroot/Scripts'),
-            filename: `[name].${version}.js`,
+            filename: `[name].js`,
         },
         // Enable sourcemaps for debugging webpack's output.
         devtool: "inline-source-map",

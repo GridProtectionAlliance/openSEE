@@ -96,6 +96,6 @@
     </script>
 
     @*@Scripts.Render("~/Scripts/OpenSEE")*@
-    <script src="@Url.Content($"~/Scripts/OpenSee.{OpenSEE.Startup.UIVersion}.js")"></script>
+    <script src="@Url.Content($"~/Scripts/OpenSee.js?v={OpenSEE.Startup.UIVersion}")"></script>
 </body>
 </html>

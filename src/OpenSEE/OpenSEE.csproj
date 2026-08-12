@@ -67,7 +67,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <None Include="tsconfig.json" />
-    <Content Update="wwwroot\Scripts\OpenSee.*.js">
+    <Content Update="wwwroot\Scripts\OpenSee.js">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <None Include="wwwroot\Scripts\TSX\Components\About.tsx" />
