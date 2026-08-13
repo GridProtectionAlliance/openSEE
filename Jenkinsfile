@@ -16,9 +16,6 @@ pipeline {
         devBranch = "development"
         mainBranch = "master"
         NUGET_PACKAGES = "D:\\NuGetCache"
-        publishDirectory = "${WORKSPACE}\\build\\Jenkins\\publish"
-        artifactDirectory = "${WORKSPACE}\\build\\Jenkins\\artifacts"
-        deliveryDirectory = "\\\\webhostfiles\\Delivery\\openSEE"
     }
 
     stages {
@@ -187,13 +184,8 @@ pipeline {
         stage('Publish Application') {
             steps {
                 powershell """
-                    if (Test-Path -LiteralPath '${env.publishDirectory}') {
-                        Remove-Item -LiteralPath '${env.publishDirectory}' -Recurse -Force
-                    }
-                    New-Item -ItemType Directory -Path '${env.publishDirectory}' -Force | Out-Null
                     dotnet publish '.\\src\\OpenSEE\\OpenSEE.csproj' `
-                        '-p:PublishProfile=Release Profile openSEE' `
-                        -o '${env.publishDirectory}'
+                        '-p:PublishProfile=Release Profile openSEE'
                 """
             }
         }
@@ -201,19 +193,24 @@ pipeline {
         stage('Package Application') {
             steps {
                 script {
+                    if (!env.WEBHOST_DELIVERY_DIRECTORY?.trim()) {
+                        error('WEBHOST_DELIVERY_DIRECTORY is not configured in Jenkins.')
+                    }
+
                     env.archiveName = env.BRANCH_NAME == "${env.mainBranch}" ?
                         "openSEE_v${env.openSEEVersion}.zip" :
                         "openSEE_v${env.openSEEVersion}a.zip"
                 }
                 powershell """
-                    if (Test-Path -LiteralPath '${env.artifactDirectory}') {
-                        Remove-Item -LiteralPath '${env.artifactDirectory}' -Recurse -Force
-                    }
-                    New-Item -ItemType Directory -Path '${env.artifactDirectory}' -Force | Out-Null
+                    [xml]\$publishProfile = Get-Content `
+                        -LiteralPath '.\\src\\OpenSEE\\Properties\\PublishProfiles\\Release Profile openSEE.pubxml' `
+                        -Raw
+                    \$publishDir = (\$publishProfile.Project.PropertyGroup |
+                        Where-Object { \$_.PublishDir }).PublishDir
 
                     Compress-Archive `
-                        -Path '${env.publishDirectory}\\*' `
-                        -DestinationPath '${env.artifactDirectory}\\${env.archiveName}' `
+                        -Path (Join-Path '.\\src\\OpenSEE' "\$publishDir*") `
+                        -DestinationPath '${WORKSPACE}\\${env.archiveName}' `
                         -Force
                 """
             }
@@ -244,7 +241,7 @@ pipeline {
                 }
             }
             steps {
-                powershell "Move-Item -Path '${env.artifactDirectory}\\${env.archiveName}' -Destination '${env.deliveryDirectory}\\PreRelease\\${env.archiveName}' -Force"
+                powershell "Move-Item -Path '${WORKSPACE}\\${env.archiveName}' -Destination '${env.WEBHOST_DELIVERY_DIRECTORY}\\openSEE\\PreRelease\\${env.archiveName}' -Force"
             }
         }
 
@@ -260,7 +257,7 @@ pipeline {
                 }
             }
             steps {
-                powershell "Move-Item -Path '${env.artifactDirectory}\\${env.archiveName}' -Destination '${env.deliveryDirectory}\\${env.archiveName}' -Force"
+                powershell "Move-Item -Path '${WORKSPACE}\\${env.archiveName}' -Destination '${env.WEBHOST_DELIVERY_DIRECTORY}\\openSEE\\${env.archiveName}' -Force"
                 powershell "git tag -a v${env.openSEEVersion} -m 'Version ${env.openSEEVersion} release'"
                 powershell "git push origin --tags"
             }

@@ -8,8 +8,6 @@ WORKDIR /openSEE
 # Copy openSEE from the local published folder to the container
 COPY ./[Bb]uild/${CONFIGURATION}/Applications/openSEE/net9.0/publish/linux-x64/ /openSEE/
 
-ENV ASPNETCORE_HTTP_PORTS=50951
-
 # Set permissions for all copied folders and files
 RUN chmod -R 777 /openSEE
 
@@ -17,7 +15,7 @@ RUN chmod -R 777 /openSEE
 RUN chmod +x /openSEE/OpenSEE
 
 # Expose the webserver port
-EXPOSE 50951
+EXPOSE 8080
 
 # Define the entry point to run
 ENTRYPOINT ["sh", "-c", "exec /openSEE/OpenSEE"]
