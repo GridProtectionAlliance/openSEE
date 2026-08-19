@@ -42,8 +42,8 @@ pipeline {
                         env.LAST_RELEASE_TAG = bat(script: "@git describe --tags --abbrev=0 ${mainCommit}", returnStdout: true).trim()
                     }
                     catch (Exception ex) {
-                        println("No tags found, setting LAST_RELEASE_TAG to v2.0.0")
-                        env.LAST_RELEASE_TAG = "v2.0.0"
+                        println("No tags found, setting LAST_RELEASE_TAG to v3.0.0")
+                        env.LAST_RELEASE_TAG = "v3.0.0"
                     }
                     println("Last Release Tag: ${env.LAST_RELEASE_TAG}")
                 }
@@ -159,6 +159,24 @@ pipeline {
             }
         }
 
+        stage('Lint') {
+            when {
+                allOf {
+                    expression {
+                        return env.CHANGE_BRANCH == "${env.devBranch}"
+                    }
+                    expression {
+                        return env.CHANGE_TARGET == "${env.mainBranch}"
+                    }
+                }
+            }
+            steps {
+                dir('src/OpenSEE') {
+                    bat(script: 'npm run lint')
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             when {
                 anyOf {
@@ -176,7 +194,11 @@ pipeline {
                     println("Building openSEE Docker image tag: opensee:${env.openSEEDockerTag}")
                 }
 
-                powershell "msbuild /t:Publish /p:DeployOnBuild=true';'Configuration=Release';'PublishProfile='Docker Release Profile openSEE' './src/OpenSEE/OpenSEE.csproj' /nodeReuse:false -restore"
+                powershell """
+                    dotnet publish '.\\src\\OpenSEE\\OpenSEE.csproj' `
+                        --configuration Release `
+                        '-p:PublishProfile=Docker Release Profile openSEE'
+                """
                 powershell "docker build --build-arg CONFIGURATION=Release -f .\\openSEE.dockerfile -t opensee:${env.openSEEDockerTag} ."
             }
         }
@@ -252,7 +274,7 @@ pipeline {
                         return env.BRANCH_NAME == "${env.mainBranch}"
                     }
                     expression {
-                        return env.openSEEVersion != env.LAST_RELEASE_TAG
+                        return "v${env.openSEEVersion}" != env.LAST_RELEASE_TAG
                     }
                 }
             }
