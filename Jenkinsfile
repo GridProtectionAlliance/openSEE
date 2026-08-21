@@ -113,7 +113,9 @@ pipeline {
                     env.GIT_COMMIT = bat(script: '@git rev-parse HEAD', returnStdout: true).trim()
                 }
                 powershell "powershell.exe -File .\\scripts\\Versioning.ps1 -VersionFile './scripts/OpenSEE.version' -Commit false"
+                powershell "powershell.exe -File .\\scripts\\PackageVersioning.ps1 -VersionFile './src/OpenSEE/package.json'"
                 bat(script: "@git add scripts/OpenSEE.version")
+                bat(script: "@git add src/OpenSEE/package.json")
                 bat(script: "git diff --cached --quiet || git commit -m \"Updated Version Number\"")
             }
         }
