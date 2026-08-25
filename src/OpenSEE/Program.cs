@@ -150,6 +150,7 @@ namespace OpenSEE
             dynamic section = settings[settingsCatergory];
 
             section.NodeID = ("00000000-0000-0000-0000-000000000000", "The applications instance identifier");
+            section.SystemName = ("OpenSEE", "Defines the system name for the application instance.");
 
             dynamic oauthSection = settings[OAuthAuthenticationProvider.SettingsSection];
             oauthSection.UserIdClaim = ("http://schemas.microsoft.com/identity/claims/objectidentifier", "Defines the claim used to identify the user.");

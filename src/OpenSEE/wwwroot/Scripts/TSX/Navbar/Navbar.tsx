@@ -55,7 +55,7 @@ const OpenSeeNavBar = (props: IProps) => {
     return (
         <>
             <InfoSection width={props.Width} />
-            <div className="col-sm-10 col-md-11 col-xl-7">
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
                 {(props.Width < 1568 && props.Width > 1200) || props.Width < 1050 ?
                     <>
                         <ul className="navbar-nav navbar-expand justify-content-end">
@@ -76,7 +76,7 @@ const OpenSeeNavBar = (props: IProps) => {
                         </ul>
                     </> :
                     <>
-                        <ul className="navbar-nav navbar-expand">
+                        <ul className="navbar-nav navbar-expand justify-content-end">
                             <WidgetSection
                                 OpenDrawers={props.OpenDrawers}
                                 ToggleDrawer={props.ToggleDrawer}

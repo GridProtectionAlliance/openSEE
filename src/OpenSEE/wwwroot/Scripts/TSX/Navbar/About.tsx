@@ -40,12 +40,13 @@ const About = (props: Iprops) => {
                 props.closeCallback()
             }}
             ShowX={true}
-            ShowCancel={true}
+            ShowCancel={false}
             CancelBtnClass={"btn btn-danger"}
             ShowConfirm={false}
         >
             <p>Version: {version}</p>
             <p>UI Version: {LIB_VERSION}</p>
+            <p>System Name:{systemName}</p>
 
             <p>openSEE is a browser-based waveform display and analytics tool that is used to view waveforms recorded by DFRs, Power Quality meters, relays and other substation devices that are stored in the openXDA database.
                 The link in the URL window of openSEE can be embedded in emails so that recipients can quickly access the waveforms being studied.</p>
@@ -74,4 +75,4 @@ const About = (props: Iprops) => {
     );
 }
 
-export default About; 
+export default About;
