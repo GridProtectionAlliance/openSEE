@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 const path = require("path");
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -16,7 +16,7 @@ function buildConfig(env, argv) {
         },
         output: {
             path: path.resolve(__dirname, './wwwroot/Scripts'),
-            filename: "[name].js",
+            filename: `[name].js`,
         },
         // Enable sourcemaps for debugging webpack's output.
         devtool: "inline-source-map",

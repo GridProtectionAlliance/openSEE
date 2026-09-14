@@ -131,7 +131,6 @@ const WidgetSection = (props: IProps) => {
 
     return (
         <>
-            <li className="nav-item" style={{ width: 'calc(100% - 969px)', textAlign: 'center' }}></li>
             <li className="nav-item" style={{ width: '84px', marginTop: "10px" }}>
                 <div style={{ position: 'absolute' }}>
                     <BtnDropdown Label={<ReactIcons.LineChart />}

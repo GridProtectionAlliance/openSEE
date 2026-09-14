@@ -1,4 +1,4 @@
-﻿@*******************************************************************************************************
+@*******************************************************************************************************
 //  Index.cshtml - Gbtc
 //
 //  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
@@ -24,6 +24,7 @@
 //       Moved OpenSee out of PQ Dashboard
 //
 //*****************************************************************************************************@
+@using Gemstone.Configuration
 @using Gemstone.Reflection
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Authentication.Cookies
@@ -36,6 +37,7 @@
         CookieAuthenticationOptionsMonitor.Get(CookieAuthenticationDefaults.AuthenticationScheme);
 
     string? antiforgeryToken = Antiforgery.GetAndStoreTokens(ViewContext.HttpContext).RequestToken;
+    string systemName = (string)Settings.Default[Settings.SystemSettingsCategory].SystemName;
 
     ViewData["Title"] = "Home page";
 }
@@ -93,9 +95,10 @@
         var defaultEventStartTime = '@Html.Raw(ViewBag.DefaultEventStartTime)';
         var defaultEventEndTime = '@Html.Raw(ViewBag.DefaultEventEndTime)';
         var systemFrequency = '@Html.Raw(ViewBag.SystemFrequency)';
+        var systemName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(systemName));
     </script>
 
     @*@Scripts.Render("~/Scripts/OpenSEE")*@
-    <script src="@Url.Content("~/Scripts/OpenSEE.js")"></script>
+    <script src="@Url.Content($"~/Scripts/OpenSee.js?v={applicationVersion}")"></script>
 </body>
 </html>
