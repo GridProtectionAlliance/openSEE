@@ -52,20 +52,16 @@ pipeline {
 
         stage('Check Conditions') {
             when {
-                anyOf {
-                    not {
-                        anyOf {
+                not {
+                    anyOf {
+                        expression { env.BRANCH_NAME == env.mainBranch }
+                        allOf {
                             expression { env.BRANCH_NAME.startsWith("PR") }
-                            expression { env.BRANCH_NAME == "${env.mainBranch}" }
+                            anyOf {
+                                expression { env.CHANGE_TARGET == env.devBranch }
+                                expression { env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch }
+                            }
                         }
-                    }
-                    allOf {
-                        expression { env.BRANCH_NAME.startsWith("PR") }
-                        expression { env.CHANGE_BRANCH != "${env.devBranch}" }
-                    }
-                    allOf {
-                        expression { env.BRANCH_NAME.startsWith("PR") }
-                        expression { env.CHANGE_TARGET != "${env.mainBranch}" }
                     }
                 }
             }
@@ -77,7 +73,7 @@ pipeline {
         stage('Checkout Master Branch') {
             when {
                 expression {
-                    return env.BRANCH_NAME == "${env.mainBranch}"
+                    return env.BRANCH_NAME == env.mainBranch
                 }
             }
             steps {
@@ -91,7 +87,7 @@ pipeline {
         stage('Checkout Development Branch') {
             when {
                 expression {
-                    return env.CHANGE_BRANCH == "${env.devBranch}"
+                    return env.CHANGE_BRANCH == env.devBranch
                 }
             }
             steps {
@@ -105,7 +101,7 @@ pipeline {
         stage('Application Version') {
             when {
                 expression {
-                    return env.BRANCH_NAME != "${env.mainBranch}"
+                    return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                 }
             }
             steps {
@@ -123,7 +119,7 @@ pipeline {
         stage('Gemstone Updates') {
             when {
                 expression {
-                    return env.BRANCH_NAME != "${env.mainBranch}"
+                    return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                 }
             }
             steps {
@@ -140,7 +136,7 @@ pipeline {
             when {
                 allOf {
                     expression {
-                        return env.BRANCH_NAME != "${env.mainBranch}"
+                        return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                     }
                     expression {
                         return bat(script: '@git rev-parse HEAD', returnStdout: true).trim() != env.GIT_COMMIT
@@ -153,7 +149,7 @@ pipeline {
             }
         }
 
-        stage('Build Production UI') {
+        stage('Build') {
             steps {
                 dir('src/OpenSEE') {
                     bat(script: 'npm run build')
@@ -163,13 +159,9 @@ pipeline {
 
         stage('Lint') {
             when {
-                allOf {
-                    expression {
-                        return env.CHANGE_BRANCH == "${env.devBranch}"
-                    }
-                    expression {
-                        return env.CHANGE_TARGET == "${env.mainBranch}"
-                    }
+                expression {
+                    return env.BRANCH_NAME.startsWith("PR") && (env.CHANGE_TARGET == env.devBranch ||
+                        (env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch))
                 }
             }
             steps {
@@ -183,10 +175,10 @@ pipeline {
             when {
                 anyOf {
                     expression {
-                        return env.CHANGE_BRANCH == "${env.devBranch}"
+                        return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                     }
                     expression {
-                        return env.BRANCH_NAME == "${env.mainBranch}"
+                        return env.BRANCH_NAME == env.mainBranch
                     }
                 }
             }
@@ -206,6 +198,12 @@ pipeline {
         }
 
         stage('Publish Application') {
+            when {
+                expression {
+                    return (env.BRANCH_NAME == env.mainBranch) ||
+                        (env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch)
+                }
+            }
             steps {
                 powershell """
                     dotnet publish '.\\src\\OpenSEE\\OpenSEE.csproj' `
@@ -215,6 +213,12 @@ pipeline {
         }
 
         stage('Package Application') {
+            when {
+                expression {
+                    return (env.BRANCH_NAME == env.mainBranch) ||
+                        (env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch)
+                }
+            }
             steps {
                 script {
                     if (!env.WEBHOST_DELIVERY_DIRECTORY?.trim()) {
@@ -243,7 +247,7 @@ pipeline {
         stage('Comment Prerelease') {
             when {
                 expression {
-                    return env.CHANGE_BRANCH == "${env.devBranch}"
+                    return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                 }
             }
             steps {
@@ -261,7 +265,7 @@ pipeline {
         stage('Deploy Prerelease') {
             when {
                 expression {
-                    return env.CHANGE_BRANCH == "${env.devBranch}"
+                    return env.CHANGE_BRANCH == env.devBranch && env.CHANGE_TARGET == env.mainBranch
                 }
             }
             steps {
@@ -273,7 +277,7 @@ pipeline {
             when {
                 allOf {
                     expression {
-                        return env.BRANCH_NAME == "${env.mainBranch}"
+                        return env.BRANCH_NAME == env.mainBranch
                     }
                     expression {
                         return "v${env.openSEEVersion}" != env.LAST_RELEASE_TAG
