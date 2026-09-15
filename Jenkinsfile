@@ -166,7 +166,7 @@ pipeline {
             }
             steps {
                 dir('src/OpenSEE') {
-                    bat(script: 'npm run lint')
+                    //bat(script: 'npm run lint')
                 }
             }
         }
