@@ -193,7 +193,24 @@ pipeline {
                         --configuration Release `
                         '-p:PublishProfile=Docker Release Profile openSEE'
                 """
-                powershell "docker build --build-arg CONFIGURATION=Release -f .\\openSEE.dockerfile -t opensee:${env.openSEEDockerTag} ."
+                withCredentials([
+                    string(credentialsId: 'wsl-docker-user', variable: 'WSL_DOCKER_USER')
+                ]) {
+                    powershell '''
+                        $key = 'C:\\ProgramData\\Jenkins\\.ssh\\wsl_docker'
+                        $wslPath = '/mnt/' + $env:WORKSPACE.Substring(0, 1).ToLowerInvariant() + $env:WORKSPACE.Substring(2).Replace('\\', '/')
+
+                        ssh -i $key `
+                            -o BatchMode=yes `
+                            -p 2222 `
+                            "$env:WSL_DOCKER_USER@localhost" `
+                            "cd '$wslPath' && docker info --format '{{.OSType}}' && docker build --build-arg CONFIGURATION=Release -f ./openSEE.dockerfile -t 'opensee:$env:openSEEDockerTag' ."
+
+                        if ($LASTEXITCODE -ne 0) {
+                            exit $LASTEXITCODE
+                        }
+                    '''
+                }
             }
         }
 
