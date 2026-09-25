@@ -24,7 +24,7 @@
 
 import * as d3 from "d3";
 import { OpenSee } from "../../../global";
-import { formatTimeTick } from "../../Utils/Utilities";
+import { formatTimeTick, getAutoTimeUnit, resolveTimeUnit } from "../../Utils/Utilities";
 import { IFormatTimeContext } from "../../Utils/Types";
 
 export function createXAxis(
@@ -66,22 +66,9 @@ export const updateXAxisLabel = (
 
     const h = xScale != null ? xScale.domain()[1] - xScale.domain()[0] : 100;
 
-    let label: string;
-    if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short !== "auto" && !isOverlappingWaveform) {
-        label = (timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short ?? "";
-    } else if (isOverlappingWaveform) {
-        label = h < 100 ? "ms" : "s";
-    } else if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short === "ms since event") {
-        label = "ms";
-    } else if ((timeUnit as OpenSee.IUnitSetting).options?.[timeUnit.current]?.short === "cycles") {
-        label = "cycle";
-    } else {
-        label = h < 100 ? "ms" : "s";
-    }
-
     d3.select(container)
         .select(".xAxisLabel")
-        .text(`Time (${label})`);
+        .text(`Time (${isOverlappingWaveform ? getAutoTimeUnit(h) : resolveTimeUnit(timeUnit, h)})`);
 }
 
 export const updateXAxisPositionOnResize = (container: HTMLDivElement | null, height: number, width: number) => {
