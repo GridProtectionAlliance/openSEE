@@ -217,6 +217,7 @@ const SettingsWidget = () => {
                                         <TimeUnitSelector
                                             timeUnitIndex={timeUnit.current}
                                             setter={handleSetTimeUnit}
+                                            timeSpanMs={endTime - startTime}
                                         />
                                     </div>
                                 </div>

@@ -30,7 +30,7 @@ import { PlotDataStateContext } from '../Context/PlotDataContext';
 import { PlotStateStateContext, PlotStateActionContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import { selectSelectedPoints } from '../PlotSelectors';
-import { formatMainEventTimeTick, formatTimeDelta } from '../Graphs/Utils/Utilities';
+import { formatTimeDelta } from '../Graphs/Utils/Utilities';
 import { useGetContainerPosition } from '@gpa-gemstone/helper-functions';
 import { Alert } from '@gpa-gemstone/react-interactive';
 
@@ -41,13 +41,6 @@ const PointWidget = () => {
     const evt = React.useContext(EventContext);
     const colors = useAppSelector(SelectColor);
     const timeUnit = useAppSelector(SelectTimeUnit);
-
-    const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
-    const inceptionTime = new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime();
-    const timeFormatOpts = { timeUnit, domainWidth: plotState.endTime - plotState.startTime, startTime: plotState.startTime, originalStartTime, inceptionTime };
-
-    const timeUnitShort = timeUnit.options?.[timeUnit.current]?.short ?? 'auto';
-    const displayTimeUnitShort = timeUnitShort === 'auto' ? (plotState.endTime - plotState.startTime < 100 ? 'ms' : 's') : timeUnitShort;
 
     const points = React.useMemo(
         () => selectSelectedPoints(evt.Context.EventID, plots, plotState.meta),

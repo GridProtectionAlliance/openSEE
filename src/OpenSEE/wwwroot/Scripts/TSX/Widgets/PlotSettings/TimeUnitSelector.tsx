@@ -22,26 +22,38 @@
 //******************************************************************************************************
 import * as React from 'react';
 import { defaultSettings } from '../../defaults';
+import { getAutoTimeUnit } from '../../Graphs/Utils/Utilities';
 import { Select } from '@gpa-gemstone/react-forms';
 
 interface IProps {
     setter: (index: number) => void,
     timeUnitIndex: number,
-    overlappingWave?: boolean
+    overlappingWave?: boolean,
+    timeSpanMs?: number
 }
 
 const TimeUnitSelector = React.memo((props: IProps) => {
-    const options = React.useMemo(() => {
-        const src = props.overlappingWave
-            ? (defaultSettings.OverlappingWaveTimeUnit.options ?? [])
-            : (defaultSettings.TimeUnit.options ?? []);
-        return src.map((option, index) => ({ Label: option.label, Value: index }));
-    }, [props.overlappingWave]);
+    const src = React.useMemo(() => props.overlappingWave
+        ? (defaultSettings.OverlappingWaveTimeUnit.options ?? [])
+        : (defaultSettings.TimeUnit.options ?? []), [props.overlappingWave]);
+
+    // Like AxisUnitSelector, when auto is selected show the unit it currently resolves to
+    let autoIndex = -1;
+    if (src[props.timeUnitIndex]?.short === 'auto' && props.timeSpanMs != null) {
+        const autoShort = getAutoTimeUnit(props.timeSpanMs);
+        autoIndex = src.findIndex(option => option.short === autoShort);
+    }
+
+    const options = React.useMemo(() =>
+        src.map((option, index) => ({
+            Label: index === autoIndex ? `${option.label} (auto)` : option.label,
+            Value: index
+        })), [src, autoIndex]);
 
     return (
         <Select
             Label={''}
-            Record={{ value: props.timeUnitIndex }}
+            Record={{ value: autoIndex >= 0 ? autoIndex : props.timeUnitIndex }}
             Field='value'
             Setter={(_, option) => props.setter(option.Value as number)}
             Options={options}
