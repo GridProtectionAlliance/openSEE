@@ -157,6 +157,18 @@ pipeline {
             }
         }
 
+        stage('Build .NET') {
+            // Publish compiles the project on every other path, so only PRs into development need this.
+            when {
+                expression {
+                    return env.BRANCH_NAME.startsWith("PR") && env.CHANGE_TARGET == env.devBranch
+                }
+            }
+            steps {
+                bat(script: 'dotnet build src/OpenSEE/OpenSEE.csproj --configuration Release')
+            }
+        }
+
         stage('Lint') {
             when {
                 expression {
