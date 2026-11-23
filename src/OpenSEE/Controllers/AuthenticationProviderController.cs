@@ -21,6 +21,7 @@
 //
 //******************************************************************************************************
 
+using Gemstone.Configuration;
 using Gemstone.Security.AuthenticationProviders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,10 +40,14 @@ public class AuthenticationProviderController() : ControllerBase
     [AllowAnonymous]
     public IActionResult GetAll()
     {
-        List<object> providers = [new { ProviderIdentity = WindowsAuthenticationProviderExtensions.DefaultIdentity, Name = "Windows Authentication" }];
+        string windowsLabel = Settings.Default[WindowsAuthenticationProvider.SettingsSection].LoginLabel;
+        List<object> providers = [new { ProviderIdentity = WindowsAuthenticationProviderExtensions.DefaultIdentity, Name = windowsLabel }];
 
         if (AuthenticationSetup.OAuthEnabled)
-            providers.Add(new { ProviderIdentity = OAuthAuthenticationProviderExtensions.DefaultIdentity, Name = "Azure Active Directory" });
+        {
+            string oauthLabel = Settings.Default[OAuthAuthenticationProvider.SettingsSection].LoginLabel;
+            providers.Add(new { ProviderIdentity = OAuthAuthenticationProviderExtensions.DefaultIdentity, Name = oauthLabel });
+        }
 
         return Ok(providers);
     }
