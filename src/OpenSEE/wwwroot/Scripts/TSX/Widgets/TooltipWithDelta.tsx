@@ -24,6 +24,7 @@
 //
 //******************************************************************************************************
 import React from 'react';
+import moment from 'moment';
 import { SelectColor, SelectTimeUnit } from '../Store/settingSlice';
 import { useAppSelector } from '../hooks';
 import HoverContext from '../Context/HoverContext';
@@ -32,7 +33,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectDeltaHoverPoints } from '../PlotSelectors';
-import { formatTimeDelta, formatMainEventTimeTick } from '../Graphs/Utils/Utilities';
+import { formatTimeDelta, formatMainEventTimeTick, resolveTimeUnit } from '../Graphs/Utils/Utilities';
 import { Alert } from '@gpa-gemstone/react-interactive';
 
 const columnTextStyle: React.CSSProperties = {
@@ -51,6 +52,7 @@ const ToolTipDeltaWidget = () => {
     const originalStartTime = new Date(evt.Context.EventInfo?.EventDate + "Z").getTime();
     const inceptionTime = new Date(evt.Context.EventInfo?.InceptionDate + "Z").getTime();
     const timeFormatOpts = { timeUnit, domainWidth: endTime - startTime, startTime, originalStartTime, inceptionTime };
+    const timeUnitLabel = resolveTimeUnit(timeUnit, endTime - startTime);
 
     const points = React.useMemo(() => selectDeltaHoverPoints(hover, evt.Context.EventID, plots, meta, undefined, analytic.Harmonic), [hover, evt.Context.EventID, plots, meta, analytic.Harmonic]);
 
@@ -73,15 +75,17 @@ const ToolTipDeltaWidget = () => {
             <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
                 <div className={`${!isNaN(secondDate) ? 'col-4' : 'col-6'} px-1 pb-1 text-center`} style={columnTextStyle}>
                     <b>
-                        {(!isNaN(firstDate) ? formatMainEventTimeTick(firstDate, timeFormatOpts) : null)}
+                        {(!isNaN(firstDate) ? <>{formatMainEventTimeTick(firstDate, timeFormatOpts)}<br />({timeUnitLabel})</> : null)}
                     </b>
+                    {!isNaN(firstDate) ? <div>{moment(firstDate).utc().format('YYYY-MM-DD HH:mm:ss.SSS')}</div> : null}
                 </div>
                 {!isNaN(secondDate) ?
                     <>
                         <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
                             <b>
-                                {(formatMainEventTimeTick(secondDate, timeFormatOpts))}
+                                {formatMainEventTimeTick(secondDate, timeFormatOpts)}<br />({timeUnitLabel})
                             </b>
+                            <div>{moment(secondDate).utc().format('YYYY-MM-DD HH:mm:ss.SSS')}</div>
                         </div>
                         <div className="col-4 px-1 pb-1 text-center" style={columnTextStyle}>
                             <b>

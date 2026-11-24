@@ -31,6 +31,7 @@ declare global {
     const defaultEventStartTime: string;
     const defaultEventEndTime: string;
     const systemFrequency: string;
+    const systemName: string;
     const logoutPath: string;
 }
 

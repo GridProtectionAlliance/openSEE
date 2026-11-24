@@ -83,9 +83,19 @@ export const formatValueTick = (d: number, unit: OpenSee.Unit, yScaleCollection:
         return d.toFixed(2)
 };
 
+// The only place that decides what the "auto" time unit means: ms while less than 100 ms is visible, otherwise s.
+export const getAutoTimeUnit = (timeSpanMs: number): 'ms' | 's' => timeSpanMs < 100 ? 'ms' : 's';
+
+// Short name of the time unit actually displayed, with "auto" replaced by the unit it resolves to.
+export const resolveTimeUnit = (timeUnit: OpenSee.IUnitSetting, timeSpanMs: number): string => {
+    const short = timeUnit.options?.[timeUnit.current]?.short ?? 'auto';
+    return short === 'auto' ? getAutoTimeUnit(timeSpanMs) : short;
+};
+
 export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecision = false): string => {
     const TS = moment(d);
-    let h = ctx.xDomainWidth;
+    const timeSpanMs = ctx.xDomainWidth;
+    const short = resolveTimeUnit(ctx.timeUnit, timeSpanMs);
     // moment/JS Date only resolve to whole milliseconds, so when extra precision is requested the
     // sub-second portion is taken from the raw value (which keeps sub-ms detail) instead of moment.
     const extra = extraPrecision ? 1 : 0;
@@ -93,52 +103,44 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecisio
 
     if (ctx.isOverlappingWaveform) {
         if (defaultSettings.OverlappingWaveTimeUnit.options?.[ctx.overlappingWaveTimeUnit]?.short === "ms") {
-            if (h < 2)
+            if (timeSpanMs < 2)
                 return d.toFixed(3 + extra)
-            if (h < 5)
+            if (timeSpanMs < 5)
                 return d.toFixed(2 + extra)
             else
                 return d.toFixed(1 + extra)
         } else if (defaultSettings.OverlappingWaveTimeUnit.options?.[ctx.overlappingWaveTimeUnit]?.short === "cycles") {
             const cyc = d * 60.0 / 1000.0;
-            h = h * 60.0 / 1000.0;
-            if (h < 2)
+            const timeSpanCycles = timeSpanMs * 60.0 / 1000.0;
+            if (timeSpanCycles < 2)
                 return cyc.toFixed(3 + extra)
-            if (h < 5)
+            if (timeSpanCycles < 5)
                 return cyc.toFixed(2 + extra)
             else
                 return cyc.toFixed(1 + extra)
         }
 
     }
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'auto') {
-        if (h < 100)
-            return extraPrecision ? subSecondMs.toFixed(3) : TS.format("SSS.S")
-        else if (h < 1000)
-            return TS.format("ss.SS")
-        else
-            return TS.format("ss.S")
-    }
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 's') {
-        if (h < 100)
+    else if (short == 's') {
+        if (timeSpanMs < 100)
             return extraPrecision ? ((d % 60000) / 1000).toFixed(5) : TS.format("ss.SSS")
-        else if (h < 1000)
+        else if (timeSpanMs < 1000)
             return TS.format("ss.SS")
         else
             return TS.format("ss.S")
     }
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'ms')
+    else if (short == 'ms')
         if (extraPrecision)
             return subSecondMs.toFixed(3)
-        else if (h < 100)
+        else if (timeSpanMs < 100)
             return TS.format("SSS.S")
         else
             return TS.format("SSS")
 
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'min')
+    else if (short == 'min')
         return TS.format("mm:ss")
 
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'ms since record') {
+    else if (short == 'ms since record') {
         let ms = d - ctx.originalStartTime;
 
         if (ctx.useRelevantTime && !ctx.isOriginalEvt) {
@@ -147,15 +149,15 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecisio
                 ms = d - evt?.StartTime
         }
 
-        if (h < 2)
+        if (timeSpanMs < 2)
             return ms.toFixed(3 + extra)
-        if (h < 5)
+        if (timeSpanMs < 5)
             return ms.toFixed(2 + extra)
         else
             return ms.toFixed(1 + extra)
     }
 
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'ms since inception') {
+    else if (short == 'ms since inception') {
         let ms = d - ctx.inceptionTime;
 
         if (ctx.useRelevantTime && !ctx.isOriginalEvt) {
@@ -164,32 +166,32 @@ export const formatTimeTick = (d: number, ctx: IFormatTimeContext, extraPrecisio
                 ms = d - evt?.Inception
         }
 
-        if (h < 2)
+        if (timeSpanMs < 2)
             return ms.toFixed(3 + extra)
-        if (h < 5)
+        if (timeSpanMs < 5)
             return ms.toFixed(2 + extra)
         else
             return ms.toFixed(1 + extra)
     }
 
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since record') {
+    else if (short == 'cycles since record') {
         const cyc = (d - ctx.startTime) * 60.0 / 1000.0;
 
-        h = h * 60.0 / 1000.0;
-        if (h < 2)
+        const timeSpanCycles = timeSpanMs * 60.0 / 1000.0;
+        if (timeSpanCycles < 2)
             return cyc.toFixed(3 + extra)
-        if (h < 5)
+        if (timeSpanCycles < 5)
             return cyc.toFixed(2 + extra)
         else
             return cyc.toFixed(1 + extra)
     }
-    else if (ctx.timeUnit.options?.[ctx.timeUnit.current]?.short == 'cycles since inception') {
+    else if (short == 'cycles since inception') {
         const cyc = (d - ctx.inceptionTime) * 60.0 / 1000.0;
 
-        h = h * 60.0 / 1000.0;
-        if (h < 2)
+        const timeSpanCycles = timeSpanMs * 60.0 / 1000.0;
+        if (timeSpanCycles < 2)
             return cyc.toFixed(3 + extra)
-        if (h < 5)
+        if (timeSpanCycles < 5)
             return cyc.toFixed(2 + extra)
         else
             return cyc.toFixed(1 + extra)
@@ -227,9 +229,7 @@ export const formatTimeDelta = (deltaMs: number, timeUnit: OpenSee.IUnitSetting,
     if (isNaN(deltaMs))
         return '';
 
-    let short = timeUnit.options?.[timeUnit.current]?.short ?? 'auto';
-    if (short === 'auto')
-        short = domainWidthMS < 100 ? 'ms' : 's';
+    const short = resolveTimeUnit(timeUnit, domainWidthMS);
 
     if (short === 's')
         return (deltaMs / 1000).toFixed(7) + ' (s)';

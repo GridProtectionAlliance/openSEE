@@ -1,4 +1,4 @@
-﻿//******************************************************************************************************
+//******************************************************************************************************
 //  Startup.cs - Gbtc
 //
 //  Copyright © 2020, Grid Protection Alliance.  All Rights Reserved.
@@ -154,6 +154,11 @@ public class Startup
         });
 
         app.UseGemstoneAuthentication();
+
+        dynamic options = Settings.Instance[Program.DefaultWebHostingCategory];
+
+        if (options.DisableAuthentication ?? false)
+            app.UseMiddleware<SkipAuthenticationMiddleware>();
 
         app.UseStaticFiles(WebExtensions.StaticFileEmbeddedResources());
         app.UseStaticFiles();

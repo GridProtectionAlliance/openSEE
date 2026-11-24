@@ -24,6 +24,7 @@
 //******************************************************************************************************
 
 import * as React from 'react';
+import moment from 'moment';
 import { useSelector } from 'react-redux';
 import { SelectColor, SelectTimeUnit } from '../Store/settingSlice';
 import HoverContext from '../Context/HoverContext';
@@ -32,7 +33,7 @@ import { PlotStateStateContext } from '../Context/PlotStateContext';
 import EventContext from '../Context/EventContext';
 import AnalyticContext from '../Context/AnalyticContext';
 import { selectHoverPoints } from '../PlotSelectors';
-import { formatMainEventTimeTick } from '../Graphs/Utils/Utilities';
+import { formatMainEventTimeTick, resolveTimeUnit } from '../Graphs/Utils/Utilities';
 import { Alert } from '@gpa-gemstone/react-interactive';
 
 const ToolTipWidget = () => {
@@ -64,7 +65,8 @@ const ToolTipWidget = () => {
             <div className="d-flex flex-column" style={{ height: '100%', marginBottom: 0, overflowY: 'hidden', padding: "3%", width: '100%', boxSizing: 'border-box' }}>
                 <div className="row no-gutters border-top" style={{ flex: '0 0 auto', position: 'sticky', top: 0, zIndex: 1 }}>
                     <div className="col" style={{ textAlign: 'center' }}>
-                        <b>{formatMainEventTimeTick(hover[0], { timeUnit, domainWidth: endTime - startTime, startTime, originalStartTime, inceptionTime })}</b>
+                        <b>{formatMainEventTimeTick(hover[0], { timeUnit, domainWidth: endTime - startTime, startTime, originalStartTime, inceptionTime })}<br />({resolveTimeUnit(timeUnit, endTime - startTime)})</b>
+                        <div>{moment(hover[0]).utc().format('YYYY-MM-DD HH:mm:ss.SSS')}</div>
                     </div>
                 </div>
                 <div className="d-flex flex-column" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>

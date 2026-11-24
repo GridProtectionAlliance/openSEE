@@ -1,4 +1,4 @@
-﻿//******************************************************************************************************
+//******************************************************************************************************
 //  About.tsx - Gbtc
 //
 //  Copyright © 2019, Grid Protection Alliance.  All Rights Reserved.
@@ -23,6 +23,7 @@
 
 import * as React from 'react';
 import { Modal } from '@gpa-gemstone/react-interactive'
+import { LIB_VERSION } from '../version';
 
 interface Iprops {
     closeCallback: () => void,
@@ -39,11 +40,13 @@ const About = (props: Iprops) => {
                 props.closeCallback()
             }}
             ShowX={true}
-            ShowCancel={true}
+            ShowCancel={false}
             CancelBtnClass={"btn btn-danger"}
             ShowConfirm={false}
         >
-            <p>Version 3.0</p>
+            <p>Version: {version}</p>
+            <p>UI Version: {LIB_VERSION}</p>
+            <p>System Name:{systemName}</p>
 
             <p>openSEE is a browser-based waveform display and analytics tool that is used to view waveforms recorded by DFRs, Power Quality meters, relays and other substation devices that are stored in the openXDA database.
                 The link in the URL window of openSEE can be embedded in emails so that recipients can quickly access the waveforms being studied.</p>
@@ -72,4 +75,4 @@ const About = (props: Iprops) => {
     );
 }
 
-export default About; 
+export default About;

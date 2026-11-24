@@ -5,10 +5,18 @@
     <BuildType Name="Release" />
   </Configurations>
   <Folder Name="/Solution Items/">
+    <File Path="../Jenkinsfile" />
+    <File Path="../openSEE.dockerfile" />
     <File Path="Directory.Build.props" />
     <File Path="nuget.config" />
   </Folder>
-  <Project Path="OpenSEE/OpenSEE.csproj" />
+  <Folder Name="/Scripts/">
+    <File Path="../scripts/CreateDependencyPR.ps1" />
+    <File Path="../scripts/GemstoneUpdates.ps1" />
+    <File Path="../scripts/GithubComment.ps1" />
+    <File Path="../scripts/OpenSEE.version" />
+    <File Path="../scripts/Versioning.ps1" />
+  </Folder>
   <Folder Name="/Libraries/">
     <Project Path="Libraries/PQDS/PQDS.csproj" />
   </Folder>
@@ -25,4 +33,5 @@
     <Project Path="../../../Gemstone/threading/src/Gemstone.Threading/Gemstone.Threading.csproj" />
     <Project Path="../../../Gemstone/web/src/Gemstone.Web/Gemstone.Web.csproj" />
   </Folder>
+  <Project Path="OpenSEE/OpenSEE.csproj" />
 </Solution>

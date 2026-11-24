@@ -37,5 +37,6 @@ namespace OpenSEE.Models
         public string ApplicationDescription { get; set; }
         public string ApplicationKeywords { get; set; }
         public string BootstrapTheme { get; set; }
+        public string SystemName { get; set; }
     }
 }
